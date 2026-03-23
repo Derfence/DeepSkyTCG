@@ -1,0 +1,98 @@
+[
+  {
+    "id": "ALP-001",
+    "extensionId": "core-alpha",
+    "name": "Spark Fox",
+    "rarityLabel": "Common",
+    "drawWeight": 40,
+    "imageRef": "spark_fox"
+  },
+  {
+    "id": "ALP-002",
+    "extensionId": "core-alpha",
+    "name": "Steam Golem",
+    "rarityLabel": "Common",
+    "drawWeight": 36,
+    "imageRef": "steam_golem"
+  },
+  {
+    "id": "ALP-003",
+    "extensionId": "core-alpha",
+    "name": "Cloud Archer",
+    "rarityLabel": "Common",
+    "drawWeight": 34,
+    "imageRef": "cloud_archer"
+  },
+  {
+    "id": "ALP-004",
+    "extensionId": "core-alpha",
+    "name": "Rune Beetle",
+    "rarityLabel": "Rare",
+    "drawWeight": 18,
+    "imageRef": "rune_beetle"
+  },
+  {
+    "id": "ALP-005",
+    "extensionId": "core-alpha",
+    "name": "Aurora Drake",
+    "rarityLabel": "Rare",
+    "drawWeight": 12,
+    "imageRef": "aurora_drake"
+  },
+  {
+    "id": "ALP-006",
+    "extensionId": "core-alpha",
+    "name": "Nova Queen",
+    "rarityLabel": "Epic",
+    "drawWeight": 6,
+    "imageRef": "nova_queen"
+  },
+  {
+    "id": "MON-001",
+    "extensionId": "moon-dawn",
+    "name": "Moonlit Hare",
+    "rarityLabel": "Common",
+    "drawWeight": 38,
+    "imageRef": "moonlit_hare"
+  },
+  {
+    "id": "MON-002",
+    "extensionId": "moon-dawn",
+    "name": "Dawn Scribe",
+    "rarityLabel": "Common",
+    "drawWeight": 35,
+    "imageRef": "dawn_scribe"
+  },
+  {
+    "id": "MON-003",
+    "extensionId": "moon-dawn",
+    "name": "Mist Guardian",
+    "rarityLabel": "Common",
+    "drawWeight": 33,
+    "imageRef": "mist_guardian"
+  },
+  {
+    "id": "MON-004",
+    "extensionId": "moon-dawn",
+    "name": "Lunar Duelist",
+    "rarityLabel": "Rare",
+    "drawWeight": 19,
+    "imageRef": "lunar_duelist"
+  },
+  {
+    "id": "MON-005",
+    "extensionId": "moon-dawn",
+    "name": "Sunrise Caller",
+    "rarityLabel": "Rare",
+    "drawWeight": 11,
+    "imageRef": "sunrise_caller"
+  },
+  {
+    "id": "MON-006",
+    "extensionId": "moon-dawn",
+    "name": "Eclipse Regent",
+    "rarityLabel": "Epic",
+    "drawWeight": 5,
+    "imageRef": "eclipse_regent"
+  }
+]

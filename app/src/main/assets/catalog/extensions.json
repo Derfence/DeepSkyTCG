@@ -1,0 +1,12 @@
+[
+  {
+    "id": "core-alpha",
+    "name": "Core Alpha",
+    "coverImageRef": "cover_core_alpha"
+  },
+  {
+    "id": "moon-dawn",
+    "name": "Moon Dawn",
+    "coverImageRef": "cover_moon_dawn"
+  }
+]
