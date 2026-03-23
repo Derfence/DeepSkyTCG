@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
@@ -60,19 +61,25 @@ fun MainMenuScreen(
                 )
                 Button(
                     onClick = onOpenPack,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("menu-open-pack"),
                 ) {
                     Text("Open Pack")
                 }
                 Button(
                     onClick = onOpenLibrary,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("menu-library"),
                 ) {
                     Text("Library")
                 }
                 OutlinedButton(
                     onClick = onLogout,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("menu-logout"),
                 ) {
                     Text("Logout")
                 }

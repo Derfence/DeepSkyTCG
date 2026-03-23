@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.gatcha.model.ExtensionDefinition
@@ -46,7 +47,10 @@ fun PackSelectionScreen(
             .padding(16.dp),
     ) {
         item {
-            TextButton(onClick = onBack) {
+            TextButton(
+                onClick = onBack,
+                modifier = Modifier.testTag("pack-back"),
+            ) {
                 Text("Back")
             }
         }
@@ -66,6 +70,7 @@ fun PackSelectionScreen(
                     "Prochain tirage disponible : $nextDrawAtText"
                 },
                 color = Color(0xFFD6E4F5),
+                modifier = Modifier.testTag("pack-status"),
             )
         }
 
@@ -78,8 +83,15 @@ fun PackSelectionScreen(
         state.errorMessage?.let { error ->
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(text = error, color = Color(0xFFFF9090))
-                    Button(onClick = onRefresh) {
+                    Text(
+                        text = error,
+                        color = Color(0xFFFF9090),
+                        modifier = Modifier.testTag("pack-error"),
+                    )
+                    Button(
+                        onClick = onRefresh,
+                        modifier = Modifier.testTag("pack-refresh"),
+                    ) {
                         Text("Retry")
                     }
                 }
@@ -106,6 +118,7 @@ private fun ExtensionCard(
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
+                .testTag("pack-extension-${extension.id}")
                 .fillMaxWidth()
                 .background(
                     Brush.linearGradient(
@@ -127,7 +140,9 @@ private fun ExtensionCard(
             Button(
                 onClick = { onOpenPack(extension.id) },
                 enabled = !drawLocked,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("pack-draw-${extension.id}"),
             ) {
                 Text(if (drawLocked) "Pack locked" else "Draw this pack")
             }

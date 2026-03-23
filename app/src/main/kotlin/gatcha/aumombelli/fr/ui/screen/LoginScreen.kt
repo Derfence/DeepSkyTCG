@@ -22,6 +22,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -79,7 +80,9 @@ fun LoginScreen(
                     onValueChange = onUsernameChange,
                     label = { Text("Username") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("login-username"),
                 )
 
                 if (state.isCreateMode) {
@@ -88,7 +91,9 @@ fun LoginScreen(
                         onValueChange = onEmailChange,
                         label = { Text("Email") },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("login-email"),
                     )
                 }
 
@@ -98,7 +103,9 @@ fun LoginScreen(
                     label = { Text("Password") },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("login-password"),
                 )
 
                 state.errorMessage?.let { error ->
@@ -106,13 +113,16 @@ fun LoginScreen(
                         text = error,
                         color = Color(0xFFFF7A7A),
                         style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.testTag("login-error"),
                     )
                 }
 
                 Button(
                     onClick = onSubmit,
                     enabled = !state.isLoading,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("login-submit"),
                 ) {
                     if (state.isLoading) {
                         CircularProgressIndicator(
@@ -127,7 +137,9 @@ fun LoginScreen(
 
                 TextButton(
                     onClick = onModeToggle,
-                    modifier = Modifier.align(Alignment.End),
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .testTag("login-toggle-mode"),
                 ) {
                     Text(
                         text = if (state.isCreateMode) "I already have an account" else "Create a new account",

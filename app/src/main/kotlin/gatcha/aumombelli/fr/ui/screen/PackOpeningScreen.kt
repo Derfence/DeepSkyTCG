@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.gatcha.model.PackCard
@@ -68,7 +69,10 @@ fun PackOpeningScreen(
                     .padding(24.dp),
             ) {
                 Text("No opened pack available.", color = Color.White)
-                Button(onClick = onDone) {
+                Button(
+                    onClick = onDone,
+                    modifier = Modifier.testTag("pack-opening-done"),
+                ) {
                     Text("Back to menu")
                 }
             }
@@ -87,6 +91,7 @@ fun PackOpeningScreen(
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
+                modifier = Modifier.testTag("pack-opening-title"),
             )
             Text(
                 text = "Extension: ${packResult.extensionId}",
@@ -135,7 +140,9 @@ fun PackOpeningScreen(
 
             Button(
                 onClick = onDone,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("pack-opening-done"),
             ) {
                 Text("Back to menu")
             }
@@ -174,10 +181,12 @@ private fun RevealCard(
                 text = "$page / $total",
                 color = Color.White.copy(alpha = 0.9f),
                 style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.testTag("pack-opening-progress"),
             )
             Text(
                 text = card.cardId,
                 color = Color(0xFFEAF4FF),
+                modifier = Modifier.testTag("pack-opening-card-id"),
             )
             Box(
                 modifier = Modifier
@@ -195,6 +204,7 @@ private fun RevealCard(
                 style = MaterialTheme.typography.headlineSmall,
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
+                modifier = Modifier.testTag("pack-opening-card-name"),
             )
             Text(
                 text = card.rarityLabel,

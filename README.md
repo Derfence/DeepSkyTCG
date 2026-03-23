@@ -69,6 +69,7 @@ Depuis la racine du dépôt principal :
 
 ```powershell
 .\test-all.bat
+.\test-all.bat e2e
 ```
 
 ## Pré-requis locaux
@@ -91,6 +92,8 @@ sdk.dir=C\:\\Users\\Derfence\\AppData\\Local\\Android\\Sdk
 - Avant `connectedDebugAndroidTest`, démarrer un émulateur Android ou brancher un appareil puis vérifier `adb devices` depuis Windows.
 - Si Android Studio ou Gradle signale que `Build Tools 35.0.0` est corrompu, supprimer cette version dans le SDK Manager Windows ou supprimer le dossier `C:\Users\Derfence\AppData\Local\Android\Sdk\build-tools\35.0.0`, puis relancer.
 - Le dépôt racine fournit un lanceur `test-all.bat` qui enchaîne les tests client puis serveur.
+- Le mode `.\test-all.bat e2e` lance en plus une vraie expérimentation bout en bout sur l'app Android debug avec un serveur local isolé.
+- Le `test-all.bat` standard continue d'exécuter uniquement les tests instrumentés Android non-E2E.
 
 ## Test bout en bout local
 
@@ -98,6 +101,13 @@ sdk.dir=C\:\\Users\\Derfence\\AppData\\Local\\Android\\Sdk
 - Le package Android utilisé par l'application est `fr.aumombelli.gatcha`.
 - En build `debug`, le client résout localement `gatcha.aumombelli.fr` vers `127.0.0.1` dans l'appareil.
 - Le script racine `routage.bat` active ensuite un `adb reverse tcp:8080 tcp:8080`, ce qui redirige ce `localhost` de l'appareil vers la machine hôte.
+- Le mode `.\test-all.bat e2e` orchestre automatiquement :
+  - l'activation du routage ;
+  - le `pm clear` de l'app ;
+  - le démarrage du serveur local ;
+  - l'exécution d'un vrai test instrumenté E2E ;
+  - les validations serveur côté hôte ;
+  - l'arrêt du serveur et la désactivation du routage.
 - Démarrer d'abord l'émulateur ou brancher un appareil, puis lancer le routage depuis un terminal Windows :
 
 ```powershell
@@ -123,6 +133,14 @@ cd /mnt/c/Users/Derfence/Documents/Gatcha/server
 ```powershell
 .\routage.bat off
 ```
+
+Pour exécuter la chaîne E2E complète :
+
+```powershell
+.\test-all.bat e2e
+```
+
+Le test E2E pilote la vraie app via des `testTag` stables et un utilisateur de test injecté par arguments d'instrumentation.
 
 ## Dépendance au dépôt racine
 

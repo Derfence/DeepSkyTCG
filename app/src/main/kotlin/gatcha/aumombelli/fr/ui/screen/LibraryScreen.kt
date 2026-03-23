@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.gatcha.model.LibraryCardItem
@@ -53,7 +54,10 @@ fun LibraryScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                TextButton(onClick = onBack) {
+                TextButton(
+                    onClick = onBack,
+                    modifier = Modifier.testTag("library-back"),
+                ) {
                     Text("Back")
                 }
                 Text(
@@ -67,7 +71,10 @@ fun LibraryScreen(
                     color = Color(0xFFD0E0F2),
                 )
                 if (state.errorMessage != null) {
-                    Button(onClick = onRefresh) {
+                    Button(
+                        onClick = onRefresh,
+                        modifier = Modifier.testTag("library-refresh"),
+                    ) {
                         Text("Retry")
                     }
                 }
@@ -99,7 +106,9 @@ fun LibraryScreen(
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = Color(0xFF9EE7FF),
-                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+                    modifier = Modifier
+                        .padding(top = 8.dp, bottom = 4.dp)
+                        .testTag("library-section-${section.extension.id}"),
                 )
             }
             items(section.cards, key = { it.definition.id }) { card ->
@@ -119,7 +128,9 @@ private fun LibraryCard(
 ) {
     val owned = item.ownedCount > 0
     Card(
-        modifier = modifier.alpha(if (owned) 1f else 0.45f),
+        modifier = modifier
+            .alpha(if (owned) 1f else 0.45f)
+            .testTag("library-card-${item.definition.id}"),
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -153,6 +164,7 @@ private fun LibraryCard(
             Text(
                 text = if (owned) "Owned: ${item.ownedCount}" else "Not owned yet",
                 color = Color(0xFFD3E3F4),
+                modifier = Modifier.testTag("library-owned-${item.definition.id}"),
             )
         }
     }
