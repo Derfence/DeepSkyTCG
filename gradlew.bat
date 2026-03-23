@@ -41,4 +41,8 @@ if not exist "%GRADLE_BIN%" (
   exit /b 1
 )
 
+pushd "%SCRIPT_DIR%" >nul
 call "%GRADLE_BIN%" %*
+set EXIT_CODE=%ERRORLEVEL%
+popd >nul
+exit /b %EXIT_CODE%
