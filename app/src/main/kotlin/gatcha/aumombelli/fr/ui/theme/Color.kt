@@ -1,4 +1,4 @@
-package gatcha.aumombelli.fr.ui.theme
+package fr.aumombelli.gatcha.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

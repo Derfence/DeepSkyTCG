@@ -1,8 +1,8 @@
-package gatcha.aumombelli.fr.data
+package fr.aumombelli.gatcha.data
 
 import android.content.Context
-import gatcha.aumombelli.fr.model.CardDefinition
-import gatcha.aumombelli.fr.model.ExtensionDefinition
+import fr.aumombelli.gatcha.model.CardDefinition
+import fr.aumombelli.gatcha.model.ExtensionDefinition
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json

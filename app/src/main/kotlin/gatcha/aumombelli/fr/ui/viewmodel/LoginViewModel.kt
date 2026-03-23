@@ -1,13 +1,13 @@
-package gatcha.aumombelli.fr.ui.viewmodel
+package fr.aumombelli.gatcha.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import gatcha.aumombelli.fr.data.AuthGateway
-import gatcha.aumombelli.fr.data.CollectionGateway
-import gatcha.aumombelli.fr.data.SecurityUtils
-import gatcha.aumombelli.fr.data.SessionGateway
-import gatcha.aumombelli.fr.model.CreateAccountRequest
-import gatcha.aumombelli.fr.model.LoginRequest
+import fr.aumombelli.gatcha.data.AuthGateway
+import fr.aumombelli.gatcha.data.CollectionGateway
+import fr.aumombelli.gatcha.data.SecurityUtils
+import fr.aumombelli.gatcha.data.SessionGateway
+import fr.aumombelli.gatcha.model.CreateAccountRequest
+import fr.aumombelli.gatcha.model.LoginRequest
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow

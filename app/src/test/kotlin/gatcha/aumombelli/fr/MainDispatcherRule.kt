@@ -1,4 +1,4 @@
-package gatcha.aumombelli.fr
+package fr.aumombelli.gatcha
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

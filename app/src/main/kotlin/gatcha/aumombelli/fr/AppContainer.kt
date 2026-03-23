@@ -1,11 +1,12 @@
-package gatcha.aumombelli.fr
+package fr.aumombelli.gatcha
 
 import android.content.Context
-import gatcha.aumombelli.fr.data.CollectionRepository
-import gatcha.aumombelli.fr.data.GameCatalogRepository
-import gatcha.aumombelli.fr.data.PackRepository
-import gatcha.aumombelli.fr.data.SessionRepository
-import gatcha.aumombelli.fr.network.GameApiService
+import fr.aumombelli.gatcha.data.CollectionRepository
+import fr.aumombelli.gatcha.data.GameCatalogRepository
+import fr.aumombelli.gatcha.data.PackRepository
+import fr.aumombelli.gatcha.data.SessionRepository
+import fr.aumombelli.gatcha.network.GameApiService
+import fr.aumombelli.gatcha.network.LocalRoutingDns
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -22,6 +23,11 @@ class AppContainer(
     }
 
     private val httpClient = HttpClient(OkHttp) {
+        engine {
+            config {
+                dns(LocalRoutingDns())
+            }
+        }
         install(ContentNegotiation) {
             json(json)
         }

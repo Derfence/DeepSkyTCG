@@ -1,4 +1,4 @@
-package gatcha.aumombelli.fr
+package fr.aumombelli.gatcha
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule

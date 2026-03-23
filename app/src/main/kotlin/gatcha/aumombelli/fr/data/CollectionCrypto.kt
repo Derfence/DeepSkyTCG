@@ -1,6 +1,6 @@
-package gatcha.aumombelli.fr.data
+package fr.aumombelli.gatcha.data
 
-import gatcha.aumombelli.fr.model.OwnedCollection
+import fr.aumombelli.gatcha.model.OwnedCollection
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.security.MessageDigest

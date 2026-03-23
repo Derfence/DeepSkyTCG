@@ -1,10 +1,10 @@
-package gatcha.aumombelli.fr.data
+package fr.aumombelli.gatcha.data
 
-import gatcha.aumombelli.fr.model.DrawPackRequest
-import gatcha.aumombelli.fr.model.DrawPackResponse
-import gatcha.aumombelli.fr.model.OwnedCollection
-import gatcha.aumombelli.fr.model.SaveCollectionRequest
-import gatcha.aumombelli.fr.network.GameApiService
+import fr.aumombelli.gatcha.model.DrawPackRequest
+import fr.aumombelli.gatcha.model.DrawPackResponse
+import fr.aumombelli.gatcha.model.OwnedCollection
+import fr.aumombelli.gatcha.model.SaveCollectionRequest
+import fr.aumombelli.gatcha.network.GameApiService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

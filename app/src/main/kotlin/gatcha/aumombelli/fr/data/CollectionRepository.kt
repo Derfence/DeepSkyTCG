@@ -1,11 +1,11 @@
-package gatcha.aumombelli.fr.data
+package fr.aumombelli.gatcha.data
 
-import gatcha.aumombelli.fr.model.GetCollectionRequest
-import gatcha.aumombelli.fr.model.OwnedCollection
-import gatcha.aumombelli.fr.model.PackCard
-import gatcha.aumombelli.fr.model.SaveCollectionRequest
-import gatcha.aumombelli.fr.model.mergePackCards
-import gatcha.aumombelli.fr.network.GameApiService
+import fr.aumombelli.gatcha.model.GetCollectionRequest
+import fr.aumombelli.gatcha.model.OwnedCollection
+import fr.aumombelli.gatcha.model.PackCard
+import fr.aumombelli.gatcha.model.SaveCollectionRequest
+import fr.aumombelli.gatcha.model.mergePackCards
+import fr.aumombelli.gatcha.network.GameApiService
 
 class CollectionRepository(
     private val apiService: GameApiService,

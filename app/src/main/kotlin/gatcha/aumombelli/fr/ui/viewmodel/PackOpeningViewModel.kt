@@ -1,9 +1,9 @@
-package gatcha.aumombelli.fr.ui.viewmodel
+package fr.aumombelli.gatcha.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import gatcha.aumombelli.fr.data.PackGateway
-import gatcha.aumombelli.fr.model.DrawPackResponse
+import fr.aumombelli.gatcha.data.PackGateway
+import fr.aumombelli.gatcha.model.DrawPackResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

@@ -1,8 +1,8 @@
-package gatcha.aumombelli.fr
+package fr.aumombelli.gatcha
 
-import gatcha.aumombelli.fr.data.CollectionCrypto
-import gatcha.aumombelli.fr.data.SecurityUtils
-import gatcha.aumombelli.fr.model.OwnedCollection
+import fr.aumombelli.gatcha.data.CollectionCrypto
+import fr.aumombelli.gatcha.data.SecurityUtils
+import fr.aumombelli.gatcha.model.OwnedCollection
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Test

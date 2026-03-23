@@ -1,11 +1,11 @@
-package gatcha.aumombelli.fr.ui.viewmodel
+package fr.aumombelli.gatcha.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import gatcha.aumombelli.fr.data.CatalogGateway
-import gatcha.aumombelli.fr.data.CollectionGateway
-import gatcha.aumombelli.fr.model.LibraryCardItem
-import gatcha.aumombelli.fr.model.LibrarySection
+import fr.aumombelli.gatcha.data.CatalogGateway
+import fr.aumombelli.gatcha.data.CollectionGateway
+import fr.aumombelli.gatcha.model.LibraryCardItem
+import fr.aumombelli.gatcha.model.LibrarySection
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

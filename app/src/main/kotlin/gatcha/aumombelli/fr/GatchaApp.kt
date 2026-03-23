@@ -1,4 +1,4 @@
-package gatcha.aumombelli.fr
+package fr.aumombelli.gatcha
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -8,19 +8,19 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import gatcha.aumombelli.fr.ui.navigation.AppDestination
-import gatcha.aumombelli.fr.ui.screen.LibraryScreen
-import gatcha.aumombelli.fr.ui.screen.LoginScreen
-import gatcha.aumombelli.fr.ui.screen.MainMenuScreen
-import gatcha.aumombelli.fr.ui.screen.PackOpeningScreen
-import gatcha.aumombelli.fr.ui.screen.PackSelectionScreen
-import gatcha.aumombelli.fr.ui.viewmodel.GatchaViewModelFactory
-import gatcha.aumombelli.fr.ui.viewmodel.LibraryViewModel
-import gatcha.aumombelli.fr.ui.viewmodel.LoginEvent
-import gatcha.aumombelli.fr.ui.viewmodel.LoginViewModel
-import gatcha.aumombelli.fr.ui.viewmodel.PackEvent
-import gatcha.aumombelli.fr.ui.viewmodel.PackOpeningViewModel
-import gatcha.aumombelli.fr.ui.viewmodel.PackViewModel
+import fr.aumombelli.gatcha.ui.navigation.AppDestination
+import fr.aumombelli.gatcha.ui.screen.LibraryScreen
+import fr.aumombelli.gatcha.ui.screen.LoginScreen
+import fr.aumombelli.gatcha.ui.screen.MainMenuScreen
+import fr.aumombelli.gatcha.ui.screen.PackOpeningScreen
+import fr.aumombelli.gatcha.ui.screen.PackSelectionScreen
+import fr.aumombelli.gatcha.ui.viewmodel.GatchaViewModelFactory
+import fr.aumombelli.gatcha.ui.viewmodel.LibraryViewModel
+import fr.aumombelli.gatcha.ui.viewmodel.LoginEvent
+import fr.aumombelli.gatcha.ui.viewmodel.LoginViewModel
+import fr.aumombelli.gatcha.ui.viewmodel.PackEvent
+import fr.aumombelli.gatcha.ui.viewmodel.PackOpeningViewModel
+import fr.aumombelli.gatcha.ui.viewmodel.PackViewModel
 
 @Composable
 fun GatchaApp(appContainer: AppContainer) {

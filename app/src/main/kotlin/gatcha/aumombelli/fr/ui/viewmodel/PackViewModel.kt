@@ -1,14 +1,14 @@
-package gatcha.aumombelli.fr.ui.viewmodel
+package fr.aumombelli.gatcha.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import gatcha.aumombelli.fr.data.CatalogGateway
-import gatcha.aumombelli.fr.data.CollectionGateway
-import gatcha.aumombelli.fr.data.PackGateway
-import gatcha.aumombelli.fr.data.PendingSaveException
-import gatcha.aumombelli.fr.data.SessionGateway
-import gatcha.aumombelli.fr.model.ExtensionDefinition
-import gatcha.aumombelli.fr.model.OwnedCollection
+import fr.aumombelli.gatcha.data.CatalogGateway
+import fr.aumombelli.gatcha.data.CollectionGateway
+import fr.aumombelli.gatcha.data.PackGateway
+import fr.aumombelli.gatcha.data.PendingSaveException
+import fr.aumombelli.gatcha.data.SessionGateway
+import fr.aumombelli.gatcha.model.ExtensionDefinition
+import fr.aumombelli.gatcha.model.OwnedCollection
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow

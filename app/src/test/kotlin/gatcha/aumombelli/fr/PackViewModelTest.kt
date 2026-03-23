@@ -1,14 +1,14 @@
-package gatcha.aumombelli.fr
+package fr.aumombelli.gatcha
 
-import gatcha.aumombelli.fr.data.PendingSaveException
-import gatcha.aumombelli.fr.model.CardDefinition
-import gatcha.aumombelli.fr.model.DrawPackResponse
-import gatcha.aumombelli.fr.model.ExtensionDefinition
-import gatcha.aumombelli.fr.model.OwnedCollection
-import gatcha.aumombelli.fr.model.PackCard
-import gatcha.aumombelli.fr.model.StoredSessionSnapshot
-import gatcha.aumombelli.fr.ui.viewmodel.PackEvent
-import gatcha.aumombelli.fr.ui.viewmodel.PackViewModel
+import fr.aumombelli.gatcha.data.PendingSaveException
+import fr.aumombelli.gatcha.model.CardDefinition
+import fr.aumombelli.gatcha.model.DrawPackResponse
+import fr.aumombelli.gatcha.model.ExtensionDefinition
+import fr.aumombelli.gatcha.model.OwnedCollection
+import fr.aumombelli.gatcha.model.PackCard
+import fr.aumombelli.gatcha.model.StoredSessionSnapshot
+import fr.aumombelli.gatcha.ui.viewmodel.PackEvent
+import fr.aumombelli.gatcha.ui.viewmodel.PackViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first

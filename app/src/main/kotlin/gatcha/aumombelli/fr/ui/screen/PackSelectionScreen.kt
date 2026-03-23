@@ -1,4 +1,4 @@
-package gatcha.aumombelli.fr.ui.screen
+package fr.aumombelli.gatcha.ui.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -20,8 +20,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import gatcha.aumombelli.fr.model.ExtensionDefinition
-import gatcha.aumombelli.fr.ui.viewmodel.PackSelectionUiState
+import fr.aumombelli.gatcha.model.ExtensionDefinition
+import fr.aumombelli.gatcha.ui.viewmodel.PackSelectionUiState
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter

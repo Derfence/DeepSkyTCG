@@ -1,4 +1,4 @@
-package gatcha.aumombelli.fr.data
+package fr.aumombelli.gatcha.data
 
 import android.content.Context
 import androidx.datastore.preferences.core.MutablePreferences
@@ -6,9 +6,9 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import gatcha.aumombelli.fr.model.DrawPackResponse
-import gatcha.aumombelli.fr.model.SessionCredentials
-import gatcha.aumombelli.fr.model.StoredSessionSnapshot
+import fr.aumombelli.gatcha.model.DrawPackResponse
+import fr.aumombelli.gatcha.model.SessionCredentials
+import fr.aumombelli.gatcha.model.StoredSessionSnapshot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first

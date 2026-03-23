@@ -1,4 +1,4 @@
-package gatcha.aumombelli.fr.ui.viewmodel
+package fr.aumombelli.gatcha.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider

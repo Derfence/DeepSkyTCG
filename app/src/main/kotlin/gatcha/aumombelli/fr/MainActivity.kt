@@ -1,9 +1,9 @@
-package gatcha.aumombelli.fr
+package fr.aumombelli.gatcha
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import gatcha.aumombelli.fr.ui.theme.GatchaTheme
+import fr.aumombelli.gatcha.ui.theme.GatchaTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

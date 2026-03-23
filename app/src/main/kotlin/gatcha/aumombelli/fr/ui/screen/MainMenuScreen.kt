@@ -1,4 +1,4 @@
-package gatcha.aumombelli.fr.ui.screen
+package fr.aumombelli.gatcha.ui.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

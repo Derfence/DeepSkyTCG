@@ -1,4 +1,4 @@
-package gatcha.aumombelli.fr.data
+package fr.aumombelli.gatcha.data
 
 import java.security.MessageDigest
 

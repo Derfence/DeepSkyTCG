@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "gatcha.aumombelli.fr"
+    namespace = "fr.aumombelli.gatcha"
     buildToolsVersion = "36.1.0"
 
     compileSdk {
@@ -16,7 +16,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "gatcha.aumombelli.fr"
+        applicationId = "fr.aumombelli.gatcha"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
@@ -26,7 +26,13 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "LOCAL_ROUTED_HOST", "\"gatcha.aumombelli.fr\"")
+            buildConfigField("String", "LOCAL_ROUTED_IP", "\"127.0.0.1\"")
+        }
         release {
+            buildConfigField("String", "LOCAL_ROUTED_HOST", "\"\"")
+            buildConfigField("String", "LOCAL_ROUTED_IP", "\"\"")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -45,6 +51,7 @@ android {
     }
 
     buildFeatures {
+        buildConfig = true
         compose = true
     }
 

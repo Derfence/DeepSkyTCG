@@ -1,4 +1,4 @@
-package gatcha.aumombelli.fr.model
+package fr.aumombelli.gatcha.model
 
 import kotlinx.serialization.Serializable
 

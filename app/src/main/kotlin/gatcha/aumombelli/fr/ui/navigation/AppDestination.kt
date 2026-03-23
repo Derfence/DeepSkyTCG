@@ -1,4 +1,4 @@
-package gatcha.aumombelli.fr.ui.navigation
+package fr.aumombelli.gatcha.ui.navigation
 
 sealed class AppDestination(val route: String) {
     data object Login : AppDestination("login")

@@ -1,9 +1,9 @@
-package gatcha.aumombelli.fr
+package fr.aumombelli.gatcha
 
-import gatcha.aumombelli.fr.model.CardDefinition
-import gatcha.aumombelli.fr.model.ExtensionDefinition
-import gatcha.aumombelli.fr.model.OwnedCollection
-import gatcha.aumombelli.fr.ui.viewmodel.LibraryViewModel
+import fr.aumombelli.gatcha.model.CardDefinition
+import fr.aumombelli.gatcha.model.ExtensionDefinition
+import fr.aumombelli.gatcha.model.OwnedCollection
+import fr.aumombelli.gatcha.ui.viewmodel.LibraryViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest

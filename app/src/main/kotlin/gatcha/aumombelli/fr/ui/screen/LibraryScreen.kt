@@ -1,4 +1,4 @@
-package gatcha.aumombelli.fr.ui.screen
+package fr.aumombelli.gatcha.ui.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -25,9 +25,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import gatcha.aumombelli.fr.model.LibraryCardItem
-import gatcha.aumombelli.fr.ui.theme.rarityColor
-import gatcha.aumombelli.fr.ui.viewmodel.LibraryUiState
+import fr.aumombelli.gatcha.model.LibraryCardItem
+import fr.aumombelli.gatcha.ui.theme.rarityColor
+import fr.aumombelli.gatcha.ui.viewmodel.LibraryUiState
 
 @Composable
 fun LibraryScreen(

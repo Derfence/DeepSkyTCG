@@ -1,16 +1,16 @@
-package gatcha.aumombelli.fr.data
+package fr.aumombelli.gatcha.data
 
-import gatcha.aumombelli.fr.model.CardDefinition
-import gatcha.aumombelli.fr.model.CreateAccountRequest
-import gatcha.aumombelli.fr.model.CreateAccountResponse
-import gatcha.aumombelli.fr.model.DrawPackResponse
-import gatcha.aumombelli.fr.model.ExtensionDefinition
-import gatcha.aumombelli.fr.model.LoginRequest
-import gatcha.aumombelli.fr.model.LoginResponse
-import gatcha.aumombelli.fr.model.OwnedCollection
-import gatcha.aumombelli.fr.model.PackCard
-import gatcha.aumombelli.fr.model.SessionCredentials
-import gatcha.aumombelli.fr.model.StoredSessionSnapshot
+import fr.aumombelli.gatcha.model.CardDefinition
+import fr.aumombelli.gatcha.model.CreateAccountRequest
+import fr.aumombelli.gatcha.model.CreateAccountResponse
+import fr.aumombelli.gatcha.model.DrawPackResponse
+import fr.aumombelli.gatcha.model.ExtensionDefinition
+import fr.aumombelli.gatcha.model.LoginRequest
+import fr.aumombelli.gatcha.model.LoginResponse
+import fr.aumombelli.gatcha.model.OwnedCollection
+import fr.aumombelli.gatcha.model.PackCard
+import fr.aumombelli.gatcha.model.SessionCredentials
+import fr.aumombelli.gatcha.model.StoredSessionSnapshot
 import kotlinx.coroutines.flow.StateFlow
 
 interface AuthGateway {

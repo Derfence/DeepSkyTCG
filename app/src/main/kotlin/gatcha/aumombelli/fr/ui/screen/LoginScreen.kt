@@ -1,4 +1,4 @@
-package gatcha.aumombelli.fr.ui.screen
+package fr.aumombelli.gatcha.ui.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -25,9 +25,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import gatcha.aumombelli.fr.ui.theme.AuroraTeal
-import gatcha.aumombelli.fr.ui.theme.EmberGold
-import gatcha.aumombelli.fr.ui.viewmodel.LoginUiState
+import fr.aumombelli.gatcha.ui.theme.AuroraTeal
+import fr.aumombelli.gatcha.ui.theme.EmberGold
+import fr.aumombelli.gatcha.ui.viewmodel.LoginUiState
 
 @Composable
 fun LoginScreen(

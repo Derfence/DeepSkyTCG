@@ -1,8 +1,8 @@
-package gatcha.aumombelli.fr
+package fr.aumombelli.gatcha
 
-import gatcha.aumombelli.fr.model.OwnedCollection
-import gatcha.aumombelli.fr.model.PackCard
-import gatcha.aumombelli.fr.model.mergePackCards
+import fr.aumombelli.gatcha.model.OwnedCollection
+import fr.aumombelli.gatcha.model.PackCard
+import fr.aumombelli.gatcha.model.mergePackCards
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

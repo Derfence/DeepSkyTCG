@@ -1,8 +1,8 @@
-package gatcha.aumombelli.fr
+package fr.aumombelli.gatcha
 
-import gatcha.aumombelli.fr.network.ApiCallException
-import gatcha.aumombelli.fr.ui.viewmodel.LoginEvent
-import gatcha.aumombelli.fr.ui.viewmodel.LoginViewModel
+import fr.aumombelli.gatcha.network.ApiCallException
+import fr.aumombelli.gatcha.ui.viewmodel.LoginEvent
+import fr.aumombelli.gatcha.ui.viewmodel.LoginViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
@@ -46,7 +46,7 @@ class LoginViewModelTest {
         }
         val sessionGateway = FakeSessionGateway()
         val collectionGateway = FakeCollectionGateway().apply {
-            serverCollection = gatcha.aumombelli.fr.model.OwnedCollection(cards = mapOf("ALP-001" to 1))
+            serverCollection = fr.aumombelli.gatcha.model.OwnedCollection(cards = mapOf("ALP-001" to 1))
         }
         val viewModel = LoginViewModel(authGateway, sessionGateway, collectionGateway)
 

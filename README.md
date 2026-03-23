@@ -92,6 +92,38 @@ sdk.dir=C\:\\Users\\Derfence\\AppData\\Local\\Android\\Sdk
 - Si Android Studio ou Gradle signale que `Build Tools 35.0.0` est corrompu, supprimer cette version dans le SDK Manager Windows ou supprimer le dossier `C:\Users\Derfence\AppData\Local\Android\Sdk\build-tools\35.0.0`, puis relancer.
 - Le dépôt racine fournit un lanceur `test-all.bat` qui enchaîne les tests client puis serveur.
 
+## Test bout en bout local
+
+- Le client pointe désormais vers `http://gatcha.aumombelli.fr:8080`.
+- Le package Android utilisé par l'application est `fr.aumombelli.gatcha`.
+- En build `debug`, le client résout localement `gatcha.aumombelli.fr` vers `127.0.0.1` dans l'appareil.
+- Le script racine `routage.bat` active ensuite un `adb reverse tcp:8080 tcp:8080`, ce qui redirige ce `localhost` de l'appareil vers la machine hôte.
+- Démarrer d'abord l'émulateur ou brancher un appareil, puis lancer le routage depuis un terminal Windows :
+
+```powershell
+.\routage.bat on
+```
+
+- Vérifier éventuellement l'état du routage :
+
+```powershell
+.\routage.bat status
+```
+
+- Lancer ensuite le serveur sur la machine hôte, par exemple depuis WSL :
+
+```bash
+cd /mnt/c/Users/Derfence/Documents/Gatcha/server
+./gradlew run
+```
+
+- Depuis l'appareil, le domaine applicatif atteint alors la machine hôte via `localhost` + `adb reverse`.
+- Une fois le test terminé, couper la redirection :
+
+```powershell
+.\routage.bat off
+```
+
 ## Dépendance au dépôt racine
 
 Ce dépôt a vocation à être référencé par le dépôt racine `Gatcha-game` en tant que sous-module Git.

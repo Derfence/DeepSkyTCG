@@ -1,4 +1,4 @@
-package gatcha.aumombelli.fr
+package fr.aumombelli.gatcha
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -6,10 +6,10 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
-import gatcha.aumombelli.fr.model.DrawPackResponse
-import gatcha.aumombelli.fr.model.PackCard
-import gatcha.aumombelli.fr.ui.screen.PackOpeningScreen
-import gatcha.aumombelli.fr.ui.viewmodel.PackOpeningUiState
+import fr.aumombelli.gatcha.model.DrawPackResponse
+import fr.aumombelli.gatcha.model.PackCard
+import fr.aumombelli.gatcha.ui.screen.PackOpeningScreen
+import fr.aumombelli.gatcha.ui.viewmodel.PackOpeningUiState
 import org.junit.Rule
 import org.junit.Test
 

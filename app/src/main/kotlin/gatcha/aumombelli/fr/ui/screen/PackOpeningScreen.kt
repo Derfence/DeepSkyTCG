@@ -1,4 +1,4 @@
-package gatcha.aumombelli.fr.ui.screen
+package fr.aumombelli.gatcha.ui.screen
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -31,9 +31,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import gatcha.aumombelli.fr.model.PackCard
-import gatcha.aumombelli.fr.ui.theme.rarityColor
-import gatcha.aumombelli.fr.ui.viewmodel.PackOpeningUiState
+import fr.aumombelli.gatcha.model.PackCard
+import fr.aumombelli.gatcha.ui.theme.rarityColor
+import fr.aumombelli.gatcha.ui.viewmodel.PackOpeningUiState
 import kotlinx.coroutines.delay
 
 @Composable
