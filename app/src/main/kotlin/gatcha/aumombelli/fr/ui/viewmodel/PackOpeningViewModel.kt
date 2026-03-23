@@ -2,7 +2,7 @@ package gatcha.aumombelli.fr.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import gatcha.aumombelli.fr.data.PackRepository
+import gatcha.aumombelli.fr.data.PackGateway
 import gatcha.aumombelli.fr.model.DrawPackResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -14,7 +14,7 @@ data class PackOpeningUiState(
 )
 
 class PackOpeningViewModel(
-    packRepository: PackRepository,
+    packRepository: PackGateway,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PackOpeningUiState())
     val uiState: StateFlow<PackOpeningUiState> = _uiState.asStateFlow()

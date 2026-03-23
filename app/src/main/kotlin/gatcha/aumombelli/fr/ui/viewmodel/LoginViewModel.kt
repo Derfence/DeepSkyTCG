@@ -2,12 +2,12 @@ package gatcha.aumombelli.fr.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import gatcha.aumombelli.fr.data.CollectionRepository
+import gatcha.aumombelli.fr.data.AuthGateway
+import gatcha.aumombelli.fr.data.CollectionGateway
 import gatcha.aumombelli.fr.data.SecurityUtils
-import gatcha.aumombelli.fr.data.SessionRepository
+import gatcha.aumombelli.fr.data.SessionGateway
 import gatcha.aumombelli.fr.model.CreateAccountRequest
 import gatcha.aumombelli.fr.model.LoginRequest
-import gatcha.aumombelli.fr.network.GameApiService
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -31,9 +31,9 @@ sealed interface LoginEvent {
 }
 
 class LoginViewModel(
-    private val apiService: GameApiService,
-    private val sessionRepository: SessionRepository,
-    private val collectionRepository: CollectionRepository,
+    private val apiService: AuthGateway,
+    private val sessionRepository: SessionGateway,
+    private val collectionRepository: CollectionGateway,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()

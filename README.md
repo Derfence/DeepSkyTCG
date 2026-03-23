@@ -59,10 +59,38 @@ L'état actuel du code doit correspondre à une première release technique `v0.
 
 Depuis le dossier `client-android/` :
 
-```bash
-./gradlew :app:testDebugUnitTest
-./gradlew :app:assembleDebug
+```powershell
+.\gradlew.bat :app:testDebugUnitTest
+.\gradlew.bat :app:assembleDebug
+.\gradlew.bat :app:connectedDebugAndroidTest
 ```
+
+Depuis la racine du dépôt principal :
+
+```powershell
+.\test-all.bat
+```
+
+## Pré-requis locaux
+
+- SDK Android Platform 36.
+- Android 16 QPR2 / SDK Platform `36.1`.
+- Android SDK Build-Tools `36.1.0`.
+- Le projet utilise `compileSdk { version = release(36) { minorApiLevel = 1 } }` pour cibler correctement l'API `36.1`.
+- Le projet force `buildToolsVersion = "36.1.0"` pour éviter l'utilisation par défaut de `35.0.0`.
+- Le fichier `local.properties` doit pointer vers un chemin Windows, par exemple :
+
+```properties
+sdk.dir=C\:\\Users\\Derfence\\AppData\\Local\\Android\\Sdk
+```
+
+## Exécution locale recommandée
+
+- Les tests unitaires Android peuvent être lancés depuis Windows avec `gradlew.bat`.
+- Les tests instrumentés `connectedDebugAndroidTest` doivent être lancés depuis Windows lorsque le SDK Android installé est un SDK Windows.
+- Avant `connectedDebugAndroidTest`, démarrer un émulateur Android ou brancher un appareil puis vérifier `adb devices` depuis Windows.
+- Si Android Studio ou Gradle signale que `Build Tools 35.0.0` est corrompu, supprimer cette version dans le SDK Manager Windows ou supprimer le dossier `C:\Users\Derfence\AppData\Local\Android\Sdk\build-tools\35.0.0`, puis relancer.
+- Le dépôt racine fournit un lanceur `test-all.bat` qui enchaîne les tests client puis serveur.
 
 ## Dépendance au dépôt racine
 

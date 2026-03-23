@@ -16,14 +16,14 @@ class PendingSaveException(
 
 class PackRepository(
     private val apiService: GameApiService,
-    private val sessionRepository: SessionRepository,
-    private val collectionRepository: CollectionRepository,
-) {
+    private val sessionRepository: SessionGateway,
+    private val collectionRepository: CollectionGateway,
+) : PackGateway {
     private val currentPackResult = MutableStateFlow<DrawPackResponse?>(null)
 
-    fun currentPackResult(): StateFlow<DrawPackResponse?> = currentPackResult.asStateFlow()
+    override fun currentPackResult(): StateFlow<DrawPackResponse?> = currentPackResult.asStateFlow()
 
-    suspend fun openPack(extensionId: String, currentCollection: OwnedCollection): DrawPackResponse {
+    override suspend fun openPack(extensionId: String, currentCollection: OwnedCollection): DrawPackResponse {
         val session = sessionRepository.requireActiveSession()
         val packResponse = apiService.drawPack(
             DrawPackRequest(

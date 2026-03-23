@@ -9,16 +9,16 @@ import kotlinx.serialization.json.Json
 
 class GameCatalogRepository(
     private val context: Context,
-) {
+) : CatalogGateway {
     private val json = Json { ignoreUnknownKeys = true }
 
-    suspend fun loadExtensions(): List<ExtensionDefinition> = withContext(Dispatchers.IO) {
+    override suspend fun loadExtensions(): List<ExtensionDefinition> = withContext(Dispatchers.IO) {
         context.assets.open("catalog/extensions.json").bufferedReader().use { reader ->
             json.decodeFromString<List<ExtensionDefinition>>(reader.readText()).sortedBy { it.id }
         }
     }
 
-    suspend fun loadCards(): List<CardDefinition> = withContext(Dispatchers.IO) {
+    override suspend fun loadCards(): List<CardDefinition> = withContext(Dispatchers.IO) {
         context.assets.open("catalog/cards.json").bufferedReader().use { reader ->
             json.decodeFromString<List<CardDefinition>>(reader.readText()).sortedBy { it.id }
         }

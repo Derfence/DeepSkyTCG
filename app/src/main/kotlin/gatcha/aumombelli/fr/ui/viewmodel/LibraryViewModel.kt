@@ -2,8 +2,8 @@ package gatcha.aumombelli.fr.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import gatcha.aumombelli.fr.data.CollectionRepository
-import gatcha.aumombelli.fr.data.GameCatalogRepository
+import gatcha.aumombelli.fr.data.CatalogGateway
+import gatcha.aumombelli.fr.data.CollectionGateway
 import gatcha.aumombelli.fr.model.LibraryCardItem
 import gatcha.aumombelli.fr.model.LibrarySection
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,8 +19,8 @@ data class LibraryUiState(
 )
 
 class LibraryViewModel(
-    private val catalogRepository: GameCatalogRepository,
-    private val collectionRepository: CollectionRepository,
+    private val catalogRepository: CatalogGateway,
+    private val collectionRepository: CollectionGateway,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(LibraryUiState())
     val uiState: StateFlow<LibraryUiState> = _uiState.asStateFlow()

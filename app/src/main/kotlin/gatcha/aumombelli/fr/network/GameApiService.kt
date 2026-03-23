@@ -1,5 +1,6 @@
 package gatcha.aumombelli.fr.network
 
+import gatcha.aumombelli.fr.data.AuthGateway
 import gatcha.aumombelli.fr.model.ApiError
 import gatcha.aumombelli.fr.model.CreateAccountRequest
 import gatcha.aumombelli.fr.model.CreateAccountResponse
@@ -30,11 +31,11 @@ class GameApiService(
     private val client: HttpClient,
     private val json: Json,
     private val baseUrl: String = "http://10.0.2.2:8080",
-) {
-    suspend fun createAccount(request: CreateAccountRequest): CreateAccountResponse =
+) : AuthGateway {
+    override suspend fun createAccount(request: CreateAccountRequest): CreateAccountResponse =
         post("/api/account/create", request)
 
-    suspend fun login(request: LoginRequest): LoginResponse =
+    override suspend fun login(request: LoginRequest): LoginResponse =
         post("/api/account/login", request)
 
     suspend fun getCollection(request: GetCollectionRequest): GetCollectionResponse =

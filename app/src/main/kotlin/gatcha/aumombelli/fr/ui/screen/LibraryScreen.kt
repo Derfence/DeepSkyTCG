@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import gatcha.aumombelli.fr.model.LibraryCardItem
+import gatcha.aumombelli.fr.ui.theme.rarityColor
 import gatcha.aumombelli.fr.ui.viewmodel.LibraryUiState
 
 @Composable
@@ -155,10 +156,4 @@ private fun LibraryCard(
             )
         }
     }
-}
-
-private fun rarityColor(rarityLabel: String): Color = when (rarityLabel) {
-    "Epic" -> Color(0xFF8D5CFF)
-    "Rare" -> Color(0xFF2EC4B6)
-    else -> Color(0xFF587291)
 }

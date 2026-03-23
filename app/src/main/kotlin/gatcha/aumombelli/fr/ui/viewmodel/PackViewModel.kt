@@ -2,11 +2,11 @@ package gatcha.aumombelli.fr.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import gatcha.aumombelli.fr.data.CollectionRepository
-import gatcha.aumombelli.fr.data.GameCatalogRepository
-import gatcha.aumombelli.fr.data.PackRepository
+import gatcha.aumombelli.fr.data.CatalogGateway
+import gatcha.aumombelli.fr.data.CollectionGateway
+import gatcha.aumombelli.fr.data.PackGateway
 import gatcha.aumombelli.fr.data.PendingSaveException
-import gatcha.aumombelli.fr.data.SessionRepository
+import gatcha.aumombelli.fr.data.SessionGateway
 import gatcha.aumombelli.fr.model.ExtensionDefinition
 import gatcha.aumombelli.fr.model.OwnedCollection
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -31,10 +31,10 @@ sealed interface PackEvent {
 }
 
 class PackViewModel(
-    private val catalogRepository: GameCatalogRepository,
-    private val collectionRepository: CollectionRepository,
-    private val packRepository: PackRepository,
-    private val sessionRepository: SessionRepository,
+    private val catalogRepository: CatalogGateway,
+    private val collectionRepository: CollectionGateway,
+    private val packRepository: PackGateway,
+    private val sessionRepository: SessionGateway,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PackSelectionUiState())
     val uiState: StateFlow<PackSelectionUiState> = _uiState.asStateFlow()

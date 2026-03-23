@@ -9,9 +9,9 @@ import gatcha.aumombelli.fr.network.GameApiService
 
 class CollectionRepository(
     private val apiService: GameApiService,
-    private val sessionRepository: SessionRepository,
-) {
-    suspend fun loadCollectionFromServer(): OwnedCollection {
+    private val sessionRepository: SessionGateway,
+) : CollectionGateway {
+    override suspend fun loadCollectionFromServer(): OwnedCollection {
         val session = sessionRepository.requireActiveSession()
         val response = apiService.getCollection(
             GetCollectionRequest(
@@ -27,7 +27,7 @@ class CollectionRepository(
         return CollectionCrypto.decryptAndDeserialize(response.collectionBlob, session.passwordHash)
     }
 
-    suspend fun getCachedCollectionOrEmpty(): OwnedCollection {
+    override suspend fun getCachedCollectionOrEmpty(): OwnedCollection {
         val snapshot = sessionRepository.readSnapshot()
         val session = sessionRepository.requireActiveSession()
         val blob = snapshot.lastCollectionBlob ?: return OwnedCollection()
@@ -35,7 +35,7 @@ class CollectionRepository(
             .getOrDefault(OwnedCollection())
     }
 
-    suspend fun saveCollection(collection: OwnedCollection): String {
+    override suspend fun saveCollection(collection: OwnedCollection): String {
         val session = sessionRepository.requireActiveSession()
         val blob = CollectionCrypto.serializeAndEncrypt(collection, session.passwordHash)
         val response = apiService.saveCollection(
@@ -49,7 +49,7 @@ class CollectionRepository(
         return response.savedAt
     }
 
-    suspend fun replayPendingSaveIfNeeded(): Boolean {
+    override suspend fun replayPendingSaveIfNeeded(): Boolean {
         val session = sessionRepository.requireActiveSession()
         val snapshot = sessionRepository.readSnapshot()
         val pendingBlob = snapshot.pendingCollectionBlob ?: return false
@@ -67,7 +67,7 @@ class CollectionRepository(
         return true
     }
 
-    fun mergeCards(collection: OwnedCollection, cards: List<PackCard>): OwnedCollection {
+    override fun mergeCards(collection: OwnedCollection, cards: List<PackCard>): OwnedCollection {
         return collection.mergePackCards(cards)
     }
 }

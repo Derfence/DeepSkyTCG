@@ -19,24 +19,24 @@ private val Context.dataStore by preferencesDataStore(name = "gatcha_preferences
 
 class SessionRepository(
     private val context: Context,
-) {
+) : SessionGateway {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
     private val activeSession = MutableStateFlow<SessionCredentials?>(null)
 
     val activeSessionFlow: Flow<SessionCredentials?> = activeSession
 
-    fun setActiveSession(username: String, passwordHash: String) {
+    override fun setActiveSession(username: String, passwordHash: String) {
         activeSession.value = SessionCredentials(username = username, passwordHash = passwordHash)
     }
 
-    fun clearActiveSession() {
+    override fun clearActiveSession() {
         activeSession.value = null
     }
 
-    fun requireActiveSession(): SessionCredentials =
+    override fun requireActiveSession(): SessionCredentials =
         checkNotNull(activeSession.value) { "No active session is available." }
 
-    suspend fun readSnapshot(): StoredSessionSnapshot = context.dataStore.data.map { preferences ->
+    override suspend fun readSnapshot(): StoredSessionSnapshot = context.dataStore.data.map { preferences ->
         StoredSessionSnapshot(
             lastUsername = preferences[Keys.lastUsername],
             lastCollectionBlob = preferences[Keys.lastCollectionBlob],
@@ -47,7 +47,7 @@ class SessionRepository(
         )
     }.first()
 
-    suspend fun saveLoginMetadata(username: String, lastSavedAt: String?, nextDrawAt: String?) {
+    override suspend fun saveLoginMetadata(username: String, lastSavedAt: String?, nextDrawAt: String?) {
         context.dataStore.edit { preferences ->
             preferences[Keys.lastUsername] = username
             setOrRemove(preferences, Keys.lastSavedAt, lastSavedAt)
@@ -55,7 +55,7 @@ class SessionRepository(
         }
     }
 
-    suspend fun commitSavedCollection(collectionBlob: String, savedAt: String?, nextDrawAt: String?) {
+    override suspend fun commitSavedCollection(collectionBlob: String, savedAt: String?, nextDrawAt: String?) {
         context.dataStore.edit { preferences ->
             preferences[Keys.lastCollectionBlob] = collectionBlob
             setOrRemove(preferences, Keys.lastSavedAt, savedAt)
@@ -65,7 +65,7 @@ class SessionRepository(
         }
     }
 
-    suspend fun savePendingPack(collectionBlob: String, packResponse: DrawPackResponse) {
+    override suspend fun savePendingPack(collectionBlob: String, packResponse: DrawPackResponse) {
         context.dataStore.edit { preferences ->
             preferences[Keys.pendingCollectionBlob] = collectionBlob
             preferences[Keys.pendingPackJson] = json.encodeToString(DrawPackResponse.serializer(), packResponse)
@@ -73,14 +73,14 @@ class SessionRepository(
         }
     }
 
-    suspend fun clearPendingPack() {
+    override suspend fun clearPendingPack() {
         context.dataStore.edit { preferences ->
             preferences.remove(Keys.pendingCollectionBlob)
             preferences.remove(Keys.pendingPackJson)
         }
     }
 
-    suspend fun decodePendingPack(): DrawPackResponse? {
+    override suspend fun decodePendingPack(): DrawPackResponse? {
         val snapshot = readSnapshot()
         return snapshot.pendingPackJson?.let {
             json.decodeFromString(DrawPackResponse.serializer(), it)
