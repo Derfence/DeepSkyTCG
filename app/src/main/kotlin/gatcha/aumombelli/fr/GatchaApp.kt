@@ -153,7 +153,10 @@ private fun AppNavigation(appContainer: AppContainer) {
         composable(AppDestination.PackOpening.route) {
             val viewModel: PackOpeningViewModel = viewModel(
                 factory = GatchaViewModelFactory {
-                    PackOpeningViewModel(appContainer.packRepository)
+                    PackOpeningViewModel(
+                        catalogRepository = appContainer.catalogRepository,
+                        packRepository = appContainer.packRepository,
+                    )
                 },
             )
             val uiState by viewModel.uiState.collectAsState()

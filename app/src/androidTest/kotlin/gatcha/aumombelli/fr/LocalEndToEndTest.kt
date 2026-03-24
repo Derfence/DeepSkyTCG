@@ -54,6 +54,10 @@ class LocalEndToEndTest {
         composeRule.waitUntilTagExists("pack-opening-card-id", timeoutMillis = 10_000)
 
         val firstDrawnCardId = composeRule.readText("pack-opening-card-id")
+        composeRule.onNodeWithTag("pack-opening-card-surface").performClick()
+        composeRule.waitUntilTagExists("astro-card-fullscreen-close", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
+        composeRule.waitUntilTagExists("pack-opening-card-surface", timeoutMillis = 10_000)
 
         repeat(4) {
             composeRule.onRoot().performTouchInput { swipeLeft() }
@@ -71,6 +75,13 @@ class LocalEndToEndTest {
 
         composeRule.onNodeWithTag("library-card-$cardId").assertIsDisplayed()
         composeRule.onNodeWithTag("library-owned-$cardId").assertTextContains("Owned:", substring = true)
+        composeRule.onNodeWithTag("library-card-$cardId").performClick()
+        composeRule.waitUntilTagExists("library-card-preview", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("library-card-preview-surface").performClick()
+        composeRule.waitUntilTagExists("astro-card-fullscreen-close", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
+        composeRule.waitUntilTagExists("library-card-preview-close", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("library-card-preview-close").performClick()
 
         composeRule.onNodeWithTag("library-back").performClick()
         composeRule.waitUntilTagExists("menu-open-pack", timeoutMillis = 10_000)

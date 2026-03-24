@@ -11,8 +11,10 @@ Cette application permet au joueur de :
 - se connecter ;
 - récupérer sa collection ;
 - consulter sa bibliothèque de cartes ;
+- ouvrir l'aperçu d'une carte possédée depuis la bibliothèque puis l'agrandir en plein écran ;
 - ouvrir un pack par extension ;
-- visualiser l'ouverture du pack puis révéler les cartes par glissement.
+- visualiser l'ouverture du pack puis révéler les cartes par glissement ;
+- ouvrir une carte tirée en plein écran pour consulter ses informations scientifiques.
 
 ## Stack technique
 
@@ -29,9 +31,24 @@ Cette application permet au joueur de :
 - `GatchaApp` : bootstrap de compatibilité puis navigation Compose.
 - `data/` : persistance locale, chiffrement de collection, migration de deck, repositories.
 - `network/` : client HTTP de l'API serveur.
+- `ui/component/` : rendu Compose partagé des cartes astro, badges de rareté et variantes visuelles.
 - `ui/viewmodel/` : logique d'écran.
 - `ui/screen/` : écrans Compose.
-- `assets/catalog/` : `metadata.json`, extensions et cartes statiques de la version catalogue courante.
+- `assets/catalog/` : `metadata.json`, `extensions.json`, `cards.json` et `variant_profiles.json`.
+
+## Affichage des cartes astro
+
+- Une miniature de bibliothèque reste atténuée tant que la carte n'est pas possédée.
+- Un clic sur une carte possédée ouvre un aperçu centré ; un second clic ouvre le plein écran.
+- L'écran d'ouverture de pack permet aussi d'ouvrir la carte révélée en plein écran.
+- Le fond de carte dépend de la qualité du ciel (`city`, `suburban`, `rural`, `mountain`).
+- Les cartes holographiques ajoutent une surcouche d'étoiles scintillantes.
+- Le badge de rareté utilise un logo étoilé dédié :
+  - `Common` : étoile blanche à 4 branches ;
+  - `Uncommon` : étoile bleue à 4 branches ;
+  - `Rare` : étoile or à 4 branches ;
+  - `Epic` : étoile à 6 branches.
+- Le plein écran intègre directement les données scientifiques du catalogue local : description, identité, coordonnées célestes et mesures.
 
 ## Compatibilité catalogue
 
@@ -43,8 +60,9 @@ Cette application permet au joueur de :
 
 ## Workflow de release
 
-- Toute nouvelle extension implique la mise à jour coordonnée de `metadata.json`, `extensions.json` et `cards.json`.
+- Toute nouvelle extension implique la mise à jour coordonnée de `metadata.json`, `extensions.json`, `cards.json` et `variant_profiles.json`.
 - Une évolution de format du deck doit ajouter une migration explicite `n -> n+1` avant publication.
+- Le catalogue source éditable est maintenant le fichier racine `catalogue_astronomie.csv`, appliqué via `python3 scripts/catalog_sync.py apply`.
 
 ## Branches Git prévues
 
@@ -123,6 +141,9 @@ sdk.dir=C\:\\Users\\Derfence\\AppData\\Local\\Android\\Sdk
   - l'exécution d'un vrai test instrumenté E2E ;
   - les validations serveur côté hôte ;
   - l'arrêt du serveur et la désactivation du routage.
+- Le scénario E2E vérifie aussi :
+  - l'ouverture plein écran d'une carte depuis l'écran d'ouverture de pack ;
+  - l'aperçu puis le plein écran d'une carte possédée depuis la bibliothèque.
 - Démarrer d'abord l'émulateur ou brancher un appareil, puis lancer le routage depuis un terminal Windows :
 
 ```powershell

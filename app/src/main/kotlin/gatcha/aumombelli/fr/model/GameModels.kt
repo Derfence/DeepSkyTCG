@@ -108,12 +108,45 @@ data class StoredSessionSnapshot(
 
 data class LibraryCardItem(
     val definition: CardDefinition,
+    val extensionName: String,
     val ownedCount: Int,
+    val availableVariants: List<DisplayCardVariant> = emptyList(),
 )
 
 data class LibrarySection(
     val extension: ExtensionDefinition,
     val cards: List<LibraryCardItem>,
+)
+
+data class DisplayCardVariant(
+    val skyQuality: String,
+    val skyQualityLabel: String,
+    val finish: String,
+    val finishLabel: String,
+    val isHolographic: Boolean,
+    val count: Int = 0,
+) {
+    val key: String get() = "$skyQuality::$finish"
+
+    val selectorLabel: String
+        get() = buildString {
+            append(skyQualityLabel)
+            if (finish != "standard") {
+                append(" · ")
+                append(finishLabel)
+            }
+            if (count > 0) {
+                append(" ×")
+                append(count)
+            }
+        }
+}
+
+data class DisplayCard(
+    val definition: CardDefinition,
+    val extensionName: String,
+    val activeVariant: DisplayCardVariant,
+    val availableVariants: List<DisplayCardVariant> = listOf(activeVariant),
 )
 
 @Serializable
@@ -268,3 +301,85 @@ fun VariantProfile.requireFinishDefinition(code: String): CardFinishDefinition =
     checkNotNull(finishes.firstOrNull { it.code == code }) {
         "Unknown finish '$code' for variant profile '$id'."
     }
+
+fun VariantProfile.toDisplayVariant(
+    skyQuality: String,
+    finish: String,
+    count: Int = 0,
+): DisplayCardVariant {
+    val skyQualityDefinition = requireSkyQualityDefinition(skyQuality)
+    val finishDefinition = requireFinishDefinition(finish)
+    return DisplayCardVariant(
+        skyQuality = skyQualityDefinition.code,
+        skyQualityLabel = skyQualityDefinition.label,
+        finish = finishDefinition.code,
+        finishLabel = finishDefinition.label,
+        isHolographic = finishDefinition.isHolographic,
+        count = count,
+    )
+}
+
+fun CardVariant.toDisplayVariant(count: Int = 0): DisplayCardVariant =
+    DisplayCardVariant(
+        skyQuality = skyQuality,
+        skyQualityLabel = skyQualityLabel,
+        finish = finish,
+        finishLabel = finishLabel,
+        isHolographic = isHolographic,
+        count = count,
+    )
+
+fun CardDefinition.toDisplayCard(
+    extensionName: String,
+    activeVariant: DisplayCardVariant,
+    availableVariants: List<DisplayCardVariant> = listOf(activeVariant),
+): DisplayCard =
+    DisplayCard(
+        definition = this,
+        extensionName = extensionName,
+        activeVariant = activeVariant,
+        availableVariants = availableVariants,
+    )
+
+fun LibraryCardItem.toDisplayCard(selectedVariantKey: String? = null): DisplayCard? {
+    val activeVariant = availableVariants.firstOrNull { it.key == selectedVariantKey }
+        ?: availableVariants.firstOrNull()
+        ?: return null
+    return definition.toDisplayCard(
+        extensionName = extensionName,
+        activeVariant = activeVariant,
+        availableVariants = availableVariants,
+    )
+}
+
+fun DisplayCard.withSelectedVariant(selectedVariantKey: String?): DisplayCard {
+    val selectedVariant = availableVariants.firstOrNull { it.key == selectedVariantKey }
+        ?: availableVariants.firstOrNull()
+        ?: activeVariant
+    return copy(activeVariant = selectedVariant)
+}
+
+fun OwnedCardEntry.toDisplayVariants(variantProfile: VariantProfile): List<DisplayCardVariant> =
+    normalized().variants
+        .map { variantCount ->
+            variantProfile.toDisplayVariant(
+                skyQuality = variantCount.skyQuality,
+                finish = variantCount.finish,
+                count = variantCount.count,
+            )
+        }
+        .sortedWith(
+            compareByDescending<DisplayCardVariant> { it.isHolographic }
+                .thenByDescending { skyQualityRank(it.skyQuality) }
+                .thenByDescending { it.count }
+                .thenBy { it.skyQualityLabel }
+                .thenBy { it.finishLabel },
+        )
+
+private fun skyQualityRank(code: String): Int = when (code) {
+    "mountain" -> 4
+    "rural" -> 3
+    "suburban" -> 2
+    "city" -> 1
+    else -> 0
+}

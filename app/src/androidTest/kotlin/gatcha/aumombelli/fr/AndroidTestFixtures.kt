@@ -4,47 +4,14 @@ import fr.aumombelli.gatcha.model.AbsoluteMagnitudeMeasurement
 import fr.aumombelli.gatcha.model.AngularMeasurement
 import fr.aumombelli.gatcha.model.AstronomyInfo
 import fr.aumombelli.gatcha.model.CardDefinition
-import fr.aumombelli.gatcha.model.CardFinishDefinition
 import fr.aumombelli.gatcha.model.CardVariant
 import fr.aumombelli.gatcha.model.CelestialCoordinates
 import fr.aumombelli.gatcha.model.Declination
 import fr.aumombelli.gatcha.model.DeepSkyDetails
 import fr.aumombelli.gatcha.model.LightYearMeasurement
-import fr.aumombelli.gatcha.model.OwnedCardEntry
-import fr.aumombelli.gatcha.model.OwnedCollection
-import fr.aumombelli.gatcha.model.OwnedVariantCount
 import fr.aumombelli.gatcha.model.PackCard
 import fr.aumombelli.gatcha.model.RightAscension
-import fr.aumombelli.gatcha.model.SkyQualityDefinition
-import fr.aumombelli.gatcha.model.VariantProfile
 import fr.aumombelli.gatcha.model.VisualSize
-import fr.aumombelli.gatcha.model.WeightedCode
-
-fun testVariantProfiles(): List<VariantProfile> = listOf(
-    VariantProfile(
-        id = "observation-default",
-        skyQualities = listOf(
-            SkyQualityDefinition("city", "Ville"),
-            SkyQualityDefinition("suburban", "Periurbain"),
-            SkyQualityDefinition("rural", "Campagne"),
-            SkyQualityDefinition("mountain", "Montagne"),
-        ),
-        finishes = listOf(
-            CardFinishDefinition("standard", "Standard"),
-            CardFinishDefinition("holographic", "Holographique", isHolographic = true),
-        ),
-        skyQualityWeights = listOf(
-            WeightedCode("city", 40),
-            WeightedCode("suburban", 30),
-            WeightedCode("rural", 20),
-            WeightedCode("mountain", 10),
-        ),
-        finishWeights = listOf(
-            WeightedCode("standard", 88),
-            WeightedCode("holographic", 12),
-        ),
-    ),
-)
 
 fun testCardDefinition(
     id: String,
@@ -114,26 +81,3 @@ fun testPackCard(
         isHolographic = isHolographic,
     ),
 )
-
-fun ownedCollectionOf(vararg cards: Pair<String, Int>): OwnedCollection =
-    OwnedCollection(
-        cards = cards.associate { (cardId, count) ->
-            cardId to OwnedCardEntry(
-                totalOwned = count,
-                variants = listOf(OwnedVariantCount("city", "standard", count)),
-            )
-        }.toSortedMap(),
-    )
-
-fun ownedCollectionWithVariants(
-    cardId: String,
-    vararg variants: OwnedVariantCount,
-): OwnedCollection =
-    OwnedCollection(
-        cards = sortedMapOf(
-            cardId to OwnedCardEntry(
-                totalOwned = variants.sumOf { it.count },
-                variants = variants.toList(),
-            ),
-        ),
-    )

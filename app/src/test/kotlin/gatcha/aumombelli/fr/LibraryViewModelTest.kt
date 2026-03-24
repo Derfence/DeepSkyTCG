@@ -2,7 +2,7 @@ package fr.aumombelli.gatcha
 
 import fr.aumombelli.gatcha.model.CardDefinition
 import fr.aumombelli.gatcha.model.ExtensionDefinition
-import fr.aumombelli.gatcha.model.OwnedCollection
+import fr.aumombelli.gatcha.model.OwnedVariantCount
 import fr.aumombelli.gatcha.ui.viewmodel.LibraryViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -31,7 +31,11 @@ class LibraryViewModelTest {
             )
         }
         val collectionGateway = FakeCollectionGateway().apply {
-            cachedCollection = ownedCollectionOf("MON-001" to 2)
+            cachedCollection = ownedCollectionWithVariants(
+                "MON-001",
+                OwnedVariantCount("city", "standard", 1),
+                OwnedVariantCount("mountain", "holographic", 1),
+            )
         }
 
         val viewModel = LibraryViewModel(catalogGateway, collectionGateway)
@@ -43,6 +47,11 @@ class LibraryViewModelTest {
         assertEquals(listOf("core-alpha", "moon-dawn"), state.sections.map { it.extension.id })
         assertEquals(listOf("MON-001", "MON-002"), state.sections[1].cards.map { it.definition.id })
         assertEquals(2, state.sections[1].cards.first().ownedCount)
+        assertEquals("Moon Dawn", state.sections[1].cards.first().extensionName)
+        assertEquals(
+            listOf("mountain::holographic", "city::standard"),
+            state.sections[1].cards.first().availableVariants.map { it.key },
+        )
     }
 
     @Test
