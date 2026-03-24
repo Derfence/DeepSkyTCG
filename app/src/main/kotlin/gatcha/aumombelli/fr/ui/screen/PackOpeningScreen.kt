@@ -38,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import fr.aumombelli.gatcha.model.DisplayCard
 import fr.aumombelli.gatcha.ui.component.AstroCardDetailsSurface
 import fr.aumombelli.gatcha.ui.component.AstroCardPreviewSurface
+import fr.aumombelli.gatcha.ui.component.AstroCardSurfaceMode
 import fr.aumombelli.gatcha.ui.viewmodel.PackOpeningUiState
 import kotlinx.coroutines.delay
 
@@ -238,6 +239,7 @@ private fun RevealCard(
         ) {
             AstroCardPreviewSurface(
                 displayCard = displayCard,
+                mode = AstroCardSurfaceMode.PackReveal,
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("pack-opening-card-surface"),

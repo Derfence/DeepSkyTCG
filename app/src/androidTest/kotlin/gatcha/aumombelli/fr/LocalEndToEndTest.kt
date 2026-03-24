@@ -83,9 +83,8 @@ class LocalEndToEndTest {
         composeRule.onNodeWithTag("library-card-preview-surface").performClick()
         composeRule.waitUntilTagExists("astro-card-fullscreen-close", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
-        composeRule.waitUntilTagExists("library-card-preview-close", timeoutMillis = 10_000)
-        composeRule.onNodeWithTag("library-card-preview-close").performClick()
 
+        composeRule.waitUntilTagGone("astro-card-fullscreen-close", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("library-grid").performScrollToNode(hasTestTag("library-back"))
         composeRule.onNodeWithTag("library-back").performClick()
         composeRule.waitUntilTagExists("menu-open-pack", timeoutMillis = 10_000)
@@ -127,6 +126,15 @@ class LocalEndToEndTest {
     ) {
         waitUntil(timeoutMillis) {
             onAllNodesWithTag(tag).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
+        }
+    }
+
+    private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.waitUntilTagGone(
+        tag: String,
+        timeoutMillis: Long = 5_000,
+    ) {
+        waitUntil(timeoutMillis) {
+            onAllNodesWithTag(tag).fetchSemanticsNodes(atLeastOneRootRequired = false).isEmpty()
         }
     }
 

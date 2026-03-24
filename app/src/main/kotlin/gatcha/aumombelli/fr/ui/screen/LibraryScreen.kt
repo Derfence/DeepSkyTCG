@@ -38,6 +38,7 @@ import fr.aumombelli.gatcha.model.LibraryCardItem
 import fr.aumombelli.gatcha.model.toDisplayCard
 import fr.aumombelli.gatcha.ui.component.AstroCardDetailsSurface
 import fr.aumombelli.gatcha.ui.component.AstroCardPreviewSurface
+import fr.aumombelli.gatcha.ui.component.AstroCardSurfaceMode
 import fr.aumombelli.gatcha.ui.component.AstroCardThumbnail
 import fr.aumombelli.gatcha.ui.component.DisplayCardVariantSelector
 import fr.aumombelli.gatcha.ui.viewmodel.LibraryUiState
@@ -61,6 +62,11 @@ fun LibraryScreen(
     val fullscreenItem = fullscreenCardId?.let(cardsById::get)
     val previewCard = previewItem?.toDisplayCard(selectedVariantKey)
     val fullscreenCard = fullscreenItem?.toDisplayCard(selectedVariantKey)
+    val closePreviewToLibrary = {
+        previewCardId = null
+        fullscreenCardId = null
+        selectedVariantKey = null
+    }
 
     Box(
         modifier = Modifier
@@ -160,10 +166,7 @@ fun LibraryScreen(
             CardPreviewDialog(
                 item = previewItem,
                 selectedVariantKey = selectedVariantKey,
-                onDismiss = {
-                    previewCardId = null
-                    selectedVariantKey = null
-                },
+                onDismiss = closePreviewToLibrary,
                 onExpand = {
                     fullscreenCardId = previewCardId
                 },
@@ -177,7 +180,7 @@ fun LibraryScreen(
             FullscreenCardDialog(
                 item = fullscreenItem,
                 selectedVariantKey = selectedVariantKey,
-                onDismiss = { fullscreenCardId = null },
+                onDismiss = closePreviewToLibrary,
                 onVariantSelected = { variantKey ->
                     selectedVariantKey = variantKey
                 },
@@ -232,6 +235,7 @@ private fun CardPreviewDialog(
                 }
                 AstroCardPreviewSurface(
                     displayCard = displayCard,
+                    mode = AstroCardSurfaceMode.Preview,
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("library-card-preview-surface"),

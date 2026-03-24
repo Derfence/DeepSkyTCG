@@ -11,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -65,6 +66,14 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
+const val TRADING_CARD_WIDTH_OVER_HEIGHT = 1f / 1.754f
+
+enum class AstroCardSurfaceMode {
+    Thumbnail,
+    Preview,
+    PackReveal,
+}
+
 @Composable
 fun AstroCardThumbnail(
     item: LibraryCardItem,
@@ -83,7 +92,7 @@ fun AstroCardThumbnail(
         ) {
             AstroCardPreviewSurface(
                 displayCard = displayCard,
-                compact = true,
+                mode = AstroCardSurfaceMode.Thumbnail,
                 modifier = Modifier.fillMaxWidth(),
                 onClick = if (owned) onClick else null,
             )
@@ -106,25 +115,37 @@ fun AstroCardThumbnail(
 fun AstroCardPreviewSurface(
     displayCard: DisplayCard,
     modifier: Modifier = Modifier,
-    compact: Boolean = false,
+    mode: AstroCardSurfaceMode = AstroCardSurfaceMode.Preview,
     onClick: (() -> Unit)? = null,
     accessoryContent: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
     val palette = skyQualityPalette(displayCard.activeVariant.skyQuality)
+    val compact = mode == AstroCardSurfaceMode.Thumbnail
     val shape = RoundedCornerShape(if (compact) 24.dp else 30.dp)
     val clickableModifier = if (onClick == null) {
         modifier
     } else {
         modifier.clickable(onClick = onClick)
     }
+    val cardModifier = if (mode == AstroCardSurfaceMode.Thumbnail) {
+        clickableModifier
+    } else {
+        clickableModifier.aspectRatio(TRADING_CARD_WIDTH_OVER_HEIGHT)
+    }
 
     Card(
         shape = shape,
-        modifier = clickableModifier,
+        modifier = cardModifier,
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
+                .then(
+                    if (mode == AstroCardSurfaceMode.Thumbnail) {
+                        Modifier.fillMaxWidth()
+                    } else {
+                        Modifier.fillMaxSize()
+                    },
+                )
                 .background(
                     Brush.verticalGradient(
                         listOf(
@@ -141,7 +162,11 @@ fun AstroCardPreviewSurface(
             }
             Column(
                 verticalArrangement = Arrangement.spacedBy(if (compact) 10.dp else 14.dp),
-                modifier = Modifier.fillMaxWidth(),
+                modifier = if (compact) {
+                    Modifier.fillMaxWidth()
+                } else {
+                    Modifier.fillMaxSize()
+                },
             ) {
                 CardHeader(
                     displayCard = displayCard,
@@ -150,8 +175,11 @@ fun AstroCardPreviewSurface(
                 accessoryContent?.invoke(this)
                 CardHero(
                     displayCard = displayCard,
-                    compact = compact,
+                    mode = mode,
                 )
+                if (!compact) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
                 CardFooter(
                     definition = displayCard.definition,
                     rarityLabel = displayCard.definition.rarityLabel,
@@ -204,7 +232,7 @@ fun AstroCardDetailsSurface(
                 accessoryContent?.invoke(this)
                 CardHero(
                     displayCard = displayCard,
-                    compact = false,
+                    mode = AstroCardSurfaceMode.Preview,
                 )
                 DescriptionBlock(displayCard.definition)
                 IdentitySection(displayCard)
@@ -269,8 +297,10 @@ private fun CardHeader(
 @Composable
 private fun CardHero(
     displayCard: DisplayCard,
-    compact: Boolean,
+    mode: AstroCardSurfaceMode,
 ) {
+    val compact = mode == AstroCardSurfaceMode.Thumbnail
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -286,45 +316,62 @@ private fun CardHero(
                 ),
             )
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.padding(12.dp),
-        ) {
-            Text(
-                text = displayCard.definition.astronomy.catalogNumber,
-                color = Color.White,
-                fontWeight = FontWeight.Black,
-                style = (if (compact) {
-                    MaterialTheme.typography.headlineMedium
-                } else {
-                    MaterialTheme.typography.displaySmall
-                }).copy(
-                    shadow = Shadow(
-                        color = Color.Black.copy(alpha = 0.35f),
-                        offset = Offset(0f, 5f),
-                        blurRadius = 18f,
+        if (mode == AstroCardSurfaceMode.Thumbnail) {
+            Box(
+                modifier = Modifier
+                    .size(88.dp)
+                    .clip(CircleShape)
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = 0.2f),
+                                Color.White.copy(alpha = 0.06f),
+                                Color.Transparent,
+                            ),
+                        ),
                     ),
-                ),
-                textAlign = TextAlign.Center,
             )
-            Text(
-                text = displayCard.definition.astronomy.objectTypeLabel,
-                color = Color(0xFFF4F8FC),
-                textAlign = TextAlign.Center,
-                style = if (compact) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.titleMedium,
-            )
-            Surface(
-                color = Color.Black.copy(alpha = 0.22f),
-                shape = RoundedCornerShape(50),
+        } else {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+                modifier = Modifier.padding(12.dp),
             ) {
                 Text(
-                    text = buildVariantLine(displayCard.activeVariant),
-                    color = Color(0xFFF9F4DA),
+                    text = displayCard.definition.astronomy.catalogNumber,
+                    color = Color.White,
+                    fontWeight = FontWeight.Black,
+                    style = (if (compact) {
+                        MaterialTheme.typography.headlineMedium
+                    } else {
+                        MaterialTheme.typography.displaySmall
+                    }).copy(
+                        shadow = Shadow(
+                            color = Color.Black.copy(alpha = 0.35f),
+                            offset = Offset(0f, 5f),
+                            blurRadius = 18f,
+                        ),
+                    ),
                     textAlign = TextAlign.Center,
-                    style = if (compact) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                 )
+                Text(
+                    text = displayCard.definition.astronomy.objectTypeLabel,
+                    color = Color(0xFFF4F8FC),
+                    textAlign = TextAlign.Center,
+                    style = if (compact) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.titleMedium,
+                )
+                Surface(
+                    color = Color.Black.copy(alpha = 0.22f),
+                    shape = RoundedCornerShape(50),
+                ) {
+                    Text(
+                        text = buildVariantLine(displayCard.activeVariant),
+                        color = Color(0xFFF9F4DA),
+                        textAlign = TextAlign.Center,
+                        style = if (compact) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                    )
+                }
             }
         }
     }

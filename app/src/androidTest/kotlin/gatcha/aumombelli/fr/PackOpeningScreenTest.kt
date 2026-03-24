@@ -11,8 +11,11 @@ import androidx.compose.ui.test.swipeLeft
 import fr.aumombelli.gatcha.model.DrawPackResponse
 import fr.aumombelli.gatcha.model.toDisplayCard
 import fr.aumombelli.gatcha.model.toDisplayVariant
+import fr.aumombelli.gatcha.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.gatcha.ui.screen.PackOpeningScreen
 import fr.aumombelli.gatcha.ui.viewmodel.PackOpeningUiState
+import kotlin.math.abs
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -66,13 +69,27 @@ class PackOpeningScreenTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag("pack-opening-card-name").assertTextContains("Nebuleuse d'Orion")
+        composeRule.assertApproxCardRatio("pack-opening-card-surface")
         composeRule.onNodeWithTag("pack-opening-card-surface").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("astro-card-fullscreen-close").assertIsDisplayed()
         composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
         composeRule.waitForIdle()
+        composeRule.onNodeWithTag("pack-opening-card-name").assertTextContains("Nebuleuse d'Orion")
         composeRule.onRoot().performTouchInput { swipeLeft() }
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("pack-opening-card-name").assertTextContains("Galaxie d'Andromede")
+    }
+
+    private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertApproxCardRatio(
+        tag: String,
+        tolerance: Float = 0.03f,
+    ) {
+        val bounds = onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val actualRatio = bounds.width / bounds.height
+        assertTrue(
+            "Expected $tag width/height ratio near $TRADING_CARD_WIDTH_OVER_HEIGHT but was $actualRatio",
+            abs(actualRatio - TRADING_CARD_WIDTH_OVER_HEIGHT) <= tolerance,
+        )
     }
 }

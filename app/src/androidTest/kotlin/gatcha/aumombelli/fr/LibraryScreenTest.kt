@@ -1,8 +1,10 @@
 package fr.aumombelli.gatcha
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import fr.aumombelli.gatcha.model.DisplayCardVariant
@@ -10,7 +12,10 @@ import fr.aumombelli.gatcha.model.ExtensionDefinition
 import fr.aumombelli.gatcha.model.LibraryCardItem
 import fr.aumombelli.gatcha.model.LibrarySection
 import fr.aumombelli.gatcha.ui.screen.LibraryScreen
+import fr.aumombelli.gatcha.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.gatcha.ui.viewmodel.LibraryUiState
+import kotlin.math.abs
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -19,7 +24,7 @@ class LibraryScreenTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun owned_card_opens_preview_then_fullscreen_while_unowned_is_passive() {
+    fun owned_card_opens_preview_then_fullscreen_and_returns_to_library() {
         val ownedItem = LibraryCardItem(
             definition = testCardDefinition("M42", name = "Nebuleuse d'Orion"),
             extensionName = "Astronomes en herbe",
@@ -58,7 +63,51 @@ class LibraryScreenTest {
         composeRule.onNodeWithTag("library-card-preview-surface").performClick()
         composeRule.onNodeWithTag("astro-card-fullscreen").assertIsDisplayed()
         composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
-        composeRule.onNodeWithTag("library-card-preview").assertIsDisplayed()
-        composeRule.onNodeWithTag("library-card-preview-close").performClick()
+        composeRule.onAllNodesWithTag("library-card-preview").assertCountEquals(0)
+        composeRule.onNodeWithTag("library-back").assertIsDisplayed()
+    }
+
+    @Test
+    fun preview_card_uses_trading_card_ratio() {
+        val ownedItem = LibraryCardItem(
+            definition = testCardDefinition("M42", name = "Nebuleuse d'Orion"),
+            extensionName = "Astronomes en herbe",
+            ownedCount = 1,
+            availableVariants = listOf(
+                DisplayCardVariant("city", "Ville", "standard", "Standard", false, 1),
+            ),
+        )
+
+        composeRule.setContent {
+            LibraryScreen(
+                state = LibraryUiState(
+                    isLoading = false,
+                    sections = listOf(
+                        LibrarySection(
+                            extension = ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                            cards = listOf(ownedItem),
+                        ),
+                    ),
+                ),
+                onBack = {},
+                onRefresh = {},
+            )
+        }
+
+        composeRule.onNodeWithTag("library-card-M42").performClick()
+        composeRule.onNodeWithTag("library-card-preview-surface").assertIsDisplayed()
+        composeRule.assertApproxCardRatio("library-card-preview-surface")
+    }
+
+    private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertApproxCardRatio(
+        tag: String,
+        tolerance: Float = 0.03f,
+    ) {
+        val bounds = onNodeWithTag(tag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val actualRatio = bounds.width / bounds.height
+        assertTrue(
+            "Expected $tag width/height ratio near $TRADING_CARD_WIDTH_OVER_HEIGHT but was $actualRatio",
+            abs(actualRatio - TRADING_CARD_WIDTH_OVER_HEIGHT) <= tolerance,
+        )
     }
 }

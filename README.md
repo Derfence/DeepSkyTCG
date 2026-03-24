@@ -39,8 +39,11 @@ Cette application permet au joueur de :
 ## Affichage des cartes astro
 
 - Une miniature de bibliothèque reste atténuée tant que la carte n'est pas possédée.
-- Un clic sur une carte possédée ouvre un aperçu centré ; un second clic ouvre le plein écran.
+- Les miniatures de bibliothèque gardent un rendu simplifié et n'affichent plus le texte central de catalogue ni la variante au centre.
+- Un clic sur une carte possédée ouvre un aperçu centré au ratio de carte a collectionner ; un second clic ouvre le plein écran.
+- La fermeture du plein écran ouvert depuis la bibliothèque revient directement a la grille, sans repasser par l'aperçu.
 - L'écran d'ouverture de pack permet aussi d'ouvrir la carte révélée en plein écran.
+- Les cartes d'aperçu de bibliothèque et les cartes révélées dans les packs utilisent un ratio fixe `hauteur / largeur = 1.754`.
 - Le fond de carte dépend de la qualité du ciel (`city`, `suburban`, `rural`, `mountain`).
 - Les cartes holographiques ajoutent une surcouche d'étoiles scintillantes.
 - Le badge de rareté utilise un logo étoilé dédié :
