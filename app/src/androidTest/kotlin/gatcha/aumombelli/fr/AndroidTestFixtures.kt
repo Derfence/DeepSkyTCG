@@ -11,6 +11,7 @@ import fr.aumombelli.gatcha.model.DeepSkyDetails
 import fr.aumombelli.gatcha.model.LightYearMeasurement
 import fr.aumombelli.gatcha.model.PackCard
 import fr.aumombelli.gatcha.model.RightAscension
+import fr.aumombelli.gatcha.model.SkyEventDetails
 import fr.aumombelli.gatcha.model.VisualSize
 
 fun testCardDefinition(
@@ -79,5 +80,47 @@ fun testPackCard(
         finish = finish,
         finishLabel = finishLabel,
         isHolographic = isHolographic,
+    ),
+)
+
+fun testSkyEventCardDefinition(
+    id: String,
+    name: String = "Perseides",
+    withVisualSize: Boolean = true,
+): CardDefinition = CardDefinition(
+    id = id,
+    extensionId = "astronomes-en-herbe",
+    name = name,
+    rarityLabel = "Epic",
+    drawWeight = 1,
+    imageRef = "sky_event",
+    variantProfileId = "observation-default",
+    astronomy = AstronomyInfo(
+        commonName = name,
+        primaryCatalogName = "IMO",
+        catalogNumber = id,
+        objectFamily = "sky_event",
+        objectTypeLabel = "Essaim d'etoiles filantes",
+        constellation = "Persee",
+        mainSeason = "Ete",
+        coordinates = CelestialCoordinates(
+            rightAscension = RightAscension(3, 4, 0.0, "AD 03h 04m 00,0s"),
+            declination = Declination("+", 58, 0, 0, "+58° 00′ 00″"),
+            label = "AD 03h 04m 00,0s ; Dec +58° 00′ 00″",
+        ),
+        shortDescription = "Evenement celeste de test.",
+        details = SkyEventDetails(
+            visualSize = if (withVisualSize) {
+                VisualSize(
+                    fullMoonWidth = 180.0,
+                    fullMoonHeight = 90.0,
+                    angularWidth = AngularMeasurement(90, 0, 0, "90°00′00″"),
+                    angularHeight = AngularMeasurement(45, 0, 0, "45°00′00″"),
+                    label = "180,00 × 90,00 (90°00′00″ × 45°00′00″)",
+                )
+            } else {
+                null
+            },
+        ),
     ),
 )

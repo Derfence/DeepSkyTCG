@@ -57,7 +57,7 @@ class CollectionRepositoryTest {
 
         val collection = repository.getCachedCollectionOrEmpty()
 
-        assertEquals(4, collection.version)
+        assertEquals(5, collection.version)
         assertEquals(emptyMap<String, Int>(), collection.cards.mapValues { it.value.totalOwned })
     }
 
@@ -93,7 +93,7 @@ class CollectionRepositoryTest {
         val migrated = repository.loadCollectionFromServer()
 
         assertEquals(listOf("/api/collection/get", "/api/collection/save"), paths)
-        assertEquals(4, migrated.version)
+        assertEquals(5, migrated.version)
     }
 
     @Test
@@ -130,7 +130,7 @@ class CollectionRepositoryTest {
         assertEquals(listOf("/api/collection/save"), paths)
         val committedBlob = sessionGateway.committedCollections.single().first
         val migrated = CollectionCrypto.decryptAndDeserialize(committedBlob, PasswordHash)
-        assertEquals(4, migrated.version)
+        assertEquals(5, migrated.version)
     }
 
     private fun newRepository(

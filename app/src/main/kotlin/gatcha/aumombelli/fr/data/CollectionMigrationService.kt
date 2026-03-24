@@ -33,6 +33,7 @@ class CollectionMigrationService(
             1 -> collection.copy(version = 2).normalized()
             2 -> collection.copy(version = 3).normalized()
             3 -> collection.copy(version = 4).normalized()
+            4 -> collection.copy(version = 5).normalized()
             else -> throw IllegalStateException(
                 "No migration path exists for collection version ${collection.version}.",
             )

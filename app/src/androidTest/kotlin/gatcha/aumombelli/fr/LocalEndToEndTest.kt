@@ -4,11 +4,13 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
@@ -73,6 +75,7 @@ class LocalEndToEndTest {
         composeRule.onNodeWithTag("menu-library").performClick()
         composeRule.waitUntilTagExists("library-section-${LocalE2eConfig.extensionId}", timeoutMillis = 10_000)
 
+        composeRule.onNodeWithTag("library-grid").performScrollToNode(hasTestTag("library-card-$cardId"))
         composeRule.onNodeWithTag("library-card-$cardId").assertIsDisplayed()
         composeRule.onNodeWithTag("library-owned-$cardId").assertTextContains("Owned:", substring = true)
         composeRule.onNodeWithTag("library-card-$cardId").performClick()
@@ -83,6 +86,7 @@ class LocalEndToEndTest {
         composeRule.waitUntilTagExists("library-card-preview-close", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("library-card-preview-close").performClick()
 
+        composeRule.onNodeWithTag("library-grid").performScrollToNode(hasTestTag("library-back"))
         composeRule.onNodeWithTag("library-back").performClick()
         composeRule.waitUntilTagExists("menu-open-pack", timeoutMillis = 10_000)
     }

@@ -56,6 +56,7 @@ import fr.aumombelli.gatcha.model.DeepSkyDetails
 import fr.aumombelli.gatcha.model.DisplayCard
 import fr.aumombelli.gatcha.model.DisplayCardVariant
 import fr.aumombelli.gatcha.model.LibraryCardItem
+import fr.aumombelli.gatcha.model.SkyEventDetails
 import fr.aumombelli.gatcha.model.StarDetails
 import fr.aumombelli.gatcha.model.toDisplayCard
 import fr.aumombelli.gatcha.ui.theme.rarityBadgeStyle
@@ -408,8 +409,11 @@ private fun CoordinatesSection(displayCard: DisplayCard) {
 
 @Composable
 private fun MeasurementsSection(displayCard: DisplayCard) {
+    val items = measurementItems(displayCard.definition.astronomy.details)
+    if (items.isEmpty()) return
+
     SectionCard(title = "Mesures") {
-        KeyValueList(measurementItems(displayCard.definition.astronomy.details))
+        KeyValueList(items)
     }
 }
 
@@ -594,12 +598,12 @@ private fun TwinklingStarsOverlay(
 }
 
 private fun measurementItems(details: AstronomyDetails): List<Pair<String, String>> = when (details) {
-    is DeepSkyDetails -> listOf(
-        "Distance a la Terre" to details.distance.label,
-        "Taille reelle" to details.realSize.label,
-        "Taille visuelle" to details.visualSize.label,
-        "Magnitude absolue" to details.absoluteMagnitude.label,
-    )
+    is DeepSkyDetails -> buildList {
+        add("Distance a la Terre" to details.distance.label)
+        add("Taille reelle" to details.realSize.label)
+        add("Taille visuelle" to details.visualSize.label)
+        details.absoluteMagnitude?.let { add("Magnitude absolue" to it.label) }
+    }
     is StarDetails -> buildList {
         add("Distance a la Terre" to details.distance.label)
         details.realSize?.let { add("Taille reelle" to it.label) }
@@ -609,6 +613,9 @@ private fun measurementItems(details: AstronomyDetails): List<Pair<String, Strin
     is ConstellationDetails -> listOf(
         "Taille visuelle" to details.visualSize.label,
     )
+    is SkyEventDetails -> details.visualSize?.let {
+        listOf("Taille visuelle" to it.label)
+    } ?: emptyList()
 }
 
 private fun buildVariantLine(variant: DisplayCardVariant): String = buildString {

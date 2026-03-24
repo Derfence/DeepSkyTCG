@@ -77,7 +77,7 @@ class AppCompatibilityBlockTest {
                 override suspend fun decodePendingPack(): DrawPackResponse? = null
             },
             catalogRepository = object : CatalogGateway {
-                override suspend fun loadMetadata(): CatalogMetadata = CatalogMetadata(catalogVersion = 4)
+                override suspend fun loadMetadata(): CatalogMetadata = CatalogMetadata(catalogVersion = 5)
                 override suspend fun loadExtensions(): List<ExtensionDefinition> = emptyList()
                 override suspend fun loadCards(): List<CardDefinition> = emptyList()
                 override suspend fun loadVariantProfiles(): List<VariantProfile> = emptyList()
@@ -91,8 +91,8 @@ class AppCompatibilityBlockTest {
             },
             appStatusRepository = appStatusGateway,
             collectionRepository = object : CollectionGateway {
-                override suspend fun loadCollectionFromServer(): OwnedCollection = OwnedCollection(version = 4)
-                override suspend fun getCachedCollectionOrEmpty(): OwnedCollection = OwnedCollection(version = 4)
+                override suspend fun loadCollectionFromServer(): OwnedCollection = OwnedCollection(version = 5)
+                override suspend fun getCachedCollectionOrEmpty(): OwnedCollection = OwnedCollection(version = 5)
                 override suspend fun saveCollection(collection: OwnedCollection): String = "2026-03-24T12:00:00Z"
                 override suspend fun replayPendingSaveIfNeeded(): Boolean = false
                 override fun mergeCards(collection: OwnedCollection, cards: List<PackCard>): OwnedCollection = collection

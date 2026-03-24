@@ -225,7 +225,7 @@ data class DeepSkyDetails(
     val distance: LightYearMeasurement,
     val realSize: LightYearMeasurement,
     val visualSize: VisualSize,
-    val absoluteMagnitude: AbsoluteMagnitudeMeasurement,
+    val absoluteMagnitude: AbsoluteMagnitudeMeasurement? = null,
 ) : AstronomyDetails()
 
 @Serializable
@@ -241,6 +241,12 @@ data class StarDetails(
 @SerialName("constellation")
 data class ConstellationDetails(
     val visualSize: VisualSize,
+) : AstronomyDetails()
+
+@Serializable
+@SerialName("sky_event")
+data class SkyEventDetails(
+    val visualSize: VisualSize? = null,
 ) : AstronomyDetails()
 
 fun OwnedCollection.mergePackCards(cards: List<PackCard>): OwnedCollection {

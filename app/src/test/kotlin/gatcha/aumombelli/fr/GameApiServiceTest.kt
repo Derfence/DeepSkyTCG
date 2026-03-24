@@ -31,7 +31,7 @@ class GameApiServiceTest {
     @Test
     fun `login request includes catalog version header`() = runTest {
         val catalogGateway = FakeCatalogGateway().apply {
-            metadata = metadata.copy(catalogVersion = 4)
+            metadata = metadata.copy(catalogVersion = 5)
         }
         var capturedHeader: String? = null
         val engine = MockEngine { request ->
@@ -60,7 +60,7 @@ class GameApiServiceTest {
             ),
         )
 
-        assertEquals("4", capturedHeader)
+        assertEquals("5", capturedHeader)
     }
 
     @Test
