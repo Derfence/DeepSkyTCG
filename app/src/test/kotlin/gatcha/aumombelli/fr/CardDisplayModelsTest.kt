@@ -3,6 +3,7 @@ package fr.aumombelli.gatcha
 import androidx.compose.ui.graphics.Color
 import fr.aumombelli.gatcha.model.OwnedCardEntry
 import fr.aumombelli.gatcha.model.OwnedVariantCount
+import fr.aumombelli.gatcha.model.raritySortPriority
 import fr.aumombelli.gatcha.model.toDisplayVariants
 import fr.aumombelli.gatcha.ui.theme.rarityBadgeStyle
 import fr.aumombelli.gatcha.ui.theme.skyQualityPalette
@@ -40,6 +41,15 @@ class CardDisplayModelsTest {
         assertEquals(4, rarityBadgeStyle("Uncommon").branchCount)
         assertEquals(4, rarityBadgeStyle("Rare").branchCount)
         assertEquals(6, rarityBadgeStyle("Epic").branchCount)
+        assertEquals(Color(0xFFC69BFF), rarityBadgeStyle("Epic").color)
+    }
+
+    @Test
+    fun `rarity sort priority orders cards from common to epic`() {
+        assertEquals(0, raritySortPriority("Common"))
+        assertEquals(1, raritySortPriority("Uncommon"))
+        assertEquals(2, raritySortPriority("Rare"))
+        assertEquals(3, raritySortPriority("Epic"))
     }
 
     @Test

@@ -1,8 +1,10 @@
 package fr.aumombelli.gatcha
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -68,17 +70,18 @@ class PackOpeningScreenTest {
         composeRule.mainClock.autoAdvance = true
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithTag("pack-opening-card-name").assertTextContains("Nebuleuse d'Orion")
+        composeRule.onNodeWithTag("pack-opening-card-id").assertTextContains("ALP-001")
+        composeRule.onAllNodesWithTag("pack-opening-card-name").assertCountEquals(0)
         composeRule.assertApproxCardRatio("pack-opening-card-surface")
         composeRule.onNodeWithTag("pack-opening-card-surface").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("astro-card-fullscreen-close").assertIsDisplayed()
         composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("pack-opening-card-name").assertTextContains("Nebuleuse d'Orion")
+        composeRule.onNodeWithTag("pack-opening-card-id").assertTextContains("ALP-001")
         composeRule.onRoot().performTouchInput { swipeLeft() }
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("pack-opening-card-name").assertTextContains("Galaxie d'Andromede")
+        composeRule.onNodeWithTag("pack-opening-card-id").assertTextContains("ALP-002")
     }
 
     private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertApproxCardRatio(

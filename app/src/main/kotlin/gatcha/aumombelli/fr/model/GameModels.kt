@@ -149,6 +149,14 @@ data class DisplayCard(
     val availableVariants: List<DisplayCardVariant> = listOf(activeVariant),
 )
 
+fun raritySortPriority(rarityLabel: String): Int = when (rarityLabel) {
+    "Common" -> 0
+    "Uncommon" -> 1
+    "Rare" -> 2
+    "Epic" -> 3
+    else -> 4
+}
+
 @Serializable
 data class AstronomyInfo(
     val commonName: String? = null,

@@ -7,6 +7,7 @@ import fr.aumombelli.gatcha.data.CollectionGateway
 import fr.aumombelli.gatcha.model.LibraryCardItem
 import fr.aumombelli.gatcha.model.LibrarySection
 import fr.aumombelli.gatcha.model.ownedCountFor
+import fr.aumombelli.gatcha.model.raritySortPriority
 import fr.aumombelli.gatcha.model.toDisplayVariants
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -46,7 +47,12 @@ class LibraryViewModel(
                         extension = extension,
                         cards = cards
                             .filter { it.extensionId == extension.id }
-                            .sortedBy { it.id }
+                            .sortedWith(
+                                compareBy(
+                                    { raritySortPriority(it.rarityLabel) },
+                                    { it.id },
+                                ),
+                            )
                             .map { card ->
                                 val availableVariants = collection.cards[card.id]
                                     ?.toDisplayVariants(

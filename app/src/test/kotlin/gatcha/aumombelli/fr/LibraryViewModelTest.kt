@@ -26,13 +26,14 @@ class LibraryViewModelTest {
             )
             cards = listOf(
                 testCardDefinition("MON-002", extensionId = "moon-dawn", name = "M42", imageRef = "dawn"),
+                testCardDefinition("MON-050", extensionId = "moon-dawn", name = "M57", rarityLabel = "Epic", imageRef = "ring"),
                 testCardDefinition("ALP-001", extensionId = "core-alpha", name = "Orion", imageRef = "fox"),
                 testCardDefinition("MON-001", extensionId = "moon-dawn", name = "M31", rarityLabel = "Rare", imageRef = "hare"),
             )
         }
         val collectionGateway = FakeCollectionGateway().apply {
             cachedCollection = ownedCollectionWithVariants(
-                "MON-001",
+                "MON-050",
                 OwnedVariantCount("city", "standard", 1),
                 OwnedVariantCount("mountain", "holographic", 1),
             )
@@ -45,12 +46,13 @@ class LibraryViewModelTest {
         assertEquals(false, state.isLoading)
         assertNull(state.errorMessage)
         assertEquals(listOf("core-alpha", "moon-dawn"), state.sections.map { it.extension.id })
-        assertEquals(listOf("MON-001", "MON-002"), state.sections[1].cards.map { it.definition.id })
-        assertEquals(2, state.sections[1].cards.first().ownedCount)
-        assertEquals("Moon Dawn", state.sections[1].cards.first().extensionName)
+        assertEquals(listOf("MON-002", "MON-001", "MON-050"), state.sections[1].cards.map { it.definition.id })
+        val ownedCard = state.sections[1].cards.first { it.definition.id == "MON-050" }
+        assertEquals(2, ownedCard.ownedCount)
+        assertEquals("Moon Dawn", ownedCard.extensionName)
         assertEquals(
             listOf("mountain::holographic", "city::standard"),
-            state.sections[1].cards.first().availableVariants.map { it.key },
+            ownedCard.availableVariants.map { it.key },
         )
     }
 

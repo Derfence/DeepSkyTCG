@@ -33,8 +33,8 @@ fun rarityBadgeStyle(rarityLabel: String): RarityBadgeStyle = when (rarityLabel)
     )
     "Epic" -> RarityBadgeStyle(
         branchCount = 6,
-        color = Color(0xFFFFE8A8),
-        glowColor = Color(0x88FFBB33),
+        color = Color(0xFFC69BFF),
+        glowColor = Color(0x887A3DFF),
     )
     else -> RarityBadgeStyle(
         branchCount = 4,

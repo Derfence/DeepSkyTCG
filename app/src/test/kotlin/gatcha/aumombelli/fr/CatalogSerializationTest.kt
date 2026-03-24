@@ -92,7 +92,7 @@ class CatalogSerializationTest {
               "id": "evt-halley",
               "extensionId": "astronomes-en-herbe",
               "name": "Comete de Halley",
-              "rarityLabel": "Legendary",
+              "rarityLabel": "Epic",
               "drawWeight": 1,
               "imageRef": "halley",
               "variantProfileId": "observation-default",

@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.gatcha.model.AstronomyDetails
 import fr.aumombelli.gatcha.model.CardDefinition
@@ -94,7 +95,9 @@ fun AstroCardThumbnail(
             AstroCardPreviewSurface(
                 displayCard = displayCard,
                 mode = AstroCardSurfaceMode.Thumbnail,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("library-card-surface-${item.definition.id}"),
                 onClick = if (owned) onClick else null,
             )
             QuantityPill(
@@ -128,11 +131,7 @@ fun AstroCardPreviewSurface(
     } else {
         modifier.clickable(onClick = onClick)
     }
-    val cardModifier = if (mode == AstroCardSurfaceMode.Thumbnail) {
-        clickableModifier
-    } else {
-        clickableModifier.aspectRatio(TRADING_CARD_WIDTH_OVER_HEIGHT)
-    }
+    val cardModifier = clickableModifier.aspectRatio(TRADING_CARD_WIDTH_OVER_HEIGHT)
 
     Card(
         shape = shape,
@@ -286,6 +285,8 @@ private fun CardHeader(
         fontWeight = FontWeight.Bold,
         style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineMedium,
         modifier = Modifier.fillMaxWidth(),
+        maxLines = if (compact) 2 else Int.MAX_VALUE,
+        overflow = if (compact) TextOverflow.Ellipsis else TextOverflow.Clip,
     )
     Text(
         text = displayCard.extensionName,
@@ -293,6 +294,8 @@ private fun CardHeader(
         textAlign = TextAlign.Center,
         style = if (compact) MaterialTheme.typography.labelLarge else MaterialTheme.typography.titleSmall,
         modifier = Modifier.fillMaxWidth(),
+        maxLines = if (compact) 1 else Int.MAX_VALUE,
+        overflow = if (compact) TextOverflow.Ellipsis else TextOverflow.Clip,
     )
 }
 

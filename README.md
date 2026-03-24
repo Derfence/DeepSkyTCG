@@ -39,6 +39,7 @@ Cette application permet au joueur de :
 ## Affichage des cartes astro
 
 - Une miniature de bibliothèque reste atténuée tant que la carte n'est pas possédée.
+- La bibliothèque trie les cartes d'une extension par rareté, de `Common` vers `Epic`.
 - Les miniatures de bibliothèque gardent un rendu simplifié et n'affichent plus le texte central de catalogue ni la variante au centre.
 - Un clic sur une carte possédée ouvre un aperçu centré au ratio de carte a collectionner ; un second clic ouvre le plein écran.
 - La fermeture du plein écran ouvert depuis la bibliothèque revient directement a la grille, sans repasser par l'aperçu.
@@ -50,7 +51,7 @@ Cette application permet au joueur de :
   - `Common` : étoile blanche à 4 branches ;
   - `Uncommon` : étoile bleue à 4 branches ;
   - `Rare` : étoile or à 4 branches ;
-  - `Epic` : étoile à 6 branches.
+  - `Epic` : étoile violette à 6 branches.
 - Le plein écran intègre directement les données scientifiques du catalogue local : description, identité, coordonnées célestes et mesures.
 
 ## Compatibilité catalogue

@@ -247,13 +247,6 @@ private fun RevealCard(
             )
         }
         Text(
-            text = displayCard.definition.name,
-            style = MaterialTheme.typography.headlineSmall,
-            color = Color.White,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.testTag("pack-opening-card-name"),
-        )
-        Text(
             text = "Touchez la carte pour voir toutes les donnees scientifiques.",
             color = Color(0xFFD7E7F7),
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
