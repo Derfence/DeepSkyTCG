@@ -45,16 +45,16 @@ fun rarityBadgeStyle(rarityLabel: String): RarityBadgeStyle = when (rarityLabel)
 
 fun skyQualityPalette(skyQuality: String): SkyQualityPalette = when (skyQuality) {
     "city" -> SkyQualityPalette(
-        top = Color(0xFFD9A441),
-        bottom = Color(0xFF564122),
-        glow = Color(0x99FFE082),
-        mist = Color(0x66FFF4C2),
+        top = Color(0xFF8E845F),
+        bottom = Color(0xFF3E382C),
+        glow = Color(0x668B7B4A),
+        mist = Color(0x334E4A3D),
     )
     "suburban" -> SkyQualityPalette(
-        top = Color(0xFFB66A3D),
-        bottom = Color(0xFF2B2131),
-        glow = Color(0x88FFB36B),
-        mist = Color(0x55FFD2A5),
+        top = Color(0xFF5F4A46),
+        bottom = Color(0xFF211C24),
+        glow = Color(0x665C4A54),
+        mist = Color(0x33453B48),
     )
     "rural" -> SkyQualityPalette(
         top = Color(0xFF123660),

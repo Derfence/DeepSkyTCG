@@ -44,7 +44,8 @@ class CardDisplayModelsTest {
 
     @Test
     fun `sky quality palette uses polluted and deep sky colors`() {
-        assertEquals(Color(0xFFD9A441), skyQualityPalette("city").top)
+        assertEquals(Color(0xFF8E845F), skyQualityPalette("city").top)
+        assertEquals(Color(0xFF5F4A46), skyQualityPalette("suburban").top)
         assertEquals(Color(0xFF010308), skyQualityPalette("mountain").bottom)
     }
 }

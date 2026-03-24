@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -200,7 +201,7 @@ fun AstroCardDetailsSurface(
 
     Card(
         shape = RoundedCornerShape(34.dp),
-        modifier = modifier,
+        modifier = modifier.navigationBarsPadding(),
     ) {
         Box(
             modifier = Modifier
@@ -223,7 +224,7 @@ fun AstroCardDetailsSurface(
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(22.dp),
+                    .padding(start = 22.dp, top = 22.dp, end = 22.dp, bottom = 44.dp),
             ) {
                 CardHeader(
                     displayCard = displayCard,
@@ -243,6 +244,7 @@ fun AstroCardDetailsSurface(
                     rarityLabel = displayCard.definition.rarityLabel,
                     compact = false,
                 )
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }

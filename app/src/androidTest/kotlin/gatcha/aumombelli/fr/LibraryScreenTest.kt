@@ -30,7 +30,7 @@ class LibraryScreenTest {
             extensionName = "Astronomes en herbe",
             ownedCount = 2,
             availableVariants = listOf(
-                DisplayCardVariant("mountain", "Montagne", "holographic", "Holographique", true, 1),
+                DisplayCardVariant("mountain", "Montagne", "standard", "Standard", false, 1),
                 DisplayCardVariant("city", "Ville", "standard", "Standard", false, 1),
             ),
         )
