@@ -6,12 +6,15 @@ Client Android natif du projet Gatcha.
 
 Cette application permet au joueur de :
 
+- vérifier la compatibilité catalogue avec le serveur au démarrage ;
 - créer un compte ;
 - se connecter ;
 - récupérer sa collection ;
 - consulter sa bibliothèque de cartes ;
+- ouvrir l'aperçu d'une carte possédée depuis la bibliothèque puis l'agrandir en plein écran ;
 - ouvrir un pack par extension ;
-- visualiser l'ouverture du pack puis révéler les cartes par glissement.
+- visualiser l'ouverture du pack puis révéler les cartes par glissement ;
+- ouvrir une carte tirée en plein écran pour consulter ses informations scientifiques.
 
 ## Stack technique
 
@@ -25,12 +28,45 @@ Cette application permet au joueur de :
 ## Structure fonctionnelle
 
 - `MainActivity` : point d'entrée Android.
-- `GatchaApp` : navigation Compose.
-- `data/` : persistance locale, chiffrement de collection, repositories.
+- `GatchaApp` : bootstrap de compatibilité puis navigation Compose.
+- `data/` : persistance locale, chiffrement de collection, migration de deck, repositories.
 - `network/` : client HTTP de l'API serveur.
+- `ui/component/` : rendu Compose partagé des cartes astro, badges de rareté et variantes visuelles.
 - `ui/viewmodel/` : logique d'écran.
 - `ui/screen/` : écrans Compose.
-- `assets/catalog/` : extensions et cartes statiques de la v1.
+- `assets/catalog/` : `metadata.json`, `extensions.json`, `cards.json` et `variant_profiles.json`.
+
+## Affichage des cartes astro
+
+- Une miniature de bibliothèque reste atténuée tant que la carte n'est pas possédée.
+- La bibliothèque trie les cartes d'une extension par rareté, de `Common` vers `Epic`.
+- Les miniatures de bibliothèque gardent un rendu simplifié et n'affichent plus le texte central de catalogue ni la variante au centre.
+- Un clic sur une carte possédée ouvre un aperçu centré au ratio de carte a collectionner ; un second clic ouvre le plein écran.
+- La fermeture du plein écran ouvert depuis la bibliothèque revient directement a la grille, sans repasser par l'aperçu.
+- L'écran d'ouverture de pack permet aussi d'ouvrir la carte révélée en plein écran.
+- Les cartes d'aperçu de bibliothèque et les cartes révélées dans les packs utilisent un ratio fixe `hauteur / largeur = 1.754`.
+- Le fond de carte dépend de la qualité du ciel (`city`, `suburban`, `rural`, `mountain`).
+- Les cartes holographiques ajoutent une surcouche d'étoiles scintillantes.
+- Le badge de rareté utilise un logo étoilé dédié :
+  - `Common` : étoile blanche à 4 branches ;
+  - `Uncommon` : étoile bleue à 4 branches ;
+  - `Rare` : étoile or à 4 branches ;
+  - `Epic` : étoile violette à 6 branches.
+- Le plein écran intègre directement les données scientifiques du catalogue local : description, identité, coordonnées célestes et mesures.
+
+## Compatibilité catalogue
+
+- Le client charge `assets/catalog/metadata.json` pour obtenir `catalogVersion`.
+- Au démarrage, l'application appelle `POST /api/app/status` et bloque l'UI tant que la compatibilité n'est pas validée.
+- Toutes les autres requêtes HTTP envoient `X-Gatcha-Catalog-Version`.
+- Si le serveur répond `client_update_required` ou `server_update_pending`, l'application rebascule sur l'écran bloquant.
+- `OwnedCollection.version` est la version de deck persistée dans le blob chiffré ; les blobs anciens sont migrés côté client avant usage et resauvegarde.
+
+## Workflow de release
+
+- Toute nouvelle extension implique la mise à jour coordonnée de `metadata.json`, `extensions.json`, `cards.json` et `variant_profiles.json`.
+- Une évolution de format du deck doit ajouter une migration explicite `n -> n+1` avant publication.
+- Le catalogue source éditable est maintenant le fichier racine `catalogue_astronomie.csv`, appliqué via `python3 scripts/catalog_sync.py apply`.
 
 ## Branches Git prévues
 
@@ -98,6 +134,7 @@ sdk.dir=C\:\\Users\\Derfence\\AppData\\Local\\Android\\Sdk
 ## Test bout en bout local
 
 - Le client pointe désormais vers `http://gatcha.aumombelli.fr:8080`.
+- Le démarrage appelle d'abord `POST /api/app/status`, il faut donc que le serveur local expose aussi la même `catalogVersion`.
 - Le package Android utilisé par l'application est `fr.aumombelli.gatcha`.
 - En build `debug`, le client résout localement `gatcha.aumombelli.fr` vers `127.0.0.1` dans l'appareil.
 - Le script racine `routage.bat` active ensuite un `adb reverse tcp:8080 tcp:8080`, ce qui redirige ce `localhost` de l'appareil vers la machine hôte.
@@ -108,6 +145,9 @@ sdk.dir=C\:\\Users\\Derfence\\AppData\\Local\\Android\\Sdk
   - l'exécution d'un vrai test instrumenté E2E ;
   - les validations serveur côté hôte ;
   - l'arrêt du serveur et la désactivation du routage.
+- Le scénario E2E vérifie aussi :
+  - l'ouverture plein écran d'une carte depuis l'écran d'ouverture de pack ;
+  - l'aperçu puis le plein écran d'une carte possédée depuis la bibliothèque.
 - Démarrer d'abord l'émulateur ou brancher un appareil, puis lancer le routage depuis un terminal Windows :
 
 ```powershell

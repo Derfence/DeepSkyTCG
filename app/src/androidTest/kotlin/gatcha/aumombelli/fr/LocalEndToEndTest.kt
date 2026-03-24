@@ -4,11 +4,13 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
@@ -32,6 +34,7 @@ class LocalEndToEndTest {
     }
 
     private fun createAccountAndReachMainMenu() {
+        composeRule.waitUntilTagExists("login-toggle-mode", timeoutMillis = 20_000)
         composeRule.onNodeWithTag("login-toggle-mode").performClick()
         composeRule.waitUntilTagExists("login-email")
 
@@ -46,13 +49,17 @@ class LocalEndToEndTest {
 
     private fun openPackAndCaptureVisibleCardId(): String {
         composeRule.onNodeWithTag("menu-open-pack").performClick()
-        composeRule.waitUntilTagExists("pack-draw-core-alpha", timeoutMillis = 10_000)
-        composeRule.onNodeWithTag("pack-draw-core-alpha").performClick()
+        composeRule.waitUntilTagExists("pack-draw-${LocalE2eConfig.extensionId}", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("pack-draw-${LocalE2eConfig.extensionId}").performClick()
 
         composeRule.waitUntilTagExists("pack-opening-title", timeoutMillis = 20_000)
         composeRule.waitUntilTagExists("pack-opening-card-id", timeoutMillis = 10_000)
 
         val firstDrawnCardId = composeRule.readText("pack-opening-card-id")
+        composeRule.onNodeWithTag("pack-opening-card-surface").performClick()
+        composeRule.waitUntilTagExists("astro-card-fullscreen-close", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
+        composeRule.waitUntilTagExists("pack-opening-card-surface", timeoutMillis = 10_000)
 
         repeat(4) {
             composeRule.onRoot().performTouchInput { swipeLeft() }
@@ -66,20 +73,28 @@ class LocalEndToEndTest {
 
     private fun verifyLibraryContainsDrawnCard(cardId: String) {
         composeRule.onNodeWithTag("menu-library").performClick()
-        composeRule.waitUntilTagExists("library-section-core-alpha", timeoutMillis = 10_000)
+        composeRule.waitUntilTagExists("library-section-${LocalE2eConfig.extensionId}", timeoutMillis = 10_000)
 
+        composeRule.onNodeWithTag("library-grid").performScrollToNode(hasTestTag("library-card-$cardId"))
         composeRule.onNodeWithTag("library-card-$cardId").assertIsDisplayed()
         composeRule.onNodeWithTag("library-owned-$cardId").assertTextContains("Owned:", substring = true)
+        composeRule.onNodeWithTag("library-card-$cardId").performClick()
+        composeRule.waitUntilTagExists("library-card-preview", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("library-card-preview-surface").performClick()
+        composeRule.waitUntilTagExists("astro-card-fullscreen-close", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
 
+        composeRule.waitUntilTagGone("astro-card-fullscreen-close", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("library-grid").performScrollToNode(hasTestTag("library-back"))
         composeRule.onNodeWithTag("library-back").performClick()
         composeRule.waitUntilTagExists("menu-open-pack", timeoutMillis = 10_000)
     }
 
     private fun verifyCooldownIsVisible() {
         composeRule.onNodeWithTag("menu-open-pack").performClick()
-        composeRule.waitUntilTagExists("pack-draw-core-alpha", timeoutMillis = 10_000)
+        composeRule.waitUntilTagExists("pack-draw-${LocalE2eConfig.extensionId}", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("pack-status").assertTextContains("Prochain tirage disponible", substring = true)
-        composeRule.onNodeWithTag("pack-draw-core-alpha").assertIsNotEnabled()
+        composeRule.onNodeWithTag("pack-draw-${LocalE2eConfig.extensionId}").assertIsNotEnabled()
         composeRule.onNodeWithTag("pack-back").performClick()
         composeRule.waitUntilTagExists("menu-logout", timeoutMillis = 10_000)
     }
@@ -111,6 +126,15 @@ class LocalEndToEndTest {
     ) {
         waitUntil(timeoutMillis) {
             onAllNodesWithTag(tag).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
+        }
+    }
+
+    private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.waitUntilTagGone(
+        tag: String,
+        timeoutMillis: Long = 5_000,
+    ) {
+        waitUntil(timeoutMillis) {
+            onAllNodesWithTag(tag).fetchSemanticsNodes(atLeastOneRootRequired = false).isEmpty()
         }
     }
 

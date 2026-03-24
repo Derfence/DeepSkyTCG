@@ -17,4 +17,7 @@ object LocalE2eConfig {
 
     val password: String
         get() = arguments.getString("e2e.password") ?: "Password123!"
+
+    val extensionId: String
+        get() = arguments.getString("e2e.extensionId") ?: "astronomes-en-herbe"
 }

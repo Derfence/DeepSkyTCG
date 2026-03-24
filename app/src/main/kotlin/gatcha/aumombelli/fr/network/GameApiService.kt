@@ -1,15 +1,27 @@
 package fr.aumombelli.gatcha.network
 
+import fr.aumombelli.gatcha.data.AppCompatibilityController
+import fr.aumombelli.gatcha.data.AppStatusApi
 import fr.aumombelli.gatcha.data.AuthGateway
+import fr.aumombelli.gatcha.data.CatalogGateway
 import fr.aumombelli.gatcha.model.ApiError
+import fr.aumombelli.gatcha.model.AppStatusRequest
+import fr.aumombelli.gatcha.model.AppStatusResponse
+import fr.aumombelli.gatcha.model.CompatibilityStatuses
 import fr.aumombelli.gatcha.model.CreateAccountRequest
 import fr.aumombelli.gatcha.model.CreateAccountResponse
+import fr.aumombelli.gatcha.model.DrawPackApiResponse
+import fr.aumombelli.gatcha.model.DrawnCardReference
 import fr.aumombelli.gatcha.model.DrawPackRequest
 import fr.aumombelli.gatcha.model.DrawPackResponse
 import fr.aumombelli.gatcha.model.GetCollectionRequest
 import fr.aumombelli.gatcha.model.GetCollectionResponse
 import fr.aumombelli.gatcha.model.LoginRequest
 import fr.aumombelli.gatcha.model.LoginResponse
+import fr.aumombelli.gatcha.model.CardVariant
+import fr.aumombelli.gatcha.model.PackCard
+import fr.aumombelli.gatcha.model.requireFinishDefinition
+import fr.aumombelli.gatcha.model.requireSkyQualityDefinition
 import fr.aumombelli.gatcha.model.SaveCollectionRequest
 import fr.aumombelli.gatcha.model.SaveCollectionResponse
 import io.ktor.client.HttpClient
@@ -33,8 +45,17 @@ class ApiCallException(
 class GameApiService(
     private val client: HttpClient,
     private val json: Json,
+    private val catalogGateway: CatalogGateway,
+    private val compatibilityController: AppCompatibilityController,
     private val baseUrl: String = "http://gatcha.aumombelli.fr:8080",
-) : AuthGateway {
+) : AuthGateway, AppStatusApi {
+    override suspend fun fetchAppStatus(): AppStatusResponse =
+        post(
+            path = "/api/app/status",
+            payload = AppStatusRequest(catalogGateway.loadMetadata().catalogVersion),
+            includeCatalogVersionHeader = false,
+        )
+
     override suspend fun createAccount(request: CreateAccountRequest): CreateAccountResponse =
         post("/api/account/create", request)
 
@@ -47,13 +68,55 @@ class GameApiService(
     suspend fun saveCollection(request: SaveCollectionRequest): SaveCollectionResponse =
         post("/api/collection/save", request)
 
-    suspend fun drawPack(request: DrawPackRequest): DrawPackResponse =
-        post("/api/packs/draw", request)
+    suspend fun drawPack(request: DrawPackRequest): DrawPackResponse {
+        val response: DrawPackApiResponse = post("/api/packs/draw", request)
+        val cardsById = catalogGateway.loadCards().associateBy { it.id }
+        val variantProfilesById = catalogGateway.loadVariantProfiles().associateBy { it.id }
+        val cards = response.cards.map { drawnCard ->
+            val definition = checkNotNull(cardsById[drawnCard.cardId]) {
+                "Server returned an unknown card id for the current catalog: ${drawnCard.cardId}"
+            }
+            val variantProfile = checkNotNull(variantProfilesById[definition.variantProfileId]) {
+                "Unknown variant profile '${definition.variantProfileId}' for card '${definition.id}'."
+            }
+            val skyQuality = variantProfile.requireSkyQualityDefinition(drawnCard.skyQuality)
+            val finish = variantProfile.requireFinishDefinition(drawnCard.finish)
+            PackCard(
+                cardId = definition.id,
+                name = definition.name,
+                rarityLabel = definition.rarityLabel,
+                imageRef = definition.imageRef,
+                variant = CardVariant(
+                    skyQuality = skyQuality.code,
+                    skyQualityLabel = skyQuality.label,
+                    finish = finish.code,
+                    finishLabel = finish.label,
+                    isHolographic = finish.isHolographic,
+                ),
+            )
+        }
+        return DrawPackResponse(
+            extensionId = response.extensionId,
+            drawnAt = response.drawnAt,
+            nextDrawAt = response.nextDrawAt,
+            cards = cards,
+        )
+    }
 
-    private suspend inline fun <reified T> post(path: String, payload: Any): T {
+    private suspend inline fun <reified T> post(
+        path: String,
+        payload: Any,
+        includeCatalogVersionHeader: Boolean = true,
+    ): T {
+        val catalogVersion = if (includeCatalogVersionHeader) {
+            catalogGateway.loadMetadata().catalogVersion
+        } else {
+            null
+        }
         val response = client.post("$baseUrl$path") {
             headers {
                 append(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                catalogVersion?.let { append(CatalogVersionHeader, it.toString()) }
             }
             setBody(payload)
         }
@@ -67,6 +130,17 @@ class GameApiService(
         } catch (_: SerializationException) {
             ApiError(code = "unknown_error", message = rawBody.ifBlank { "Unknown network error." })
         }
+        if (error.code in CompatibilityErrorCodes) {
+            compatibilityController.markBlocked(error.message)
+        }
         throw ApiCallException(error.code, error.message, error.retryAt)
+    }
+
+    private companion object {
+        const val CatalogVersionHeader = "X-Gatcha-Catalog-Version"
+        val CompatibilityErrorCodes = setOf(
+            CompatibilityStatuses.ClientUpdateRequired,
+            CompatibilityStatuses.ServerUpdatePending,
+        )
     }
 }

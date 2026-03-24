@@ -1,6 +1,9 @@
 package fr.aumombelli.gatcha.data
 
 import fr.aumombelli.gatcha.model.OwnedCollection
+import fr.aumombelli.gatcha.model.OwnedCardEntry
+import fr.aumombelli.gatcha.model.OwnedVariantCount
+import fr.aumombelli.gatcha.model.normalized
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.security.MessageDigest
@@ -11,11 +14,19 @@ import java.util.zip.GZIPOutputStream
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 
 object CollectionCrypto {
     private const val IvSize = 12
     private const val GcmTagLengthBits = 128
+    private const val LegacyDefaultSkyQuality = "city"
+    private const val LegacyDefaultFinish = "standard"
     private val random = SecureRandom()
     private val json = Json {
         encodeDefaults = true
@@ -40,7 +51,7 @@ object CollectionCrypto {
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.DECRYPT_MODE, deriveKey(passwordHash), GCMParameterSpec(GcmTagLengthBits, iv))
         val decompressed = decompress(cipher.doFinal(encrypted))
-        return json.decodeFromString(OwnedCollection.serializer(), decompressed.decodeToString())
+        return decodeCollectionPayload(decompressed.decodeToString())
     }
 
     private fun deriveKey(passwordHash: String): SecretKeySpec {
@@ -57,4 +68,38 @@ object CollectionCrypto {
 
     private fun decompress(bytes: ByteArray): ByteArray =
         GZIPInputStream(ByteArrayInputStream(bytes)).use { it.readAllBytes() }
+
+    private fun decodeCollectionPayload(payload: String): OwnedCollection {
+        val root = json.parseToJsonElement(payload).jsonObject
+        val version = root["version"]?.jsonPrimitive?.intOrNull ?: 1
+        val cardsElement = root["cards"] as? JsonObject ?: return OwnedCollection(version = version)
+
+        val isLegacyCountMap = cardsElement.values.all { value ->
+            value is JsonPrimitive && value.intOrNull != null
+        }
+        if (isLegacyCountMap) {
+            return OwnedCollection(
+                version = version,
+                cards = cardsElement.mapValues { (_, value) ->
+                    legacyEntryFromCount(value)
+                }.toSortedMap(),
+            ).normalized()
+        }
+
+        return json.decodeFromJsonElement(OwnedCollection.serializer(), root).normalized()
+    }
+
+    private fun legacyEntryFromCount(value: JsonElement): OwnedCardEntry {
+        val count = value.jsonPrimitive.intOrNull ?: 0
+        return OwnedCardEntry(
+            totalOwned = count,
+            variants = listOf(
+                OwnedVariantCount(
+                    skyQuality = LegacyDefaultSkyQuality,
+                    finish = LegacyDefaultFinish,
+                    count = count,
+                ),
+            ),
+        )
+    }
 }

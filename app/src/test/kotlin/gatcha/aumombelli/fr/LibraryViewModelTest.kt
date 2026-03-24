@@ -2,7 +2,7 @@ package fr.aumombelli.gatcha
 
 import fr.aumombelli.gatcha.model.CardDefinition
 import fr.aumombelli.gatcha.model.ExtensionDefinition
-import fr.aumombelli.gatcha.model.OwnedCollection
+import fr.aumombelli.gatcha.model.OwnedVariantCount
 import fr.aumombelli.gatcha.ui.viewmodel.LibraryViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -25,13 +25,18 @@ class LibraryViewModelTest {
                 ExtensionDefinition("moon-dawn", "Moon Dawn", "cover"),
             )
             cards = listOf(
-                CardDefinition("MON-002", "moon-dawn", "Dawn Scribe", "Common", 1, "dawn"),
-                CardDefinition("ALP-001", "core-alpha", "Spark Fox", "Common", 1, "fox"),
-                CardDefinition("MON-001", "moon-dawn", "Moonlit Hare", "Rare", 1, "hare"),
+                testCardDefinition("MON-002", extensionId = "moon-dawn", name = "M42", imageRef = "dawn"),
+                testCardDefinition("MON-050", extensionId = "moon-dawn", name = "M57", rarityLabel = "Epic", imageRef = "ring"),
+                testCardDefinition("ALP-001", extensionId = "core-alpha", name = "Orion", imageRef = "fox"),
+                testCardDefinition("MON-001", extensionId = "moon-dawn", name = "M31", rarityLabel = "Rare", imageRef = "hare"),
             )
         }
         val collectionGateway = FakeCollectionGateway().apply {
-            cachedCollection = OwnedCollection(cards = mapOf("MON-001" to 2))
+            cachedCollection = ownedCollectionWithVariants(
+                "MON-050",
+                OwnedVariantCount("city", "standard", 1),
+                OwnedVariantCount("mountain", "holographic", 1),
+            )
         }
 
         val viewModel = LibraryViewModel(catalogGateway, collectionGateway)
@@ -41,8 +46,14 @@ class LibraryViewModelTest {
         assertEquals(false, state.isLoading)
         assertNull(state.errorMessage)
         assertEquals(listOf("core-alpha", "moon-dawn"), state.sections.map { it.extension.id })
-        assertEquals(listOf("MON-001", "MON-002"), state.sections[1].cards.map { it.definition.id })
-        assertEquals(2, state.sections[1].cards.first().ownedCount)
+        assertEquals(listOf("MON-002", "MON-001", "MON-050"), state.sections[1].cards.map { it.definition.id })
+        val ownedCard = state.sections[1].cards.first { it.definition.id == "MON-050" }
+        assertEquals(2, ownedCard.ownedCount)
+        assertEquals("Moon Dawn", ownedCard.extensionName)
+        assertEquals(
+            listOf("mountain::holographic", "city::standard"),
+            ownedCard.availableVariants.map { it.key },
+        )
     }
 
     @Test

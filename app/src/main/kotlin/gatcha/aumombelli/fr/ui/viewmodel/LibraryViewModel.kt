@@ -6,6 +6,9 @@ import fr.aumombelli.gatcha.data.CatalogGateway
 import fr.aumombelli.gatcha.data.CollectionGateway
 import fr.aumombelli.gatcha.model.LibraryCardItem
 import fr.aumombelli.gatcha.model.LibrarySection
+import fr.aumombelli.gatcha.model.ownedCountFor
+import fr.aumombelli.gatcha.model.raritySortPriority
+import fr.aumombelli.gatcha.model.toDisplayVariants
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,18 +38,34 @@ class LibraryViewModel(
             runCatching {
                 val extensions = catalogRepository.loadExtensions()
                 val cards = catalogRepository.loadCards()
+                val variantProfiles = catalogRepository.loadVariantProfiles()
                 val collection = collectionRepository.getCachedCollectionOrEmpty()
+                val variantProfilesById = variantProfiles.associateBy { it.id }
 
                 extensions.map { extension ->
                     LibrarySection(
                         extension = extension,
                         cards = cards
                             .filter { it.extensionId == extension.id }
-                            .sortedBy { it.id }
+                            .sortedWith(
+                                compareBy(
+                                    { raritySortPriority(it.rarityLabel) },
+                                    { it.id },
+                                ),
+                            )
                             .map { card ->
+                                val availableVariants = collection.cards[card.id]
+                                    ?.toDisplayVariants(
+                                        checkNotNull(variantProfilesById[card.variantProfileId]) {
+                                            "Unknown variant profile '${card.variantProfileId}' for '${card.id}'."
+                                        },
+                                    )
+                                    .orEmpty()
                                 LibraryCardItem(
                                     definition = card,
-                                    ownedCount = collection.cards[card.id] ?: 0,
+                                    extensionName = extension.name,
+                                    ownedCount = collection.ownedCountFor(card.id),
+                                    availableVariants = availableVariants,
                                 )
                             },
                     )

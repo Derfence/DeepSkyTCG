@@ -18,7 +18,7 @@ class SecurityUtilsTest {
 
     @Test
     fun `collection crypto round trip succeeds`() {
-        val collection = OwnedCollection(cards = mapOf("ALP-001" to 2, "MON-004" to 1))
+        val collection = ownedCollectionOf("ALP-001" to 2, "MON-004" to 1)
         val passwordHash = SecurityUtils.computeClientPasswordHash("alice", "secret")
 
         val encrypted = CollectionCrypto.serializeAndEncrypt(collection, passwordHash)

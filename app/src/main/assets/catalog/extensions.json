@@ -1,12 +1,7 @@
 [
   {
-    "id": "core-alpha",
-    "name": "Core Alpha",
-    "coverImageRef": "cover_core_alpha"
-  },
-  {
-    "id": "moon-dawn",
-    "name": "Moon Dawn",
-    "coverImageRef": "cover_moon_dawn"
+    "id": "astronomes-en-herbe",
+    "name": "Astronomes en herbe",
+    "coverImageRef": "cover_astronomes_en_herbe"
   }
 ]

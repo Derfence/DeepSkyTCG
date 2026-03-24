@@ -1,98 +1,3683 @@
 [
   {
-    "id": "ALP-001",
-    "extensionId": "core-alpha",
-    "name": "Spark Fox",
-    "rarityLabel": "Common",
-    "drawWeight": 40,
-    "imageRef": "spark_fox"
-  },
-  {
-    "id": "ALP-002",
-    "extensionId": "core-alpha",
-    "name": "Steam Golem",
-    "rarityLabel": "Common",
-    "drawWeight": 36,
-    "imageRef": "steam_golem"
-  },
-  {
-    "id": "ALP-003",
-    "extensionId": "core-alpha",
-    "name": "Cloud Archer",
+    "id": "aeh-m31-andromeda",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Galaxie d'Andromede",
     "rarityLabel": "Common",
     "drawWeight": 34,
-    "imageRef": "cloud_archer"
+    "imageRef": "m31_andromeda",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Galaxie d'Andromede",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M31",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Galaxie spirale",
+      "constellation": "Andromede",
+      "mainSeason": "Automne",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 0,
+          "minutes": 42,
+          "seconds": 44.3,
+          "label": "AD 00h 42m 44,3s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 41,
+          "arcMinutes": 16,
+          "arcSeconds": 9,
+          "label": "+41° 16′ 09″"
+        },
+        "label": "AD 00h 42m 44,3s ; Dec +41° 16′ 09″"
+      },
+      "shortDescription": "La grande galaxie d'Andromede est la voisine majeure de la Voie lactee. Visible a l'oeil nu sous un bon ciel, elle revele surtout un noyau brillant a l'oeil, tandis que les jumelles allongent nettement son halo.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 2540000.0,
+          "label": "2 540 000 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 220000.0,
+          "label": "220 000 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 6.0,
+          "fullMoonHeight": 2.0,
+          "angularWidth": {
+            "degrees": 3,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "3°00′00″"
+          },
+          "angularHeight": {
+            "degrees": 1,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "1°00′00″"
+          },
+          "label": "6,00 × 2,00 (3°00′00″ × 1°00′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -21.5,
+          "label": "-21.5"
+        }
+      }
+    }
   },
   {
-    "id": "ALP-004",
-    "extensionId": "core-alpha",
-    "name": "Rune Beetle",
-    "rarityLabel": "Rare",
-    "drawWeight": 18,
-    "imageRef": "rune_beetle"
-  },
-  {
-    "id": "ALP-005",
-    "extensionId": "core-alpha",
-    "name": "Aurora Drake",
-    "rarityLabel": "Rare",
-    "drawWeight": 12,
-    "imageRef": "aurora_drake"
-  },
-  {
-    "id": "ALP-006",
-    "extensionId": "core-alpha",
-    "name": "Nova Queen",
-    "rarityLabel": "Epic",
-    "drawWeight": 6,
-    "imageRef": "nova_queen"
-  },
-  {
-    "id": "MON-001",
-    "extensionId": "moon-dawn",
-    "name": "Moonlit Hare",
+    "id": "aeh-m42-orion-nebula",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Nebuleuse d'Orion",
     "rarityLabel": "Common",
-    "drawWeight": 38,
-    "imageRef": "moonlit_hare"
+    "drawWeight": 36,
+    "imageRef": "m42_orion_nebula",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Nebuleuse d'Orion",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M42",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Nebuleuse par emission et reflexion",
+      "constellation": "Orion",
+      "mainSeason": "Hiver",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 5,
+          "minutes": 35,
+          "seconds": 17.3,
+          "label": "AD 05h 35m 17,3s"
+        },
+        "declination": {
+          "sign": "-",
+          "degrees": 5,
+          "arcMinutes": 23,
+          "arcSeconds": 28,
+          "label": "-05° 23′ 28″"
+        },
+        "label": "AD 05h 35m 17,3s ; Dec -05° 23′ 28″"
+      },
+      "shortDescription": "Grande nebuleuse d'emission et de reflexion, M42 est une pouponniere stellaire tres accessible. A l'oeil nu elle parait laiteuse dans l'epee d'Orion, et aux jumelles son aile lumineuse devient evidente.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 1344.0,
+          "label": "1 344 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 24.0,
+          "label": "24 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 2.1,
+          "fullMoonHeight": 1.94,
+          "angularWidth": {
+            "degrees": 1,
+            "arcMinutes": 5,
+            "arcSeconds": 0,
+            "label": "1°05′00″"
+          },
+          "angularHeight": {
+            "degrees": 1,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "1°00′00″"
+          },
+          "label": "2,10 × 1,94 (1°05′00″ × 1°00′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -4.1,
+          "label": "-4.1"
+        }
+      }
+    }
   },
   {
-    "id": "MON-002",
-    "extensionId": "moon-dawn",
-    "name": "Dawn Scribe",
+    "id": "aeh-m45-pleiades",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Pleiades",
     "rarityLabel": "Common",
     "drawWeight": 35,
-    "imageRef": "dawn_scribe"
+    "imageRef": "m45_pleiades",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Pleiades",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M45",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Amas ouvert",
+      "constellation": "Taureau",
+      "mainSeason": "Hiver",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 3,
+          "minutes": 47,
+          "seconds": 24.0,
+          "label": "AD 03h 47m 24,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 24,
+          "arcMinutes": 7,
+          "arcSeconds": 0,
+          "label": "+24° 07′ 00″"
+        },
+        "label": "AD 03h 47m 24,0s ; Dec +24° 07′ 00″"
+      },
+      "shortDescription": "Visible a l'oeil nu comme un petit essaim bleute, M45 est un amas ouvert jeune et spectaculaire. Des jumelles de base montrent deja des dizaines d'etoiles fines dans un champ tres esthetique.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 444.0,
+          "label": "444 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 17.5,
+          "label": "17,5 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 3.67,
+          "fullMoonHeight": 3.67,
+          "angularWidth": {
+            "degrees": 1,
+            "arcMinutes": 50,
+            "arcSeconds": 0,
+            "label": "1°50′00″"
+          },
+          "angularHeight": {
+            "degrees": 1,
+            "arcMinutes": 50,
+            "arcSeconds": 0,
+            "label": "1°50′00″"
+          },
+          "label": "3,67 × 3,67 (1°50′00″ × 1°50′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -1.6,
+          "label": "-1.6"
+        }
+      }
+    }
   },
   {
-    "id": "MON-003",
-    "extensionId": "moon-dawn",
-    "name": "Mist Guardian",
+    "id": "aeh-orion-constellation",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Orion",
     "rarityLabel": "Common",
-    "drawWeight": 33,
-    "imageRef": "mist_guardian"
+    "drawWeight": 30,
+    "imageRef": "orion_constellation",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Orion",
+      "primaryCatalogName": "IAU",
+      "catalogNumber": "ORI",
+      "objectFamily": "constellation",
+      "objectTypeLabel": "Constellation",
+      "constellation": "Orion",
+      "mainSeason": "Hiver",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 5,
+          "minutes": 30,
+          "seconds": 0.0,
+          "label": "AD 05h 30m 00,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 5,
+          "arcMinutes": 0,
+          "arcSeconds": 0,
+          "label": "+05° 00′ 00″"
+        },
+        "label": "AD 05h 30m 00,0s ; Dec +05° 00′ 00″"
+      },
+      "shortDescription": "Avec sa ceinture tres reconnaissable, Orion est l'une des meilleures cartes d'apprentissage du ciel. Elle sert de tremplin vers M42, Betelgeuse, Rigel et Sirius.",
+      "details": {
+        "detailType": "constellation",
+        "visualSize": {
+          "fullMoonWidth": 16.0,
+          "fullMoonHeight": 15.0,
+          "angularWidth": {
+            "degrees": 8,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "8°00′00″"
+          },
+          "angularHeight": {
+            "degrees": 7,
+            "arcMinutes": 30,
+            "arcSeconds": 0,
+            "label": "7°30′00″"
+          },
+          "label": "16,00 × 15,00 (8°00′00″ × 7°30′00″)"
+        }
+      }
+    }
   },
   {
-    "id": "MON-004",
-    "extensionId": "moon-dawn",
-    "name": "Lunar Duelist",
+    "id": "aeh-betelgeuse",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Betelgeuse",
+    "rarityLabel": "Common",
+    "drawWeight": 24,
+    "imageRef": "betelgeuse",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Betelgeuse",
+      "primaryCatalogName": "Bayer",
+      "catalogNumber": "Alpha Orionis",
+      "objectFamily": "star",
+      "objectTypeLabel": "Supergeante rouge",
+      "constellation": "Orion",
+      "mainSeason": "Hiver",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 5,
+          "minutes": 55,
+          "seconds": 10.3,
+          "label": "AD 05h 55m 10,3s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 7,
+          "arcMinutes": 24,
+          "arcSeconds": 25,
+          "label": "+07° 24′ 25″"
+        },
+        "label": "AD 05h 55m 10,3s ; Dec +07° 24′ 25″"
+      },
+      "shortDescription": "Betelgeuse marque l'epaule d'Orion et change legerement d'eclat au fil du temps. Sa teinte orangee saute aux yeux et en fait une excellente etoile de comparaison pour apprendre les couleurs stellaires.",
+      "details": {
+        "detailType": "star",
+        "distance": {
+          "lightYears": 548.0,
+          "label": "548 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 0.00011,
+          "label": "0,00011 annee-lumiere"
+        },
+        "absoluteMagnitude": {
+          "value": -5.85,
+          "label": "-5.85"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-sirius",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Sirius",
+    "rarityLabel": "Common",
+    "drawWeight": 28,
+    "imageRef": "sirius",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Sirius",
+      "primaryCatalogName": "Bayer",
+      "catalogNumber": "Alpha Canis Majoris",
+      "objectFamily": "star",
+      "objectTypeLabel": "Etoile binaire",
+      "constellation": "Grand Chien",
+      "mainSeason": "Hiver",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 6,
+          "minutes": 45,
+          "seconds": 8.9,
+          "label": "AD 06h 45m 08,9s"
+        },
+        "declination": {
+          "sign": "-",
+          "degrees": 16,
+          "arcMinutes": 42,
+          "arcSeconds": 58,
+          "label": "-16° 42′ 58″"
+        },
+        "label": "AD 06h 45m 08,9s ; Dec -16° 42′ 58″"
+      },
+      "shortDescription": "Sirius accroche immediatement le regard par son eclat et sa scintillation, meme depuis un ciel imparfait. C'est une carte repere tres naturelle pour les debutants.",
+      "details": {
+        "detailType": "star",
+        "distance": {
+          "lightYears": 8.6,
+          "label": "8,6 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 0.00000025,
+          "label": "0,00000025 annee-lumiere"
+        },
+        "absoluteMagnitude": {
+          "value": 1.42,
+          "label": "1.42"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-m44-praesepe",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Amas de la Creche",
+    "rarityLabel": "Common",
+    "drawWeight": 32,
+    "imageRef": "m44_praesepe",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Amas de la Creche",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M44",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Amas ouvert",
+      "constellation": "Cancer",
+      "mainSeason": "Printemps",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 8,
+          "minutes": 40,
+          "seconds": 24.0,
+          "label": "AD 08h 40m 24,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 19,
+          "arcMinutes": 41,
+          "arcSeconds": 0,
+          "label": "+19° 41′ 00″"
+        },
+        "label": "AD 08h 40m 24,0s ; Dec +19° 41′ 00″"
+      },
+      "shortDescription": "M44 est un grand amas ouvert visible comme une petite tache floue a l'oeil nu sous un ciel noir. Aux jumelles, il se resout en une foule d'etoiles fines, ideal pour l'initiation.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 577.0,
+          "label": "577 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 23.0,
+          "label": "23 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 3.1,
+          "fullMoonHeight": 3.1,
+          "angularWidth": {
+            "degrees": 1,
+            "arcMinutes": 35,
+            "arcSeconds": 0,
+            "label": "1°35′00″"
+          },
+          "angularHeight": {
+            "degrees": 1,
+            "arcMinutes": 35,
+            "arcSeconds": 0,
+            "label": "1°35′00″"
+          },
+          "label": "3,10 × 3,10 (1°35′00″ × 1°35′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -4.1,
+          "label": "-4.1"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-double-cluster",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Double Amas de Persee",
+    "rarityLabel": "Common",
+    "drawWeight": 30,
+    "imageRef": "double_cluster",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Double Amas de Persee",
+      "primaryCatalogName": "Caldwell",
+      "catalogNumber": "C14",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Double amas ouvert",
+      "constellation": "Persee",
+      "mainSeason": "Automne",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 2,
+          "minutes": 21,
+          "seconds": 0.0,
+          "label": "AD 02h 21m 00,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 57,
+          "arcMinutes": 8,
+          "arcSeconds": 0,
+          "label": "+57° 08′ 00″"
+        },
+        "label": "AD 02h 21m 00,0s ; Dec +57° 08′ 00″"
+      },
+      "shortDescription": "Le Double Amas de Persee regroupe deux riches amas ouverts vus cote a cote. Sous un bon ciel il est deja devinable a l'oeil nu, et les jumelles le rendent spectaculaire.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 7500.0,
+          "label": "7 500 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 70.0,
+          "label": "70 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 2.0,
+          "fullMoonHeight": 1.0,
+          "angularWidth": {
+            "degrees": 1,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "1°00′00″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 30,
+            "arcSeconds": 0,
+            "label": "0°30′00″"
+          },
+          "label": "2,00 × 1,00 (1°00′00″ × 0°30′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -3.7,
+          "label": "-3.7"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-m13-hercules",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Grand amas d'Hercule",
+    "rarityLabel": "Uncommon",
+    "drawWeight": 18,
+    "imageRef": "m13_hercules",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Grand amas d'Hercule",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M13",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Amas globulaire",
+      "constellation": "Hercule",
+      "mainSeason": "Ete",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 16,
+          "minutes": 41,
+          "seconds": 41.0,
+          "label": "AD 16h 41m 41,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 36,
+          "arcMinutes": 28,
+          "arcSeconds": 0,
+          "label": "+36° 28′ 00″"
+        },
+        "label": "AD 16h 41m 41,0s ; Dec +36° 28′ 00″"
+      },
+      "shortDescription": "M13 est le plus celebre amas globulaire boreal. A l'oeil nu il demande un ciel de qualite, mais des jumelles montrent deja une petite boule laiteuse tres dense.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 25000.0,
+          "label": "25 000 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 145.0,
+          "label": "145 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 0.65,
+          "fullMoonHeight": 0.65,
+          "angularWidth": {
+            "degrees": 0,
+            "arcMinutes": 20,
+            "arcSeconds": 0,
+            "label": "0°20′00″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 20,
+            "arcSeconds": 0,
+            "label": "0°20′00″"
+          },
+          "label": "0,65 × 0,65 (0°20′00″ × 0°20′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -8.5,
+          "label": "-8.5"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-m27-dumbbell",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Nebuleuse Dumbbell",
+    "rarityLabel": "Uncommon",
+    "drawWeight": 16,
+    "imageRef": "m27_dumbbell",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Nebuleuse Dumbbell",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M27",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Nebuleuse planetaire",
+      "constellation": "Petit Renard",
+      "mainSeason": "Ete",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 19,
+          "minutes": 59,
+          "seconds": 36.0,
+          "label": "AD 19h 59m 36,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 22,
+          "arcMinutes": 43,
+          "arcSeconds": 0,
+          "label": "+22° 43′ 00″"
+        },
+        "label": "AD 19h 59m 36,0s ; Dec +22° 43′ 00″"
+      },
+      "shortDescription": "M27 est l'une des nebuleuses planetaires les plus faciles. Aux jumelles elle ressemble a une petite tache ovale douce, mieux visible sous un ciel bien noir.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 1360.0,
+          "label": "1 360 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 2.5,
+          "label": "2,5 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 0.27,
+          "fullMoonHeight": 0.18,
+          "angularWidth": {
+            "degrees": 0,
+            "arcMinutes": 8,
+            "arcSeconds": 0,
+            "label": "0°08′00″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 5,
+            "arcSeconds": 0,
+            "label": "0°05′00″"
+          },
+          "label": "0,27 × 0,18 (0°08′00″ × 0°05′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -0.5,
+          "label": "-0.5"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-m57-ring",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Nebuleuse de la Lyre",
     "rarityLabel": "Rare",
-    "drawWeight": 19,
-    "imageRef": "lunar_duelist"
+    "drawWeight": 8,
+    "imageRef": "m57_ring",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Nebuleuse de la Lyre",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M57",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Nebuleuse planetaire",
+      "constellation": "Lyre",
+      "mainSeason": "Ete",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 18,
+          "minutes": 53,
+          "seconds": 35.0,
+          "label": "AD 18h 53m 35,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 33,
+          "arcMinutes": 2,
+          "arcSeconds": 0,
+          "label": "+33° 02′ 00″"
+        },
+        "label": "AD 18h 53m 35,0s ; Dec +33° 02′ 00″"
+      },
+      "shortDescription": "Petite et delicate, M57 demande deja un peu de precision aux jumelles. C'est une excellente carte de progression pour passer des grands classiques aux objets compacts plus subtils.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 2300.0,
+          "label": "2 300 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 1.3,
+          "label": "1,3 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 0.05,
+          "fullMoonHeight": 0.04,
+          "angularWidth": {
+            "degrees": 0,
+            "arcMinutes": 1,
+            "arcSeconds": 24,
+            "label": "0°01′24″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 1,
+            "arcSeconds": 12,
+            "label": "0°01′12″"
+          },
+          "label": "0,05 × 0,04 (0°01′24″ × 0°01′12″)"
+        },
+        "absoluteMagnitude": {
+          "value": 0.7,
+          "label": "0.7"
+        }
+      }
+    }
   },
   {
-    "id": "MON-005",
-    "extensionId": "moon-dawn",
-    "name": "Sunrise Caller",
+    "id": "aeh-mizar-alcor",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Mizar et Alcor",
+    "rarityLabel": "Common",
+    "drawWeight": 20,
+    "imageRef": "mizar_alcor",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Mizar et Alcor",
+      "primaryCatalogName": "Bayer",
+      "catalogNumber": "Zeta UMa + 80 UMa",
+      "objectFamily": "star",
+      "objectTypeLabel": "Double visuelle",
+      "constellation": "Grande Ourse",
+      "mainSeason": "Printemps",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 13,
+          "minutes": 24,
+          "seconds": 0.0,
+          "label": "AD 13h 24m 00,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 54,
+          "arcMinutes": 56,
+          "arcSeconds": 0,
+          "label": "+54° 56′ 00″"
+        },
+        "label": "AD 13h 24m 00,0s ; Dec +54° 56′ 00″"
+      },
+      "shortDescription": "Visible a l'oeil nu sous un ciel correct, le duo Mizar-Alcor est une carte ideale pour apprendre a tester sa vue puis a verifier le systeme aux jumelles.",
+      "details": {
+        "detailType": "star",
+        "distance": {
+          "lightYears": 83.0,
+          "label": "83 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 0.007,
+          "label": "0,007 annee-lumiere"
+        },
+        "absoluteMagnitude": {
+          "value": 2.2,
+          "label": "2.2"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-albireo",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Albireo",
+    "rarityLabel": "Common",
+    "drawWeight": 18,
+    "imageRef": "albireo",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Albireo",
+      "primaryCatalogName": "Bayer",
+      "catalogNumber": "Beta Cygni",
+      "objectFamily": "star",
+      "objectTypeLabel": "Etoile double coloree",
+      "constellation": "Cygne",
+      "mainSeason": "Ete",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 19,
+          "minutes": 30,
+          "seconds": 43.0,
+          "label": "AD 19h 30m 43,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 27,
+          "arcMinutes": 58,
+          "arcSeconds": 0,
+          "label": "+27° 58′ 00″"
+        },
+        "label": "AD 19h 30m 43,0s ; Dec +27° 58′ 00″"
+      },
+      "shortDescription": "Aux jumelles, Albireo offre un duo de couleurs tres gratifiant. C'est une carte parfaite pour introduire la notion d'etoile double sans grosse difficulte technique.",
+      "details": {
+        "detailType": "star",
+        "distance": {
+          "lightYears": 420.0,
+          "label": "420 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 0.005,
+          "label": "0,005 annee-lumiere"
+        },
+        "absoluteMagnitude": {
+          "value": -2.3,
+          "label": "-2.3"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-algol",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Algol",
+    "rarityLabel": "Uncommon",
+    "drawWeight": 14,
+    "imageRef": "algol",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Algol",
+      "primaryCatalogName": "Bayer",
+      "catalogNumber": "Beta Persei",
+      "objectFamily": "star",
+      "objectTypeLabel": "Etoile variable eclipsante",
+      "constellation": "Persee",
+      "mainSeason": "Automne",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 3,
+          "minutes": 8,
+          "seconds": 10.0,
+          "label": "AD 03h 08m 10,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 40,
+          "arcMinutes": 57,
+          "arcSeconds": 20,
+          "label": "+40° 57′ 20″"
+        },
+        "label": "AD 03h 08m 10,0s ; Dec +40° 57′ 20″"
+      },
+      "shortDescription": "Algol est la variable ideale pour debuter : son eclat baisse de facon nette et reguliere. En comparant son brillant d'une nuit a l'autre avec les etoiles voisines, on comprend vite le principe des etoiles variables.",
+      "details": {
+        "detailType": "star",
+        "distance": {
+          "lightYears": 93.0,
+          "label": "93 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 0.0003,
+          "label": "0,0003 annee-lumiere"
+        },
+        "absoluteMagnitude": {
+          "value": -0.2,
+          "label": "-0.2"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-mira",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Mira",
     "rarityLabel": "Rare",
-    "drawWeight": 11,
-    "imageRef": "sunrise_caller"
+    "drawWeight": 8,
+    "imageRef": "mira",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Mira",
+      "primaryCatalogName": "Bayer",
+      "catalogNumber": "Omicron Ceti",
+      "objectFamily": "star",
+      "objectTypeLabel": "Etoile variable a longue periode",
+      "constellation": "Baleine",
+      "mainSeason": "Automne",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 2,
+          "minutes": 19,
+          "seconds": 21.0,
+          "label": "AD 02h 19m 21,0s"
+        },
+        "declination": {
+          "sign": "-",
+          "degrees": 2,
+          "arcMinutes": 58,
+          "arcSeconds": 40,
+          "label": "-02° 58′ 40″"
+        },
+        "label": "AD 02h 19m 21,0s ; Dec -02° 58′ 40″"
+      },
+      "shortDescription": "Mira change d'eclat sur plusieurs mois, au point de devenir parfois invisible a l'oeil nu puis de revenir franchement. C'est une excellente cible pour suivre le ciel dans la duree.",
+      "details": {
+        "detailType": "star",
+        "distance": {
+          "lightYears": 300.0,
+          "label": "300 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 0.001,
+          "label": "0,001 annee-lumiere"
+        },
+        "absoluteMagnitude": {
+          "value": -0.6,
+          "label": "-0.6"
+        }
+      }
+    }
   },
   {
-    "id": "MON-006",
-    "extensionId": "moon-dawn",
-    "name": "Eclipse Regent",
+    "id": "aeh-polaris",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Etoile Polaire",
+    "rarityLabel": "Common",
+    "drawWeight": 29,
+    "imageRef": "polaris",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Etoile Polaire",
+      "primaryCatalogName": "Bayer",
+      "catalogNumber": "Alpha Ursae Minoris",
+      "objectFamily": "star",
+      "objectTypeLabel": "Supergeante jaune",
+      "constellation": "Petite Ourse",
+      "mainSeason": "Toute annee",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 2,
+          "minutes": 31,
+          "seconds": 49.0,
+          "label": "AD 02h 31m 49,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 89,
+          "arcMinutes": 15,
+          "arcSeconds": 51,
+          "label": "+89° 15′ 51″"
+        },
+        "label": "AD 02h 31m 49,0s ; Dec +89° 15′ 51″"
+      },
+      "shortDescription": "La Polaire indique presque exactement le nord celeste. Elle n'est pas la plus brillante, mais c'est sans doute l'etoile la plus utile pour apprendre a s'orienter et comprendre la rotation du ciel.",
+      "details": {
+        "detailType": "star",
+        "distance": {
+          "lightYears": 433.0,
+          "label": "433 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 0.0005,
+          "label": "0,0005 annee-lumiere"
+        },
+        "absoluteMagnitude": {
+          "value": -3.6,
+          "label": "-3.6"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-cassiopeia",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Cassiopee",
+    "rarityLabel": "Common",
+    "drawWeight": 27,
+    "imageRef": "cassiopeia_constellation",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Cassiopee",
+      "primaryCatalogName": "IAU",
+      "catalogNumber": "CAS",
+      "objectFamily": "constellation",
+      "objectTypeLabel": "Constellation",
+      "constellation": "Cassiopee",
+      "mainSeason": "Automne",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 1,
+          "minutes": 0,
+          "seconds": 0.0,
+          "label": "AD 01h 00m 00,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 60,
+          "arcMinutes": 0,
+          "arcSeconds": 0,
+          "label": "+60° 00′ 00″"
+        },
+        "label": "AD 01h 00m 00,0s ; Dec +60° 00′ 00″"
+      },
+      "shortDescription": "Avec sa forme en W ou en M selon la saison, Cassiopee est un excellent repere boreal. Elle aide a retrouver la Polaire et ouvre la voie vers le Double Amas ou de riches champs de la Voie lactee.",
+      "details": {
+        "detailType": "constellation",
+        "visualSize": {
+          "fullMoonWidth": 10.0,
+          "fullMoonHeight": 7.0,
+          "angularWidth": {
+            "degrees": 5,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "5°00′00″"
+          },
+          "angularHeight": {
+            "degrees": 3,
+            "arcMinutes": 30,
+            "arcSeconds": 0,
+            "label": "3°30′00″"
+          },
+          "label": "10,00 × 7,00 (5°00′00″ × 3°30′00″)"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-cygne",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Cygne",
+    "rarityLabel": "Common",
+    "drawWeight": 26,
+    "imageRef": "cygnus_constellation",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Cygne",
+      "primaryCatalogName": "IAU",
+      "catalogNumber": "CYG",
+      "objectFamily": "constellation",
+      "objectTypeLabel": "Constellation",
+      "constellation": "Cygne",
+      "mainSeason": "Ete",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 20,
+          "minutes": 30,
+          "seconds": 0.0,
+          "label": "AD 20h 30m 00,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 42,
+          "arcMinutes": 0,
+          "arcSeconds": 0,
+          "label": "+42° 00′ 00″"
+        },
+        "label": "AD 20h 30m 00,0s ; Dec +42° 00′ 00″"
+      },
+      "shortDescription": "Le Cygne traverse la Voie lactee estivale sous la forme d'une grande croix. A l'oeil nu et surtout aux jumelles, c'est une region tres riche pour les promenades celestes.",
+      "details": {
+        "detailType": "constellation",
+        "visualSize": {
+          "fullMoonWidth": 12.0,
+          "fullMoonHeight": 9.0,
+          "angularWidth": {
+            "degrees": 6,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "6°00′00″"
+          },
+          "angularHeight": {
+            "degrees": 4,
+            "arcMinutes": 30,
+            "arcSeconds": 0,
+            "label": "4°30′00″"
+          },
+          "label": "12,00 × 9,00 (6°00′00″ × 4°30′00″)"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-gemeaux",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Gemeaux",
+    "rarityLabel": "Common",
+    "drawWeight": 24,
+    "imageRef": "gemini_constellation",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Gemeaux",
+      "primaryCatalogName": "IAU",
+      "catalogNumber": "GEM",
+      "objectFamily": "constellation",
+      "objectTypeLabel": "Constellation",
+      "constellation": "Gemeaux",
+      "mainSeason": "Hiver",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 7,
+          "minutes": 0,
+          "seconds": 0.0,
+          "label": "AD 07h 00m 00,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 22,
+          "arcMinutes": 0,
+          "arcSeconds": 0,
+          "label": "+22° 00′ 00″"
+        },
+        "label": "AD 07h 00m 00,0s ; Dec +22° 00′ 00″"
+      },
+      "shortDescription": "Les Gemeaux se reperent grace a Castor et Pollux. La constellation forme une belle porte d'entree vers l'observation hivernale et sert de repere pour plusieurs essaims d'etoiles filantes.",
+      "details": {
+        "detailType": "constellation",
+        "visualSize": {
+          "fullMoonWidth": 9.0,
+          "fullMoonHeight": 6.0,
+          "angularWidth": {
+            "degrees": 4,
+            "arcMinutes": 30,
+            "arcSeconds": 0,
+            "label": "4°30′00″"
+          },
+          "angularHeight": {
+            "degrees": 3,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "3°00′00″"
+          },
+          "label": "9,00 × 6,00 (4°30′00″ × 3°00′00″)"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-hyades",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Hyades",
+    "rarityLabel": "Common",
+    "drawWeight": 27,
+    "imageRef": "hyades",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Hyades",
+      "primaryCatalogName": "Melotte",
+      "catalogNumber": "Mel 25",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Amas ouvert",
+      "constellation": "Taureau",
+      "mainSeason": "Hiver",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 4,
+          "minutes": 27,
+          "seconds": 0.0,
+          "label": "AD 04h 27m 00,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 16,
+          "arcMinutes": 0,
+          "arcSeconds": 0,
+          "label": "+16° 00′ 00″"
+        },
+        "label": "AD 04h 27m 00,0s ; Dec +16° 00′ 00″"
+      },
+      "shortDescription": "Les Hyades dessinent la face du Taureau autour d'Aldebaran. Tres etendu, cet amas ne tient pas dans de fortes jumelles mais reste superbe a faible grossissement ou simplement a l'oeil nu.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 153.0,
+          "label": "153 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 75.0,
+          "label": "75 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 11.0,
+          "fullMoonHeight": 5.0,
+          "angularWidth": {
+            "degrees": 5,
+            "arcMinutes": 30,
+            "arcSeconds": 0,
+            "label": "5°30′00″"
+          },
+          "angularHeight": {
+            "degrees": 2,
+            "arcMinutes": 30,
+            "arcSeconds": 0,
+            "label": "2°30′00″"
+          },
+          "label": "11,00 × 5,00 (5°30′00″ × 2°30′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -2.7,
+          "label": "-2.7"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-coathanger",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Amas du Cintre",
+    "rarityLabel": "Uncommon",
+    "drawWeight": 13,
+    "imageRef": "coathanger",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Amas du Cintre",
+      "primaryCatalogName": "Collinder",
+      "catalogNumber": "Cr 399",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Asterisme",
+      "constellation": "Petit Renard",
+      "mainSeason": "Ete",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 19,
+          "minutes": 26,
+          "seconds": 0.0,
+          "label": "AD 19h 26m 00,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 20,
+          "arcMinutes": 11,
+          "arcSeconds": 0,
+          "label": "+20° 11′ 00″"
+        },
+        "label": "AD 19h 26m 00,0s ; Dec +20° 11′ 00″"
+      },
+      "shortDescription": "Le Cintre est un asterisme celebre aux jumelles : une ligne d'etoiles surmontee d'un crochet, comme un petit porte-manteau dans la Voie lactee d'ete.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 420.0,
+          "label": "420 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 30.0,
+          "label": "30 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 2.5,
+          "fullMoonHeight": 1.3,
+          "angularWidth": {
+            "degrees": 1,
+            "arcMinutes": 16,
+            "arcSeconds": 0,
+            "label": "1°16′00″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 40,
+            "arcSeconds": 0,
+            "label": "0°40′00″"
+          },
+          "label": "2,50 × 1,30 (1°16′00″ × 0°40′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -1.0,
+          "label": "-1"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-ngc7000",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Nebuleuse de l'Amerique du Nord",
+    "rarityLabel": "Rare",
+    "drawWeight": 6,
+    "imageRef": "ngc7000_north_america",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Nebuleuse de l'Amerique du Nord",
+      "primaryCatalogName": "NGC",
+      "catalogNumber": "NGC 7000",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Nebuleuse diffuse",
+      "constellation": "Cygne",
+      "mainSeason": "Ete",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 20,
+          "minutes": 58,
+          "seconds": 54.0,
+          "label": "AD 20h 58m 54,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 44,
+          "arcMinutes": 20,
+          "arcSeconds": 0,
+          "label": "+44° 20′ 00″"
+        },
+        "label": "AD 20h 58m 54,0s ; Dec +44° 20′ 00″"
+      },
+      "shortDescription": "Tres vaste mais peu contrastée, la nebuleuse de l'Amerique du Nord recompense surtout un ciel noir et de bonnes jumelles grand champ. C'est typiquement une carte de chasse patiente.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 2200.0,
+          "label": "2 200 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 100.0,
+          "label": "100 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 4.0,
+          "fullMoonHeight": 3.5,
+          "angularWidth": {
+            "degrees": 2,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "2°00′00″"
+          },
+          "angularHeight": {
+            "degrees": 1,
+            "arcMinutes": 45,
+            "arcSeconds": 0,
+            "label": "1°45′00″"
+          },
+          "label": "4,00 × 3,50 (2°00′00″ × 1°45′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -6.0,
+          "label": "-6"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-m81-bode",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Galaxie de Bode",
+    "rarityLabel": "Rare",
+    "drawWeight": 7,
+    "imageRef": "m81_bode",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Galaxie de Bode",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M81",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Galaxie spirale",
+      "constellation": "Grande Ourse",
+      "mainSeason": "Printemps",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 9,
+          "minutes": 55,
+          "seconds": 33.0,
+          "label": "AD 09h 55m 33,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 69,
+          "arcMinutes": 4,
+          "arcSeconds": 0,
+          "label": "+69° 04′ 00″"
+        },
+        "label": "AD 09h 55m 33,0s ; Dec +69° 04′ 00″"
+      },
+      "shortDescription": "M81 est une galaxie brillante du ciel boreal. Des jumelles sous un ciel noir montrent une tache ovale douce, et les observateurs confirmes peuvent la chercher avec M82 dans le meme secteur.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 11700000.0,
+          "label": "11 700 000 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 90000.0,
+          "label": "90 000 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 0.88,
+          "fullMoonHeight": 0.42,
+          "angularWidth": {
+            "degrees": 0,
+            "arcMinutes": 26,
+            "arcSeconds": 0,
+            "label": "0°26′00″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 12,
+            "arcSeconds": 30,
+            "label": "0°12′30″"
+          },
+          "label": "0,88 × 0,42 (0°26′00″ × 0°12′30″)"
+        },
+        "absoluteMagnitude": {
+          "value": -20.8,
+          "label": "-20.8"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-m82-cigar",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Galaxie du Cigare",
+    "rarityLabel": "Rare",
+    "drawWeight": 7,
+    "imageRef": "m82_cigar",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Galaxie du Cigare",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M82",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Galaxie irreguliere",
+      "constellation": "Grande Ourse",
+      "mainSeason": "Printemps",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 9,
+          "minutes": 55,
+          "seconds": 53.0,
+          "label": "AD 09h 55m 53,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 69,
+          "arcMinutes": 41,
+          "arcSeconds": 0,
+          "label": "+69° 41′ 00″"
+        },
+        "label": "AD 09h 55m 53,0s ; Dec +69° 41′ 00″"
+      },
+      "shortDescription": "M82 accompagne M81 dans une meme zone de jumelles. Plus mince et allongee, elle aide a comprendre que les galaxies peuvent montrer des formes tres differentes meme a faible grossissement.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 12000000.0,
+          "label": "12 000 000 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 37000.0,
+          "label": "37 000 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 0.37,
+          "fullMoonHeight": 0.15,
+          "angularWidth": {
+            "degrees": 0,
+            "arcMinutes": 11,
+            "arcSeconds": 0,
+            "label": "0°11′00″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 4,
+            "arcSeconds": 30,
+            "label": "0°04′30″"
+          },
+          "label": "0,37 × 0,15 (0°11′00″ × 0°04′30″)"
+        },
+        "absoluteMagnitude": {
+          "value": -20.0,
+          "label": "-20"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-m33-triangulum",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Galaxie du Triangle",
+    "rarityLabel": "Rare",
+    "drawWeight": 7,
+    "imageRef": "m33_triangulum",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Galaxie du Triangle",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M33",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Galaxie spirale",
+      "constellation": "Triangle",
+      "mainSeason": "Automne",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 1,
+          "minutes": 33,
+          "seconds": 51.0,
+          "label": "AD 01h 33m 51,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 30,
+          "arcMinutes": 39,
+          "arcSeconds": 37,
+          "label": "+30° 39′ 37″"
+        },
+        "label": "AD 01h 33m 51,0s ; Dec +30° 39′ 37″"
+      },
+      "shortDescription": "Immense mais de faible brillance de surface, M33 est un vrai test de transparence du ciel. Elle apprend vite qu'un grand objet n'est pas toujours un objet facile.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 2730000.0,
+          "label": "2 730 000 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 60000.0,
+          "label": "60 000 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 2.3,
+          "fullMoonHeight": 1.5,
+          "angularWidth": {
+            "degrees": 1,
+            "arcMinutes": 8,
+            "arcSeconds": 0,
+            "label": "1°08′00″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 45,
+            "arcSeconds": 0,
+            "label": "0°45′00″"
+          },
+          "label": "2,30 × 1,50 (1°08′00″ × 0°45′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -18.9,
+          "label": "-18.9"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-andromede-constellation",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Andromede",
+    "rarityLabel": "Common",
+    "drawWeight": 20,
+    "imageRef": "andromeda_constellation",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Andromede",
+      "primaryCatalogName": "IAU",
+      "catalogNumber": "AND",
+      "objectFamily": "constellation",
+      "objectTypeLabel": "Constellation",
+      "constellation": "Andromede",
+      "mainSeason": "Automne",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 1,
+          "minutes": 0,
+          "seconds": 0.0,
+          "label": "AD 01h 00m 00,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 38,
+          "arcMinutes": 0,
+          "arcSeconds": 0,
+          "label": "+38° 00′ 00″"
+        },
+        "label": "AD 01h 00m 00,0s ; Dec +38° 00′ 00″"
+      },
+      "shortDescription": "Andromede prolonge le grand carre de Pegase et mene naturellement vers M31. Sa forme allongee est moins evidente qu'Orion, mais elle apprend a lire les lignes d'etoiles.",
+      "details": {
+        "detailType": "constellation",
+        "visualSize": {
+          "fullMoonWidth": 11.0,
+          "fullMoonHeight": 5.0,
+          "angularWidth": {
+            "degrees": 5,
+            "arcMinutes": 30,
+            "arcSeconds": 0,
+            "label": "5°30′00″"
+          },
+          "angularHeight": {
+            "degrees": 2,
+            "arcMinutes": 30,
+            "arcSeconds": 0,
+            "label": "2°30′00″"
+          },
+          "label": "11,00 × 5,00 (5°30′00″ × 2°30′00″)"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-perseids",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Perseides",
+    "rarityLabel": "Common",
+    "drawWeight": 22,
+    "imageRef": "perseids_meteor_shower",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Perseides",
+      "primaryCatalogName": "IMO",
+      "catalogNumber": "PER",
+      "objectFamily": "sky_event",
+      "objectTypeLabel": "Essaim d'etoiles filantes",
+      "constellation": "Persee",
+      "mainSeason": "Ete",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 3,
+          "minutes": 4,
+          "seconds": 0.0,
+          "label": "AD 03h 04m 00,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 58,
+          "arcMinutes": 0,
+          "arcSeconds": 0,
+          "label": "+58° 00′ 00″"
+        },
+        "label": "AD 03h 04m 00,0s ; Dec +58° 00′ 00″"
+      },
+      "shortDescription": "Essaim d'etoiles filantes tres populaire et facile a tenter chaque ete, les Perseides sont une excellente porte d'entree vers l'observation sans instrument.",
+      "details": {
+        "detailType": "sky_event",
+        "visualSize": {
+          "fullMoonWidth": 180.0,
+          "fullMoonHeight": 90.0,
+          "angularWidth": {
+            "degrees": 90,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "90°00′00″"
+          },
+          "angularHeight": {
+            "degrees": 45,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "45°00′00″"
+          },
+          "label": "180,00 × 90,00 (90°00′00″ × 45°00′00″)"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-geminids",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Geminides",
+    "rarityLabel": "Uncommon",
+    "drawWeight": 16,
+    "imageRef": "geminids_meteor_shower",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Geminides",
+      "primaryCatalogName": "IMO",
+      "catalogNumber": "GEM",
+      "objectFamily": "sky_event",
+      "objectTypeLabel": "Essaim d'etoiles filantes",
+      "constellation": "Gemeaux",
+      "mainSeason": "Hiver",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 7,
+          "minutes": 30,
+          "seconds": 0.0,
+          "label": "AD 07h 30m 00,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 32,
+          "arcMinutes": 0,
+          "arcSeconds": 0,
+          "label": "+32° 00′ 00″"
+        },
+        "label": "AD 07h 30m 00,0s ; Dec +32° 00′ 00″"
+      },
+      "shortDescription": "Souvent tres productives mais moins confortables a observer en plein hiver, les Geminides melangent accessibilite et contrainte de saison.",
+      "details": {
+        "detailType": "sky_event",
+        "visualSize": {
+          "fullMoonWidth": 180.0,
+          "fullMoonHeight": 90.0,
+          "angularWidth": {
+            "degrees": 90,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "90°00′00″"
+          },
+          "angularHeight": {
+            "degrees": 45,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "45°00′00″"
+          },
+          "label": "180,00 × 90,00 (90°00′00″ × 45°00′00″)"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-aurora-borealis",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Aurore boreale",
     "rarityLabel": "Epic",
-    "drawWeight": 5,
-    "imageRef": "eclipse_regent"
+    "drawWeight": 2,
+    "imageRef": "aurora_borealis",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Aurore boreale",
+      "primaryCatalogName": "Geophysique",
+      "catalogNumber": "AUR-N",
+      "objectFamily": "sky_event",
+      "objectTypeLabel": "Phenomenes lumineux polaires",
+      "constellation": "Circumpolaire",
+      "mainSeason": "Automne-Hiver",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 0,
+          "minutes": 0,
+          "seconds": 0.0,
+          "label": "AD 00h 00m 00,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 70,
+          "arcMinutes": 0,
+          "arcSeconds": 0,
+          "label": "+70° 00′ 00″"
+        },
+        "label": "AD 00h 00m 00,0s ; Dec +70° 00′ 00″"
+      },
+      "shortDescription": "Observer une aurore boreale depuis la France reste exceptionnel, mais pas impossible lors de fortes tempetes geomagnetiques. C'est une carte evenement memorable, plus mythique que reguliere.",
+      "details": {
+        "detailType": "sky_event",
+        "visualSize": {
+          "fullMoonWidth": 120.0,
+          "fullMoonHeight": 60.0,
+          "angularWidth": {
+            "degrees": 60,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "60°00′00″"
+          },
+          "angularHeight": {
+            "degrees": 30,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "30°00′00″"
+          },
+          "label": "120,00 × 60,00 (60°00′00″ × 30°00′00″)"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-comet-46p",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Comete 46P/Wirtanen",
+    "rarityLabel": "Rare",
+    "drawWeight": 6,
+    "imageRef": "46p_wirtanen",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Comete 46P/Wirtanen",
+      "primaryCatalogName": "Periodic Comet",
+      "catalogNumber": "46P",
+      "objectFamily": "sky_event",
+      "objectTypeLabel": "Comete periodique",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 0,
+          "minutes": 0,
+          "seconds": 0.0,
+          "label": "AD 00h 00m 00,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 0,
+          "arcMinutes": 0,
+          "arcSeconds": 0,
+          "label": "+00° 00′ 00″"
+        },
+        "label": "AD 00h 00m 00,0s ; Dec +00° 00′ 00″"
+      },
+      "shortDescription": "Certaines cometes deviennent de belles cibles aux jumelles pendant quelques semaines. 46P/Wirtanen represente ce type de visiteuse accessible mais temporaire, a surveiller au bon moment.",
+      "details": {
+        "detailType": "sky_event"
+      }
+    }
+  },
+  {
+    "id": "aeh-comet-halley",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Comete de Halley",
+    "rarityLabel": "Epic",
+    "drawWeight": 1,
+    "imageRef": "halley_comet",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Comete de Halley",
+      "primaryCatalogName": "Periodic Comet",
+      "catalogNumber": "1P/Halley",
+      "objectFamily": "sky_event",
+      "objectTypeLabel": "Comete periodique",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 0,
+          "minutes": 0,
+          "seconds": 0.0,
+          "label": "AD 00h 00m 00,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 0,
+          "arcMinutes": 0,
+          "arcSeconds": 0,
+          "label": "+00° 00′ 00″"
+        },
+        "label": "AD 00h 00m 00,0s ; Dec +00° 00′ 00″"
+      },
+      "shortDescription": "La comete de Halley symbolise la grande visite exceptionnelle qu'on espere voir au moins une fois dans sa vie. C'est la carte evenement rare par excellence.",
+      "details": {
+        "detailType": "sky_event"
+      }
+    }
+  },
+  {
+    "id": "aeh-m41-open-cluster",
+    "extensionId": "astronomes-en-herbe",
+    "name": "M41",
+    "rarityLabel": "Common",
+    "drawWeight": 24,
+    "imageRef": "m41_open_cluster",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "M41",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M41",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Amas ouvert",
+      "constellation": "Grand Chien",
+      "mainSeason": "Hiver",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 6,
+          "minutes": 47,
+          "seconds": 0.0,
+          "label": "AD 06h 47m 00,0s"
+        },
+        "declination": {
+          "sign": "-",
+          "degrees": 20,
+          "arcMinutes": 44,
+          "arcSeconds": 0,
+          "label": "-20° 44′ 00″"
+        },
+        "label": "AD 06h 47m 00,0s ; Dec -20° 44′ 00″"
+      },
+      "shortDescription": "M41 est un amas ouvert facile a reperer juste sous Sirius. Aux jumelles il se montre comme un petit groupe serre et lumineux, parfait pour une premiere chasse aux amas d'hiver.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 2300.0,
+          "label": "2 300 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 25.0,
+          "label": "25 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 1.23,
+          "fullMoonHeight": 1.23,
+          "angularWidth": {
+            "degrees": 0,
+            "arcMinutes": 38,
+            "arcSeconds": 0,
+            "label": "0°38′00″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 38,
+            "arcSeconds": 0,
+            "label": "0°38′00″"
+          },
+          "label": "1,23 × 1,23 (0°38′00″ × 0°38′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -4.2,
+          "label": "-4.2"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-m47-open-cluster",
+    "extensionId": "astronomes-en-herbe",
+    "name": "M47",
+    "rarityLabel": "Common",
+    "drawWeight": 23,
+    "imageRef": "m47_open_cluster",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "M47",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M47",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Amas ouvert",
+      "constellation": "Poupe",
+      "mainSeason": "Hiver",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 7,
+          "minutes": 36,
+          "seconds": 35.0,
+          "label": "AD 07h 36m 35,0s"
+        },
+        "declination": {
+          "sign": "-",
+          "degrees": 14,
+          "arcMinutes": 30,
+          "arcSeconds": 0,
+          "label": "-14° 30′ 00″"
+        },
+        "label": "AD 07h 36m 35,0s ; Dec -14° 30′ 00″"
+      },
+      "shortDescription": "M47 est large, brillant et tres gratifiant aux jumelles. Son aspect aere permet de comprendre qu'un amas ouvert peut deja etre beau sans aucun grossissement fort.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 1600.0,
+          "label": "1 600 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 12.0,
+          "label": "12 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 0.97,
+          "fullMoonHeight": 0.97,
+          "angularWidth": {
+            "degrees": 0,
+            "arcMinutes": 30,
+            "arcSeconds": 0,
+            "label": "0°30′00″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 30,
+            "arcSeconds": 0,
+            "label": "0°30′00″"
+          },
+          "label": "0,97 × 0,97 (0°30′00″ × 0°30′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -4.4,
+          "label": "-4.4"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-m46-open-cluster",
+    "extensionId": "astronomes-en-herbe",
+    "name": "M46",
+    "rarityLabel": "Uncommon",
+    "drawWeight": 15,
+    "imageRef": "m46_open_cluster",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "M46",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M46",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Amas ouvert",
+      "constellation": "Poupe",
+      "mainSeason": "Hiver",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 7,
+          "minutes": 41,
+          "seconds": 46.0,
+          "label": "AD 07h 41m 46,0s"
+        },
+        "declination": {
+          "sign": "-",
+          "degrees": 14,
+          "arcMinutes": 49,
+          "arcSeconds": 0,
+          "label": "-14° 49′ 00″"
+        },
+        "label": "AD 07h 41m 46,0s ; Dec -14° 49′ 00″"
+      },
+      "shortDescription": "M46 parait plus laiteux et plus riche que M47 dans le meme secteur. Aux jumelles, il offre une tache granuleuse ideale pour comparer differents types d'amas ouverts.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 4900.0,
+          "label": "4 900 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 30.0,
+          "label": "30 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 0.87,
+          "fullMoonHeight": 0.87,
+          "angularWidth": {
+            "degrees": 0,
+            "arcMinutes": 27,
+            "arcSeconds": 0,
+            "label": "0°27′00″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 27,
+            "arcSeconds": 0,
+            "label": "0°27′00″"
+          },
+          "label": "0,87 × 0,87 (0°27′00″ × 0°27′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -6.1,
+          "label": "-6.1"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-m35-open-cluster",
+    "extensionId": "astronomes-en-herbe",
+    "name": "M35",
+    "rarityLabel": "Common",
+    "drawWeight": 24,
+    "imageRef": "m35_open_cluster",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "M35",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M35",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Amas ouvert",
+      "constellation": "Gemeaux",
+      "mainSeason": "Hiver",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 6,
+          "minutes": 9,
+          "seconds": 0.0,
+          "label": "AD 06h 09m 00,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 24,
+          "arcMinutes": 20,
+          "arcSeconds": 0,
+          "label": "+24° 20′ 00″"
+        },
+        "label": "AD 06h 09m 00,0s ; Dec +24° 20′ 00″"
+      },
+      "shortDescription": "M35 est un grand amas des Gemeaux, facile et elegant aux jumelles. Il remplit bien le champ et accompagne tres bien une seance de reperage hivernal.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 2800.0,
+          "label": "2 800 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 24.0,
+          "label": "24 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 0.9,
+          "fullMoonHeight": 0.9,
+          "angularWidth": {
+            "degrees": 0,
+            "arcMinutes": 28,
+            "arcSeconds": 0,
+            "label": "0°28′00″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 28,
+            "arcSeconds": 0,
+            "label": "0°28′00″"
+          },
+          "label": "0,90 × 0,90 (0°28′00″ × 0°28′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -4.2,
+          "label": "-4.2"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-m36-open-cluster",
+    "extensionId": "astronomes-en-herbe",
+    "name": "M36",
+    "rarityLabel": "Uncommon",
+    "drawWeight": 15,
+    "imageRef": "m36_open_cluster",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "M36",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M36",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Amas ouvert",
+      "constellation": "Cocher",
+      "mainSeason": "Hiver",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 5,
+          "minutes": 36,
+          "seconds": 18.0,
+          "label": "AD 05h 36m 18,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 34,
+          "arcMinutes": 8,
+          "arcSeconds": 0,
+          "label": "+34° 08′ 00″"
+        },
+        "label": "AD 05h 36m 18,0s ; Dec +34° 08′ 00″"
+      },
+      "shortDescription": "Petit mais brillant, M36 se detecte bien aux jumelles dans le Cocher. C'est une bonne cible pour apprendre a differencier les amas compacts des amas plus etendus.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 4100.0,
+          "label": "4 100 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 14.0,
+          "label": "14 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 0.39,
+          "fullMoonHeight": 0.39,
+          "angularWidth": {
+            "degrees": 0,
+            "arcMinutes": 12,
+            "arcSeconds": 0,
+            "label": "0°12′00″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 12,
+            "arcSeconds": 0,
+            "label": "0°12′00″"
+          },
+          "label": "0,39 × 0,39 (0°12′00″ × 0°12′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -3.7,
+          "label": "-3.7"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-m37-open-cluster",
+    "extensionId": "astronomes-en-herbe",
+    "name": "M37",
+    "rarityLabel": "Uncommon",
+    "drawWeight": 15,
+    "imageRef": "m37_open_cluster",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "M37",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M37",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Amas ouvert",
+      "constellation": "Cocher",
+      "mainSeason": "Hiver",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 5,
+          "minutes": 52,
+          "seconds": 18.0,
+          "label": "AD 05h 52m 18,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 32,
+          "arcMinutes": 33,
+          "arcSeconds": 0,
+          "label": "+32° 33′ 00″"
+        },
+        "label": "AD 05h 52m 18,0s ; Dec +32° 33′ 00″"
+      },
+      "shortDescription": "M37 est le plus riche des trois grands amas du Cocher. Aux jumelles il prend l'aspect d'une petite brume dense qui recompense un ciel bien noir.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 4500.0,
+          "label": "4 500 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 25.0,
+          "label": "25 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 0.77,
+          "fullMoonHeight": 0.77,
+          "angularWidth": {
+            "degrees": 0,
+            "arcMinutes": 24,
+            "arcSeconds": 0,
+            "label": "0°24′00″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 24,
+            "arcSeconds": 0,
+            "label": "0°24′00″"
+          },
+          "label": "0,77 × 0,77 (0°24′00″ × 0°24′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -5.0,
+          "label": "-5"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-m38-open-cluster",
+    "extensionId": "astronomes-en-herbe",
+    "name": "M38",
+    "rarityLabel": "Uncommon",
+    "drawWeight": 15,
+    "imageRef": "m38_open_cluster",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "M38",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M38",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Amas ouvert",
+      "constellation": "Cocher",
+      "mainSeason": "Hiver",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 5,
+          "minutes": 28,
+          "seconds": 42.0,
+          "label": "AD 05h 28m 42,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 35,
+          "arcMinutes": 51,
+          "arcSeconds": 0,
+          "label": "+35° 51′ 00″"
+        },
+        "label": "AD 05h 28m 42,0s ; Dec +35° 51′ 00″"
+      },
+      "shortDescription": "M38 complete tres bien le trio classique M36-M37-M38. Son apparence plus large et plus diffuse en fait une belle cible comparative pour progresser aux jumelles.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 4200.0,
+          "label": "4 200 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 25.0,
+          "label": "25 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 0.68,
+          "fullMoonHeight": 0.68,
+          "angularWidth": {
+            "degrees": 0,
+            "arcMinutes": 21,
+            "arcSeconds": 0,
+            "label": "0°21′00″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 21,
+            "arcSeconds": 0,
+            "label": "0°21′00″"
+          },
+          "label": "0,68 × 0,68 (0°21′00″ × 0°21′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -4.2,
+          "label": "-4.2"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-m6-butterfly",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Amas du Papillon",
+    "rarityLabel": "Uncommon",
+    "drawWeight": 14,
+    "imageRef": "m6_butterfly_cluster",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Amas du Papillon",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M6",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Amas ouvert",
+      "constellation": "Scorpion",
+      "mainSeason": "Ete",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 17,
+          "minutes": 40,
+          "seconds": 12.0,
+          "label": "AD 17h 40m 12,0s"
+        },
+        "declination": {
+          "sign": "-",
+          "degrees": 32,
+          "arcMinutes": 13,
+          "arcSeconds": 0,
+          "label": "-32° 13′ 00″"
+        },
+        "label": "AD 17h 40m 12,0s ; Dec -32° 13′ 00″"
+      },
+      "shortDescription": "M6 est un amas ouvert tres esthetique, mais assez bas depuis la France. Sous un horizon sud bien degage, il devient une belle recompense de debut d'ete aux jumelles.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 1600.0,
+          "label": "1 600 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 20.0,
+          "label": "20 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 0.81,
+          "fullMoonHeight": 0.81,
+          "angularWidth": {
+            "degrees": 0,
+            "arcMinutes": 25,
+            "arcSeconds": 0,
+            "label": "0°25′00″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 25,
+            "arcSeconds": 0,
+            "label": "0°25′00″"
+          },
+          "label": "0,81 × 0,81 (0°25′00″ × 0°25′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -5.6,
+          "label": "-5.6"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-m7-ptolemy",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Amas de Ptolemee",
+    "rarityLabel": "Uncommon",
+    "drawWeight": 12,
+    "imageRef": "m7_ptolemy_cluster",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Amas de Ptolemee",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M7",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Amas ouvert",
+      "constellation": "Scorpion",
+      "mainSeason": "Ete",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 17,
+          "minutes": 53,
+          "seconds": 51.0,
+          "label": "AD 17h 53m 51,0s"
+        },
+        "declination": {
+          "sign": "-",
+          "degrees": 34,
+          "arcMinutes": 49,
+          "arcSeconds": 0,
+          "label": "-34° 49′ 00″"
+        },
+        "label": "AD 17h 53m 51,0s ; Dec -34° 49′ 00″"
+      },
+      "shortDescription": "M7 est immense et spectaculaire en ciel sombre, mais reste tres bas pour les observateurs francais. Avec de petites jumelles et un bon horizon, son champ est magnifique.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 980.0,
+          "label": "980 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 25.0,
+          "label": "25 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 2.58,
+          "fullMoonHeight": 2.58,
+          "angularWidth": {
+            "degrees": 1,
+            "arcMinutes": 20,
+            "arcSeconds": 0,
+            "label": "1°20′00″"
+          },
+          "angularHeight": {
+            "degrees": 1,
+            "arcMinutes": 20,
+            "arcSeconds": 0,
+            "label": "1°20′00″"
+          },
+          "label": "2,58 × 2,58 (1°20′00″ × 1°20′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -4.8,
+          "label": "-4.8"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-m8-lagoon",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Nebuleuse de la Lagune",
+    "rarityLabel": "Uncommon",
+    "drawWeight": 16,
+    "imageRef": "m8_lagoon_nebula",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Nebuleuse de la Lagune",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M8",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Nebuleuse diffuse",
+      "constellation": "Sagittaire",
+      "mainSeason": "Ete",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 18,
+          "minutes": 3,
+          "seconds": 37.0,
+          "label": "AD 18h 03m 37,0s"
+        },
+        "declination": {
+          "sign": "-",
+          "degrees": 24,
+          "arcMinutes": 23,
+          "arcSeconds": 12,
+          "label": "-24° 23′ 12″"
+        },
+        "label": "AD 18h 03m 37,0s ; Dec -24° 23′ 12″"
+      },
+      "shortDescription": "M8 est l'une des nebuleuses les plus accessibles du ciel d'ete. Aux jumelles, elle se montre comme une large lueur diffuse dans un champ riche en etoiles du Sagittaire.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 4100.0,
+          "label": "4 100 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 110.0,
+          "label": "110 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 2.9,
+          "fullMoonHeight": 1.29,
+          "angularWidth": {
+            "degrees": 1,
+            "arcMinutes": 30,
+            "arcSeconds": 0,
+            "label": "1°30′00″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 40,
+            "arcSeconds": 0,
+            "label": "0°40′00″"
+          },
+          "label": "2,90 × 1,29 (1°30′00″ × 0°40′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -6.0,
+          "label": "-6"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-m16-eagle",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Nebuleuse de l'Aigle",
+    "rarityLabel": "Rare",
+    "drawWeight": 7,
+    "imageRef": "m16_eagle_nebula",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Nebuleuse de l'Aigle",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M16",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Amas ouvert et nebuleuse",
+      "constellation": "Serpent",
+      "mainSeason": "Ete",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 18,
+          "minutes": 18,
+          "seconds": 48.0,
+          "label": "AD 18h 18m 48,0s"
+        },
+        "declination": {
+          "sign": "-",
+          "degrees": 13,
+          "arcMinutes": 49,
+          "arcSeconds": 0,
+          "label": "-13° 49′ 00″"
+        },
+        "label": "AD 18h 18m 48,0s ; Dec -13° 49′ 00″"
+      },
+      "shortDescription": "M16 est surtout connue pour son amas ouvert et sa region nebulueuse. Aux jumelles, on retient surtout un petit groupe stellaire pose dans une zone diffuse de la Voie lactee.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 5700.0,
+          "label": "5 700 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 70.0,
+          "label": "70 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 1.13,
+          "fullMoonHeight": 0.9,
+          "angularWidth": {
+            "degrees": 0,
+            "arcMinutes": 35,
+            "arcSeconds": 0,
+            "label": "0°35′00″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 28,
+            "arcSeconds": 0,
+            "label": "0°28′00″"
+          },
+          "label": "1,13 × 0,90 (0°35′00″ × 0°28′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -6.4,
+          "label": "-6.4"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-m17-swan",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Nebuleuse du Cygne",
+    "rarityLabel": "Rare",
+    "drawWeight": 7,
+    "imageRef": "m17_swan_nebula",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Nebuleuse du Cygne",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M17",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Nebuleuse diffuse",
+      "constellation": "Sagittaire",
+      "mainSeason": "Ete",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 18,
+          "minutes": 20,
+          "seconds": 47.0,
+          "label": "AD 18h 20m 47,0s"
+        },
+        "declination": {
+          "sign": "-",
+          "degrees": 16,
+          "arcMinutes": 11,
+          "arcSeconds": 0,
+          "label": "-16° 11′ 00″"
+        },
+        "label": "AD 18h 20m 47,0s ; Dec -16° 11′ 00″"
+      },
+      "shortDescription": "M17 est une nebuleuse d'ete compacte mais bien contrastree. Aux jumelles, elle apparait comme une tache lumineuse allongee, ambitieuse mais tres formatrice.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 5500.0,
+          "label": "5 500 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 15.0,
+          "label": "15 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 0.65,
+          "fullMoonHeight": 0.48,
+          "angularWidth": {
+            "degrees": 0,
+            "arcMinutes": 20,
+            "arcSeconds": 0,
+            "label": "0°20′00″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 15,
+            "arcSeconds": 0,
+            "label": "0°15′00″"
+          },
+          "label": "0,65 × 0,48 (0°20′00″ × 0°15′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -5.8,
+          "label": "-5.8"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-m24-star-cloud",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Nuage stellaire du Sagittaire",
+    "rarityLabel": "Common",
+    "drawWeight": 25,
+    "imageRef": "m24_star_cloud",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Nuage stellaire du Sagittaire",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M24",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Nuage stellaire",
+      "constellation": "Sagittaire",
+      "mainSeason": "Ete",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 18,
+          "minutes": 16,
+          "seconds": 48.0,
+          "label": "AD 18h 16m 48,0s"
+        },
+        "declination": {
+          "sign": "-",
+          "degrees": 18,
+          "arcMinutes": 29,
+          "arcSeconds": 0,
+          "label": "-18° 29′ 00″"
+        },
+        "label": "AD 18h 16m 48,0s ; Dec -18° 29′ 00″"
+      },
+      "shortDescription": "M24 est une immense fenetre vers des champs stellaires tres denses de la Voie lactee. C'est une merveille aux jumelles, plus proche d'une promenade celeste que d'un objet isole.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 10000.0,
+          "label": "10 000 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 600.0,
+          "label": "600 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 3.87,
+          "fullMoonHeight": 1.94,
+          "angularWidth": {
+            "degrees": 2,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "2°00′00″"
+          },
+          "angularHeight": {
+            "degrees": 1,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "1°00′00″"
+          },
+          "label": "3,87 × 1,94 (2°00′00″ × 1°00′00″)"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-m11-wild-duck",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Amas du Canard Sauvage",
+    "rarityLabel": "Uncommon",
+    "drawWeight": 14,
+    "imageRef": "m11_wild_duck_cluster",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Amas du Canard Sauvage",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M11",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Amas ouvert",
+      "constellation": "Ecu",
+      "mainSeason": "Ete",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 18,
+          "minutes": 51,
+          "seconds": 6.0,
+          "label": "AD 18h 51m 06,0s"
+        },
+        "declination": {
+          "sign": "-",
+          "degrees": 6,
+          "arcMinutes": 16,
+          "arcSeconds": 0,
+          "label": "-06° 16′ 00″"
+        },
+        "label": "AD 18h 51m 06,0s ; Dec -06° 16′ 00″"
+      },
+      "shortDescription": "M11 est un amas compact et dense qui gagne beaucoup avec un ciel stable et sombre. Aux jumelles il apparait petit, mais deja intense et tres distinct du fond de la Voie lactee.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 6120.0,
+          "label": "6 120 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 20.0,
+          "label": "20 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 0.45,
+          "fullMoonHeight": 0.45,
+          "angularWidth": {
+            "degrees": 0,
+            "arcMinutes": 14,
+            "arcSeconds": 0,
+            "label": "0°14′00″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 14,
+            "arcSeconds": 0,
+            "label": "0°14′00″"
+          },
+          "label": "0,45 × 0,45 (0°14′00″ × 0°14′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -6.3,
+          "label": "-6.3"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-m39-open-cluster",
+    "extensionId": "astronomes-en-herbe",
+    "name": "M39",
+    "rarityLabel": "Common",
+    "drawWeight": 21,
+    "imageRef": "m39_open_cluster",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "M39",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M39",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Amas ouvert",
+      "constellation": "Cygne",
+      "mainSeason": "Ete",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 21,
+          "minutes": 31,
+          "seconds": 48.0,
+          "label": "AD 21h 31m 48,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 48,
+          "arcMinutes": 26,
+          "arcSeconds": 0,
+          "label": "+48° 26′ 00″"
+        },
+        "label": "AD 21h 31m 48,0s ; Dec +48° 26′ 00″"
+      },
+      "shortDescription": "M39 est un amas large et tres facile pour les jumelles. Son aspect aere et sa place au coeur du Cygne en font une excellente cible pour les debutants d'ete.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 1010.0,
+          "label": "1 010 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 7.0,
+          "label": "7 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 1.03,
+          "fullMoonHeight": 1.03,
+          "angularWidth": {
+            "degrees": 0,
+            "arcMinutes": 32,
+            "arcSeconds": 0,
+            "label": "0°32′00″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 32,
+            "arcSeconds": 0,
+            "label": "0°32′00″"
+          },
+          "label": "1,03 × 1,03 (0°32′00″ × 0°32′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -4.2,
+          "label": "-4.2"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-ngc752-open-cluster",
+    "extensionId": "astronomes-en-herbe",
+    "name": "NGC 752",
+    "rarityLabel": "Common",
+    "drawWeight": 20,
+    "imageRef": "ngc752_open_cluster",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "NGC 752",
+      "primaryCatalogName": "NGC",
+      "catalogNumber": "NGC 752",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Amas ouvert",
+      "constellation": "Andromede",
+      "mainSeason": "Automne",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 1,
+          "minutes": 57,
+          "seconds": 41.0,
+          "label": "AD 01h 57m 41,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 37,
+          "arcMinutes": 47,
+          "arcSeconds": 0,
+          "label": "+37° 47′ 00″"
+        },
+        "label": "AD 01h 57m 41,0s ; Dec +37° 47′ 00″"
+      },
+      "shortDescription": "NGC 752 est un grand amas ouvert parfois oublie, pourtant superbe aux jumelles. Il apprend a voir les objets discrets qui revelent tout leur charme avec l'experience.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 1300.0,
+          "label": "1 300 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 18.0,
+          "label": "18 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 1.61,
+          "fullMoonHeight": 1.61,
+          "angularWidth": {
+            "degrees": 0,
+            "arcMinutes": 50,
+            "arcSeconds": 0,
+            "label": "0°50′00″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 50,
+            "arcSeconds": 0,
+            "label": "0°50′00″"
+          },
+          "label": "1,61 × 1,61 (0°50′00″ × 0°50′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -2.5,
+          "label": "-2.5"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-m52-open-cluster",
+    "extensionId": "astronomes-en-herbe",
+    "name": "M52",
+    "rarityLabel": "Uncommon",
+    "drawWeight": 14,
+    "imageRef": "m52_open_cluster",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "M52",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M52",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Amas ouvert",
+      "constellation": "Cassiopee",
+      "mainSeason": "Automne",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 23,
+          "minutes": 24,
+          "seconds": 48.0,
+          "label": "AD 23h 24m 48,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 61,
+          "arcMinutes": 35,
+          "arcSeconds": 0,
+          "label": "+61° 35′ 00″"
+        },
+        "label": "AD 23h 24m 48,0s ; Dec +61° 35′ 00″"
+      },
+      "shortDescription": "M52 est un amas compact de Cassiopee, facile a attraper une fois le secteur connu. Aux jumelles, il se montre comme une petite concentration lumineuse bien detachee.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 4600.0,
+          "label": "4 600 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 19.0,
+          "label": "19 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 0.42,
+          "fullMoonHeight": 0.42,
+          "angularWidth": {
+            "degrees": 0,
+            "arcMinutes": 13,
+            "arcSeconds": 0,
+            "label": "0°13′00″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 13,
+            "arcSeconds": 0,
+            "label": "0°13′00″"
+          },
+          "label": "0,42 × 0,42 (0°13′00″ × 0°13′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -6.5,
+          "label": "-6.5"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-ngc457-owl-cluster",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Amas de la Chouette",
+    "rarityLabel": "Uncommon",
+    "drawWeight": 13,
+    "imageRef": "ngc457_owl_cluster",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Amas de la Chouette",
+      "primaryCatalogName": "NGC",
+      "catalogNumber": "NGC 457",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Amas ouvert",
+      "constellation": "Cassiopee",
+      "mainSeason": "Automne",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 1,
+          "minutes": 19,
+          "seconds": 6.0,
+          "label": "AD 01h 19m 06,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 58,
+          "arcMinutes": 20,
+          "arcSeconds": 0,
+          "label": "+58° 20′ 00″"
+        },
+        "label": "AD 01h 19m 06,0s ; Dec +58° 20′ 00″"
+      },
+      "shortDescription": "NGC 457 evoque pour beaucoup une chouette ou un petit personnage. Meme aux jumelles, sa forme generale est deja pedagogique et memorisable.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 7900.0,
+          "label": "7 900 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 20.0,
+          "label": "20 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 0.65,
+          "fullMoonHeight": 0.65,
+          "angularWidth": {
+            "degrees": 0,
+            "arcMinutes": 20,
+            "arcSeconds": 0,
+            "label": "0°20′00″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 20,
+            "arcSeconds": 0,
+            "label": "0°20′00″"
+          },
+          "label": "0,65 × 0,65 (0°20′00″ × 0°20′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -6.4,
+          "label": "-6.4"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-m22-globular",
+    "extensionId": "astronomes-en-herbe",
+    "name": "M22",
+    "rarityLabel": "Uncommon",
+    "drawWeight": 13,
+    "imageRef": "m22_globular_cluster",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "M22",
+      "primaryCatalogName": "Messier",
+      "catalogNumber": "M22",
+      "objectFamily": "deep_sky",
+      "objectTypeLabel": "Amas globulaire",
+      "constellation": "Sagittaire",
+      "mainSeason": "Ete",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 18,
+          "minutes": 36,
+          "seconds": 24.0,
+          "label": "AD 18h 36m 24,0s"
+        },
+        "declination": {
+          "sign": "-",
+          "degrees": 23,
+          "arcMinutes": 54,
+          "arcSeconds": 0,
+          "label": "-23° 54′ 00″"
+        },
+        "label": "AD 18h 36m 24,0s ; Dec -23° 54′ 00″"
+      },
+      "shortDescription": "M22 est l'un des meilleurs amas globulaires pour de simples jumelles. Il forme une boule douce et brillante, tres parlante pour comprendre la difference avec un amas ouvert.",
+      "details": {
+        "detailType": "deep_sky",
+        "distance": {
+          "lightYears": 10600.0,
+          "label": "10 600 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 100.0,
+          "label": "100 annees-lumiere"
+        },
+        "visualSize": {
+          "fullMoonWidth": 0.77,
+          "fullMoonHeight": 0.77,
+          "angularWidth": {
+            "degrees": 0,
+            "arcMinutes": 24,
+            "arcSeconds": 0,
+            "label": "0°24′00″"
+          },
+          "angularHeight": {
+            "degrees": 0,
+            "arcMinutes": 24,
+            "arcSeconds": 0,
+            "label": "0°24′00″"
+          },
+          "label": "0,77 × 0,77 (0°24′00″ × 0°24′00″)"
+        },
+        "absoluteMagnitude": {
+          "value": -8.5,
+          "label": "-8.5"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-almach",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Almach",
+    "rarityLabel": "Uncommon",
+    "drawWeight": 13,
+    "imageRef": "almach",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Almach",
+      "primaryCatalogName": "Bayer",
+      "catalogNumber": "Gamma Andromedae",
+      "objectFamily": "star",
+      "objectTypeLabel": "Etoile double coloree",
+      "constellation": "Andromede",
+      "mainSeason": "Automne",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 2,
+          "minutes": 3,
+          "seconds": 54.0,
+          "label": "AD 02h 03m 54,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 42,
+          "arcMinutes": 19,
+          "arcSeconds": 47,
+          "label": "+42° 19′ 47″"
+        },
+        "label": "AD 02h 03m 54,0s ; Dec +42° 19′ 47″"
+      },
+      "shortDescription": "Almach est une celebre double coloree d'Andromede. Elle s'apprecie mieux avec une petite lunette, mais sa position en fait deja un excellent repere pour parler des systemes doubles.",
+      "details": {
+        "detailType": "star",
+        "distance": {
+          "lightYears": 350.0,
+          "label": "350 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 0.0000118,
+          "label": "0,0000118 annee-lumiere"
+        },
+        "absoluteMagnitude": {
+          "value": -0.3,
+          "label": "-0.3"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-cor-caroli",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Cor Caroli",
+    "rarityLabel": "Uncommon",
+    "drawWeight": 12,
+    "imageRef": "cor_caroli",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Cor Caroli",
+      "primaryCatalogName": "Bayer",
+      "catalogNumber": "Alpha Canum Venaticorum",
+      "objectFamily": "star",
+      "objectTypeLabel": "Etoile double visuelle",
+      "constellation": "Chiens de Chasse",
+      "mainSeason": "Printemps",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 12,
+          "minutes": 56,
+          "seconds": 1.0,
+          "label": "AD 12h 56m 01,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 38,
+          "arcMinutes": 19,
+          "arcSeconds": 6,
+          "label": "+38° 19′ 06″"
+        },
+        "label": "AD 12h 56m 01,0s ; Dec +38° 19′ 06″"
+      },
+      "shortDescription": "Cor Caroli est une belle etoile de printemps, celebre aussi pour sa nature double. Aux jumelles elle attire facilement l'oeil dans une zone moins riche que la Voie lactee.",
+      "details": {
+        "detailType": "star",
+        "distance": {
+          "lightYears": 110.0,
+          "label": "110 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 0.000000412,
+          "label": "0,000000412 annee-lumiere"
+        },
+        "absoluteMagnitude": {
+          "value": 0.1,
+          "label": "0.1"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-capella",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Capella",
+    "rarityLabel": "Common",
+    "drawWeight": 22,
+    "imageRef": "capella",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Capella",
+      "primaryCatalogName": "Bayer",
+      "catalogNumber": "Alpha Aurigae",
+      "objectFamily": "star",
+      "objectTypeLabel": "Etoile multiple",
+      "constellation": "Cocher",
+      "mainSeason": "Hiver",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 5,
+          "minutes": 16,
+          "seconds": 41.0,
+          "label": "AD 05h 16m 41,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 45,
+          "arcMinutes": 59,
+          "arcSeconds": 53,
+          "label": "+45° 59′ 53″"
+        },
+        "label": "AD 05h 16m 41,0s ; Dec +45° 59′ 53″"
+      },
+      "shortDescription": "Capella domine le ciel d'hiver avec une teinte jaune creme tres nette. C'est un excellent phare saisonnier pour apprendre les grands alignements visibles a l'oeil nu.",
+      "details": {
+        "detailType": "star",
+        "distance": {
+          "lightYears": 42.9,
+          "label": "42,9 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 0.00000176,
+          "label": "0,00000176 annee-lumiere"
+        },
+        "absoluteMagnitude": {
+          "value": 0.3,
+          "label": "0.3"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-arcturus",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Arcturus",
+    "rarityLabel": "Common",
+    "drawWeight": 21,
+    "imageRef": "arcturus",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Arcturus",
+      "primaryCatalogName": "Bayer",
+      "catalogNumber": "Alpha Bootis",
+      "objectFamily": "star",
+      "objectTypeLabel": "Geante orange",
+      "constellation": "Bouvier",
+      "mainSeason": "Printemps",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 14,
+          "minutes": 15,
+          "seconds": 39.7,
+          "label": "AD 14h 15m 39,7s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 19,
+          "arcMinutes": 10,
+          "arcSeconds": 57,
+          "label": "+19° 10′ 57″"
+        },
+        "label": "AD 14h 15m 39,7s ; Dec +19° 10′ 57″"
+      },
+      "shortDescription": "Arcturus est l'une des grandes etoiles du printemps, chaude et orangee. Elle permet de travailler les couleurs stellaires et les reperages a partir du manche de la Grande Casserole.",
+      "details": {
+        "detailType": "star",
+        "distance": {
+          "lightYears": 36.7,
+          "label": "36,7 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 0.00000373,
+          "label": "0,00000373 annee-lumiere"
+        },
+        "absoluteMagnitude": {
+          "value": -0.3,
+          "label": "-0.3"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-deneb",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Deneb",
+    "rarityLabel": "Common",
+    "drawWeight": 21,
+    "imageRef": "deneb",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Deneb",
+      "primaryCatalogName": "Bayer",
+      "catalogNumber": "Alpha Cygni",
+      "objectFamily": "star",
+      "objectTypeLabel": "Supergeante blanche",
+      "constellation": "Cygne",
+      "mainSeason": "Ete",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 20,
+          "minutes": 41,
+          "seconds": 25.9,
+          "label": "AD 20h 41m 25,9s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 45,
+          "arcMinutes": 16,
+          "arcSeconds": 49,
+          "label": "+45° 16′ 49″"
+        },
+        "label": "AD 20h 41m 25,9s ; Dec +45° 16′ 49″"
+      },
+      "shortDescription": "Deneb ferme le Triangle d'Ete avec Vega et Altair. Brillante et bien placee, elle est ideale pour apprendre les grands asterismes visibles a l'oeil nu.",
+      "details": {
+        "detailType": "star",
+        "distance": {
+          "lightYears": 2600.0,
+          "label": "2 600 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 0.0000298,
+          "label": "0,0000298 annee-lumiere"
+        },
+        "absoluteMagnitude": {
+          "value": -8.4,
+          "label": "-8.4"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-altair",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Altair",
+    "rarityLabel": "Common",
+    "drawWeight": 21,
+    "imageRef": "altair",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Altair",
+      "primaryCatalogName": "Bayer",
+      "catalogNumber": "Alpha Aquilae",
+      "objectFamily": "star",
+      "objectTypeLabel": "Etoile blanche",
+      "constellation": "Aigle",
+      "mainSeason": "Ete",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 19,
+          "minutes": 50,
+          "seconds": 47.0,
+          "label": "AD 19h 50m 47,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 8,
+          "arcMinutes": 52,
+          "arcSeconds": 6,
+          "label": "+08° 52′ 06″"
+        },
+        "label": "AD 19h 50m 47,0s ; Dec +08° 52′ 06″"
+      },
+      "shortDescription": "Altair est l'une des trois etoiles du Triangle d'Ete. Tres facile a identifier, elle est parfaite pour debuter les reperages estivaux a l'oeil nu.",
+      "details": {
+        "detailType": "star",
+        "distance": {
+          "lightYears": 16.7,
+          "label": "16,7 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 0.000000265,
+          "label": "0,000000265 annee-lumiere"
+        },
+        "absoluteMagnitude": {
+          "value": 2.2,
+          "label": "2.2"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-delta-cephei",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Delta Cephei",
+    "rarityLabel": "Uncommon",
+    "drawWeight": 11,
+    "imageRef": "delta_cephei",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Delta Cephei",
+      "primaryCatalogName": "Bayer",
+      "catalogNumber": "Delta Cephei",
+      "objectFamily": "star",
+      "objectTypeLabel": "Etoile variable cepheide",
+      "constellation": "Cephee",
+      "mainSeason": "Automne",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 22,
+          "minutes": 29,
+          "seconds": 10.3,
+          "label": "AD 22h 29m 10,3s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 58,
+          "arcMinutes": 24,
+          "arcSeconds": 55,
+          "label": "+58° 24′ 55″"
+        },
+        "label": "AD 22h 29m 10,3s ; Dec +58° 24′ 55″"
+      },
+      "shortDescription": "Delta Cephei est l'etoile type des cepheides, dont l'eclat varie regulierement. Elle constitue une belle introduction a l'observation suivie des variables a l'oeil nu ou aux jumelles.",
+      "details": {
+        "detailType": "star",
+        "distance": {
+          "lightYears": 887.0,
+          "label": "887 annees-lumiere"
+        },
+        "realSize": {
+          "lightYears": 0.00000632,
+          "label": "0,00000632 annee-lumiere"
+        },
+        "absoluteMagnitude": {
+          "value": -3.5,
+          "label": "-3.5"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-grande-ourse",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Grande Ourse",
+    "rarityLabel": "Common",
+    "drawWeight": 29,
+    "imageRef": "ursa_major_constellation",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Grande Ourse",
+      "primaryCatalogName": "IAU",
+      "catalogNumber": "UMA",
+      "objectFamily": "constellation",
+      "objectTypeLabel": "Constellation",
+      "constellation": "Grande Ourse",
+      "mainSeason": "Printemps",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 11,
+          "minutes": 0,
+          "seconds": 0.0,
+          "label": "AD 11h 00m 00,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 56,
+          "arcMinutes": 0,
+          "arcSeconds": 0,
+          "label": "+56° 00′ 00″"
+        },
+        "label": "AD 11h 00m 00,0s ; Dec +56° 00′ 00″"
+      },
+      "shortDescription": "La Grande Ourse est sans doute la constellation-repere la plus utile de l'hemisphere nord. Elle sert a trouver la Polaire, Mizar et de nombreuses zones riches aux jumelles.",
+      "details": {
+        "detailType": "constellation",
+        "visualSize": {
+          "fullMoonWidth": 23.23,
+          "fullMoonHeight": 15.48,
+          "angularWidth": {
+            "degrees": 12,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "12°00′00″"
+          },
+          "angularHeight": {
+            "degrees": 8,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "8°00′00″"
+          },
+          "label": "23,23 × 15,48 (12°00′00″ × 8°00′00″)"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-lyre-constellation",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Lyre",
+    "rarityLabel": "Common",
+    "drawWeight": 18,
+    "imageRef": "lyra_constellation",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Lyre",
+      "primaryCatalogName": "IAU",
+      "catalogNumber": "LYR",
+      "objectFamily": "constellation",
+      "objectTypeLabel": "Constellation",
+      "constellation": "Lyre",
+      "mainSeason": "Ete",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 18,
+          "minutes": 50,
+          "seconds": 0.0,
+          "label": "AD 18h 50m 00,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 36,
+          "arcMinutes": 40,
+          "arcSeconds": 0,
+          "label": "+36° 40′ 00″"
+        },
+        "label": "AD 18h 50m 00,0s ; Dec +36° 40′ 00″"
+      },
+      "shortDescription": "Petite mais tres reconnaissable grace a Vega, la Lyre est une excellente constellation d'ete pour debuter. Elle mene aussi vers M57 et d'autres cibles ambitieuses.",
+      "details": {
+        "detailType": "constellation",
+        "visualSize": {
+          "fullMoonWidth": 7.74,
+          "fullMoonHeight": 5.81,
+          "angularWidth": {
+            "degrees": 4,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "4°00′00″"
+          },
+          "angularHeight": {
+            "degrees": 3,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "3°00′00″"
+          },
+          "label": "7,74 × 5,81 (4°00′00″ × 3°00′00″)"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-persee-constellation",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Persee",
+    "rarityLabel": "Common",
+    "drawWeight": 23,
+    "imageRef": "perseus_constellation",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Persee",
+      "primaryCatalogName": "IAU",
+      "catalogNumber": "PER",
+      "objectFamily": "constellation",
+      "objectTypeLabel": "Constellation",
+      "constellation": "Persee",
+      "mainSeason": "Automne",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 3,
+          "minutes": 10,
+          "seconds": 0.0,
+          "label": "AD 03h 10m 00,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 45,
+          "arcMinutes": 0,
+          "arcSeconds": 0,
+          "label": "+45° 00′ 00″"
+        },
+        "label": "AD 03h 10m 00,0s ; Dec +45° 00′ 00″"
+      },
+      "shortDescription": "Persee est une constellation tres riche qui accueille le Double Amas et les Perseides. A l'oeil nu comme aux jumelles, elle ouvre de belles promenades d'automne.",
+      "details": {
+        "detailType": "constellation",
+        "visualSize": {
+          "fullMoonWidth": 15.48,
+          "fullMoonHeight": 11.61,
+          "angularWidth": {
+            "degrees": 8,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "8°00′00″"
+          },
+          "angularHeight": {
+            "degrees": 6,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "6°00′00″"
+          },
+          "label": "15,48 × 11,61 (8°00′00″ × 6°00′00″)"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-leonids",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Leonides",
+    "rarityLabel": "Uncommon",
+    "drawWeight": 10,
+    "imageRef": "leonids_meteor_shower",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Leonides",
+      "primaryCatalogName": "IMO",
+      "catalogNumber": "LEO",
+      "objectFamily": "sky_event",
+      "objectTypeLabel": "Essaim d'etoiles filantes",
+      "constellation": "Lion",
+      "mainSeason": "Automne",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 10,
+          "minutes": 8,
+          "seconds": 0.0,
+          "label": "AD 10h 08m 00,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 22,
+          "arcMinutes": 0,
+          "arcSeconds": 0,
+          "label": "+22° 00′ 00″"
+        },
+        "label": "AD 10h 08m 00,0s ; Dec +22° 00′ 00″"
+      },
+      "shortDescription": "Les Leonides sont surtout celebres pour leurs sursauts historiques, mais restent un essaim tres pedagogique. Comme toujours pour les meteores, l'oeil nu reste l'instrument ideal.",
+      "details": {
+        "detailType": "sky_event",
+        "visualSize": {
+          "fullMoonWidth": 174.19,
+          "fullMoonHeight": 87.1,
+          "angularWidth": {
+            "degrees": 90,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "90°00′00″"
+          },
+          "angularHeight": {
+            "degrees": 45,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": "45°00′00″"
+          },
+          "label": "174,19 × 87,10 (90°00′00″ × 45°00′00″)"
+        }
+      }
+    }
+  },
+  {
+    "id": "aeh-comet-neowise",
+    "extensionId": "astronomes-en-herbe",
+    "name": "Comete C/2020 F3 NEOWISE",
+    "rarityLabel": "Epic",
+    "drawWeight": 2,
+    "imageRef": "comet_neowise",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Comete C/2020 F3 NEOWISE",
+      "primaryCatalogName": "Comet",
+      "catalogNumber": "C/2020 F3",
+      "objectFamily": "sky_event",
+      "objectTypeLabel": "Comete non periodique",
+      "constellation": "Variable",
+      "mainSeason": "Ete",
+      "coordinates": {
+        "rightAscension": {
+          "hours": 0,
+          "minutes": 0,
+          "seconds": 0.0,
+          "label": "AD 00h 00m 00,0s"
+        },
+        "declination": {
+          "sign": "+",
+          "degrees": 0,
+          "arcMinutes": 0,
+          "arcSeconds": 0,
+          "label": "+00° 00′ 00″"
+        },
+        "label": "AD 00h 00m 00,0s ; Dec +00° 00′ 00″"
+      },
+      "shortDescription": "NEOWISE represente la grande comete brillante qui devient soudain un sujet grand public. Une telle apparition merite une carte de tres forte rarete.",
+      "details": {
+        "detailType": "sky_event"
+      }
+    }
   }
 ]

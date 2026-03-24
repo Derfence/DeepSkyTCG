@@ -1,6 +1,8 @@
 package fr.aumombelli.gatcha.data
 
 import fr.aumombelli.gatcha.model.CardDefinition
+import fr.aumombelli.gatcha.model.AppStatusResponse
+import fr.aumombelli.gatcha.model.CatalogMetadata
 import fr.aumombelli.gatcha.model.CreateAccountRequest
 import fr.aumombelli.gatcha.model.CreateAccountResponse
 import fr.aumombelli.gatcha.model.DrawPackResponse
@@ -11,6 +13,7 @@ import fr.aumombelli.gatcha.model.OwnedCollection
 import fr.aumombelli.gatcha.model.PackCard
 import fr.aumombelli.gatcha.model.SessionCredentials
 import fr.aumombelli.gatcha.model.StoredSessionSnapshot
+import fr.aumombelli.gatcha.model.VariantProfile
 import kotlinx.coroutines.flow.StateFlow
 
 interface AuthGateway {
@@ -19,8 +22,28 @@ interface AuthGateway {
 }
 
 interface CatalogGateway {
+    suspend fun loadMetadata(): CatalogMetadata
     suspend fun loadExtensions(): List<ExtensionDefinition>
     suspend fun loadCards(): List<CardDefinition>
+    suspend fun loadVariantProfiles(): List<VariantProfile>
+}
+
+sealed interface AppCompatibilityState {
+    data object Checking : AppCompatibilityState
+    data object Compatible : AppCompatibilityState
+    data class Blocked(
+        val message: String,
+        val canRetry: Boolean = true,
+    ) : AppCompatibilityState
+}
+
+interface AppStatusGateway {
+    val state: StateFlow<AppCompatibilityState>
+    suspend fun verifyCompatibility()
+}
+
+interface AppStatusApi {
+    suspend fun fetchAppStatus(): AppStatusResponse
 }
 
 interface SessionGateway {

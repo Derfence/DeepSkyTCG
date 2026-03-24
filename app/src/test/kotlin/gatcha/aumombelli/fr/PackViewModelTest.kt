@@ -27,10 +27,10 @@ class PackViewModelTest {
     fun `refresh loads extensions collection and next draw timestamp`() = runTest {
         val catalogGateway = FakeCatalogGateway().apply {
             extensions = listOf(ExtensionDefinition("core-alpha", "Core Alpha", "cover"))
-            cards = listOf(CardDefinition("ALP-001", "core-alpha", "Spark Fox", "Common", 1, "fox"))
+            cards = listOf(testCardDefinition("ALP-001", extensionId = "core-alpha", name = "Nebuleuse d'Orion", imageRef = "fox"))
         }
         val collectionGateway = FakeCollectionGateway().apply {
-            cachedCollection = OwnedCollection(cards = mapOf("ALP-001" to 1))
+            cachedCollection = ownedCollectionOf("ALP-001" to 1)
         }
         val sessionGateway = FakeSessionGateway().apply {
             snapshot = StoredSessionSnapshot(nextDrawAt = "2026-03-24T00:00:00Z")
@@ -46,7 +46,7 @@ class PackViewModelTest {
 
         assertEquals(false, viewModel.uiState.value.isLoading)
         assertEquals("2026-03-24T00:00:00Z", viewModel.uiState.value.nextDrawAt)
-        assertEquals(1, viewModel.uiState.value.currentCollection.cards["ALP-001"])
+        assertEquals(1, viewModel.uiState.value.currentCollection.cards["ALP-001"]?.totalOwned)
     }
 
     @Test
@@ -57,13 +57,13 @@ class PackViewModelTest {
                 drawnAt = "2026-03-23T12:00:00Z",
                 nextDrawAt = "2026-03-24T00:00:00Z",
                 cards = listOf(
-                    PackCard("ALP-001", "Spark Fox", "Common", "spark_fox"),
-                    PackCard("ALP-002", "Steam Golem", "Common", "steam_golem"),
+                    testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
+                    testPackCard("ALP-002", "Galaxie d'Andromede", "Common", "steam_golem", skyQuality = "rural", skyQualityLabel = "Campagne"),
                 ),
             )
         }
         val collectionGateway = FakeCollectionGateway().apply {
-            cachedCollection = OwnedCollection(cards = mapOf("ALP-001" to 1))
+            cachedCollection = ownedCollectionOf("ALP-001" to 1)
         }
         val catalogGateway = FakeCatalogGateway().apply {
             extensions = listOf(ExtensionDefinition("core-alpha", "Core Alpha", "cover"))
@@ -82,8 +82,8 @@ class PackViewModelTest {
         advanceUntilIdle()
 
         assertEquals(PackEvent.NavigateToOpening, event.await())
-        assertEquals(2, viewModel.uiState.value.currentCollection.cards["ALP-001"])
-        assertEquals(1, viewModel.uiState.value.currentCollection.cards["ALP-002"])
+        assertEquals(2, viewModel.uiState.value.currentCollection.cards["ALP-001"]?.totalOwned)
+        assertEquals(1, viewModel.uiState.value.currentCollection.cards["ALP-002"]?.totalOwned)
         assertEquals("2026-03-24T00:00:00Z", viewModel.uiState.value.nextDrawAt)
     }
 
