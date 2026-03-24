@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
+import fr.aumombelli.gatcha.model.CardVariant
 import fr.aumombelli.gatcha.model.DrawPackResponse
 import fr.aumombelli.gatcha.model.PackCard
 import fr.aumombelli.gatcha.ui.screen.PackOpeningScreen
@@ -28,8 +29,20 @@ class PackOpeningScreenTest {
                         drawnAt = "2026-03-23T12:00:00Z",
                         nextDrawAt = "2026-03-24T00:00:00Z",
                         cards = listOf(
-                            PackCard("ALP-001", "Spark Fox", "Common", "spark_fox"),
-                            PackCard("ALP-002", "Steam Golem", "Common", "steam_golem"),
+                            PackCard(
+                                cardId = "ALP-001",
+                                name = "Nebuleuse d'Orion",
+                                rarityLabel = "Common",
+                                imageRef = "spark_fox",
+                                variant = CardVariant("city", "Ville", "standard", "Standard", false),
+                            ),
+                            PackCard(
+                                cardId = "ALP-002",
+                                name = "Galaxie d'Andromede",
+                                rarityLabel = "Common",
+                                imageRef = "steam_golem",
+                                variant = CardVariant("city", "Ville", "standard", "Standard", false),
+                            ),
                         ),
                     ),
                 ),
@@ -40,9 +53,9 @@ class PackOpeningScreenTest {
         composeRule.mainClock.advanceTimeBy(1400)
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithText("Spark Fox").assertIsDisplayed()
+        composeRule.onNodeWithText("Nebuleuse d'Orion").assertIsDisplayed()
         composeRule.onRoot().performTouchInput { swipeLeft() }
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Steam Golem").assertIsDisplayed()
+        composeRule.onNodeWithText("Galaxie d'Andromede").assertIsDisplayed()
     }
 }

@@ -7,7 +7,6 @@ import fr.aumombelli.gatcha.data.CollectionRepository
 import fr.aumombelli.gatcha.model.GetCollectionResponse
 import fr.aumombelli.gatcha.model.LoginResponse
 import fr.aumombelli.gatcha.model.OwnedCollection
-import fr.aumombelli.gatcha.model.PackCard
 import fr.aumombelli.gatcha.model.SaveCollectionResponse
 import fr.aumombelli.gatcha.model.SessionCredentials
 import fr.aumombelli.gatcha.model.mergePackCards
@@ -33,16 +32,18 @@ class CollectionRepositoryTest {
     }
 
     @Test
-    fun `merge cards increments owned counts`() {
-        val merged = OwnedCollection(cards = mapOf("ALP-001" to 1)).mergePackCards(
+    fun `merge cards increments owned counts by variant`() {
+        val merged = ownedCollectionOf("ALP-001" to 1).mergePackCards(
             cards = listOf(
-                PackCard("ALP-001", "Spark Fox", "Common", "spark_fox"),
-                PackCard("MON-006", "Eclipse Regent", "Epic", "eclipse_regent"),
+                testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "m42", skyQuality = "rural", skyQualityLabel = "Campagne"),
+                testPackCard("MON-006", "Sirius", "Epic", "sirius", finish = "holographic", finishLabel = "Holographique", isHolographic = true),
             ),
         )
 
-        assertEquals(2, merged.cards["ALP-001"])
-        assertEquals(1, merged.cards["MON-006"])
+        assertEquals(2, merged.cards["ALP-001"]?.totalOwned)
+        assertEquals(1, merged.cards["MON-006"]?.totalOwned)
+        assertEquals(2, merged.cards["ALP-001"]?.variants?.size)
+        assertEquals("holographic", merged.cards["MON-006"]?.variants?.single()?.finish)
     }
 
     @Test
@@ -56,14 +57,14 @@ class CollectionRepositoryTest {
 
         val collection = repository.getCachedCollectionOrEmpty()
 
-        assertEquals(3, collection.version)
-        assertEquals(emptyMap<String, Int>(), collection.cards)
+        assertEquals(4, collection.version)
+        assertEquals(emptyMap<String, Int>(), collection.cards.mapValues { it.value.totalOwned })
     }
 
     @Test
     fun `load collection from server migrates old blob and saves upgraded version`() = runTest {
         val oldBlob = CollectionCrypto.serializeAndEncrypt(
-            OwnedCollection(version = 1, cards = mapOf("ALP-001" to 1)),
+            serverOwnedCollectionCompat(version = 1, "ALP-001" to 1),
             PasswordHash,
         )
         val paths = mutableListOf<String>()
@@ -92,13 +93,13 @@ class CollectionRepositoryTest {
         val migrated = repository.loadCollectionFromServer()
 
         assertEquals(listOf("/api/collection/get", "/api/collection/save"), paths)
-        assertEquals(3, migrated.version)
+        assertEquals(4, migrated.version)
     }
 
     @Test
     fun `replay pending save migrates old blob before saving`() = runTest {
         val oldBlob = CollectionCrypto.serializeAndEncrypt(
-            OwnedCollection(version = 1, cards = mapOf("ALP-001" to 1)),
+            serverOwnedCollectionCompat(version = 1, "ALP-001" to 1),
             PasswordHash,
         )
         val sessionGateway = FakeSessionGateway().apply {
@@ -129,7 +130,7 @@ class CollectionRepositoryTest {
         assertEquals(listOf("/api/collection/save"), paths)
         val committedBlob = sessionGateway.committedCollections.single().first
         val migrated = CollectionCrypto.decryptAndDeserialize(committedBlob, PasswordHash)
-        assertEquals(3, migrated.version)
+        assertEquals(4, migrated.version)
     }
 
     private fun newRepository(
@@ -182,3 +183,6 @@ class CollectionRepositoryTest {
         const val PasswordHash = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
     }
 }
+
+private fun serverOwnedCollectionCompat(version: Int, vararg cards: Pair<String, Int>): OwnedCollection =
+    ownedCollectionOf(*cards).copy(version = version)

@@ -83,7 +83,14 @@ data class DrawPackApiResponse(
     val extensionId: String,
     val drawnAt: String,
     val nextDrawAt: String,
-    val cardIds: List<String>,
+    val cards: List<DrawnCardReference>,
+)
+
+@Serializable
+data class DrawnCardReference(
+    val cardId: String,
+    val skyQuality: String,
+    val finish: String,
 )
 
 @Serializable

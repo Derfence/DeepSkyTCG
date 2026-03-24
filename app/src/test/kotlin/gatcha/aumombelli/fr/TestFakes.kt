@@ -19,6 +19,7 @@ import fr.aumombelli.gatcha.model.OwnedCollection
 import fr.aumombelli.gatcha.model.PackCard
 import fr.aumombelli.gatcha.model.SessionCredentials
 import fr.aumombelli.gatcha.model.StoredSessionSnapshot
+import fr.aumombelli.gatcha.model.VariantProfile
 import fr.aumombelli.gatcha.model.mergePackCards
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -126,12 +127,14 @@ class FakeCollectionGateway : CollectionGateway {
 }
 
 class FakeCatalogGateway : CatalogGateway {
-    var metadata = CatalogMetadata(catalogVersion = 3)
+    var metadata = CatalogMetadata(catalogVersion = 4)
     var extensions: List<ExtensionDefinition> = emptyList()
     var cards: List<CardDefinition> = emptyList()
+    var variantProfiles: List<VariantProfile> = testVariantProfiles()
     var metadataFailure: Throwable? = null
     var extensionsFailure: Throwable? = null
     var cardsFailure: Throwable? = null
+    var variantProfilesFailure: Throwable? = null
 
     override suspend fun loadMetadata(): CatalogMetadata {
         metadataFailure?.let { throw it }
@@ -146,6 +149,11 @@ class FakeCatalogGateway : CatalogGateway {
     override suspend fun loadCards(): List<CardDefinition> {
         cardsFailure?.let { throw it }
         return cards
+    }
+
+    override suspend fun loadVariantProfiles(): List<VariantProfile> {
+        variantProfilesFailure?.let { throw it }
+        return variantProfiles
     }
 }
 

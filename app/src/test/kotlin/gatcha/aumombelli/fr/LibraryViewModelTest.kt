@@ -25,13 +25,13 @@ class LibraryViewModelTest {
                 ExtensionDefinition("moon-dawn", "Moon Dawn", "cover"),
             )
             cards = listOf(
-                CardDefinition("MON-002", "moon-dawn", "Dawn Scribe", "Common", 1, "dawn"),
-                CardDefinition("ALP-001", "core-alpha", "Spark Fox", "Common", 1, "fox"),
-                CardDefinition("MON-001", "moon-dawn", "Moonlit Hare", "Rare", 1, "hare"),
+                testCardDefinition("MON-002", extensionId = "moon-dawn", name = "M42", imageRef = "dawn"),
+                testCardDefinition("ALP-001", extensionId = "core-alpha", name = "Orion", imageRef = "fox"),
+                testCardDefinition("MON-001", extensionId = "moon-dawn", name = "M31", rarityLabel = "Rare", imageRef = "hare"),
             )
         }
         val collectionGateway = FakeCollectionGateway().apply {
-            cachedCollection = OwnedCollection(cards = mapOf("MON-001" to 2))
+            cachedCollection = ownedCollectionOf("MON-001" to 2)
         }
 
         val viewModel = LibraryViewModel(catalogGateway, collectionGateway)

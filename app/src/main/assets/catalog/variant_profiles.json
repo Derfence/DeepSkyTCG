@@ -1,0 +1,25 @@
+[
+  {
+    "id": "observation-default",
+    "skyQualities": [
+      { "code": "city", "label": "Ville" },
+      { "code": "suburban", "label": "Periurbain" },
+      { "code": "rural", "label": "Campagne" },
+      { "code": "mountain", "label": "Montagne" }
+    ],
+    "finishes": [
+      { "code": "standard", "label": "Standard", "isHolographic": false },
+      { "code": "holographic", "label": "Holographique", "isHolographic": true }
+    ],
+    "skyQualityWeights": [
+      { "code": "city", "weight": 40 },
+      { "code": "suburban", "weight": 30 },
+      { "code": "rural", "weight": 20 },
+      { "code": "mountain", "weight": 10 }
+    ],
+    "finishWeights": [
+      { "code": "standard", "weight": 88 },
+      { "code": "holographic", "weight": 12 }
+    ]
+  }
+]

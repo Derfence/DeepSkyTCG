@@ -6,6 +6,7 @@ import fr.aumombelli.gatcha.data.CatalogGateway
 import fr.aumombelli.gatcha.data.CollectionGateway
 import fr.aumombelli.gatcha.model.LibraryCardItem
 import fr.aumombelli.gatcha.model.LibrarySection
+import fr.aumombelli.gatcha.model.ownedCountFor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -46,7 +47,7 @@ class LibraryViewModel(
                             .map { card ->
                                 LibraryCardItem(
                                     definition = card,
-                                    ownedCount = collection.cards[card.id] ?: 0,
+                                    ownedCount = collection.ownedCountFor(card.id),
                                 )
                             },
                     )

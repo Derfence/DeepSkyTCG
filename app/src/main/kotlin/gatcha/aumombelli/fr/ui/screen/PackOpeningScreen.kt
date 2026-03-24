@@ -212,6 +212,14 @@ private fun RevealCard(
                 style = MaterialTheme.typography.titleMedium,
             )
             Text(
+                text = "Ciel: ${card.variant.skyQualityLabel}",
+                color = Color(0xFFD7E7F7),
+            )
+            Text(
+                text = "Finition: ${card.variant.finishLabel}",
+                color = if (card.variant.isHolographic) Color(0xFFFFE59A) else Color(0xFFD7E7F7),
+            )
+            Text(
                 text = "Swipe to reveal the next card",
                 color = Color(0xFFD7E7F7),
             )

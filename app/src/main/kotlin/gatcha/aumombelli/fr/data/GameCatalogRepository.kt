@@ -4,6 +4,7 @@ import android.content.Context
 import fr.aumombelli.gatcha.model.CardDefinition
 import fr.aumombelli.gatcha.model.CatalogMetadata
 import fr.aumombelli.gatcha.model.ExtensionDefinition
+import fr.aumombelli.gatcha.model.VariantProfile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
@@ -11,13 +12,18 @@ import kotlinx.serialization.json.Json
 class GameCatalogRepository(
     private val context: Context,
 ) : CatalogGateway {
-    private val json = Json { ignoreUnknownKeys = true }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        classDiscriminator = "detailType"
+    }
     @Volatile
     private var metadataCache: CatalogMetadata? = null
     @Volatile
     private var extensionsCache: List<ExtensionDefinition>? = null
     @Volatile
     private var cardsCache: List<CardDefinition>? = null
+    @Volatile
+    private var variantProfilesCache: List<VariantProfile>? = null
 
     override suspend fun loadMetadata(): CatalogMetadata = metadataCache ?: withContext(Dispatchers.IO) {
         metadataCache ?: context.assets.open("catalog/metadata.json").bufferedReader().use { reader ->
@@ -36,6 +42,13 @@ class GameCatalogRepository(
         cardsCache ?: context.assets.open("catalog/cards.json").bufferedReader().use { reader ->
             json.decodeFromString<List<CardDefinition>>(reader.readText()).sortedBy { it.id }
                 .also { cardsCache = it }
+        }
+    }
+
+    override suspend fun loadVariantProfiles(): List<VariantProfile> = withContext(Dispatchers.IO) {
+        variantProfilesCache ?: context.assets.open("catalog/variant_profiles.json").bufferedReader().use { reader ->
+            json.decodeFromString<List<VariantProfile>>(reader.readText()).sortedBy { it.id }
+                .also { variantProfilesCache = it }
         }
     }
 }

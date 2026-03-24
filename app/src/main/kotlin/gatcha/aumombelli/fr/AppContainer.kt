@@ -36,6 +36,7 @@ class AppContainer(
             val json = Json {
                 ignoreUnknownKeys = true
                 encodeDefaults = true
+                classDiscriminator = "detailType"
             }
 
             val httpClient = HttpClient(OkHttp) {

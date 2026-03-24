@@ -3,8 +3,8 @@ package fr.aumombelli.gatcha
 import fr.aumombelli.gatcha.data.AppCompatibilityController
 import fr.aumombelli.gatcha.model.CardDefinition
 import fr.aumombelli.gatcha.model.DrawPackApiResponse
+import fr.aumombelli.gatcha.model.DrawnCardReference
 import fr.aumombelli.gatcha.model.DrawPackRequest
-import fr.aumombelli.gatcha.model.PackCard
 import fr.aumombelli.gatcha.model.LoginRequest
 import fr.aumombelli.gatcha.model.LoginResponse
 import fr.aumombelli.gatcha.network.GameApiService
@@ -31,7 +31,7 @@ class GameApiServiceTest {
     @Test
     fun `login request includes catalog version header`() = runTest {
         val catalogGateway = FakeCatalogGateway().apply {
-            metadata = metadata.copy(catalogVersion = 3)
+            metadata = metadata.copy(catalogVersion = 4)
         }
         var capturedHeader: String? = null
         val engine = MockEngine { request ->
@@ -60,15 +60,15 @@ class GameApiServiceTest {
             ),
         )
 
-        assertEquals("3", capturedHeader)
+        assertEquals("4", capturedHeader)
     }
 
     @Test
-    fun `draw pack resolves card ids against local catalog`() = runTest {
+    fun `draw pack resolves card variants against local catalog`() = runTest {
         val catalogGateway = FakeCatalogGateway().apply {
             cards = listOf(
-                CardDefinition("ALP-001", "core-alpha", "Spark Fox", "Common", 40, "spark_fox"),
-                CardDefinition("ALP-002", "core-alpha", "Steam Golem", "Rare", 12, "steam_golem"),
+                testCardDefinition("ALP-001", name = "Nebuleuse d'Orion", rarityLabel = "Common", imageRef = "m42"),
+                testCardDefinition("ALP-002", name = "Galaxie d'Andromede", rarityLabel = "Rare", imageRef = "m31"),
             )
         }
         val engine = MockEngine {
@@ -76,10 +76,13 @@ class GameApiServiceTest {
                 content = json.encodeToString(
                     DrawPackApiResponse.serializer(),
                     DrawPackApiResponse(
-                        extensionId = "core-alpha",
+                        extensionId = "astronomes-en-herbe",
                         drawnAt = "2026-03-24T12:00:00Z",
                         nextDrawAt = "2026-03-25T00:00:00Z",
-                        cardIds = listOf("ALP-002", "ALP-001"),
+                        cards = listOf(
+                            DrawnCardReference("ALP-002", "rural", "holographic"),
+                            DrawnCardReference("ALP-001", "city", "standard"),
+                        ),
                     ),
                 ),
                 status = HttpStatusCode.OK,
@@ -101,14 +104,33 @@ class GameApiServiceTest {
             DrawPackRequest(
                 username = "alice",
                 passwordHash = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-                extensionId = "core-alpha",
+                extensionId = "astronomes-en-herbe",
             ),
         )
 
         assertEquals(
             listOf(
-                PackCard("ALP-002", "Steam Golem", "Rare", "steam_golem"),
-                PackCard("ALP-001", "Spark Fox", "Common", "spark_fox"),
+                testPackCard(
+                    "ALP-002",
+                    "Galaxie d'Andromede",
+                    "Rare",
+                    "m31",
+                    skyQuality = "rural",
+                    skyQualityLabel = "Campagne",
+                    finish = "holographic",
+                    finishLabel = "Holographique",
+                    isHolographic = true,
+                ),
+                testPackCard(
+                    "ALP-001",
+                    "Nebuleuse d'Orion",
+                    "Common",
+                    "m42",
+                    skyQuality = "city",
+                    skyQualityLabel = "Ville",
+                    finish = "standard",
+                    finishLabel = "Standard",
+                ),
             ),
             response.cards,
         )

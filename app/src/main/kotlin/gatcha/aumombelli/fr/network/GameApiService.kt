@@ -11,13 +11,17 @@ import fr.aumombelli.gatcha.model.CompatibilityStatuses
 import fr.aumombelli.gatcha.model.CreateAccountRequest
 import fr.aumombelli.gatcha.model.CreateAccountResponse
 import fr.aumombelli.gatcha.model.DrawPackApiResponse
+import fr.aumombelli.gatcha.model.DrawnCardReference
 import fr.aumombelli.gatcha.model.DrawPackRequest
 import fr.aumombelli.gatcha.model.DrawPackResponse
 import fr.aumombelli.gatcha.model.GetCollectionRequest
 import fr.aumombelli.gatcha.model.GetCollectionResponse
 import fr.aumombelli.gatcha.model.LoginRequest
 import fr.aumombelli.gatcha.model.LoginResponse
+import fr.aumombelli.gatcha.model.CardVariant
 import fr.aumombelli.gatcha.model.PackCard
+import fr.aumombelli.gatcha.model.requireFinishDefinition
+import fr.aumombelli.gatcha.model.requireSkyQualityDefinition
 import fr.aumombelli.gatcha.model.SaveCollectionRequest
 import fr.aumombelli.gatcha.model.SaveCollectionResponse
 import io.ktor.client.HttpClient
@@ -67,15 +71,28 @@ class GameApiService(
     suspend fun drawPack(request: DrawPackRequest): DrawPackResponse {
         val response: DrawPackApiResponse = post("/api/packs/draw", request)
         val cardsById = catalogGateway.loadCards().associateBy { it.id }
-        val cards = response.cardIds.map { cardId ->
-            val definition = checkNotNull(cardsById[cardId]) {
-                "Server returned an unknown card id for the current catalog: $cardId"
+        val variantProfilesById = catalogGateway.loadVariantProfiles().associateBy { it.id }
+        val cards = response.cards.map { drawnCard ->
+            val definition = checkNotNull(cardsById[drawnCard.cardId]) {
+                "Server returned an unknown card id for the current catalog: ${drawnCard.cardId}"
             }
+            val variantProfile = checkNotNull(variantProfilesById[definition.variantProfileId]) {
+                "Unknown variant profile '${definition.variantProfileId}' for card '${definition.id}'."
+            }
+            val skyQuality = variantProfile.requireSkyQualityDefinition(drawnCard.skyQuality)
+            val finish = variantProfile.requireFinishDefinition(drawnCard.finish)
             PackCard(
                 cardId = definition.id,
                 name = definition.name,
                 rarityLabel = definition.rarityLabel,
                 imageRef = definition.imageRef,
+                variant = CardVariant(
+                    skyQuality = skyQuality.code,
+                    skyQualityLabel = skyQuality.label,
+                    finish = finish.code,
+                    finishLabel = finish.label,
+                    isHolographic = finish.isHolographic,
+                ),
             )
         }
         return DrawPackResponse(

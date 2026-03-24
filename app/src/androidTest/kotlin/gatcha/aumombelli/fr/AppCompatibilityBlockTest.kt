@@ -23,6 +23,7 @@ import fr.aumombelli.gatcha.model.OwnedCollection
 import fr.aumombelli.gatcha.model.PackCard
 import fr.aumombelli.gatcha.model.SessionCredentials
 import fr.aumombelli.gatcha.model.StoredSessionSnapshot
+import fr.aumombelli.gatcha.model.VariantProfile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.junit.Assert.assertEquals
@@ -76,9 +77,10 @@ class AppCompatibilityBlockTest {
                 override suspend fun decodePendingPack(): DrawPackResponse? = null
             },
             catalogRepository = object : CatalogGateway {
-                override suspend fun loadMetadata(): CatalogMetadata = CatalogMetadata(catalogVersion = 3)
+                override suspend fun loadMetadata(): CatalogMetadata = CatalogMetadata(catalogVersion = 4)
                 override suspend fun loadExtensions(): List<ExtensionDefinition> = emptyList()
                 override suspend fun loadCards(): List<CardDefinition> = emptyList()
+                override suspend fun loadVariantProfiles(): List<VariantProfile> = emptyList()
             },
             apiService = object : AuthGateway {
                 override suspend fun createAccount(request: CreateAccountRequest): CreateAccountResponse =
@@ -89,8 +91,8 @@ class AppCompatibilityBlockTest {
             },
             appStatusRepository = appStatusGateway,
             collectionRepository = object : CollectionGateway {
-                override suspend fun loadCollectionFromServer(): OwnedCollection = OwnedCollection(version = 3)
-                override suspend fun getCachedCollectionOrEmpty(): OwnedCollection = OwnedCollection(version = 3)
+                override suspend fun loadCollectionFromServer(): OwnedCollection = OwnedCollection(version = 4)
+                override suspend fun getCachedCollectionOrEmpty(): OwnedCollection = OwnedCollection(version = 4)
                 override suspend fun saveCollection(collection: OwnedCollection): String = "2026-03-24T12:00:00Z"
                 override suspend fun replayPendingSaveIfNeeded(): Boolean = false
                 override fun mergeCards(collection: OwnedCollection, cards: List<PackCard>): OwnedCollection = collection

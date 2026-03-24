@@ -46,7 +46,7 @@ class LoginViewModelTest {
         }
         val sessionGateway = FakeSessionGateway()
         val collectionGateway = FakeCollectionGateway().apply {
-            serverCollection = fr.aumombelli.gatcha.model.OwnedCollection(cards = mapOf("ALP-001" to 1))
+            serverCollection = ownedCollectionOf("ALP-001" to 1)
         }
         val viewModel = LoginViewModel(authGateway, sessionGateway, collectionGateway)
 

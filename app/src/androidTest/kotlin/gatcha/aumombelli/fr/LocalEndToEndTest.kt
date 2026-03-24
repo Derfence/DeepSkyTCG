@@ -47,8 +47,8 @@ class LocalEndToEndTest {
 
     private fun openPackAndCaptureVisibleCardId(): String {
         composeRule.onNodeWithTag("menu-open-pack").performClick()
-        composeRule.waitUntilTagExists("pack-draw-core-alpha", timeoutMillis = 10_000)
-        composeRule.onNodeWithTag("pack-draw-core-alpha").performClick()
+        composeRule.waitUntilTagExists("pack-draw-${LocalE2eConfig.extensionId}", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("pack-draw-${LocalE2eConfig.extensionId}").performClick()
 
         composeRule.waitUntilTagExists("pack-opening-title", timeoutMillis = 20_000)
         composeRule.waitUntilTagExists("pack-opening-card-id", timeoutMillis = 10_000)
@@ -67,7 +67,7 @@ class LocalEndToEndTest {
 
     private fun verifyLibraryContainsDrawnCard(cardId: String) {
         composeRule.onNodeWithTag("menu-library").performClick()
-        composeRule.waitUntilTagExists("library-section-core-alpha", timeoutMillis = 10_000)
+        composeRule.waitUntilTagExists("library-section-${LocalE2eConfig.extensionId}", timeoutMillis = 10_000)
 
         composeRule.onNodeWithTag("library-card-$cardId").assertIsDisplayed()
         composeRule.onNodeWithTag("library-owned-$cardId").assertTextContains("Owned:", substring = true)
@@ -78,9 +78,9 @@ class LocalEndToEndTest {
 
     private fun verifyCooldownIsVisible() {
         composeRule.onNodeWithTag("menu-open-pack").performClick()
-        composeRule.waitUntilTagExists("pack-draw-core-alpha", timeoutMillis = 10_000)
+        composeRule.waitUntilTagExists("pack-draw-${LocalE2eConfig.extensionId}", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("pack-status").assertTextContains("Prochain tirage disponible", substring = true)
-        composeRule.onNodeWithTag("pack-draw-core-alpha").assertIsNotEnabled()
+        composeRule.onNodeWithTag("pack-draw-${LocalE2eConfig.extensionId}").assertIsNotEnabled()
         composeRule.onNodeWithTag("pack-back").performClick()
         composeRule.waitUntilTagExists("menu-logout", timeoutMillis = 10_000)
     }
