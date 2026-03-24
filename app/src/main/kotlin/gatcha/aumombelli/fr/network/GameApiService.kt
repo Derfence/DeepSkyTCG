@@ -10,12 +10,14 @@ import fr.aumombelli.gatcha.model.AppStatusResponse
 import fr.aumombelli.gatcha.model.CompatibilityStatuses
 import fr.aumombelli.gatcha.model.CreateAccountRequest
 import fr.aumombelli.gatcha.model.CreateAccountResponse
+import fr.aumombelli.gatcha.model.DrawPackApiResponse
 import fr.aumombelli.gatcha.model.DrawPackRequest
 import fr.aumombelli.gatcha.model.DrawPackResponse
 import fr.aumombelli.gatcha.model.GetCollectionRequest
 import fr.aumombelli.gatcha.model.GetCollectionResponse
 import fr.aumombelli.gatcha.model.LoginRequest
 import fr.aumombelli.gatcha.model.LoginResponse
+import fr.aumombelli.gatcha.model.PackCard
 import fr.aumombelli.gatcha.model.SaveCollectionRequest
 import fr.aumombelli.gatcha.model.SaveCollectionResponse
 import io.ktor.client.HttpClient
@@ -62,8 +64,27 @@ class GameApiService(
     suspend fun saveCollection(request: SaveCollectionRequest): SaveCollectionResponse =
         post("/api/collection/save", request)
 
-    suspend fun drawPack(request: DrawPackRequest): DrawPackResponse =
-        post("/api/packs/draw", request)
+    suspend fun drawPack(request: DrawPackRequest): DrawPackResponse {
+        val response: DrawPackApiResponse = post("/api/packs/draw", request)
+        val cardsById = catalogGateway.loadCards().associateBy { it.id }
+        val cards = response.cardIds.map { cardId ->
+            val definition = checkNotNull(cardsById[cardId]) {
+                "Server returned an unknown card id for the current catalog: $cardId"
+            }
+            PackCard(
+                cardId = definition.id,
+                name = definition.name,
+                rarityLabel = definition.rarityLabel,
+                imageRef = definition.imageRef,
+            )
+        }
+        return DrawPackResponse(
+            extensionId = response.extensionId,
+            drawnAt = response.drawnAt,
+            nextDrawAt = response.nextDrawAt,
+            cards = cards,
+        )
+    }
 
     private suspend inline fun <reified T> post(
         path: String,

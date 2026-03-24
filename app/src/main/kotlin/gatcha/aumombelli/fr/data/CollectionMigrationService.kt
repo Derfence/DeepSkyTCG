@@ -30,6 +30,7 @@ class CollectionMigrationService(
     private fun migrateStep(collection: OwnedCollection): OwnedCollection =
         when (collection.version) {
             1 -> collection.copy(version = 2, cards = collection.cards.toSortedMap())
+            2 -> collection.copy(version = 3, cards = collection.cards.toSortedMap())
             else -> throw IllegalStateException(
                 "No migration path exists for collection version ${collection.version}.",
             )

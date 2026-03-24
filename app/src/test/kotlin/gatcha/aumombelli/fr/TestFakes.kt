@@ -126,7 +126,7 @@ class FakeCollectionGateway : CollectionGateway {
 }
 
 class FakeCatalogGateway : CatalogGateway {
-    var metadata = CatalogMetadata(catalogVersion = 2)
+    var metadata = CatalogMetadata(catalogVersion = 3)
     var extensions: List<ExtensionDefinition> = emptyList()
     var cards: List<CardDefinition> = emptyList()
     var metadataFailure: Throwable? = null

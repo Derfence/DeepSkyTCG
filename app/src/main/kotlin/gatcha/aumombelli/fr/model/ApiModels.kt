@@ -79,6 +79,14 @@ data class DrawPackRequest(
 )
 
 @Serializable
+data class DrawPackApiResponse(
+    val extensionId: String,
+    val drawnAt: String,
+    val nextDrawAt: String,
+    val cardIds: List<String>,
+)
+
+@Serializable
 data class DrawPackResponse(
     val extensionId: String,
     val drawnAt: String,
