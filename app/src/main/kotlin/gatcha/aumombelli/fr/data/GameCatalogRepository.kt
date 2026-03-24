@@ -2,6 +2,7 @@ package fr.aumombelli.gatcha.data
 
 import android.content.Context
 import fr.aumombelli.gatcha.model.CardDefinition
+import fr.aumombelli.gatcha.model.CatalogMetadata
 import fr.aumombelli.gatcha.model.ExtensionDefinition
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -11,16 +12,30 @@ class GameCatalogRepository(
     private val context: Context,
 ) : CatalogGateway {
     private val json = Json { ignoreUnknownKeys = true }
+    @Volatile
+    private var metadataCache: CatalogMetadata? = null
+    @Volatile
+    private var extensionsCache: List<ExtensionDefinition>? = null
+    @Volatile
+    private var cardsCache: List<CardDefinition>? = null
+
+    override suspend fun loadMetadata(): CatalogMetadata = metadataCache ?: withContext(Dispatchers.IO) {
+        metadataCache ?: context.assets.open("catalog/metadata.json").bufferedReader().use { reader ->
+            json.decodeFromString<CatalogMetadata>(reader.readText()).also { metadataCache = it }
+        }
+    }
 
     override suspend fun loadExtensions(): List<ExtensionDefinition> = withContext(Dispatchers.IO) {
-        context.assets.open("catalog/extensions.json").bufferedReader().use { reader ->
+        extensionsCache ?: context.assets.open("catalog/extensions.json").bufferedReader().use { reader ->
             json.decodeFromString<List<ExtensionDefinition>>(reader.readText()).sortedBy { it.id }
+                .also { extensionsCache = it }
         }
     }
 
     override suspend fun loadCards(): List<CardDefinition> = withContext(Dispatchers.IO) {
-        context.assets.open("catalog/cards.json").bufferedReader().use { reader ->
+        cardsCache ?: context.assets.open("catalog/cards.json").bufferedReader().use { reader ->
             json.decodeFromString<List<CardDefinition>>(reader.readText()).sortedBy { it.id }
+                .also { cardsCache = it }
         }
     }
 }

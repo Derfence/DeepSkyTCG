@@ -2,6 +2,25 @@ package fr.aumombelli.gatcha.model
 
 import kotlinx.serialization.Serializable
 
+object CompatibilityStatuses {
+    const val Compatible = "compatible"
+    const val ClientUpdateRequired = "client_update_required"
+    const val ServerUpdatePending = "server_update_pending"
+}
+
+@Serializable
+data class AppStatusRequest(
+    val catalogVersion: Int,
+)
+
+@Serializable
+data class AppStatusResponse(
+    val serverCatalogVersion: Int,
+    val minimumSupportedCatalogVersion: Int,
+    val compatibilityStatus: String,
+    val message: String? = null,
+)
+
 @Serializable
 data class CreateAccountRequest(
     val username: String,

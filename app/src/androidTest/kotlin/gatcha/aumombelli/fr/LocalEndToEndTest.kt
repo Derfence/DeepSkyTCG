@@ -32,6 +32,7 @@ class LocalEndToEndTest {
     }
 
     private fun createAccountAndReachMainMenu() {
+        composeRule.waitUntilTagExists("login-toggle-mode", timeoutMillis = 20_000)
         composeRule.onNodeWithTag("login-toggle-mode").performClick()
         composeRule.waitUntilTagExists("login-email")
 

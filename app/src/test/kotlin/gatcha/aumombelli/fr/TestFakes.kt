@@ -1,10 +1,13 @@
 package fr.aumombelli.gatcha
 
+import fr.aumombelli.gatcha.data.AppCompatibilityState
+import fr.aumombelli.gatcha.data.AppStatusGateway
 import fr.aumombelli.gatcha.data.AuthGateway
 import fr.aumombelli.gatcha.data.CatalogGateway
 import fr.aumombelli.gatcha.data.CollectionGateway
 import fr.aumombelli.gatcha.data.PackGateway
 import fr.aumombelli.gatcha.data.SessionGateway
+import fr.aumombelli.gatcha.model.CatalogMetadata
 import fr.aumombelli.gatcha.model.CardDefinition
 import fr.aumombelli.gatcha.model.CreateAccountRequest
 import fr.aumombelli.gatcha.model.CreateAccountResponse
@@ -123,10 +126,17 @@ class FakeCollectionGateway : CollectionGateway {
 }
 
 class FakeCatalogGateway : CatalogGateway {
+    var metadata = CatalogMetadata(catalogVersion = 2)
     var extensions: List<ExtensionDefinition> = emptyList()
     var cards: List<CardDefinition> = emptyList()
+    var metadataFailure: Throwable? = null
     var extensionsFailure: Throwable? = null
     var cardsFailure: Throwable? = null
+
+    override suspend fun loadMetadata(): CatalogMetadata {
+        metadataFailure?.let { throw it }
+        return metadata
+    }
 
     override suspend fun loadExtensions(): List<ExtensionDefinition> {
         extensionsFailure?.let { throw it }
@@ -152,5 +162,22 @@ class FakePackGateway : PackGateway {
         openPackFailure?.let { throw it }
         return checkNotNull(openPackResponse) { "openPackResponse must be configured in FakePackGateway." }
             .also { packFlow.value = it }
+    }
+}
+
+class FakeAppStatusGateway : AppStatusGateway {
+    private val mutableState = MutableStateFlow<AppCompatibilityState>(AppCompatibilityState.Checking)
+    var verifyCallCount = AtomicInteger(0)
+    var onVerify: (suspend () -> Unit)? = null
+
+    override val state: StateFlow<AppCompatibilityState> = mutableState
+
+    override suspend fun verifyCompatibility() {
+        verifyCallCount.incrementAndGet()
+        onVerify?.invoke()
+    }
+
+    fun updateState(state: AppCompatibilityState) {
+        mutableState.value = state
     }
 }

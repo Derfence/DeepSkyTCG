@@ -6,6 +6,7 @@ Client Android natif du projet Gatcha.
 
 Cette application permet au joueur de :
 
+- vérifier la compatibilité catalogue avec le serveur au démarrage ;
 - créer un compte ;
 - se connecter ;
 - récupérer sa collection ;
@@ -25,12 +26,25 @@ Cette application permet au joueur de :
 ## Structure fonctionnelle
 
 - `MainActivity` : point d'entrée Android.
-- `GatchaApp` : navigation Compose.
-- `data/` : persistance locale, chiffrement de collection, repositories.
+- `GatchaApp` : bootstrap de compatibilité puis navigation Compose.
+- `data/` : persistance locale, chiffrement de collection, migration de deck, repositories.
 - `network/` : client HTTP de l'API serveur.
 - `ui/viewmodel/` : logique d'écran.
 - `ui/screen/` : écrans Compose.
-- `assets/catalog/` : extensions et cartes statiques de la v1.
+- `assets/catalog/` : `metadata.json`, extensions et cartes statiques de la version catalogue courante.
+
+## Compatibilité catalogue
+
+- Le client charge `assets/catalog/metadata.json` pour obtenir `catalogVersion`.
+- Au démarrage, l'application appelle `POST /api/app/status` et bloque l'UI tant que la compatibilité n'est pas validée.
+- Toutes les autres requêtes HTTP envoient `X-Gatcha-Catalog-Version`.
+- Si le serveur répond `client_update_required` ou `server_update_pending`, l'application rebascule sur l'écran bloquant.
+- `OwnedCollection.version` est la version de deck persistée dans le blob chiffré ; les blobs anciens sont migrés côté client avant usage et resauvegarde.
+
+## Workflow de release
+
+- Toute nouvelle extension implique la mise à jour coordonnée de `metadata.json`, `extensions.json` et `cards.json`.
+- Une évolution de format du deck doit ajouter une migration explicite `n -> n+1` avant publication.
 
 ## Branches Git prévues
 
@@ -98,6 +112,7 @@ sdk.dir=C\:\\Users\\Derfence\\AppData\\Local\\Android\\Sdk
 ## Test bout en bout local
 
 - Le client pointe désormais vers `http://gatcha.aumombelli.fr:8080`.
+- Le démarrage appelle d'abord `POST /api/app/status`, il faut donc que le serveur local expose aussi la même `catalogVersion`.
 - Le package Android utilisé par l'application est `fr.aumombelli.gatcha`.
 - En build `debug`, le client résout localement `gatcha.aumombelli.fr` vers `127.0.0.1` dans l'appareil.
 - Le script racine `routage.bat` active ensuite un `adb reverse tcp:8080 tcp:8080`, ce qui redirige ce `localhost` de l'appareil vers la machine hôte.

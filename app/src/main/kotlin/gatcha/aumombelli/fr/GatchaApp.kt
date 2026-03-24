@@ -9,11 +9,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import fr.aumombelli.gatcha.ui.navigation.AppDestination
+import fr.aumombelli.gatcha.ui.screen.AppBootstrapScreen
 import fr.aumombelli.gatcha.ui.screen.LibraryScreen
 import fr.aumombelli.gatcha.ui.screen.LoginScreen
 import fr.aumombelli.gatcha.ui.screen.MainMenuScreen
 import fr.aumombelli.gatcha.ui.screen.PackOpeningScreen
 import fr.aumombelli.gatcha.ui.screen.PackSelectionScreen
+import fr.aumombelli.gatcha.ui.viewmodel.AppBootstrapViewModel
 import fr.aumombelli.gatcha.ui.viewmodel.GatchaViewModelFactory
 import fr.aumombelli.gatcha.ui.viewmodel.LibraryViewModel
 import fr.aumombelli.gatcha.ui.viewmodel.LoginEvent
@@ -24,6 +26,26 @@ import fr.aumombelli.gatcha.ui.viewmodel.PackViewModel
 
 @Composable
 fun GatchaApp(appContainer: AppContainer) {
+    val bootstrapViewModel: AppBootstrapViewModel = viewModel(
+        factory = GatchaViewModelFactory {
+            AppBootstrapViewModel(appContainer.appStatusRepository)
+        },
+    )
+    val bootstrapState by bootstrapViewModel.uiState.collectAsState()
+
+    if (!bootstrapState.isCompatible) {
+        AppBootstrapScreen(
+            state = bootstrapState,
+            onRetry = bootstrapViewModel::retry,
+        )
+        return
+    }
+
+    AppNavigation(appContainer)
+}
+
+@Composable
+private fun AppNavigation(appContainer: AppContainer) {
     val navController = rememberNavController()
 
     NavHost(

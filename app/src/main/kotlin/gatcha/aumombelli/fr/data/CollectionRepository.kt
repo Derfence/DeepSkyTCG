@@ -10,6 +10,7 @@ import fr.aumombelli.gatcha.network.GameApiService
 class CollectionRepository(
     private val apiService: GameApiService,
     private val sessionRepository: SessionGateway,
+    private val collectionMigrationService: CollectionMigrationService,
 ) : CollectionGateway {
     override suspend fun loadCollectionFromServer(): OwnedCollection {
         val session = sessionRepository.requireActiveSession()
@@ -19,25 +20,43 @@ class CollectionRepository(
                 passwordHash = session.passwordHash,
             ),
         )
+        val decrypted = CollectionCrypto.decryptAndDeserialize(response.collectionBlob, session.passwordHash)
+        val migrated = collectionMigrationService.migrateToCurrentVersion(decrypted)
+        if (migrated != decrypted) {
+            saveCollection(migrated)
+            return migrated
+        }
         sessionRepository.commitSavedCollection(
             collectionBlob = response.collectionBlob,
             savedAt = response.savedAt,
             nextDrawAt = sessionRepository.readSnapshot().nextDrawAt,
         )
-        return CollectionCrypto.decryptAndDeserialize(response.collectionBlob, session.passwordHash)
+        return migrated
     }
 
     override suspend fun getCachedCollectionOrEmpty(): OwnedCollection {
         val snapshot = sessionRepository.readSnapshot()
         val session = sessionRepository.requireActiveSession()
-        val blob = snapshot.lastCollectionBlob ?: return OwnedCollection()
-        return runCatching { CollectionCrypto.decryptAndDeserialize(blob, session.passwordHash) }
-            .getOrDefault(OwnedCollection())
+        val blob = snapshot.lastCollectionBlob ?: return collectionMigrationService.emptyCollection()
+        return runCatching {
+            val decrypted = CollectionCrypto.decryptAndDeserialize(blob, session.passwordHash)
+            val migrated = collectionMigrationService.migrateToCurrentVersion(decrypted)
+            if (migrated != decrypted) {
+                val migratedBlob = CollectionCrypto.serializeAndEncrypt(migrated, session.passwordHash)
+                sessionRepository.commitSavedCollection(
+                    collectionBlob = migratedBlob,
+                    savedAt = snapshot.lastSavedAt,
+                    nextDrawAt = snapshot.nextDrawAt,
+                )
+            }
+            migrated
+        }.getOrDefault(collectionMigrationService.emptyCollection())
     }
 
     override suspend fun saveCollection(collection: OwnedCollection): String {
         val session = sessionRepository.requireActiveSession()
-        val blob = CollectionCrypto.serializeAndEncrypt(collection, session.passwordHash)
+        val migrated = collectionMigrationService.migrateToCurrentVersion(collection)
+        val blob = CollectionCrypto.serializeAndEncrypt(migrated, session.passwordHash)
         val response = apiService.saveCollection(
             SaveCollectionRequest(
                 username = session.username,
@@ -56,14 +75,17 @@ class CollectionRepository(
         if (snapshot.lastUsername != null && snapshot.lastUsername != session.username) {
             return false
         }
+        val decrypted = CollectionCrypto.decryptAndDeserialize(pendingBlob, session.passwordHash)
+        val migrated = collectionMigrationService.migrateToCurrentVersion(decrypted)
+        val migratedBlob = CollectionCrypto.serializeAndEncrypt(migrated, session.passwordHash)
         val response = apiService.saveCollection(
             SaveCollectionRequest(
                 username = session.username,
                 passwordHash = session.passwordHash,
-                collectionBlob = pendingBlob,
+                collectionBlob = migratedBlob,
             ),
         )
-        sessionRepository.commitSavedCollection(pendingBlob, response.savedAt, snapshot.nextDrawAt)
+        sessionRepository.commitSavedCollection(migratedBlob, response.savedAt, snapshot.nextDrawAt)
         return true
     }
 

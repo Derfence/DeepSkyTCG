@@ -1,7 +1,13 @@
 package fr.aumombelli.gatcha.network
 
+import fr.aumombelli.gatcha.data.AppCompatibilityController
+import fr.aumombelli.gatcha.data.AppStatusApi
 import fr.aumombelli.gatcha.data.AuthGateway
+import fr.aumombelli.gatcha.data.CatalogGateway
 import fr.aumombelli.gatcha.model.ApiError
+import fr.aumombelli.gatcha.model.AppStatusRequest
+import fr.aumombelli.gatcha.model.AppStatusResponse
+import fr.aumombelli.gatcha.model.CompatibilityStatuses
 import fr.aumombelli.gatcha.model.CreateAccountRequest
 import fr.aumombelli.gatcha.model.CreateAccountResponse
 import fr.aumombelli.gatcha.model.DrawPackRequest
@@ -33,8 +39,17 @@ class ApiCallException(
 class GameApiService(
     private val client: HttpClient,
     private val json: Json,
+    private val catalogGateway: CatalogGateway,
+    private val compatibilityController: AppCompatibilityController,
     private val baseUrl: String = "http://gatcha.aumombelli.fr:8080",
-) : AuthGateway {
+) : AuthGateway, AppStatusApi {
+    override suspend fun fetchAppStatus(): AppStatusResponse =
+        post(
+            path = "/api/app/status",
+            payload = AppStatusRequest(catalogGateway.loadMetadata().catalogVersion),
+            includeCatalogVersionHeader = false,
+        )
+
     override suspend fun createAccount(request: CreateAccountRequest): CreateAccountResponse =
         post("/api/account/create", request)
 
@@ -50,10 +65,20 @@ class GameApiService(
     suspend fun drawPack(request: DrawPackRequest): DrawPackResponse =
         post("/api/packs/draw", request)
 
-    private suspend inline fun <reified T> post(path: String, payload: Any): T {
+    private suspend inline fun <reified T> post(
+        path: String,
+        payload: Any,
+        includeCatalogVersionHeader: Boolean = true,
+    ): T {
+        val catalogVersion = if (includeCatalogVersionHeader) {
+            catalogGateway.loadMetadata().catalogVersion
+        } else {
+            null
+        }
         val response = client.post("$baseUrl$path") {
             headers {
                 append(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                catalogVersion?.let { append(CatalogVersionHeader, it.toString()) }
             }
             setBody(payload)
         }
@@ -67,6 +92,17 @@ class GameApiService(
         } catch (_: SerializationException) {
             ApiError(code = "unknown_error", message = rawBody.ifBlank { "Unknown network error." })
         }
+        if (error.code in CompatibilityErrorCodes) {
+            compatibilityController.markBlocked(error.message)
+        }
         throw ApiCallException(error.code, error.message, error.retryAt)
+    }
+
+    private companion object {
+        const val CatalogVersionHeader = "X-Gatcha-Catalog-Version"
+        val CompatibilityErrorCodes = setOf(
+            CompatibilityStatuses.ClientUpdateRequired,
+            CompatibilityStatuses.ServerUpdatePending,
+        )
     }
 }

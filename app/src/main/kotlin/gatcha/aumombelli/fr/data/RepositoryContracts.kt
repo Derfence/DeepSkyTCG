@@ -1,6 +1,8 @@
 package fr.aumombelli.gatcha.data
 
 import fr.aumombelli.gatcha.model.CardDefinition
+import fr.aumombelli.gatcha.model.AppStatusResponse
+import fr.aumombelli.gatcha.model.CatalogMetadata
 import fr.aumombelli.gatcha.model.CreateAccountRequest
 import fr.aumombelli.gatcha.model.CreateAccountResponse
 import fr.aumombelli.gatcha.model.DrawPackResponse
@@ -19,8 +21,27 @@ interface AuthGateway {
 }
 
 interface CatalogGateway {
+    suspend fun loadMetadata(): CatalogMetadata
     suspend fun loadExtensions(): List<ExtensionDefinition>
     suspend fun loadCards(): List<CardDefinition>
+}
+
+sealed interface AppCompatibilityState {
+    data object Checking : AppCompatibilityState
+    data object Compatible : AppCompatibilityState
+    data class Blocked(
+        val message: String,
+        val canRetry: Boolean = true,
+    ) : AppCompatibilityState
+}
+
+interface AppStatusGateway {
+    val state: StateFlow<AppCompatibilityState>
+    suspend fun verifyCompatibility()
+}
+
+interface AppStatusApi {
+    suspend fun fetchAppStatus(): AppStatusResponse
 }
 
 interface SessionGateway {

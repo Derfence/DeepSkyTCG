@@ -1,10 +1,9 @@
 package fr.aumombelli.gatcha
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import fr.aumombelli.gatcha.data.AppCompatibilityState
 import fr.aumombelli.gatcha.data.AppStatusGateway
 import fr.aumombelli.gatcha.data.AuthGateway
@@ -26,28 +25,29 @@ import fr.aumombelli.gatcha.model.SessionCredentials
 import fr.aumombelli.gatcha.model.StoredSessionSnapshot
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import org.junit.Assert.assertEquals
 import org.junit.After
 import org.junit.Rule
 import org.junit.Test
 
-class LoginScreenTest {
+class AppCompatibilityBlockTest {
     init {
-        MainActivity.appContainerFactory = { compatibleAppContainer() }
+        MainActivity.appContainerFactory = { blockedAppContainer() }
     }
 
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun login_screen_is_shown_on_launch() {
-        composeRule.waitUntil(timeoutMillis = 10_000) {
+    fun incompatible_startup_blocks_the_app() {
+        composeRule.onNodeWithTag("app-bootstrap-message").assertIsDisplayed()
+        composeRule.onNodeWithTag("app-bootstrap-retry").assertIsDisplayed()
+        assertEquals(
+            0,
             composeRule.onAllNodesWithTag("login-submit")
                 .fetchSemanticsNodes(atLeastOneRootRequired = false)
-                .isNotEmpty()
-        }
-        composeRule.onNodeWithTag("login-submit").assertIsDisplayed()
-        composeRule.onNodeWithText("Gatcha").assertIsDisplayed()
-        composeRule.onNodeWithText("Login").assertIsDisplayed()
+                .size,
+        )
     }
 
     @After
@@ -55,9 +55,11 @@ class LoginScreenTest {
         MainActivity.appContainerFactory = null
     }
 
-    private fun compatibleAppContainer(): AppContainer {
+    private fun blockedAppContainer(): AppContainer {
         val appStatusGateway = object : AppStatusGateway {
-            private val stateFlow = MutableStateFlow<AppCompatibilityState>(AppCompatibilityState.Compatible)
+            private val stateFlow = MutableStateFlow<AppCompatibilityState>(
+                AppCompatibilityState.Blocked("A newer client is required."),
+            )
             override val state: StateFlow<AppCompatibilityState> = stateFlow
             override suspend fun verifyCompatibility() = Unit
         }
@@ -97,7 +99,7 @@ class LoginScreenTest {
                 private val packFlow = MutableStateFlow<DrawPackResponse?>(null)
                 override fun currentPackResult(): StateFlow<DrawPackResponse?> = packFlow
                 override suspend fun openPack(extensionId: String, currentCollection: OwnedCollection): DrawPackResponse {
-                    error("Not used in LoginScreenTest")
+                    error("Not used in AppCompatibilityBlockTest")
                 }
             },
         )
