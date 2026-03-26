@@ -156,8 +156,9 @@ L'état actuel du code doit correspondre à une première release technique `v0.
   - la projection du dessin d'extension et la conservation de son orientation ;
   - la synchronisation d'apparition et de disparition des points de constellation avec les traits ;
   - le calcul de la rareté maximale et la détection holographique pour l'ouverture de pack ;
-  - les nouveaux événements et états transitoires des ViewModels de login et de pack.
-- Les tests Compose/instrumentés couvrent le splash de lancement, l'affichage du login, la constellation de la Grande Casserole, le retour arrière depuis une extension sélectionnée, la disparition des boosters non sélectionnés, l'ouverture de pack avec explosion, l'entrée des cartes depuis le bas et le retour par glissement vertical.
+  - les validations de formulaire, la normalisation du login et les nouveaux événements et états transitoires des ViewModels de login et de pack ;
+  - les branches de repli de compatibilité applicative et de persistance de collection.
+- Les tests Compose/instrumentés couvrent le splash de lancement, l'affichage du login, le basculement login/création, les états UI désactivés, la constellation de la Grande Casserole, le retour arrière depuis une extension sélectionnée, le cooldown de tirage, la carte d'erreur avec relance, la disparition des boosters non sélectionnés, l'ouverture de pack avec explosion, l'entrée des cartes depuis le bas et le retour par glissement vertical.
 - Les tests E2E attendent désormais la séquence complète : login -> menu -> extension -> booster -> ouverture -> swipe haut -> bibliothèque.
 
 ## Commandes utiles
@@ -197,9 +198,9 @@ sdk.dir=C\:\\Users\\Derfence\\AppData\\Local\\Android\\Sdk
 - Les tests instrumentés `connectedDebugAndroidTest` doivent être lancés depuis Windows lorsque le SDK Android installé est un SDK Windows.
 - Avant `connectedDebugAndroidTest`, démarrer un émulateur Android ou brancher un appareil puis vérifier `adb devices` depuis Windows.
 - Si Android Studio ou Gradle signale que `Build Tools 35.0.0` est corrompu, supprimer cette version dans le SDK Manager Windows ou supprimer le dossier `C:\Users\Derfence\AppData\Local\Android\Sdk\build-tools\35.0.0`, puis relancer.
-- Le dépôt racine fournit un lanceur `test-all.bat` qui enchaîne les tests client puis serveur.
-- Le mode `.\test-all.bat e2e` lance en plus une vraie expérimentation bout en bout sur l'app Android debug avec un serveur local isolé.
-- Le `test-all.bat` standard continue d'exécuter uniquement les tests instrumentés Android non-E2E.
+- Le dépôt racine fournit un lanceur `test-all.bat` qui enchaîne les tests unitaires Android, les tests instrumentés Android non-E2E, les tests serveur puis le scénario E2E local.
+- `.\test-all.bat e2e` reste accepté comme alias rétrocompatible et exécute exactement la même suite.
+- Comme l'E2E est désormais inclus dans la suite standard, `.\test-all.bat` requiert lui aussi un émulateur Android ou un appareil ADB déjà prêt.
 
 ## Test bout en bout local
 
@@ -208,7 +209,7 @@ sdk.dir=C\:\\Users\\Derfence\\AppData\\Local\\Android\\Sdk
 - Le package Android utilisé par l'application est `fr.aumombelli.gatcha`.
 - En build `debug`, le client résout localement `gatcha.aumombelli.fr` vers `127.0.0.1` dans l'appareil.
 - Le script racine `routage.bat` active ensuite un `adb reverse tcp:8080 tcp:8080`, ce qui redirige ce `localhost` de l'appareil vers la machine hôte.
-- Le mode `.\test-all.bat e2e` orchestre automatiquement :
+- Le lanceur racine `.\test-all.bat` orchestre automatiquement :
   - l'activation du routage ;
   - le `pm clear` de l'app ;
   - le démarrage du serveur local ;
@@ -244,13 +245,14 @@ cd /mnt/c/Users/Derfence/Documents/Gatcha/server
 .\routage.bat off
 ```
 
-Pour exécuter la chaîne E2E complète :
+Pour exécuter la chaîne complète locale, y compris l'E2E obligatoire :
 
 ```powershell
+.\test-all.bat
 .\test-all.bat e2e
 ```
 
-Le test E2E pilote la vraie app via des `testTag` stables et un utilisateur de test injecté par arguments d'instrumentation.
+Le test E2E pilote la vraie app via des `testTag` stables et un utilisateur de test injecté par arguments d'instrumentation. `.\test-all.bat e2e` reste uniquement un alias de `.\test-all.bat`.
 
 ## Dépendance au dépôt racine
 

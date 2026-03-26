@@ -6,6 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
@@ -184,6 +186,61 @@ class PackSelectionScreenTest {
 
         composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").assertIsDisplayed()
         composeRule.onAllNodesWithTag("pack-back").assertCountEquals(0)
+    }
+
+    @Test
+    fun cooldown_state_disables_extension_entry_and_updates_status_text() {
+        composeRule.setContent {
+            PackSelectionScreen(
+                state = PackSelectionUiState(
+                    isLoading = false,
+                    extensions = listOf(
+                        ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                    ),
+                    nextDrawAt = "2999-01-01T00:00:00Z",
+                ),
+                onRefresh = {},
+                onSelectExtension = {},
+                onSelectBooster = {},
+                onOpenPack = {},
+                onPackRevealReady = {},
+                packReadySignal = 0,
+                showBackground = false,
+            )
+        }
+
+        composeRule.onNodeWithTag("pack-status")
+            .assertTextContains("Prochain tirage disponible", substring = true)
+        composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").assertIsNotEnabled()
+    }
+
+    @Test
+    fun error_card_exposes_retry_action() {
+        var refreshCalls = 0
+
+        composeRule.setContent {
+            PackSelectionScreen(
+                state = PackSelectionUiState(
+                    isLoading = false,
+                    extensions = listOf(
+                        ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                    ),
+                    errorMessage = "Draw failed.",
+                ),
+                onRefresh = { refreshCalls += 1 },
+                onSelectExtension = {},
+                onSelectBooster = {},
+                onOpenPack = {},
+                onPackRevealReady = {},
+                packReadySignal = 0,
+                showBackground = false,
+            )
+        }
+
+        composeRule.onNodeWithTag("pack-error").assertTextContains("Draw failed.")
+        composeRule.onNodeWithTag("pack-refresh").performClick()
+
+        assertEquals(1, refreshCalls)
     }
 
     private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertApproxCardRatio(

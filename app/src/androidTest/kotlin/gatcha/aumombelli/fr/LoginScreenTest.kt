@@ -1,8 +1,8 @@
 package fr.aumombelli.gatcha
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import fr.aumombelli.gatcha.data.AppCompatibilityState
 import fr.aumombelli.gatcha.data.AppStatusGateway
@@ -106,6 +106,7 @@ class LoginScreenTest {
                 override fun clearCurrentPackResult() {
                     packFlow.value = null
                 }
+
                 override suspend fun openPack(extensionId: String, currentCollection: OwnedCollection): DrawPackResponse {
                     error("Not used in LoginScreenTest")
                 }

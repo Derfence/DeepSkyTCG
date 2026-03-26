@@ -24,6 +24,26 @@ class PackViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     @Test
+    fun `select extension and clear selection reset transient booster state`() = runTest {
+        val viewModel = PackViewModel(
+            catalogRepository = FakeCatalogGateway(),
+            collectionRepository = FakeCollectionGateway(),
+            packRepository = FakePackGateway(),
+            sessionRepository = FakeSessionGateway(),
+        )
+        advanceUntilIdle()
+
+        viewModel.selectExtension("core-alpha")
+        viewModel.selectBooster(3)
+        viewModel.clearExtensionSelection()
+
+        assertEquals(null, viewModel.uiState.value.selectedExtensionId)
+        assertEquals(null, viewModel.uiState.value.selectedBoosterIndex)
+        assertEquals(false, viewModel.uiState.value.isAwaitingPackResult)
+        assertEquals(null, viewModel.uiState.value.errorMessage)
+    }
+
+    @Test
     fun `refresh loads extensions collection and next draw timestamp`() = runTest {
         val catalogGateway = FakeCatalogGateway().apply {
             extensions = listOf(ExtensionDefinition("core-alpha", "Core Alpha", "cover"))
@@ -111,5 +131,30 @@ class PackViewModelTest {
 
         assertEquals("Pack drawn but save failed.", viewModel.uiState.value.errorMessage)
         assertEquals(false, viewModel.uiState.value.isLoading)
+    }
+
+    @Test
+    fun `open pack generic failure resets booster selection and uses default message`() = runTest {
+        val viewModel = PackViewModel(
+            catalogRepository = FakeCatalogGateway().apply {
+                extensions = listOf(ExtensionDefinition("core-alpha", "Core Alpha", "cover"))
+            },
+            collectionRepository = FakeCollectionGateway(),
+            packRepository = FakePackGateway().apply {
+                openPackFailure = IllegalStateException()
+            },
+            sessionRepository = FakeSessionGateway(),
+        )
+        advanceUntilIdle()
+
+        viewModel.selectExtension("core-alpha")
+        viewModel.selectBooster(1)
+        viewModel.openPack("core-alpha")
+        advanceUntilIdle()
+
+        assertEquals("core-alpha", viewModel.uiState.value.selectedExtensionId)
+        assertEquals(null, viewModel.uiState.value.selectedBoosterIndex)
+        assertEquals(false, viewModel.uiState.value.isAwaitingPackResult)
+        assertEquals("Unable to open the pack.", viewModel.uiState.value.errorMessage)
     }
 }

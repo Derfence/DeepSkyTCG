@@ -1,5 +1,8 @@
 package fr.aumombelli.gatcha
 
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -24,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.aumombelli.gatcha.ui.motion.AppScene
@@ -73,6 +77,7 @@ fun GatchaApp(appContainer: AppContainer) {
 @Composable
 private fun AppSceneHost(appContainer: AppContainer) {
     val scope = rememberCoroutineScope()
+    val activity = LocalContext.current.findActivity()
     val skyVariant = remember { randomSkyBackdropVariant() }
     val density = LocalDensity.current
     var currentScene by remember { mutableStateOf(AppScene.Login) }
@@ -332,6 +337,10 @@ private fun AppSceneHost(appContainer: AppContainer) {
             }
 
             AppScene.MainMenu -> {
+                BackHandler(enabled = !transitionLocked) {
+                    activity?.finish()
+                }
+
                 MainMenuScreen(
                     onOpenPack = {
                         if (!transitionLocked) {
@@ -470,4 +479,10 @@ private fun AppSceneHost(appContainer: AppContainer) {
             overlayAlpha = bookOverlayAlpha.value,
         )
     }
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }

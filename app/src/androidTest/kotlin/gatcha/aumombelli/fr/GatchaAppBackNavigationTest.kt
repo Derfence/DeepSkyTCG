@@ -87,10 +87,11 @@ class GatchaAppBackNavigationTest {
         composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").performClick()
         advanceBy(1_900)
         composeRule.onNodeWithTag("pack-booster-0").performClick()
-        advanceBy(1_200)
-        composeRule.onNodeWithTag("pack-opening-title").assertIsDisplayed()
+        advanceBy(6_400)
+        composeRule.onNodeWithTag("pack-opening-card-id").assertIsDisplayed()
 
         pressAndroidBack()
+        advanceBy(700)
         composeRule.onNodeWithTag("menu-open-pack").assertIsDisplayed()
     }
 
@@ -100,6 +101,7 @@ class GatchaAppBackNavigationTest {
         loginAndReachMainMenu()
 
         pressAndroidBack()
+        composeRule.waitUntil(timeoutMillis = 5_000) { composeRule.activity.isFinishing }
         assertTrue(composeRule.activity.isFinishing)
     }
 

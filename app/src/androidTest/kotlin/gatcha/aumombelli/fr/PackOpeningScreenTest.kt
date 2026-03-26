@@ -83,7 +83,7 @@ class PackOpeningScreenTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag("pack-opening-burst").assertIsDisplayed()
-        composeRule.onNodeWithTag("pack-opening-swipe-hint").assertIsDisplayed()
+        composeRule.onNodeWithTag("pack-opening-progress").assertIsDisplayed()
         composeRule.onNodeWithTag("pack-opening-card-id").assertTextContains("ALP-001")
         composeRule.onAllNodesWithTag("pack-opening-card-name").assertCountEquals(0)
         composeRule.assertApproxCardRatio("pack-opening-card-surface")
