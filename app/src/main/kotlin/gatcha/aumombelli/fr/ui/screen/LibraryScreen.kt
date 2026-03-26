@@ -1,5 +1,8 @@
 package fr.aumombelli.gatcha.ui.screen
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.window.Dialog
@@ -48,7 +52,13 @@ fun LibraryScreen(
     state: LibraryUiState,
     onBack: () -> Unit,
     onRefresh: () -> Unit,
+    contentVisible: Boolean = true,
 ) {
+    val contentAlpha by animateFloatAsState(
+        targetValue = if (contentVisible) 1f else 0f,
+        animationSpec = tween(durationMillis = 960, easing = FastOutSlowInEasing),
+        label = "library-content-alpha",
+    )
     val cardsById = remember(state.sections) {
         state.sections
             .flatMap { it.cards }
@@ -71,6 +81,9 @@ fun LibraryScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .graphicsLayer {
+                alpha = contentAlpha
+            }
             .background(
                 Brush.verticalGradient(
                     colors = listOf(Color(0xFF08101D), Color(0xFF0E1D33)),

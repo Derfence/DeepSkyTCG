@@ -23,11 +23,12 @@ data class LoginUiState(
     val password: String = "",
     val isCreateMode: Boolean = false,
     val isLoading: Boolean = false,
+    val isTransitioningToMenu: Boolean = false,
     val errorMessage: String? = null,
 )
 
 sealed interface LoginEvent {
-    data object NavigateToMenu : LoginEvent
+    data object AuthenticationSucceeded : LoginEvent
 }
 
 class LoginViewModel(
@@ -51,19 +52,25 @@ class LoginViewModel(
     }
 
     fun updateUsername(value: String) {
-        _uiState.update { it.copy(username = value, errorMessage = null) }
+        _uiState.update { it.copy(username = value, errorMessage = null, isTransitioningToMenu = false) }
     }
 
     fun updateEmail(value: String) {
-        _uiState.update { it.copy(email = value, errorMessage = null) }
+        _uiState.update { it.copy(email = value, errorMessage = null, isTransitioningToMenu = false) }
     }
 
     fun updatePassword(value: String) {
-        _uiState.update { it.copy(password = value, errorMessage = null) }
+        _uiState.update { it.copy(password = value, errorMessage = null, isTransitioningToMenu = false) }
     }
 
     fun toggleMode() {
-        _uiState.update { it.copy(isCreateMode = !it.isCreateMode, errorMessage = null) }
+        _uiState.update {
+            it.copy(
+                isCreateMode = !it.isCreateMode,
+                errorMessage = null,
+                isTransitioningToMenu = false,
+            )
+        }
     }
 
     fun submit() {
@@ -78,7 +85,7 @@ class LoginViewModel(
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            _uiState.update { it.copy(isLoading = true, errorMessage = null, isTransitioningToMenu = false) }
 
             val normalizedUsername = SecurityUtils.normalizeUsername(state.username)
             val passwordHash = SecurityUtils.computeClientPasswordHash(normalizedUsername, state.password)
@@ -110,14 +117,17 @@ class LoginViewModel(
                 collectionRepository.replayPendingSaveIfNeeded()
                 collectionRepository.loadCollectionFromServer()
             }.onSuccess {
-                _events.emit(LoginEvent.NavigateToMenu)
+                _uiState.update { it.copy(isLoading = false, isTransitioningToMenu = true) }
+                _events.emit(LoginEvent.AuthenticationSucceeded)
             }.onFailure { exception ->
                 _uiState.update { current ->
-                    current.copy(errorMessage = exception.message ?: "Unexpected login error.")
+                    current.copy(
+                        isLoading = false,
+                        isTransitioningToMenu = false,
+                        errorMessage = exception.message ?: "Unexpected login error.",
+                    )
                 }
             }
-
-            _uiState.update { it.copy(isLoading = false) }
         }
     }
 }

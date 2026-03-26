@@ -1,5 +1,8 @@
 package fr.aumombelli.gatcha.ui.screen
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,10 +21,14 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -38,40 +45,67 @@ fun LoginScreen(
     onPasswordChange: (String) -> Unit,
     onModeToggle: () -> Unit,
     onSubmit: () -> Unit,
+    modifier: Modifier = Modifier,
+    showBackground: Boolean = true,
+    contentVisible: Boolean = true,
+    onFormTopChanged: (Float) -> Unit = {},
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF08101D),
-                        Color(0xFF12243F),
-                        Color(0xFF1A3052),
-                    ),
-                ),
+    val formAlpha by animateFloatAsState(
+        targetValue = if (contentVisible) 1f else 0f,
+        animationSpec = tween(durationMillis = 520, easing = FastOutSlowInEasing),
+        label = "login-form-alpha",
+    )
+    val backgroundBrush = if (showBackground) {
+        Brush.verticalGradient(
+            colors = listOf(
+                Color(0xFF08101D),
+                Color(0xFF12243F),
+                Color(0xFF1A3052),
             ),
+        )
+    } else {
+        Brush.verticalGradient(
+            colors = listOf(
+                Color.Transparent,
+                Color.Transparent,
+            ),
+        )
+    }
+
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(brush = backgroundBrush),
     ) {
         Card(
             shape = RoundedCornerShape(28.dp),
             modifier = Modifier
                 .align(Alignment.Center)
+                .onGloballyPositioned { coordinates ->
+                    onFormTopChanged(coordinates.positionInRoot().y)
+                }
+                .graphicsLayer {
+                    alpha = formAlpha
+                }
                 .padding(24.dp),
         ) {
+            val fieldsEnabled = !state.isLoading && !state.isTransitioningToMenu
             Column(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(24.dp),
+                    .padding(24.dp)
+                    .testTag("app-launch-login-form"),
             ) {
                 Text(
                     text = "Gatcha",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
+                    modifier = Modifier.testTag("login-title"),
                 )
                 Text(
-                    text = "Connecte-toi pour retrouver ta collection ou créer un nouveau compte.",
+                    text = "Connecte-toi pour retrouver ta collection ou creer un nouveau compte.",
                     style = MaterialTheme.typography.bodyMedium,
                 )
 
@@ -80,6 +114,7 @@ fun LoginScreen(
                     onValueChange = onUsernameChange,
                     label = { Text("Username") },
                     singleLine = true,
+                    enabled = fieldsEnabled,
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("login-username"),
@@ -91,6 +126,7 @@ fun LoginScreen(
                         onValueChange = onEmailChange,
                         label = { Text("Email") },
                         singleLine = true,
+                        enabled = fieldsEnabled,
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag("login-email"),
@@ -102,6 +138,7 @@ fun LoginScreen(
                     onValueChange = onPasswordChange,
                     label = { Text("Password") },
                     singleLine = true,
+                    enabled = fieldsEnabled,
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier
                         .fillMaxWidth()
@@ -119,12 +156,12 @@ fun LoginScreen(
 
                 Button(
                     onClick = onSubmit,
-                    enabled = !state.isLoading,
+                    enabled = fieldsEnabled,
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag("login-submit"),
                 ) {
-                    if (state.isLoading) {
+                    if (state.isLoading || state.isTransitioningToMenu) {
                         CircularProgressIndicator(
                             color = AuroraTeal,
                             strokeWidth = 2.dp,
@@ -137,6 +174,7 @@ fun LoginScreen(
 
                 TextButton(
                     onClick = onModeToggle,
+                    enabled = fieldsEnabled,
                     modifier = Modifier
                         .align(Alignment.End)
                         .testTag("login-toggle-mode"),

@@ -8,6 +8,7 @@ import fr.aumombelli.gatcha.model.DisplayCard
 import fr.aumombelli.gatcha.model.DrawPackResponse
 import fr.aumombelli.gatcha.model.toDisplayCard
 import fr.aumombelli.gatcha.model.toDisplayVariant
+import fr.aumombelli.gatcha.ui.motion.summarizePackOpening
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,6 +17,8 @@ import kotlinx.coroutines.launch
 data class PackOpeningUiState(
     val packResult: DrawPackResponse? = null,
     val displayCards: List<DisplayCard> = emptyList(),
+    val highestBurstRarity: String? = null,
+    val hasHolographicBurst: Boolean = false,
     val errorMessage: String? = null,
 )
 
@@ -23,7 +26,11 @@ class PackOpeningViewModel(
     private val catalogRepository: CatalogGateway,
     packRepository: PackGateway,
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(PackOpeningUiState())
+    private val _uiState = MutableStateFlow(
+        PackOpeningUiState(
+            packResult = packRepository.currentPackResult().value,
+        ),
+    )
     val uiState: StateFlow<PackOpeningUiState> = _uiState.asStateFlow()
 
     init {
@@ -61,9 +68,13 @@ class PackOpeningViewModel(
             )
         }
 
+        val summary = summarizePackOpening(displayCards)
+
         return PackOpeningUiState(
             packResult = packResult,
             displayCards = displayCards,
+            highestBurstRarity = summary?.highestRarityLabel,
+            hasHolographicBurst = summary?.hasHolographicCard == true,
         )
     }
 }

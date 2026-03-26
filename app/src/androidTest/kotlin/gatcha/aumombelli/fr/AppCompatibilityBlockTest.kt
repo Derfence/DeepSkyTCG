@@ -100,6 +100,9 @@ class AppCompatibilityBlockTest {
             packRepository = object : PackGateway {
                 private val packFlow = MutableStateFlow<DrawPackResponse?>(null)
                 override fun currentPackResult(): StateFlow<DrawPackResponse?> = packFlow
+                override fun clearCurrentPackResult() {
+                    packFlow.value = null
+                }
                 override suspend fun openPack(extensionId: String, currentCollection: OwnedCollection): DrawPackResponse {
                     error("Not used in AppCompatibilityBlockTest")
                 }

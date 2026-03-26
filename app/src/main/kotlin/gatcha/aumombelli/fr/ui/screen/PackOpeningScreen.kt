@@ -4,69 +4,139 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.gatcha.model.DisplayCard
 import fr.aumombelli.gatcha.ui.component.AstroCardDetailsSurface
 import fr.aumombelli.gatcha.ui.component.AstroCardPreviewSurface
 import fr.aumombelli.gatcha.ui.component.AstroCardSurfaceMode
+import fr.aumombelli.gatcha.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
+import fr.aumombelli.gatcha.ui.motion.AnimatedExtensionPackCard
+import fr.aumombelli.gatcha.ui.motion.PACK_REVEAL_WIDTH_FRACTION
+import fr.aumombelli.gatcha.ui.motion.PackRevealBounds
+import fr.aumombelli.gatcha.ui.motion.RarityBurstOverlay
 import fr.aumombelli.gatcha.ui.viewmodel.PackOpeningUiState
+import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 
 @Composable
 fun PackOpeningScreen(
     state: PackOpeningUiState,
     onDone: () -> Unit,
+    initialBoosterBounds: PackRevealBounds? = null,
+    modifier: Modifier = Modifier,
 ) {
     val packResult = state.packResult
     val displayCards = state.displayCards
     var cardsVisible by remember(packResult?.drawnAt) { mutableStateOf(false) }
     var fullscreenPage by remember(packResult?.drawnAt) { mutableStateOf<Int?>(null) }
-    val scale = remember(packResult?.drawnAt) { Animatable(0.6f) }
+    var swipeOffset by remember(packResult?.drawnAt) { mutableFloatStateOf(0f) }
+    var dismissRequested by remember(packResult?.drawnAt) { mutableStateOf(false) }
+    var rootHeightPx by remember(packResult?.drawnAt) { mutableFloatStateOf(0f) }
+    val scale = remember(packResult?.drawnAt) { Animatable(1f) }
+    val burstProgress = remember(packResult?.drawnAt) { Animatable(0f) }
+    val cardsEntranceProgress = remember(packResult?.drawnAt) { Animatable(0f) }
+    val dismissProgress = remember(packResult?.drawnAt) { Animatable(0f) }
 
     LaunchedEffect(packResult?.drawnAt) {
         if (packResult == null) return@LaunchedEffect
         cardsVisible = false
         fullscreenPage = null
-        scale.snapTo(0.6f)
-        scale.animateTo(1f, animationSpec = tween(durationMillis = 850, easing = FastOutSlowInEasing))
-        delay(250)
+        swipeOffset = 0f
+        dismissRequested = false
+        scale.snapTo(1f)
+        burstProgress.snapTo(0f)
+        cardsEntranceProgress.snapTo(0f)
+        dismissProgress.snapTo(0f)
+        burstProgress.animateTo(1f, animationSpec = tween(durationMillis = 4800, easing = FastOutSlowInEasing))
         cardsVisible = true
+        cardsEntranceProgress.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
+        )
+    }
+
+    LaunchedEffect(dismissRequested) {
+        if (!dismissRequested) return@LaunchedEffect
+        dismissProgress.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(durationMillis = 420, easing = FastOutSlowInEasing),
+        )
+        onDone()
+    }
+
+    val swipeModifier = if (displayCards.isNotEmpty() && state.errorMessage == null) {
+        Modifier.pointerInput(packResult?.drawnAt) {
+            detectVerticalDragGestures(
+                onVerticalDrag = { change, dragAmount ->
+                    change.consume()
+                    swipeOffset = (swipeOffset + dragAmount).coerceAtMost(0f)
+                },
+                onDragEnd = {
+                    if (swipeOffset < -220f) {
+                        swipeOffset = 0f
+                        dismissRequested = true
+                    } else {
+                        swipeOffset = 0f
+                    }
+                },
+            )
+        }
+    } else {
+        Modifier
+    }
+    val packExitProgress = if (cardsVisible) {
+        1f
+    } else {
+        normalizedPhase(
+            progress = burstProgress.value,
+            start = 0.18f,
+            end = 0.84f,
+        )
     }
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(Color(0xFF060B14), Color(0xFF162840)))),
+            .onSizeChanged { rootHeightPx = it.height.toFloat() }
+            .background(Brush.verticalGradient(listOf(Color(0xE0060B14), Color(0xFF162840))))
+            .then(swipeModifier),
     ) {
         if (packResult == null) {
             EmptyPackState(onDone = onDone)
@@ -81,50 +151,85 @@ fun PackOpeningScreen(
             return@Box
         }
 
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(18.dp),
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(20.dp),
-        ) {
-            Text(
-                text = "Pack Opening",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                modifier = Modifier.testTag("pack-opening-title"),
+        if (!cardsVisible) {
+            BoosterCover(
+                extensionId = packResult.extensionId,
+                scale = scale.value,
+                exitProgress = packExitProgress,
+                initialBoosterBounds = initialBoosterBounds,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        alpha = 1f - dismissProgress.value
+                        translationY = swipeOffset + (-720f * dismissProgress.value)
+                    },
             )
-            Text(
-                text = "Extension: ${displayCards.firstOrNull()?.extensionName ?: packResult.extensionId}",
-                color = Color(0xFFD8E6F8),
-            )
+        } else {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(18.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        alpha = 1f - dismissProgress.value
+                        translationY = swipeOffset + (-720f * dismissProgress.value)
+                    }
+                    .padding(20.dp),
+            ) {
+                Text(
+                    text = "Pack Opening",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier.testTag("pack-opening-title"),
+                )
+                Text(
+                    text = "Extension: ${displayCards.firstOrNull()?.extensionName ?: packResult.extensionId}",
+                    color = Color(0xFFD8E6F8),
+                )
 
-            if (!cardsVisible) {
-                BoosterCover(scale = scale.value)
-            } else if (displayCards.isNotEmpty()) {
-                val pagerState = rememberPagerState(pageCount = { displayCards.size })
-                HorizontalPager(
-                    state = pagerState,
-                    modifier = Modifier.weight(1f),
-                ) { page ->
-                    RevealCard(
-                        displayCard = displayCards[page],
-                        page = page + 1,
-                        total = displayCards.size,
-                        onOpenFullscreen = { fullscreenPage = page },
-                    )
+                if (displayCards.isNotEmpty()) {
+                    val pagerState = rememberPagerState(pageCount = { displayCards.size })
+                    HorizontalPager(
+                        state = pagerState,
+                        modifier = Modifier
+                            .weight(1f)
+                            .graphicsLayer {
+                                alpha = cardsEntranceProgress.value
+                                translationY = (1f - cardsEntranceProgress.value) *
+                                    if (rootHeightPx > 0f) rootHeightPx else 960f
+                            },
+                    ) { page ->
+                        RevealCard(
+                            displayCard = displayCards[page],
+                            page = page + 1,
+                            total = displayCards.size,
+                            onOpenFullscreen = { fullscreenPage = page },
+                        )
+                    }
                 }
             }
+        }
 
-            Button(
-                onClick = onDone,
+        RarityBurstOverlay(
+            rarityLabel = state.highestBurstRarity,
+            hasHolographicBurst = state.hasHolographicBurst,
+            progress = burstProgress.value,
+            originBounds = initialBoosterBounds,
+        )
+
+        if (cardsVisible && displayCards.isNotEmpty() && state.errorMessage == null) {
+            Text(
+                text = "Glisse vers le haut pour revenir au menu",
+                color = Color.White.copy(
+                    alpha = 0.78f * cardsEntranceProgress.value * (1f - dismissProgress.value),
+                ),
+                style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("pack-opening-done"),
-            ) {
-                Text("Back to menu")
-            }
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 28.dp)
+                    .testTag("pack-opening-swipe-hint"),
+            )
         }
 
         val fullscreenCard = fullscreenPage?.let(displayCards::getOrNull)
@@ -171,7 +276,10 @@ private fun PackOpeningErrorState(
             .padding(24.dp),
     ) {
         Text(message, color = Color(0xFFFFA3A3))
-        Button(onClick = onDone) {
+        Button(
+            onClick = onDone,
+            modifier = Modifier.testTag("pack-opening-done"),
+        ) {
             Text("Back to menu")
         }
     }
@@ -179,33 +287,76 @@ private fun PackOpeningErrorState(
 
 @Composable
 private fun BoosterCover(
+    extensionId: String,
     scale: Float,
+    exitProgress: Float,
+    initialBoosterBounds: PackRevealBounds?,
+    modifier: Modifier = Modifier,
 ) {
-    Card(
-        shape = RoundedCornerShape(28.dp),
-        modifier = Modifier
-            .padding(top = 28.dp)
-            .size(width = 220.dp, height = 320.dp)
-            .scale(scale),
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.linearGradient(
-                        colors = listOf(Color(0xFFF6B73C), Color(0xFF2EC4B6), Color(0xFF1B2A41)),
-                    ),
-                ),
-        ) {
-            Text(
-                text = "Booster",
-                color = Color.White,
-                style = MaterialTheme.typography.headlineLarge,
-                fontWeight = FontWeight.Black,
-                modifier = Modifier.align(Alignment.Center),
+    val density = LocalDensity.current
+    val easedExitProgress = easeInDownwardMotion(exitProgress)
+
+    BoxWithConstraints(modifier = modifier) {
+        val viewportHeightPx = with(density) { maxHeight.toPx() }
+        if (initialBoosterBounds != null) {
+            val width = with(density) { initialBoosterBounds.widthPx.toDp() }
+            val height = with(density) { initialBoosterBounds.heightPx.toDp() }
+            val exitTranslationY = (
+                (viewportHeightPx - initialBoosterBounds.topPx) +
+                    initialBoosterBounds.heightPx * 1.18f
+                ) * easedExitProgress
+
+            AnimatedExtensionPackCard(
+                extensionId = extensionId,
+                modifier = Modifier
+                    .offset {
+                        IntOffset(
+                            x = initialBoosterBounds.leftPx.roundToInt(),
+                            y = initialBoosterBounds.topPx.roundToInt(),
+                        )
+                    }
+                    .size(width = width, height = height)
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                        translationY = exitTranslationY
+                    }
+                    .testTag("pack-opening-booster"),
+                revealProgressOverride = 1f,
             )
+        } else {
+            val exitTranslationY = viewportHeightPx * 1.04f * easedExitProgress
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                AnimatedExtensionPackCard(
+                    extensionId = extensionId,
+                    modifier = Modifier
+                        .fillMaxWidth(PACK_REVEAL_WIDTH_FRACTION)
+                        .aspectRatio(TRADING_CARD_WIDTH_OVER_HEIGHT)
+                        .graphicsLayer {
+                            scaleX = scale
+                            scaleY = scale
+                            translationY = exitTranslationY
+                        }
+                        .testTag("pack-opening-booster"),
+                    revealProgressOverride = 1f,
+                )
+            }
         }
     }
+}
+
+private fun normalizedPhase(
+    progress: Float,
+    start: Float,
+    end: Float,
+): Float = ((progress - start) / (end - start).coerceAtLeast(0.0001f)).coerceIn(0f, 1f)
+
+private fun easeInDownwardMotion(progress: Float): Float {
+    val clamped = progress.coerceIn(0f, 1f)
+    return clamped * clamped
 }
 
 @Composable
@@ -246,15 +397,6 @@ private fun RevealCard(
                 onClick = onOpenFullscreen,
             )
         }
-        Text(
-            text = "Touchez la carte pour voir toutes les donnees scientifiques.",
-            color = Color(0xFFD7E7F7),
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-        )
-        Text(
-            text = "Swipe to reveal the next card",
-            color = Color(0xFFD7E7F7),
-        )
     }
 }
 

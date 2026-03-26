@@ -2,6 +2,7 @@ package fr.aumombelli.gatcha
 
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasTestTag
@@ -15,6 +16,7 @@ import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeUp
 import org.junit.Rule
 import org.junit.Test
 
@@ -34,44 +36,62 @@ class LocalEndToEndTest {
     }
 
     private fun createAccountAndReachMainMenu() {
-        composeRule.waitUntilTagExists("login-toggle-mode", timeoutMillis = 20_000)
+        composeRule.waitUntilTagDisplayed("login-toggle-mode", timeoutMillis = 20_000)
         composeRule.onNodeWithTag("login-toggle-mode").performClick()
-        composeRule.waitUntilTagExists("login-email")
+        composeRule.waitUntilTagDisplayed("login-email")
 
         composeRule.replaceText("login-username", LocalE2eConfig.username)
         composeRule.replaceText("login-email", LocalE2eConfig.email)
         composeRule.replaceText("login-password", LocalE2eConfig.password)
         composeRule.onNodeWithTag("login-submit").performClick()
 
-        composeRule.waitUntilTagExists("menu-open-pack", timeoutMillis = 20_000)
+        composeRule.waitUntil(timeoutMillis = 20_000) {
+            composeRule.isTagEnabled("menu-open-pack") || composeRule.isTagDisplayed("login-error")
+        }
+        if (composeRule.isTagDisplayed("login-error")) {
+            composeRule.onNodeWithTag("login-error")
+                .assertTextContains("already exists", substring = true)
+            composeRule.onNodeWithTag("login-toggle-mode").performClick()
+            composeRule.waitUntilTagGone("login-email", timeoutMillis = 10_000)
+            composeRule.waitUntilTagDisplayed("login-submit", timeoutMillis = 10_000)
+            composeRule.replaceText("login-username", LocalE2eConfig.username)
+            composeRule.replaceText("login-password", LocalE2eConfig.password)
+            composeRule.onNodeWithTag("login-submit").performClick()
+        }
+
+        composeRule.waitUntilTagEnabled("menu-open-pack", timeoutMillis = 20_000)
         composeRule.onNodeWithTag("menu-open-pack").assertIsDisplayed()
     }
 
     private fun openPackAndCaptureVisibleCardId(): String {
+        composeRule.waitUntilTagEnabled("menu-open-pack", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("menu-open-pack").performClick()
-        composeRule.waitUntilTagExists("pack-draw-${LocalE2eConfig.extensionId}", timeoutMillis = 10_000)
-        composeRule.onNodeWithTag("pack-draw-${LocalE2eConfig.extensionId}").performClick()
+        composeRule.waitUntilTagEnabled("pack-extension-enter-${LocalE2eConfig.extensionId}", timeoutMillis = 15_000)
+        composeRule.onNodeWithTag("pack-extension-enter-${LocalE2eConfig.extensionId}").performClick()
+        composeRule.waitUntilTagEnabled("pack-booster-0", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("pack-booster-0").performClick()
 
         composeRule.waitUntilTagExists("pack-opening-title", timeoutMillis = 20_000)
         composeRule.waitUntilTagExists("pack-opening-card-id", timeoutMillis = 10_000)
 
         val firstDrawnCardId = composeRule.readText("pack-opening-card-id")
-        composeRule.onNodeWithTag("pack-opening-card-surface").performClick()
+        composeRule.firstNodeWithTag("pack-opening-card-surface").performClick()
         composeRule.waitUntilTagExists("astro-card-fullscreen-close", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
         composeRule.waitUntilTagExists("pack-opening-card-surface", timeoutMillis = 10_000)
 
         repeat(4) {
-            composeRule.onRoot().performTouchInput { swipeLeft() }
+            composeRule.firstNodeWithTag("pack-opening-card-surface").performTouchInput { swipeLeft() }
             composeRule.waitForIdle()
         }
 
-        composeRule.onNodeWithTag("pack-opening-done").performClick()
-        composeRule.waitUntilTagExists("menu-open-pack", timeoutMillis = 10_000)
+        composeRule.firstNodeWithTag("pack-opening-card-surface").performTouchInput { swipeUp() }
+        composeRule.waitUntilTagEnabled("menu-open-pack", timeoutMillis = 10_000)
         return firstDrawnCardId
     }
 
     private fun verifyLibraryContainsDrawnCard(cardId: String) {
+        composeRule.waitUntilTagEnabled("menu-library", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("menu-library").performClick()
         composeRule.waitUntilTagExists("library-section-${LocalE2eConfig.extensionId}", timeoutMillis = 10_000)
 
@@ -87,21 +107,23 @@ class LocalEndToEndTest {
         composeRule.waitUntilTagGone("astro-card-fullscreen-close", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("library-grid").performScrollToNode(hasTestTag("library-back"))
         composeRule.onNodeWithTag("library-back").performClick()
-        composeRule.waitUntilTagExists("menu-open-pack", timeoutMillis = 10_000)
+        composeRule.waitUntilTagEnabled("menu-open-pack", timeoutMillis = 10_000)
     }
 
     private fun verifyCooldownIsVisible() {
+        composeRule.waitUntilTagEnabled("menu-open-pack", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("menu-open-pack").performClick()
-        composeRule.waitUntilTagExists("pack-draw-${LocalE2eConfig.extensionId}", timeoutMillis = 10_000)
+        composeRule.waitUntilTagExists("pack-extension-enter-${LocalE2eConfig.extensionId}", timeoutMillis = 15_000)
         composeRule.onNodeWithTag("pack-status").assertTextContains("Prochain tirage disponible", substring = true)
-        composeRule.onNodeWithTag("pack-draw-${LocalE2eConfig.extensionId}").assertIsNotEnabled()
+        composeRule.onNodeWithTag("pack-extension-enter-${LocalE2eConfig.extensionId}").assertIsNotEnabled()
         composeRule.onNodeWithTag("pack-back").performClick()
-        composeRule.waitUntilTagExists("menu-logout", timeoutMillis = 10_000)
+        composeRule.waitUntilTagEnabled("menu-logout", timeoutMillis = 10_000)
     }
 
     private fun verifyInvalidLoginShowsError() {
+        composeRule.waitUntilTagEnabled("menu-logout", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("menu-logout").performClick()
-        composeRule.waitUntilTagExists("login-submit")
+        composeRule.waitUntilTagDisplayed("login-submit", timeoutMillis = 20_000)
 
         composeRule.replaceText("login-username", LocalE2eConfig.username)
         composeRule.replaceText("login-password", "${LocalE2eConfig.password}-wrong")
@@ -138,6 +160,36 @@ class LocalEndToEndTest {
         }
     }
 
+    private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.waitUntilTagDisplayed(
+        tag: String,
+        timeoutMillis: Long = 5_000,
+    ) {
+        waitUntil(timeoutMillis) {
+            isTagDisplayed(tag)
+        }
+    }
+
+    private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.waitUntilTagEnabled(
+        tag: String,
+        timeoutMillis: Long = 5_000,
+    ) {
+        waitUntil(timeoutMillis) {
+            isTagEnabled(tag)
+        }
+    }
+
+    private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.isTagDisplayed(tag: String): Boolean =
+        runCatching {
+            onNodeWithTag(tag).assertIsDisplayed()
+            true
+        }.getOrDefault(false)
+
+    private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.isTagEnabled(tag: String): Boolean =
+        runCatching {
+            onNodeWithTag(tag).assertIsEnabled()
+            true
+        }.getOrDefault(false)
+
     private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.readText(tag: String): String =
         safeReadText(tag) ?: error("No text was found for tag $tag")
 
@@ -149,4 +201,9 @@ class LocalEndToEndTest {
         val textValues = node.config[SemanticsProperties.Text]
         return textValues.joinToString(separator = "") { annotated -> annotated.toString() }
     }
+
+    private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.firstNodeWithTag(
+        tag: String,
+        useUnmergedTree: Boolean = false,
+    ) = onAllNodesWithTag(tag, useUnmergedTree = useUnmergedTree)[0]
 }

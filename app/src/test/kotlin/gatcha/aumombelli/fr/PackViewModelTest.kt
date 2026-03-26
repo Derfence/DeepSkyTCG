@@ -78,13 +78,18 @@ class PackViewModelTest {
         advanceUntilIdle()
 
         val event = async { viewModel.events.first() }
+        viewModel.selectExtension("core-alpha")
+        viewModel.selectBooster(2)
         viewModel.openPack("core-alpha")
         advanceUntilIdle()
 
-        assertEquals(PackEvent.NavigateToOpening, event.await())
+        assertEquals(PackEvent.PackReadyForReveal, event.await())
         assertEquals(2, viewModel.uiState.value.currentCollection.cards["ALP-001"]?.totalOwned)
         assertEquals(1, viewModel.uiState.value.currentCollection.cards["ALP-002"]?.totalOwned)
         assertEquals("2026-03-24T00:00:00Z", viewModel.uiState.value.nextDrawAt)
+        assertEquals("core-alpha", viewModel.uiState.value.selectedExtensionId)
+        assertEquals(2, viewModel.uiState.value.selectedBoosterIndex)
+        assertEquals(false, viewModel.uiState.value.isAwaitingPackResult)
     }
 
     @Test

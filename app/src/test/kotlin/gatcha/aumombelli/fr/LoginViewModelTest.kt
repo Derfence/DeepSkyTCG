@@ -64,7 +64,8 @@ class LoginViewModelTest {
         assertEquals("alice", sessionGateway.activeSession?.username)
         assertEquals(1, collectionGateway.replayPendingSaveCallCount.get())
         assertEquals(1, collectionGateway.loadCollectionCallCount.get())
-        assertEquals(LoginEvent.NavigateToMenu, event.await())
+        assertEquals(LoginEvent.AuthenticationSucceeded, event.await())
+        assertEquals(true, viewModel.uiState.value.isTransitioningToMenu)
         assertEquals(false, viewModel.uiState.value.isLoading)
         assertNull(viewModel.uiState.value.errorMessage)
     }

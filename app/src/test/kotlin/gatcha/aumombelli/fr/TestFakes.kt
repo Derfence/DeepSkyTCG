@@ -165,6 +165,10 @@ class FakePackGateway : PackGateway {
 
     override fun currentPackResult(): StateFlow<DrawPackResponse?> = packFlow
 
+    override fun clearCurrentPackResult() {
+        packFlow.value = null
+    }
+
     override suspend fun openPack(extensionId: String, currentCollection: OwnedCollection): DrawPackResponse {
         openPackCalls += extensionId to currentCollection
         openPackFailure?.let { throw it }

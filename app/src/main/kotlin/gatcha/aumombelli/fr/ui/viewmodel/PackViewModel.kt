@@ -23,11 +23,14 @@ data class PackSelectionUiState(
     val extensions: List<ExtensionDefinition> = emptyList(),
     val currentCollection: OwnedCollection = OwnedCollection(),
     val nextDrawAt: String? = null,
+    val selectedExtensionId: String? = null,
+    val selectedBoosterIndex: Int? = null,
+    val isAwaitingPackResult: Boolean = false,
     val errorMessage: String? = null,
 )
 
 sealed interface PackEvent {
-    data object NavigateToOpening : PackEvent
+    data object PackReadyForReveal : PackEvent
 }
 
 class PackViewModel(
@@ -70,9 +73,46 @@ class PackViewModel(
         }
     }
 
+    fun selectExtension(extensionId: String) {
+        _uiState.update {
+            it.copy(
+                selectedExtensionId = extensionId,
+                selectedBoosterIndex = null,
+                errorMessage = null,
+            )
+        }
+    }
+
+    fun clearExtensionSelection() {
+        _uiState.update {
+            it.copy(
+                selectedExtensionId = null,
+                selectedBoosterIndex = null,
+                isAwaitingPackResult = false,
+                errorMessage = null,
+            )
+        }
+    }
+
+    fun selectBooster(index: Int) {
+        _uiState.update {
+            it.copy(
+                selectedBoosterIndex = index,
+                isAwaitingPackResult = true,
+                errorMessage = null,
+            )
+        }
+    }
+
     fun openPack(extensionId: String) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            _uiState.update {
+                it.copy(
+                    selectedExtensionId = extensionId,
+                    isAwaitingPackResult = true,
+                    errorMessage = null,
+                )
+            }
             runCatching {
                 val response = packRepository.openPack(extensionId, _uiState.value.currentCollection)
                 val merged = collectionRepository.mergeCards(_uiState.value.currentCollection, response.cards)
@@ -83,15 +123,23 @@ class PackViewModel(
                         isLoading = false,
                         currentCollection = merged,
                         nextDrawAt = response.nextDrawAt,
+                        isAwaitingPackResult = false,
                     )
                 }
-                _events.emit(PackEvent.NavigateToOpening)
+                _events.emit(PackEvent.PackReadyForReveal)
             }.onFailure { exception ->
                 val message = when (exception) {
                     is PendingSaveException -> exception.message
                     else -> exception.message ?: "Unable to open the pack."
                 }
-                _uiState.update { it.copy(isLoading = false, errorMessage = message) }
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        selectedBoosterIndex = null,
+                        isAwaitingPackResult = false,
+                        errorMessage = message,
+                    )
+                }
             }
         }
     }

@@ -4,7 +4,6 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
 import fr.aumombelli.gatcha.data.AppCompatibilityState
 import fr.aumombelli.gatcha.data.AppStatusGateway
 import fr.aumombelli.gatcha.data.AuthGateway
@@ -42,13 +41,19 @@ class LoginScreenTest {
     @Test
     fun login_screen_is_shown_on_launch() {
         composeRule.waitUntil(timeoutMillis = 10_000) {
-            composeRule.onAllNodesWithTag("login-submit")
+            composeRule.onAllNodesWithTag("app-launch-logo")
                 .fetchSemanticsNodes(atLeastOneRootRequired = false)
                 .isNotEmpty()
         }
+        composeRule.onNodeWithTag("app-launch-logo").assertIsDisplayed()
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithTag("app-launch-login-form")
+                .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                .isNotEmpty()
+        }
+        composeRule.onNodeWithTag("app-launch-login-form").assertIsDisplayed()
         composeRule.onNodeWithTag("login-submit").assertIsDisplayed()
-        composeRule.onNodeWithText("Gatcha").assertIsDisplayed()
-        composeRule.onNodeWithText("Login").assertIsDisplayed()
+        composeRule.onNodeWithTag("login-title").assertIsDisplayed()
     }
 
     @After
@@ -98,6 +103,9 @@ class LoginScreenTest {
             packRepository = object : PackGateway {
                 private val packFlow = MutableStateFlow<DrawPackResponse?>(null)
                 override fun currentPackResult(): StateFlow<DrawPackResponse?> = packFlow
+                override fun clearCurrentPackResult() {
+                    packFlow.value = null
+                }
                 override suspend fun openPack(extensionId: String, currentCollection: OwnedCollection): DrawPackResponse {
                     error("Not used in LoginScreenTest")
                 }

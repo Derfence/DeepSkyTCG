@@ -7,13 +7,17 @@ Client Android natif du projet Gatcha.
 Cette application permet au joueur de :
 
 - vérifier la compatibilité catalogue avec le serveur au démarrage ;
+- voir au lancement un logo animé devant un ciel étoilé choisi aléatoirement parmi les quatre qualités de ciel du jeu, puis apparaître le formulaire de connexion ;
 - créer un compte ;
 - se connecter ;
+- traverser une transition animée du login vers le menu principal puis rejouer l'inverse au `logout` ;
 - récupérer sa collection ;
 - consulter sa bibliothèque de cartes ;
+- traverser une transition animée de livre entre menu principal et bibliothèque ;
 - ouvrir l'aperçu d'une carte possédée depuis la bibliothèque puis l'agrandir en plein écran ;
-- ouvrir un pack par extension ;
-- visualiser l'ouverture du pack puis révéler les cartes par glissement ;
+- ouvrir un pack par extension à travers une scène d'introduction animée ;
+- visualiser une animation d'extension, choisir un booster parmi quatre boosters visuels, voir une explosion de rareté dense et prolongée, puis révéler les cartes qui montent depuis le bas de l'écran ;
+- faire disparaître l'ouverture de pack par glissement vertical vers le haut pour revenir au menu ;
 - ouvrir une carte tirée en plein écran pour consulter ses informations scientifiques.
 
 ## Stack technique
@@ -32,18 +36,71 @@ Cette application permet au joueur de :
 - `data/` : persistance locale, chiffrement de collection, migration de deck, repositories.
 - `network/` : client HTTP de l'API serveur.
 - `ui/component/` : rendu Compose partagé des cartes astro, badges de rareté et variantes visuelles.
+- `ui/motion/` : modèles de motion design, variantes de ciel, animations d'extension et composants de transition partagés.
 - `ui/viewmodel/` : logique d'écran.
 - `ui/screen/` : écrans Compose.
 - `assets/catalog/` : `metadata.json`, `extensions.json`, `cards.json` et `variant_profiles.json`.
 
-## Affichage des cartes astro
+## Flux visuel et animations
 
+- Le client utilise un décor céleste partagé entre login, menu principal, sélection d'extension et scènes de pack.
+- Le lancement choisit aléatoirement une des quatre qualités de ciel existantes : `city`, `suburban`, `rural`, `mountain`.
+- Chaque qualité de ciel fait varier la densité d'étoiles scintillantes du fond, ainsi que le premier plan :
+  - `city` : grands immeubles ;
+  - `suburban` : maisons denses ;
+  - `rural` : deux ou trois maisons espacées ;
+  - `mountain` : relief montagneux sans lumières d'horizon.
+- La séquence de démarrage est la suivante :
+  - fondu du logo au centre ;
+  - montée lente du logo vers une position calculée dynamiquement entre le haut utile de l'écran et le formulaire, avec compensation de la barre de statut ;
+  - fondu du formulaire de connexion au centre.
+- Lors d'un login réussi, le formulaire disparaît d'abord en fondu ; ensuite seulement démarre la transition vers le menu principal.
+- La transition `login -> menu` fait disparaître le premier plan, déplace les étoiles avec ce mouvement, éteint les lumières colorées en même temps que le décor lorsqu'elles existent, puis ramène le ciel vers le rendu de la situation `mountain` sans passer par un noir pur.
+- Le `logout` depuis le menu principal joue exactement l'inverse de cette transition pour revenir au login.
+- La transition `menu -> bibliothèque` fait disparaître le menu en fondu, fait monter depuis le bas un livre fermé qui s'ouvre pendant son déplacement, puis fait apparaître la bibliothèque en fondu ; le retour rejoue cette chorégraphie en sens inverse.
+- Le livre de transition est rendu en Compose sans asset externe :
+  - deux couvertures en parallélogrammes marron ;
+  - deux blocs de pages plus fins en blanc cassé ;
+  - une reliure centrale arrondie en demi-cercle ;
+  - des textures simples sur les couvertures et les pages pour suggérer relief, tranches et matière.
+- Le fond bleu sombre de la bibliothèque est inclus dans le même fondu que le contenu pour éviter toute apparition brutale.
+- La transition `menu -> choix de l'extension` suit cette séquence :
+  - disparition du menu en fondu ;
+  - apparition en fondu de la nouvelle scène sans la liste ;
+  - apparition du titre `Choisis l'extension à contempler.` ;
+  - montée des blocs d'extension depuis le bas, comme une file qui s'arrête progressivement.
+- Les blocs de sélection d'extension n'affichent plus l'identifiant technique de l'extension.
+- Chaque bloc d'extension affiche à droite du titre un petit logo animé propre à l'extension ; son animation ne démarre qu'une fois le mouvement d'entrée du bloc terminé.
+- Lors du choix d'une extension, le bloc sélectionné grandit pour transitionner lui-même vers la scène suivante :
+  - le bouton d'entrée disparaît en fondu ;
+  - le titre reste affiché en haut et centré ;
+  - les quatre boosters visuels apparaissent un par un.
+- Le retour arrière depuis cette scène rejoue la transition inverse sans coupure visuelle entre les deux états.
+- Les quatre boosters affichés après choix d'extension sont purement visuels ; le tirage serveur reste unique et dépend uniquement de l'identifiant d'extension.
+- Le booster choisi conserve son logo déjà animé, se recentre exactement sur la future zone d'ouverture et les trois autres disparaissent en fondu.
+- Le passage vers l'ouverture conserve visuellement le même booster, sans relance du logo, avec fondu du reste de la scène.
+- L'ouverture joue ensuite une explosion de rareté :
+  - très dense, avec des étoiles dans toutes les directions ;
+  - plus grandes et étalées dans le temps ;
+  - émises depuis le centre du booster ;
+  - suivant une trajectoire balistique de type projectile lancé vers le haut puis retombant ;
+  - maintenues jusqu'à la fin de la descente du booster hors champ par le bas.
+- Une carte holographique ajoute une pluie supplémentaire d'étoiles tombant depuis le haut de l'écran.
+- Les cartes du pack n'apparaissent qu'après la fin complète de cette séquence, puis entrent depuis le bas de l'écran avant de prendre leur position de révélation.
+- `Astronomes en herbe` dispose d'une animation dédiée :
+  - le logo reprend la constellation de la Grande Casserole ;
+  - aucun point ni trait n'apparaît avant le début de l'apparition du logo ;
+  - les points apparaissent en même temps que les premiers traits qui les atteignent ;
+  - les points disparaissent dès que le dernier trait qui les touche commence à s'effacer ;
+  - au retour arrière, l'animation est jouée en sens inverse avec disparition synchronisée des points et des traits.
+- Les positions et connexions du dessin d'`Astronomes en herbe` sont définies dans `ui/motion/AppMotion.kt`, et leur rendu dans `ui/motion/AppMotionComponents.kt`.
 - Une miniature de bibliothèque reste atténuée tant que la carte n'est pas possédée.
 - La bibliothèque trie les cartes d'une extension par rareté, de `Common` vers `Epic`.
 - Les miniatures de bibliothèque gardent un rendu simplifié et n'affichent plus le texte central de catalogue ni la variante au centre.
-- Un clic sur une carte possédée ouvre un aperçu centré au ratio de carte a collectionner ; un second clic ouvre le plein écran.
-- La fermeture du plein écran ouvert depuis la bibliothèque revient directement a la grille, sans repasser par l'aperçu.
+- Un clic sur une carte possédée ouvre un aperçu centré au ratio de carte à collectionner ; un second clic ouvre le plein écran.
+- La fermeture du plein écran ouvert depuis la bibliothèque revient directement à la grille, sans repasser par l'aperçu.
 - L'écran d'ouverture de pack permet aussi d'ouvrir la carte révélée en plein écran.
+- Le retour du pack vers le menu principal se fait par glissement vertical vers le haut.
 - Les cartes d'aperçu de bibliothèque et les cartes révélées dans les packs utilisent un ratio fixe `hauteur / largeur = 1.754`.
 - Le fond de carte dépend de la qualité du ciel (`city`, `suburban`, `rural`, `mountain`).
 - Les cartes holographiques ajoutent une surcouche d'étoiles scintillantes.
@@ -91,12 +148,25 @@ L'état actuel du code doit correspondre à une première release technique `v0.
   - génération de release ;
   - tag Git.
 
+## Couverture de tests actuelle
+
+- Les tests unitaires couvrent maintenant aussi :
+  - la sélection déterministe d'une variante de ciel ;
+  - la résolution des animations d'extension ;
+  - la projection du dessin d'extension et la conservation de son orientation ;
+  - la synchronisation d'apparition et de disparition des points de constellation avec les traits ;
+  - le calcul de la rareté maximale et la détection holographique pour l'ouverture de pack ;
+  - les nouveaux événements et états transitoires des ViewModels de login et de pack.
+- Les tests Compose/instrumentés couvrent le splash de lancement, l'affichage du login, la constellation de la Grande Casserole, le retour arrière depuis une extension sélectionnée, la disparition des boosters non sélectionnés, l'ouverture de pack avec explosion, l'entrée des cartes depuis le bas et le retour par glissement vertical.
+- Les tests E2E attendent désormais la séquence complète : login -> menu -> extension -> booster -> ouverture -> swipe haut -> bibliothèque.
+
 ## Commandes utiles
 
 Depuis le dossier `client-android/` :
 
 ```powershell
 .\gradlew.bat :app:testDebugUnitTest
+.\gradlew.bat :app:compileDebugAndroidTestKotlin
 .\gradlew.bat :app:assembleDebug
 .\gradlew.bat :app:connectedDebugAndroidTest
 ```
