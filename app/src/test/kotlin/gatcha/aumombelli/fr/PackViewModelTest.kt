@@ -1,13 +1,13 @@
 package fr.aumombelli.gatcha
 
 import fr.aumombelli.gatcha.data.PendingSaveException
+import fr.aumombelli.gatcha.feature.packs.selection.PackEvent
 import fr.aumombelli.gatcha.model.CardDefinition
 import fr.aumombelli.gatcha.model.DrawPackResponse
 import fr.aumombelli.gatcha.model.ExtensionDefinition
 import fr.aumombelli.gatcha.model.OwnedCollection
 import fr.aumombelli.gatcha.model.PackCard
 import fr.aumombelli.gatcha.model.StoredSessionSnapshot
-import fr.aumombelli.gatcha.ui.viewmodel.PackEvent
 import fr.aumombelli.gatcha.ui.viewmodel.PackViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -22,6 +22,26 @@ import org.junit.Test
 class PackViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
+
+    @Test
+    fun `select extension and clear selection reset transient booster state`() = runTest {
+        val viewModel = PackViewModel(
+            catalogRepository = FakeCatalogGateway(),
+            collectionRepository = FakeCollectionGateway(),
+            packRepository = FakePackGateway(),
+            sessionRepository = FakeSessionGateway(),
+        )
+        advanceUntilIdle()
+
+        viewModel.selectExtension("core-alpha")
+        viewModel.selectBooster(3)
+        viewModel.clearExtensionSelection()
+
+        assertEquals(null, viewModel.uiState.value.selectedExtensionId)
+        assertEquals(null, viewModel.uiState.value.selectedBoosterIndex)
+        assertEquals(false, viewModel.uiState.value.isAwaitingPackResult)
+        assertEquals(null, viewModel.uiState.value.errorMessage)
+    }
 
     @Test
     fun `refresh loads extensions collection and next draw timestamp`() = runTest {
@@ -78,13 +98,18 @@ class PackViewModelTest {
         advanceUntilIdle()
 
         val event = async { viewModel.events.first() }
+        viewModel.selectExtension("core-alpha")
+        viewModel.selectBooster(2)
         viewModel.openPack("core-alpha")
         advanceUntilIdle()
 
-        assertEquals(PackEvent.NavigateToOpening, event.await())
+        assertEquals(PackEvent.PackReadyForReveal, event.await())
         assertEquals(2, viewModel.uiState.value.currentCollection.cards["ALP-001"]?.totalOwned)
         assertEquals(1, viewModel.uiState.value.currentCollection.cards["ALP-002"]?.totalOwned)
         assertEquals("2026-03-24T00:00:00Z", viewModel.uiState.value.nextDrawAt)
+        assertEquals("core-alpha", viewModel.uiState.value.selectedExtensionId)
+        assertEquals(2, viewModel.uiState.value.selectedBoosterIndex)
+        assertEquals(false, viewModel.uiState.value.isAwaitingPackResult)
     }
 
     @Test
@@ -106,5 +131,30 @@ class PackViewModelTest {
 
         assertEquals("Pack drawn but save failed.", viewModel.uiState.value.errorMessage)
         assertEquals(false, viewModel.uiState.value.isLoading)
+    }
+
+    @Test
+    fun `open pack generic failure resets booster selection and uses default message`() = runTest {
+        val viewModel = PackViewModel(
+            catalogRepository = FakeCatalogGateway().apply {
+                extensions = listOf(ExtensionDefinition("core-alpha", "Core Alpha", "cover"))
+            },
+            collectionRepository = FakeCollectionGateway(),
+            packRepository = FakePackGateway().apply {
+                openPackFailure = IllegalStateException()
+            },
+            sessionRepository = FakeSessionGateway(),
+        )
+        advanceUntilIdle()
+
+        viewModel.selectExtension("core-alpha")
+        viewModel.selectBooster(1)
+        viewModel.openPack("core-alpha")
+        advanceUntilIdle()
+
+        assertEquals("core-alpha", viewModel.uiState.value.selectedExtensionId)
+        assertEquals(null, viewModel.uiState.value.selectedBoosterIndex)
+        assertEquals(false, viewModel.uiState.value.isAwaitingPackResult)
+        assertEquals("Unable to open the pack.", viewModel.uiState.value.errorMessage)
     }
 }

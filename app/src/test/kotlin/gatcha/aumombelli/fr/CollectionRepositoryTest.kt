@@ -62,6 +62,23 @@ class CollectionRepositoryTest {
     }
 
     @Test
+    fun `invalid cached blob falls back to empty collection at current catalog version`() = runTest {
+        val sessionGateway = FakeSessionGateway().apply {
+            activeSession = SessionCredentials("alice", PasswordHash)
+            snapshot = snapshot.copy(lastCollectionBlob = "definitely-not-a-valid-blob")
+        }
+        val repository = newRepository(
+            sessionGateway = sessionGateway,
+        )
+
+        val collection = repository.getCachedCollectionOrEmpty()
+
+        assertEquals(5, collection.version)
+        assertEquals(emptyMap<String, Int>(), collection.cards.mapValues { it.value.totalOwned })
+        assertEquals(0, sessionGateway.committedCollections.size)
+    }
+
+    @Test
     fun `load collection from server migrates old blob and saves upgraded version`() = runTest {
         val oldBlob = CollectionCrypto.serializeAndEncrypt(
             serverOwnedCollectionCompat(version = 1, "ALP-001" to 1),
@@ -131,6 +148,29 @@ class CollectionRepositoryTest {
         val committedBlob = sessionGateway.committedCollections.single().first
         val migrated = CollectionCrypto.decryptAndDeserialize(committedBlob, PasswordHash)
         assertEquals(5, migrated.version)
+    }
+
+    @Test
+    fun `replay pending save ignores blob from another user`() = runTest {
+        val oldBlob = CollectionCrypto.serializeAndEncrypt(
+            serverOwnedCollectionCompat(version = 1, "ALP-001" to 1),
+            PasswordHash,
+        )
+        val sessionGateway = FakeSessionGateway().apply {
+            activeSession = SessionCredentials("alice", PasswordHash)
+            snapshot = snapshot.copy(
+                lastUsername = "bob",
+                pendingCollectionBlob = oldBlob,
+            )
+        }
+        val repository = newRepository(
+            sessionGateway = sessionGateway,
+        )
+
+        val replayed = repository.replayPendingSaveIfNeeded()
+
+        assertEquals(false, replayed)
+        assertEquals(0, sessionGateway.committedCollections.size)
     }
 
     private fun newRepository(

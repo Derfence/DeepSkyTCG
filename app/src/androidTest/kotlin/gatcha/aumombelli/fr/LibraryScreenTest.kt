@@ -51,7 +51,6 @@ class LibraryScreenTest {
                         ),
                     ),
                 ),
-                onBack = {},
                 onRefresh = {},
             )
         }
@@ -64,7 +63,7 @@ class LibraryScreenTest {
         composeRule.onNodeWithTag("astro-card-fullscreen").assertIsDisplayed()
         composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
         composeRule.onAllNodesWithTag("library-card-preview").assertCountEquals(0)
-        composeRule.onNodeWithTag("library-back").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("library-back").assertCountEquals(0)
     }
 
     @Test
@@ -89,7 +88,6 @@ class LibraryScreenTest {
                         ),
                     ),
                 ),
-                onBack = {},
                 onRefresh = {},
             )
         }

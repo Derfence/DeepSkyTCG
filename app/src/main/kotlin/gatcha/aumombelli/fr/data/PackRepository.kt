@@ -23,6 +23,10 @@ class PackRepository(
 
     override fun currentPackResult(): StateFlow<DrawPackResponse?> = currentPackResult.asStateFlow()
 
+    override fun clearCurrentPackResult() {
+        currentPackResult.value = null
+    }
+
     override suspend fun openPack(extensionId: String, currentCollection: OwnedCollection): DrawPackResponse {
         val session = sessionRepository.requireActiveSession()
         val packResponse = apiService.drawPack(

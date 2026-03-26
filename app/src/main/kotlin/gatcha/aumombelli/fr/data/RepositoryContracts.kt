@@ -68,5 +68,6 @@ interface CollectionGateway {
 
 interface PackGateway {
     fun currentPackResult(): StateFlow<DrawPackResponse?>
+    fun clearCurrentPackResult()
     suspend fun openPack(extensionId: String, currentCollection: OwnedCollection): DrawPackResponse
 }

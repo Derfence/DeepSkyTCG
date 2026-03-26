@@ -1,7 +1,8 @@
 package fr.aumombelli.gatcha
 
+import fr.aumombelli.gatcha.data.SecurityUtils
+import fr.aumombelli.gatcha.feature.auth.LoginEvent
 import fr.aumombelli.gatcha.network.ApiCallException
-import fr.aumombelli.gatcha.ui.viewmodel.LoginEvent
 import fr.aumombelli.gatcha.ui.viewmodel.LoginViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -17,6 +18,43 @@ import org.junit.Test
 class LoginViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
+
+    @Test
+    fun `submit requires username and password`() = runTest {
+        val authGateway = FakeAuthGateway()
+        val viewModel = LoginViewModel(
+            apiService = authGateway,
+            sessionRepository = FakeSessionGateway(),
+            collectionRepository = FakeCollectionGateway(),
+        )
+
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals("Username and password are required.", viewModel.uiState.value.errorMessage)
+        assertEquals(0, authGateway.createRequests.size)
+        assertEquals(0, authGateway.loginRequests.size)
+    }
+
+    @Test
+    fun `submit in create mode requires email`() = runTest {
+        val authGateway = FakeAuthGateway()
+        val viewModel = LoginViewModel(
+            apiService = authGateway,
+            sessionRepository = FakeSessionGateway(),
+            collectionRepository = FakeCollectionGateway(),
+        )
+
+        viewModel.toggleMode()
+        viewModel.updateUsername("alice")
+        viewModel.updatePassword("secret")
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals("Email is required to create an account.", viewModel.uiState.value.errorMessage)
+        assertEquals(0, authGateway.createRequests.size)
+        assertEquals(0, authGateway.loginRequests.size)
+    }
 
     @Test
     fun `init restores last username from session snapshot`() = runTest {
@@ -51,8 +89,8 @@ class LoginViewModelTest {
         val viewModel = LoginViewModel(authGateway, sessionGateway, collectionGateway)
 
         viewModel.toggleMode()
-        viewModel.updateUsername("Alice")
-        viewModel.updateEmail("alice@example.com")
+        viewModel.updateUsername(" Alice ")
+        viewModel.updateEmail(" alice@example.com ")
         viewModel.updatePassword("secret")
 
         val event = async { viewModel.events.first() }
@@ -61,12 +99,72 @@ class LoginViewModelTest {
 
         assertEquals(1, authGateway.createRequests.size)
         assertEquals(1, authGateway.loginRequests.size)
+        assertEquals("alice", authGateway.createRequests.single().username)
+        assertEquals("alice@example.com", authGateway.createRequests.single().email)
+        assertEquals(
+            SecurityUtils.computeClientPasswordHash("alice", "secret"),
+            authGateway.createRequests.single().passwordHash,
+        )
+        assertEquals("alice", authGateway.loginRequests.single().username)
+        assertEquals(
+            SecurityUtils.computeClientPasswordHash("alice", "secret"),
+            authGateway.loginRequests.single().passwordHash,
+        )
         assertEquals("alice", sessionGateway.activeSession?.username)
+        assertEquals(
+            SecurityUtils.computeClientPasswordHash("alice", "secret"),
+            sessionGateway.activeSession?.passwordHash,
+        )
         assertEquals(1, collectionGateway.replayPendingSaveCallCount.get())
         assertEquals(1, collectionGateway.loadCollectionCallCount.get())
-        assertEquals(LoginEvent.NavigateToMenu, event.await())
+        assertEquals(LoginEvent.AuthenticationSucceeded, event.await())
+        assertEquals(true, viewModel.uiState.value.isTransitioningToMenu)
         assertEquals(false, viewModel.uiState.value.isLoading)
         assertNull(viewModel.uiState.value.errorMessage)
+    }
+
+    @Test
+    fun `submit surfaces replay pending save failure`() = runTest {
+        val collectionGateway = FakeCollectionGateway().apply {
+            replayFailure = IllegalStateException("Pending save replay failed.")
+        }
+        val viewModel = LoginViewModel(
+            apiService = FakeAuthGateway(),
+            sessionRepository = FakeSessionGateway(),
+            collectionRepository = collectionGateway,
+        )
+
+        viewModel.updateUsername("alice")
+        viewModel.updatePassword("secret")
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals("Pending save replay failed.", viewModel.uiState.value.errorMessage)
+        assertEquals(false, viewModel.uiState.value.isTransitioningToMenu)
+        assertEquals(1, collectionGateway.replayPendingSaveCallCount.get())
+        assertEquals(0, collectionGateway.loadCollectionCallCount.get())
+    }
+
+    @Test
+    fun `submit surfaces collection loading failure after login`() = runTest {
+        val collectionGateway = FakeCollectionGateway().apply {
+            loadCollectionFailure = IllegalStateException("Collection unavailable.")
+        }
+        val viewModel = LoginViewModel(
+            apiService = FakeAuthGateway(),
+            sessionRepository = FakeSessionGateway(),
+            collectionRepository = collectionGateway,
+        )
+
+        viewModel.updateUsername("alice")
+        viewModel.updatePassword("secret")
+        viewModel.submit()
+        advanceUntilIdle()
+
+        assertEquals("Collection unavailable.", viewModel.uiState.value.errorMessage)
+        assertEquals(false, viewModel.uiState.value.isTransitioningToMenu)
+        assertEquals(1, collectionGateway.replayPendingSaveCallCount.get())
+        assertEquals(1, collectionGateway.loadCollectionCallCount.get())
     }
 
     @Test
