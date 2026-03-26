@@ -1,13 +1,9 @@
 package fr.aumombelli.gatcha
 
-import fr.aumombelli.gatcha.data.PendingSaveException
 import fr.aumombelli.gatcha.feature.packs.selection.PackEvent
-import fr.aumombelli.gatcha.model.CardDefinition
 import fr.aumombelli.gatcha.model.DrawPackResponse
 import fr.aumombelli.gatcha.model.ExtensionDefinition
-import fr.aumombelli.gatcha.model.OwnedCollection
-import fr.aumombelli.gatcha.model.PackCard
-import fr.aumombelli.gatcha.model.StoredSessionSnapshot
+import fr.aumombelli.gatcha.model.StandaloneProgress
 import fr.aumombelli.gatcha.ui.viewmodel.PackViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -27,9 +23,8 @@ class PackViewModelTest {
     fun `select extension and clear selection reset transient booster state`() = runTest {
         val viewModel = PackViewModel(
             catalogRepository = FakeCatalogGateway(),
-            collectionRepository = FakeCollectionGateway(),
+            progressRepository = FakeProgressGateway(),
             packRepository = FakePackGateway(),
-            sessionRepository = FakeSessionGateway(),
         )
         advanceUntilIdle()
 
@@ -44,23 +39,21 @@ class PackViewModelTest {
     }
 
     @Test
-    fun `refresh loads extensions collection and next draw timestamp`() = runTest {
+    fun `refresh loads extensions collection and next draw timestamp from local progress`() = runTest {
         val catalogGateway = FakeCatalogGateway().apply {
             extensions = listOf(ExtensionDefinition("core-alpha", "Core Alpha", "cover"))
-            cards = listOf(testCardDefinition("ALP-001", extensionId = "core-alpha", name = "Nebuleuse d'Orion", imageRef = "fox"))
         }
-        val collectionGateway = FakeCollectionGateway().apply {
-            cachedCollection = ownedCollectionOf("ALP-001" to 1)
-        }
-        val sessionGateway = FakeSessionGateway().apply {
-            snapshot = StoredSessionSnapshot(nextDrawAt = "2026-03-24T00:00:00Z")
+        val progressGateway = FakeProgressGateway().apply {
+            progress = StandaloneProgress(
+                collection = ownedCollectionOf("ALP-001" to 1).copy(version = 5),
+                nextDrawAt = "2026-03-24T00:00:00Z",
+            )
         }
 
         val viewModel = PackViewModel(
             catalogRepository = catalogGateway,
-            collectionRepository = collectionGateway,
+            progressRepository = progressGateway,
             packRepository = FakePackGateway(),
-            sessionRepository = sessionGateway,
         )
         advanceUntilIdle()
 
@@ -70,20 +63,37 @@ class PackViewModelTest {
     }
 
     @Test
-    fun `open pack merges collection and emits navigation`() = runTest {
-        val packGateway = FakePackGateway().apply {
-            openPackResponse = DrawPackResponse(
-                extensionId = "core-alpha",
-                drawnAt = "2026-03-23T12:00:00Z",
-                nextDrawAt = "2026-03-24T00:00:00Z",
-                cards = listOf(
-                    testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
-                    testPackCard("ALP-002", "Galaxie d'Andromede", "Common", "steam_golem", skyQuality = "rural", skyQualityLabel = "Campagne"),
+    fun `open pack reloads saved progress and emits navigation`() = runTest {
+        val response = DrawPackResponse(
+            extensionId = "core-alpha",
+            drawnAt = "2026-03-23T12:00:00Z",
+            nextDrawAt = "2026-03-24T00:00:00Z",
+            cards = listOf(
+                testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
+                testPackCard(
+                    "ALP-002",
+                    "Galaxie d'Andromede",
+                    "Common",
+                    "steam_golem",
+                    skyQuality = "rural",
+                    skyQualityLabel = "Campagne",
                 ),
+            ),
+        )
+        val progressGateway = FakeProgressGateway().apply {
+            progress = StandaloneProgress(
+                collection = ownedCollectionOf("ALP-001" to 1).copy(version = 5),
+                nextDrawAt = null,
             )
         }
-        val collectionGateway = FakeCollectionGateway().apply {
-            cachedCollection = ownedCollectionOf("ALP-001" to 1)
+        val packGateway = FakePackGateway().apply {
+            openPackResponse = response
+            onOpenPack = {
+                progressGateway.progress = StandaloneProgress(
+                    collection = ownedCollectionOf("ALP-001" to 2, "ALP-002" to 1).copy(version = 5),
+                    nextDrawAt = response.nextDrawAt,
+                )
+            }
         }
         val catalogGateway = FakeCatalogGateway().apply {
             extensions = listOf(ExtensionDefinition("core-alpha", "Core Alpha", "cover"))
@@ -91,9 +101,8 @@ class PackViewModelTest {
 
         val viewModel = PackViewModel(
             catalogRepository = catalogGateway,
-            collectionRepository = collectionGateway,
+            progressRepository = progressGateway,
             packRepository = packGateway,
-            sessionRepository = FakeSessionGateway(),
         )
         advanceUntilIdle()
 
@@ -104,6 +113,7 @@ class PackViewModelTest {
         advanceUntilIdle()
 
         assertEquals(PackEvent.PackReadyForReveal, event.await())
+        assertEquals(listOf("core-alpha"), packGateway.openPackCalls)
         assertEquals(2, viewModel.uiState.value.currentCollection.cards["ALP-001"]?.totalOwned)
         assertEquals(1, viewModel.uiState.value.currentCollection.cards["ALP-002"]?.totalOwned)
         assertEquals("2026-03-24T00:00:00Z", viewModel.uiState.value.nextDrawAt)
@@ -113,37 +123,15 @@ class PackViewModelTest {
     }
 
     @Test
-    fun `open pack surfaces pending save message`() = runTest {
-        val viewModel = PackViewModel(
-            catalogRepository = FakeCatalogGateway().apply {
-                extensions = listOf(ExtensionDefinition("core-alpha", "Core Alpha", "cover"))
-            },
-            collectionRepository = FakeCollectionGateway(),
-            packRepository = FakePackGateway().apply {
-                openPackFailure = PendingSaveException("Pack drawn but save failed.", IllegalStateException("offline"))
-            },
-            sessionRepository = FakeSessionGateway(),
-        )
-        advanceUntilIdle()
-
-        viewModel.openPack("core-alpha")
-        advanceUntilIdle()
-
-        assertEquals("Pack drawn but save failed.", viewModel.uiState.value.errorMessage)
-        assertEquals(false, viewModel.uiState.value.isLoading)
-    }
-
-    @Test
     fun `open pack generic failure resets booster selection and uses default message`() = runTest {
         val viewModel = PackViewModel(
             catalogRepository = FakeCatalogGateway().apply {
                 extensions = listOf(ExtensionDefinition("core-alpha", "Core Alpha", "cover"))
             },
-            collectionRepository = FakeCollectionGateway(),
+            progressRepository = FakeProgressGateway(),
             packRepository = FakePackGateway().apply {
                 openPackFailure = IllegalStateException()
             },
-            sessionRepository = FakeSessionGateway(),
         )
         advanceUntilIdle()
 

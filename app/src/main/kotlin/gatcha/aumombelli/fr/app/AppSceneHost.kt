@@ -28,9 +28,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.aumombelli.gatcha.AppContainer
-import fr.aumombelli.gatcha.feature.auth.LoginEvent
-import fr.aumombelli.gatcha.feature.auth.LoginScreen
-import fr.aumombelli.gatcha.feature.auth.LoginViewModel
 import fr.aumombelli.gatcha.feature.library.LibraryScreen
 import fr.aumombelli.gatcha.feature.library.LibraryViewModel
 import fr.aumombelli.gatcha.feature.packs.opening.PackOpeningScreen
@@ -38,6 +35,9 @@ import fr.aumombelli.gatcha.feature.packs.opening.PackOpeningViewModel
 import fr.aumombelli.gatcha.feature.packs.selection.PackEvent
 import fr.aumombelli.gatcha.feature.packs.selection.PackSelectionScreen
 import fr.aumombelli.gatcha.feature.packs.selection.PackViewModel
+import fr.aumombelli.gatcha.feature.start.StartEvent
+import fr.aumombelli.gatcha.feature.start.StartScreen
+import fr.aumombelli.gatcha.feature.start.StartViewModel
 import fr.aumombelli.gatcha.ui.motion.AppScene
 import fr.aumombelli.gatcha.ui.motion.AppSkyBackdrop
 import fr.aumombelli.gatcha.ui.motion.BookPortalOverlay
@@ -88,8 +88,8 @@ internal fun AppSceneHost(appContainer: AppContainer) {
         label = "app-launch-logo-lift",
     )
     val statusBarInsetPx = WindowInsets.statusBars.getTop(density).toFloat()
-    val launchLogoTargetTranslationY = if (sceneState.rootHeightPx > 0f && sceneState.loginFormTopPx > 0f) {
-        (sceneState.loginFormTopPx / 2f) - (sceneState.rootHeightPx / 2f) + (statusBarInsetPx * 0.18f)
+    val launchLogoTargetTranslationY = if (sceneState.rootHeightPx > 0f && sceneState.startCardTopPx > 0f) {
+        (sceneState.startCardTopPx / 2f) - (sceneState.rootHeightPx / 2f) + (statusBarInsetPx * 0.18f)
     } else {
         -(220f - statusBarInsetPx * 0.18f)
     }
@@ -113,45 +113,39 @@ internal fun AppSceneHost(appContainer: AppContainer) {
         )
 
         when (sceneState.currentScene) {
-            AppScene.Login -> {
-                val loginViewModel: LoginViewModel = viewModel(
-                    key = "login-${sceneState.loginViewModelKey}",
+            AppScene.Start -> {
+                val startViewModel: StartViewModel = viewModel(
+                    key = "start",
                     factory = GatchaViewModelFactory {
-                        LoginViewModel(
-                            apiService = appContainer.apiService,
-                            sessionRepository = appContainer.sessionRepository,
-                            collectionRepository = appContainer.collectionRepository,
+                        StartViewModel(
+                            progressRepository = appContainer.progressRepository,
                         )
                     },
                 )
-                val uiState by loginViewModel.uiState.collectAsState()
+                val uiState by startViewModel.uiState.collectAsState()
 
-                LaunchedEffect(loginViewModel) {
-                    loginViewModel.events.collect { event ->
+                LaunchedEffect(startViewModel) {
+                    startViewModel.events.collect { event ->
                         when (event) {
-                            LoginEvent.AuthenticationSucceeded -> {
+                            StartEvent.ReadyToEnterMenu -> {
                                 scope.launch {
-                                    sceneStateHolder.value = sceneStateHolder.value.hideLoginForm()
+                                    sceneStateHolder.value = sceneStateHolder.value.hideStartCard()
                                     kotlinx.coroutines.delay(560)
-                                    transitions.animateLoginToMenu()
+                                    transitions.animateStartToMenu()
                                 }
                             }
                         }
                     }
                 }
 
-                LoginScreen(
+                StartScreen(
                     state = uiState,
-                    onUsernameChange = loginViewModel::updateUsername,
-                    onEmailChange = loginViewModel::updateEmail,
-                    onPasswordChange = loginViewModel::updatePassword,
-                    onModeToggle = loginViewModel::toggleMode,
-                    onSubmit = loginViewModel::submit,
-                    onFormTopChanged = { topPx ->
-                        sceneStateHolder.value = sceneStateHolder.value.withLoginFormTop(topPx)
+                    onBegin = startViewModel::begin,
+                    onCardTopChanged = { topPx ->
+                        sceneStateHolder.value = sceneStateHolder.value.withStartCardTop(topPx)
                     },
                     showBackground = false,
-                    contentVisible = sceneState.loginFormVisible,
+                    contentVisible = sceneState.startCardVisible,
                 )
             }
 
@@ -168,9 +162,6 @@ internal fun AppSceneHost(appContainer: AppContainer) {
                     },
                     onOpenLibrary = {
                         scope.launch { transitions.animateMenuToLibrary() }
-                    },
-                    onLogout = {
-                        scope.launch { transitions.animateMenuToLogin() }
                     },
                     showBackground = false,
                     contentVisible = sceneState.menuContentVisible,
@@ -209,9 +200,8 @@ internal fun AppSceneHost(appContainer: AppContainer) {
                     factory = GatchaViewModelFactory {
                         PackViewModel(
                             catalogRepository = appContainer.catalogRepository,
-                            collectionRepository = appContainer.collectionRepository,
+                            progressRepository = appContainer.progressRepository,
                             packRepository = appContainer.packRepository,
-                            sessionRepository = appContainer.sessionRepository,
                         )
                     },
                 )
@@ -284,7 +274,7 @@ internal fun AppSceneHost(appContainer: AppContainer) {
             }
         }
 
-        if (launchLogoAlpha > 0.01f && sceneState.currentScene == AppScene.Login) {
+        if (launchLogoAlpha > 0.01f && sceneState.currentScene == AppScene.Start) {
             LaunchLogoMark(
                 modifier = Modifier
                     .align(Alignment.Center)

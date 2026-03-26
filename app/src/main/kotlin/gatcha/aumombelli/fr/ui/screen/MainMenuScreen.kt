@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,7 +30,6 @@ import androidx.compose.ui.unit.dp
 fun MainMenuScreen(
     onOpenPack: () -> Unit,
     onOpenLibrary: () -> Unit,
-    onLogout: () -> Unit,
     modifier: Modifier = Modifier,
     showBackground: Boolean = true,
     contentVisible: Boolean = true,
@@ -108,15 +106,6 @@ fun MainMenuScreen(
                         .testTag("menu-library"),
                 ) {
                     Text("Library")
-                }
-                OutlinedButton(
-                    onClick = onLogout,
-                    enabled = interactionsEnabled,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("menu-logout"),
-                ) {
-                    Text("Logout")
                 }
             }
         }

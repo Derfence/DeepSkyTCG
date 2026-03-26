@@ -3,6 +3,14 @@ package fr.aumombelli.gatcha.model
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class DrawPackResponse(
+    val extensionId: String,
+    val drawnAt: String,
+    val nextDrawAt: String,
+    val cards: List<PackCard>,
+)
+
+@Serializable
 data class PackCard(
     val cardId: String,
     val name: String,

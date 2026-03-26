@@ -21,16 +21,7 @@ data class OwnedVariantCount(
     val count: Int,
 )
 
-data class SessionCredentials(
-    val username: String,
-    val passwordHash: String,
-)
-
-data class StoredSessionSnapshot(
-    val lastUsername: String? = null,
-    val lastCollectionBlob: String? = null,
-    val pendingCollectionBlob: String? = null,
-    val pendingPackJson: String? = null,
+data class StandaloneProgress(
+    val collection: OwnedCollection,
     val nextDrawAt: String? = null,
-    val lastSavedAt: String? = null,
 )

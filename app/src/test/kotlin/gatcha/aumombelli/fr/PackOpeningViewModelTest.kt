@@ -53,7 +53,7 @@ class PackOpeningViewModelTest {
             packRepository = packGateway,
         )
 
-        packGateway.openPack("astronomes-en-herbe", ownedCollectionOf())
+        packGateway.openPack("astronomes-en-herbe")
         advanceUntilIdle()
 
         val state = viewModel.uiState.value

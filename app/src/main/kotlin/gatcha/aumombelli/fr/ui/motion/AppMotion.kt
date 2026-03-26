@@ -39,7 +39,7 @@ enum class SkyBackdropVariant(
 }
 
 enum class AppScene {
-    Login,
+    Start,
     MainMenu,
     Library,
     PackSelection,

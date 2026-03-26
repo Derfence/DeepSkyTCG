@@ -1,4 +1,4 @@
-package fr.aumombelli.gatcha.feature.auth
+package fr.aumombelli.gatcha.feature.start
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -13,22 +13,18 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 
 @Composable
-fun LoginScreen(
-    state: LoginUiState,
-    onUsernameChange: (String) -> Unit,
-    onEmailChange: (String) -> Unit,
-    onPasswordChange: (String) -> Unit,
-    onModeToggle: () -> Unit,
-    onSubmit: () -> Unit,
+fun StartScreen(
+    state: StartUiState,
+    onBegin: () -> Unit,
     modifier: Modifier = Modifier,
     showBackground: Boolean = true,
     contentVisible: Boolean = true,
-    onFormTopChanged: (Float) -> Unit = {},
+    onCardTopChanged: (Float) -> Unit = {},
 ) {
-    val formAlpha by animateFloatAsState(
+    val cardAlpha by animateFloatAsState(
         targetValue = if (contentVisible) 1f else 0f,
         animationSpec = tween(durationMillis = 520, easing = FastOutSlowInEasing),
-        label = "login-form-alpha",
+        label = "start-card-alpha",
     )
     val backgroundBrush = if (showBackground) {
         Brush.verticalGradient(
@@ -52,15 +48,11 @@ fun LoginScreen(
             .fillMaxSize()
             .background(brush = backgroundBrush),
     ) {
-        LoginFormCard(
+        StartCard(
             state = state,
-            formAlpha = formAlpha,
-            onUsernameChange = onUsernameChange,
-            onEmailChange = onEmailChange,
-            onPasswordChange = onPasswordChange,
-            onModeToggle = onModeToggle,
-            onSubmit = onSubmit,
-            onFormTopChanged = onFormTopChanged,
+            cardAlpha = cardAlpha,
+            onBegin = onBegin,
+            onCardTopChanged = onCardTopChanged,
         )
     }
 }

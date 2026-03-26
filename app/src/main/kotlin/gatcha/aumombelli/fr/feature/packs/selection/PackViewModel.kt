@@ -3,10 +3,8 @@ package fr.aumombelli.gatcha.feature.packs.selection
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import fr.aumombelli.gatcha.data.CatalogGateway
-import fr.aumombelli.gatcha.data.CollectionGateway
 import fr.aumombelli.gatcha.data.PackGateway
-import fr.aumombelli.gatcha.data.PendingSaveException
-import fr.aumombelli.gatcha.data.SessionGateway
+import fr.aumombelli.gatcha.data.ProgressGateway
 import fr.aumombelli.gatcha.model.ExtensionDefinition
 import fr.aumombelli.gatcha.model.OwnedCollection
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -35,9 +33,8 @@ sealed interface PackEvent {
 
 class PackViewModel(
     private val catalogRepository: CatalogGateway,
-    private val collectionRepository: CollectionGateway,
+    private val progressRepository: ProgressGateway,
     private val packRepository: PackGateway,
-    private val sessionRepository: SessionGateway,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PackSelectionUiState())
     val uiState: StateFlow<PackSelectionUiState> = _uiState.asStateFlow()
@@ -54,9 +51,8 @@ class PackViewModel(
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             runCatching {
                 val extensions = catalogRepository.loadExtensions()
-                val collection = collectionRepository.getCachedCollectionOrEmpty()
-                val snapshot = sessionRepository.readSnapshot()
-                Triple(extensions, collection, snapshot.nextDrawAt)
+                val progress = progressRepository.loadProgress()
+                Triple(extensions, progress.collection, progress.nextDrawAt)
             }.onSuccess { (extensions, collection, nextDrawAt) ->
                 _uiState.value = PackSelectionUiState(
                     isLoading = false,
@@ -114,30 +110,26 @@ class PackViewModel(
                 )
             }
             runCatching {
-                val response = packRepository.openPack(extensionId, _uiState.value.currentCollection)
-                val merged = collectionRepository.mergeCards(_uiState.value.currentCollection, response.cards)
-                response to merged
-            }.onSuccess { (response, merged) ->
+                val response = packRepository.openPack(extensionId)
+                val progress = progressRepository.loadProgress()
+                response to progress
+            }.onSuccess { (response, progress) ->
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        currentCollection = merged,
-                        nextDrawAt = response.nextDrawAt,
+                        currentCollection = progress.collection,
+                        nextDrawAt = progress.nextDrawAt,
                         isAwaitingPackResult = false,
                     )
                 }
                 _events.emit(PackEvent.PackReadyForReveal)
             }.onFailure { exception ->
-                val message = when (exception) {
-                    is PendingSaveException -> exception.message
-                    else -> exception.message ?: "Unable to open the pack."
-                }
                 _uiState.update {
                     it.copy(
                         isLoading = false,
                         selectedBoosterIndex = null,
                         isAwaitingPackResult = false,
-                        errorMessage = message,
+                        errorMessage = exception.message ?: "Unable to open the pack.",
                     )
                 }
             }

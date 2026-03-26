@@ -4,18 +4,17 @@ import fr.aumombelli.gatcha.ui.motion.AppScene
 import fr.aumombelli.gatcha.ui.motion.PackRevealBounds
 
 internal data class AppSceneUiState(
-    val currentScene: AppScene = AppScene.Login,
+    val currentScene: AppScene = AppScene.Start,
     val launchLogoVisible: Boolean = false,
     val launchLogoRaised: Boolean = false,
-    val loginFormVisible: Boolean = false,
+    val startCardVisible: Boolean = false,
     val menuContentVisible: Boolean = false,
     val libraryContentVisible: Boolean = false,
     val packSceneVisible: Boolean = false,
     val packExtensionListVisible: Boolean = false,
     val transitionLocked: Boolean = false,
     val rootHeightPx: Float = 0f,
-    val loginFormTopPx: Float = 0f,
-    val loginViewModelKey: Int = 0,
+    val startCardTopPx: Float = 0f,
     val libraryViewModelKey: Int = 0,
     val packFlowKey: Int = 0,
     val packReadySignal: Int = 0,
@@ -24,21 +23,21 @@ internal data class AppSceneUiState(
 
 internal fun AppSceneUiState.withRootHeight(heightPx: Float): AppSceneUiState = copy(rootHeightPx = heightPx)
 
-internal fun AppSceneUiState.withLoginFormTop(topPx: Float): AppSceneUiState = copy(loginFormTopPx = topPx)
+internal fun AppSceneUiState.withStartCardTop(topPx: Float): AppSceneUiState = copy(startCardTopPx = topPx)
 
 internal fun AppSceneUiState.resetLaunchSequence(): AppSceneUiState = copy(
     launchLogoVisible = false,
     launchLogoRaised = false,
-    loginFormVisible = false,
+    startCardVisible = false,
 )
 
 internal fun AppSceneUiState.showLaunchLogo(): AppSceneUiState = copy(launchLogoVisible = true)
 
 internal fun AppSceneUiState.raiseLaunchLogo(): AppSceneUiState = copy(launchLogoRaised = true)
 
-internal fun AppSceneUiState.showLoginForm(): AppSceneUiState = copy(loginFormVisible = true)
+internal fun AppSceneUiState.showStartCard(): AppSceneUiState = copy(startCardVisible = true)
 
-internal fun AppSceneUiState.hideLoginForm(): AppSceneUiState = copy(loginFormVisible = false)
+internal fun AppSceneUiState.hideStartCard(): AppSceneUiState = copy(startCardVisible = false)
 
 internal fun AppSceneUiState.hideLaunchLogo(): AppSceneUiState = copy(launchLogoVisible = false)
 
@@ -66,19 +65,6 @@ internal fun AppSceneUiState.lockTransitions(): AppSceneUiState = copy(transitio
 internal fun AppSceneUiState.unlockTransitions(): AppSceneUiState = copy(transitionLocked = false)
 
 internal fun AppSceneUiState.enterMainMenu(): AppSceneUiState = copy(currentScene = AppScene.MainMenu)
-
-internal fun AppSceneUiState.prepareReturnToLogin(nextLoginViewModelKey: Int): AppSceneUiState = copy(
-    currentScene = AppScene.Login,
-    launchLogoVisible = true,
-    launchLogoRaised = true,
-    loginFormVisible = false,
-    menuContentVisible = false,
-    libraryContentVisible = false,
-    packSceneVisible = false,
-    packExtensionListVisible = false,
-    loginViewModelKey = nextLoginViewModelKey,
-    selectedPackRevealBounds = null,
-)
 
 internal fun AppSceneUiState.prepareLibraryEntry(nextLibraryViewModelKey: Int): AppSceneUiState = copy(
     menuContentVisible = false,

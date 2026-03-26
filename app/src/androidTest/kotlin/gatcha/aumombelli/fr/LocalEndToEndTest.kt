@@ -9,56 +9,48 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
-import androidx.compose.ui.test.performTextClearance
-import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeUp
+import fr.aumombelli.gatcha.testsupport.offlineMainActivityTestAppContainer
+import org.junit.After
 import org.junit.Rule
 import org.junit.Test
 
 class LocalEndToEndTest {
+    init {
+        MainActivity.appContainerFactory = { context ->
+            offlineMainActivityTestAppContainer(
+                context = context,
+                dataStoreFileName = "local-e2e.preferences_pb",
+                randomSeed = 12345,
+            )
+        }
+    }
+
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
     fun local_end_to_end_flow() {
-        createAccountAndReachMainMenu()
+        startAndReachMainMenu()
 
         val firstDrawnCardId = openPackAndCaptureVisibleCardId()
 
         verifyLibraryContainsDrawnCard(firstDrawnCardId)
         verifyCooldownIsVisible()
-        verifyInvalidLoginShowsError()
     }
 
-    private fun createAccountAndReachMainMenu() {
-        composeRule.waitUntilTagDisplayed("login-toggle-mode", timeoutMillis = 20_000)
-        composeRule.onNodeWithTag("login-toggle-mode").performClick()
-        composeRule.waitUntilTagDisplayed("login-email")
+    @After
+    fun tearDown() {
+        MainActivity.appContainerFactory = null
+    }
 
-        composeRule.replaceText("login-username", LocalE2eConfig.username)
-        composeRule.replaceText("login-email", LocalE2eConfig.email)
-        composeRule.replaceText("login-password", LocalE2eConfig.password)
-        composeRule.onNodeWithTag("login-submit").performClick()
-
-        composeRule.waitUntil(timeoutMillis = 20_000) {
-            composeRule.isTagEnabled("menu-open-pack") || composeRule.isTagDisplayed("login-error")
-        }
-        if (composeRule.isTagDisplayed("login-error")) {
-            composeRule.onNodeWithTag("login-error")
-                .assertTextContains("already exists", substring = true)
-            composeRule.onNodeWithTag("login-toggle-mode").performClick()
-            composeRule.waitUntilTagGone("login-email", timeoutMillis = 10_000)
-            composeRule.waitUntilTagDisplayed("login-submit", timeoutMillis = 10_000)
-            composeRule.replaceText("login-username", LocalE2eConfig.username)
-            composeRule.replaceText("login-password", LocalE2eConfig.password)
-            composeRule.onNodeWithTag("login-submit").performClick()
-        }
-
+    private fun startAndReachMainMenu() {
+        composeRule.waitUntilTagDisplayed("start-begin", timeoutMillis = 20_000)
+        composeRule.onNodeWithTag("start-begin").performClick()
         composeRule.waitUntilTagEnabled("menu-open-pack", timeoutMillis = 20_000)
         composeRule.onNodeWithTag("menu-open-pack").assertIsDisplayed()
     }
@@ -116,29 +108,7 @@ class LocalEndToEndTest {
         composeRule.onNodeWithTag("pack-status").assertTextContains("Prochain tirage disponible", substring = true)
         composeRule.onNodeWithTag("pack-extension-enter-${LocalE2eConfig.extensionId}").assertIsNotEnabled()
         composeRule.pressAndroidBack()
-        composeRule.waitUntilTagEnabled("menu-logout", timeoutMillis = 10_000)
-    }
-
-    private fun verifyInvalidLoginShowsError() {
-        composeRule.waitUntilTagEnabled("menu-logout", timeoutMillis = 10_000)
-        composeRule.onNodeWithTag("menu-logout").performClick()
-        composeRule.waitUntilTagDisplayed("login-submit", timeoutMillis = 20_000)
-
-        composeRule.replaceText("login-username", LocalE2eConfig.username)
-        composeRule.replaceText("login-password", "${LocalE2eConfig.password}-wrong")
-        composeRule.onNodeWithTag("login-submit").performClick()
-
-        composeRule.waitUntilTagExists("login-error", timeoutMillis = 10_000)
-        composeRule.onNodeWithTag("login-error").assertTextContains("Invalid credentials", substring = true)
-    }
-
-    private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.replaceText(
-        tag: String,
-        value: String,
-    ) {
-        val interaction = onNodeWithTag(tag)
-        interaction.performTextClearance()
-        interaction.performTextInput(value)
+        composeRule.waitUntilTagEnabled("menu-library", timeoutMillis = 10_000)
     }
 
     private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.waitUntilTagExists(
