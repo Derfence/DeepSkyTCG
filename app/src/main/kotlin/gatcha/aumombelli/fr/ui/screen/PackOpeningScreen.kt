@@ -170,6 +170,7 @@ fun PackOpeningScreen(
                 verticalArrangement = Arrangement.spacedBy(18.dp),
                 modifier = Modifier
                     .fillMaxSize()
+                    .gatchaContentInsetsPadding(includeBottom = true)
                     .graphicsLayer {
                         alpha = 1f - dismissProgress.value
                         translationY = swipeOffset + (-720f * dismissProgress.value)
@@ -218,20 +219,6 @@ fun PackOpeningScreen(
             originBounds = initialBoosterBounds,
         )
 
-        if (cardsVisible && displayCards.isNotEmpty() && state.errorMessage == null) {
-            Text(
-                text = "Glisse vers le haut pour revenir au menu",
-                color = Color.White.copy(
-                    alpha = 0.78f * cardsEntranceProgress.value * (1f - dismissProgress.value),
-                ),
-                style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 28.dp)
-                    .testTag("pack-opening-swipe-hint"),
-            )
-        }
-
         val fullscreenCard = fullscreenPage?.let(displayCards::getOrNull)
         if (fullscreenCard != null) {
             PackOpeningFullscreenDialog(
@@ -251,6 +238,7 @@ private fun EmptyPackState(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxSize()
+            .gatchaContentInsetsPadding(includeBottom = true)
             .padding(24.dp),
     ) {
         Text("No opened pack available.", color = Color.White)
@@ -273,6 +261,7 @@ private fun PackOpeningErrorState(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxSize()
+            .gatchaContentInsetsPadding(includeBottom = true)
             .padding(24.dp),
     ) {
         Text(message, color = Color(0xFFFFA3A3))
@@ -416,6 +405,7 @@ private fun PackOpeningFullscreenDialog(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color(0xE608101A))
+                .gatchaContentInsetsPadding(includeBottom = true)
                 .padding(14.dp)
                 .testTag("astro-card-fullscreen"),
         ) {

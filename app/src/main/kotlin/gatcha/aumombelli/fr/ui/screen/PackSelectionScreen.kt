@@ -23,7 +23,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -67,10 +66,8 @@ import kotlinx.coroutines.delay
 @Composable
 fun PackSelectionScreen(
     state: PackSelectionUiState,
-    onBack: () -> Unit,
     onRefresh: () -> Unit,
     onSelectExtension: (String) -> Unit,
-    onBackToExtensions: () -> Unit,
     onSelectBooster: (Int) -> Unit,
     onOpenPack: (String) -> Unit,
     onPackRevealReady: () -> Unit,
@@ -110,13 +107,10 @@ fun PackSelectionScreen(
     val boosterIntroProgress = remember { Animatable(0f) }
     val boosterSelectionProgress = remember { Animatable(0f) }
     var handledPackSignal by remember(displayedExtension?.id) { mutableIntStateOf(packReadySignal) }
-    var returnToListSignal by remember { mutableIntStateOf(0) }
-    var isReturningToList by remember { mutableStateOf(false) }
 
     LaunchedEffect(selectedExtension?.id) {
         if (selectedExtension != null) {
             if (displayedExtensionId == selectedExtension.id && heroProgress.value >= 0.99f) return@LaunchedEffect
-            isReturningToList = false
             displayedExtensionId = selectedExtension.id
             heroProgress.snapTo(0f)
             boosterIntroProgress.snapTo(0f)
@@ -129,7 +123,7 @@ fun PackSelectionScreen(
                 targetValue = 1f,
                 animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
             )
-        } else if (displayedExtensionId != null && !isReturningToList) {
+        } else if (displayedExtensionId != null) {
             boosterIntroProgress.snapTo(0f)
             boosterSelectionProgress.snapTo(0f)
             heroProgress.animateTo(
@@ -138,26 +132,6 @@ fun PackSelectionScreen(
             )
             displayedExtensionId = null
         }
-    }
-
-    LaunchedEffect(returnToListSignal) {
-        if (returnToListSignal == 0) return@LaunchedEffect
-        if (displayedExtensionId == null) return@LaunchedEffect
-        isReturningToList = true
-        boosterIntroProgress.animateTo(
-            targetValue = 0f,
-            animationSpec = tween(durationMillis = 520, easing = FastOutSlowInEasing),
-        )
-        boosterSelectionProgress.animateTo(
-            targetValue = 0f,
-            animationSpec = tween(durationMillis = 420, easing = FastOutSlowInEasing),
-        )
-        heroProgress.animateTo(
-            targetValue = 0f,
-            animationSpec = tween(durationMillis = 820, easing = FastOutSlowInEasing),
-        )
-        displayedExtensionId = null
-        isReturningToList = false
     }
 
     LaunchedEffect(state.selectedBoosterIndex, displayedExtension?.id) {
@@ -198,7 +172,6 @@ fun PackSelectionScreen(
     } else {
         1f
     }
-    val canNavigateSelectedStage = displayedExtension == null || (heroProgress.value >= 0.99f && !isReturningToList)
 
     Box(
         modifier = modifier
@@ -213,43 +186,23 @@ fun PackSelectionScreen(
                     Brush.verticalGradient(listOf(Color.Transparent, Color.Transparent))
                 },
             )
-            .padding(16.dp),
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .gatchaContentInsetsPadding(includeBottom = true)
+                .padding(16.dp),
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .graphicsLayer {
-                        alpha = stageTextAlpha
-                    },
-            ) {
-                TextButton(
-                    onClick = {
-                        if (displayedExtension == null) {
-                            onBack()
-                        } else {
-                            isReturningToList = true
-                            onBackToExtensions()
-                            returnToListSignal += 1
-                        }
-                    },
-                    enabled = !state.isAwaitingPackResult && interactionsEnabled && canNavigateSelectedStage,
-                    modifier = Modifier.testTag("pack-back"),
-                ) {
-                    Text(if (displayedExtension == null) "Back" else "Extensions")
-                }
-                Text(
-                    text = "Open Pack",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    modifier = Modifier.padding(start = 8.dp),
-                )
-            }
+            Text(
+                text = "Open Pack",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier.graphicsLayer {
+                    alpha = stageTextAlpha
+                },
+            )
 
             Text(
                 text = if (nextDrawAtText == null) {

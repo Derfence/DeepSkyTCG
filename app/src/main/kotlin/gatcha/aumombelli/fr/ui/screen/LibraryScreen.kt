@@ -50,7 +50,6 @@ import fr.aumombelli.gatcha.ui.viewmodel.LibraryUiState
 @Composable
 fun LibraryScreen(
     state: LibraryUiState,
-    onBack: () -> Unit,
     onRefresh: () -> Unit,
     contentVisible: Boolean = true,
 ) {
@@ -94,6 +93,7 @@ fun LibraryScreen(
             columns = GridCells.Adaptive(minSize = 150.dp),
             modifier = Modifier
                 .fillMaxSize()
+                .gatchaContentInsetsPadding(includeBottom = true)
                 .testTag("library-grid"),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -104,12 +104,6 @@ fun LibraryScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    TextButton(
-                        onClick = onBack,
-                        modifier = Modifier.testTag("library-back"),
-                    ) {
-                        Text("Back")
-                    }
                     Text(
                         text = "Library",
                         style = MaterialTheme.typography.headlineMedium,
@@ -221,6 +215,7 @@ private fun CardPreviewDialog(
             shape = RoundedCornerShape(30.dp),
             modifier = Modifier
                 .fillMaxWidth()
+                .gatchaContentInsetsPadding(includeBottom = true)
                 .padding(12.dp)
                 .testTag("library-card-preview"),
         ) {
@@ -292,6 +287,7 @@ private fun FullscreenCardDialog(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color(0xE608101A))
+                .gatchaContentInsetsPadding(includeBottom = true)
                 .padding(14.dp)
                 .testTag("astro-card-fullscreen"),
         ) {

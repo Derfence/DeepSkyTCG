@@ -47,6 +47,7 @@ fun AppBootstrapScreen(
             shape = RoundedCornerShape(28.dp),
             modifier = Modifier
                 .align(Alignment.Center)
+                .gatchaContentInsetsPadding(includeBottom = true)
                 .padding(24.dp),
         ) {
             Column(

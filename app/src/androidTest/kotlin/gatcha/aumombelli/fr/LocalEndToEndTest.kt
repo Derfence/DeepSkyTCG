@@ -105,8 +105,7 @@ class LocalEndToEndTest {
         composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
 
         composeRule.waitUntilTagGone("astro-card-fullscreen-close", timeoutMillis = 10_000)
-        composeRule.onNodeWithTag("library-grid").performScrollToNode(hasTestTag("library-back"))
-        composeRule.onNodeWithTag("library-back").performClick()
+        composeRule.pressAndroidBack()
         composeRule.waitUntilTagEnabled("menu-open-pack", timeoutMillis = 10_000)
     }
 
@@ -116,7 +115,7 @@ class LocalEndToEndTest {
         composeRule.waitUntilTagExists("pack-extension-enter-${LocalE2eConfig.extensionId}", timeoutMillis = 15_000)
         composeRule.onNodeWithTag("pack-status").assertTextContains("Prochain tirage disponible", substring = true)
         composeRule.onNodeWithTag("pack-extension-enter-${LocalE2eConfig.extensionId}").assertIsNotEnabled()
-        composeRule.onNodeWithTag("pack-back").performClick()
+        composeRule.pressAndroidBack()
         composeRule.waitUntilTagEnabled("menu-logout", timeoutMillis = 10_000)
     }
 
@@ -206,4 +205,10 @@ class LocalEndToEndTest {
         tag: String,
         useUnmergedTree: Boolean = false,
     ) = onAllNodesWithTag(tag, useUnmergedTree = useUnmergedTree)[0]
+
+    private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.pressAndroidBack() {
+        activity.runOnUiThread {
+            activity.onBackPressedDispatcher.onBackPressed()
+        }
+    }
 }

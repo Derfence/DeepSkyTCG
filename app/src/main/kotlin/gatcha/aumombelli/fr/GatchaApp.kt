@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -109,9 +110,18 @@ private fun AppSceneHost(appContainer: AppContainer) {
     )
     val statusBarInsetPx = WindowInsets.statusBars.getTop(density).toFloat()
     val launchLogoTargetTranslationY = if (rootHeightPx > 0f && loginFormTopPx > 0f) {
-        ((loginFormTopPx + statusBarInsetPx) / 2f) - (rootHeightPx / 2f) + (statusBarInsetPx * 0.18f)
+        (loginFormTopPx / 2f) - (rootHeightPx / 2f) + (statusBarInsetPx * 0.18f)
     } else {
         -(220f - statusBarInsetPx * 0.18f)
+    }
+
+    fun finishPackOpeningToMenu() {
+        appContainer.packRepository.clearCurrentPackResult()
+        selectedPackRevealBounds = null
+        packSceneVisible = false
+        packExtensionListVisible = false
+        currentScene = AppScene.MainMenu
+        menuContentVisible = true
     }
 
     LaunchedEffect(Unit) {
@@ -352,9 +362,12 @@ private fun AppSceneHost(appContainer: AppContainer) {
                 )
                 val uiState by viewModel.uiState.collectAsState()
 
+                BackHandler(enabled = !transitionLocked) {
+                    scope.launch { animateLibraryToMenu() }
+                }
+
                 LibraryScreen(
                     state = uiState,
-                    onBack = { scope.launch { animateLibraryToMenu() } },
                     onRefresh = viewModel::refresh,
                     contentVisible = libraryContentVisible,
                 )
@@ -381,17 +394,29 @@ private fun AppSceneHost(appContainer: AppContainer) {
                         when (event) {
                         PackEvent.PackReadyForReveal -> packReadySignal += 1
                     }
+                    }
                 }
-            }
+
+                if (currentScene == AppScene.PackSelection) {
+                    BackHandler(
+                        enabled = !transitionLocked && !uiState.isAwaitingPackResult,
+                    ) {
+                        if (uiState.selectedExtensionId != null) {
+                            viewModel.clearExtensionSelection()
+                        } else {
+                            scope.launch { animatePackSelectionToMenu() }
+                        }
+                    }
+                } else {
+                    BackHandler(enabled = true) {
+                        finishPackOpeningToMenu()
+                    }
+                }
 
                 PackSelectionScreen(
                     state = uiState,
-                    onBack = {
-                        scope.launch { animatePackSelectionToMenu() }
-                    },
                     onRefresh = viewModel::refresh,
                     onSelectExtension = viewModel::selectExtension,
-                    onBackToExtensions = viewModel::clearExtensionSelection,
                     onSelectBooster = viewModel::selectBooster,
                     onOpenPack = viewModel::openPack,
                     onPackRevealReady = {
@@ -421,14 +446,7 @@ private fun AppSceneHost(appContainer: AppContainer) {
                     PackOpeningScreen(
                         state = uiState,
                         initialBoosterBounds = selectedPackRevealBounds,
-                        onDone = {
-                            appContainer.packRepository.clearCurrentPackResult()
-                            selectedPackRevealBounds = null
-                            packSceneVisible = false
-                            packExtensionListVisible = false
-                            currentScene = AppScene.MainMenu
-                            menuContentVisible = true
-                        },
+                        onDone = ::finishPackOpeningToMenu,
                     )
                 }
             }

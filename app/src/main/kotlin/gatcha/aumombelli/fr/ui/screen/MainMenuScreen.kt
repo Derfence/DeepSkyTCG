@@ -72,6 +72,7 @@ fun MainMenuScreen(
                     alpha = panelAlpha
                     translationY = panelTranslationY
                 }
+                .gatchaContentInsetsPadding(includeBottom = true)
                 .padding(24.dp),
         ) {
             Column(

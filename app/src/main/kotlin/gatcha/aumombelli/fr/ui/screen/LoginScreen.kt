@@ -87,6 +87,7 @@ fun LoginScreen(
                 .graphicsLayer {
                     alpha = formAlpha
                 }
+                .gatchaContentInsetsPadding(includeBottom = true)
                 .padding(24.dp),
         ) {
             val fieldsEnabled = !state.isLoading && !state.isTransitioningToMenu

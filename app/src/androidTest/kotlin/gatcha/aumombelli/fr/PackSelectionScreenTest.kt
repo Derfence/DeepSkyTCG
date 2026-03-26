@@ -45,10 +45,8 @@ class PackSelectionScreenTest {
         composeRule.setContent {
             PackSelectionScreen(
                 state = state.value,
-                onBack = {},
                 onRefresh = {},
                 onSelectExtension = {},
-                onBackToExtensions = {},
                 onSelectBooster = { boosterIndex ->
                     selectedBooster = boosterIndex
                     state.value = state.value.copy(
@@ -75,6 +73,7 @@ class PackSelectionScreenTest {
             .assertCountEquals(0)
         composeRule.onAllNodesWithTag("pack-extension-constellation")
             .assertCountEquals(0)
+        composeRule.onAllNodesWithTag("pack-back").assertCountEquals(0)
         composeRule.onAllNodesWithText("Booster")
             .assertCountEquals(0)
 
@@ -118,10 +117,8 @@ class PackSelectionScreenTest {
         composeRule.setContent {
             PackSelectionScreen(
                 state = state.value,
-                onBack = {},
                 onRefresh = {},
                 onSelectExtension = {},
-                onBackToExtensions = {},
                 onSelectBooster = {},
                 onOpenPack = {},
                 onPackRevealReady = {},
@@ -153,8 +150,7 @@ class PackSelectionScreenTest {
     }
 
     @Test
-    fun selected_extension_can_return_to_extension_list_cleanly() {
-        var backToExtensionsCalls = 0
+    fun selected_extension_returns_to_extension_list_when_selection_is_cleared() {
         val state = mutableStateOf(
             PackSelectionUiState(
                 isLoading = false,
@@ -169,13 +165,8 @@ class PackSelectionScreenTest {
         composeRule.setContent {
             PackSelectionScreen(
                 state = state.value,
-                onBack = {},
                 onRefresh = {},
                 onSelectExtension = {},
-                onBackToExtensions = {
-                    backToExtensionsCalls += 1
-                    state.value = state.value.copy(selectedExtensionId = null)
-                },
                 onSelectBooster = {},
                 onOpenPack = {},
                 onPackRevealReady = {},
@@ -186,13 +177,13 @@ class PackSelectionScreenTest {
 
         composeRule.mainClock.advanceTimeBy(1800)
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("pack-back").performClick()
-        composeRule.mainClock.advanceTimeBy(2400)
+        state.value = state.value.copy(selectedExtensionId = null)
+        composeRule.mainClock.advanceTimeBy(1200)
         composeRule.mainClock.autoAdvance = true
         composeRule.waitForIdle()
 
-        assertEquals(1, backToExtensionsCalls)
         composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("pack-back").assertCountEquals(0)
     }
 
     private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertApproxCardRatio(
