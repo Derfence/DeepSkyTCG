@@ -40,7 +40,7 @@ class LocalEndToEndTest {
         val firstDrawnCardId = openPackAndCaptureVisibleCardId()
 
         verifyLibraryContainsDrawnCard(firstDrawnCardId)
-        verifyCooldownIsVisible()
+        verifyRechargeStatusIsVisible()
     }
 
     @After
@@ -101,12 +101,13 @@ class LocalEndToEndTest {
         composeRule.waitUntilTagEnabled("menu-open-pack", timeoutMillis = 10_000)
     }
 
-    private fun verifyCooldownIsVisible() {
+    private fun verifyRechargeStatusIsVisible() {
         composeRule.waitUntilTagEnabled("menu-open-pack", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("menu-open-pack").performClick()
         composeRule.waitUntilTagExists("pack-extension-enter-${LocalE2eConfig.extensionId}", timeoutMillis = 15_000)
-        composeRule.onNodeWithTag("pack-status").assertTextContains("Prochain tirage disponible", substring = true)
-        composeRule.onNodeWithTag("pack-extension-enter-${LocalE2eConfig.extensionId}").assertIsNotEnabled()
+        composeRule.onNodeWithTag("pack-status-count").assertTextContains("9/10")
+        composeRule.onNodeWithTag("pack-status-remaining").assertTextContains("Prochaine charge dans", substring = true)
+        composeRule.onNodeWithTag("pack-extension-enter-${LocalE2eConfig.extensionId}").assertIsEnabled()
         composeRule.pressAndroidBack()
         composeRule.waitUntilTagEnabled("menu-library", timeoutMillis = 10_000)
     }

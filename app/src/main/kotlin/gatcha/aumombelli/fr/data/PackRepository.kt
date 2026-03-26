@@ -22,13 +22,15 @@ class PackRepository(
         val progress = progressRepository.loadProgress()
         val packResponse = localPackEngine.drawPack(
             extensionId = extensionId,
-            nextDrawAt = progress.nextDrawAt,
+            availableDrawCount = progress.availableDrawCount,
+            nextChargeAt = progress.nextChargeAt,
         )
         val mergedCollection = collectionRepository.mergeCards(progress.collection, packResponse.cards)
         progressRepository.saveProgress(
             progress.copy(
                 collection = mergedCollection,
-                nextDrawAt = packResponse.nextDrawAt,
+                availableDrawCount = packResponse.availableDrawCount,
+                nextChargeAt = packResponse.nextChargeAt,
             ),
         )
         currentPackResult.value = packResponse

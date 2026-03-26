@@ -202,6 +202,7 @@ internal fun AppSceneHost(appContainer: AppContainer) {
                             catalogRepository = appContainer.catalogRepository,
                             progressRepository = appContainer.progressRepository,
                             packRepository = appContainer.packRepository,
+                            gameSettings = appContainer.gameSettings,
                         )
                     },
                 )

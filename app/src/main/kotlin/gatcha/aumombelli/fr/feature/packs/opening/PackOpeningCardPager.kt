@@ -86,14 +86,6 @@ internal fun PackOpeningFullscreenDialog(
                 .padding(14.dp)
                 .testTag("astro-card-fullscreen"),
         ) {
-            TextButton(
-                onClick = onDismiss,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .testTag("astro-card-fullscreen-close"),
-            ) {
-                Text("Fermer")
-            }
             AstroCardDetailsSurface(
                 displayCard = displayCard,
                 modifier = Modifier

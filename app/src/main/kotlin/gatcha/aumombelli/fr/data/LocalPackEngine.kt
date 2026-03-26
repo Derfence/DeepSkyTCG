@@ -17,7 +17,8 @@ class PackCooldownException(
 
 data class StandaloneGameSettings(
     val cardsPerPack: Int = 5,
-    val drawCooldown: Duration = Duration.ofHours(12),
+    val drawCooldown: Duration = DEFAULT_DRAW_COOLDOWN,
+    val maxStoredDraws: Int = DEFAULT_MAX_STORED_DRAWS,
     val clock: Clock = Clock.systemUTC(),
     val random: Random = Random.Default,
 )
@@ -26,14 +27,31 @@ class LocalPackEngine(
     private val catalogRepository: CatalogGateway,
     private val settings: StandaloneGameSettings,
 ) {
-    suspend fun drawPack(extensionId: String, nextDrawAt: String?): DrawPackResponse {
+    suspend fun drawPack(
+        extensionId: String,
+        availableDrawCount: Int,
+        nextChargeAt: String?,
+    ): DrawPackResponse {
         val now = settings.clock.instant()
-        val retryAt = nextDrawAt
-            ?.let { runCatching { Instant.parse(it) }.getOrNull() }
-            ?.takeIf { now.isBefore(it) }
-        if (retryAt != null) {
+        val normalizedChargeState = normalizePackChargeState(
+            availableDrawCount = availableDrawCount,
+            nextChargeAt = nextChargeAt,
+            now = now,
+            drawCooldown = settings.drawCooldown,
+            maxStoredDraws = settings.maxStoredDraws,
+        )
+        if (normalizedChargeState.availableDrawCount == 0) {
+            val retryAt = checkNotNull(normalizedChargeState.nextChargeAt) {
+                "A locked pack draw must expose a next charge time."
+            }
             throw PackCooldownException(retryAt.toString())
         }
+        val updatedChargeState = consumePackCharge(
+            normalizedState = normalizedChargeState,
+            now = now,
+            drawCooldown = settings.drawCooldown,
+            maxStoredDraws = settings.maxStoredDraws,
+        )
 
         val cards = catalogRepository.loadCards().filter { it.extensionId == extensionId }
         if (cards.isEmpty()) {
@@ -41,7 +59,6 @@ class LocalPackEngine(
         }
         val variantProfilesById = catalogRepository.loadVariantProfiles().associateBy { it.id }
         val drawnAt = now.toString()
-        val nextDrawAtValue = now.plus(settings.drawCooldown).toString()
         val drawnCards = List(settings.cardsPerPack) {
             val definition = pickWeighted(cards)
             val variantProfile = checkNotNull(variantProfilesById[definition.variantProfileId]) {
@@ -71,7 +88,8 @@ class LocalPackEngine(
         return DrawPackResponse(
             extensionId = extensionId,
             drawnAt = drawnAt,
-            nextDrawAt = nextDrawAtValue,
+            availableDrawCount = updatedChargeState.availableDrawCount,
+            nextChargeAt = updatedChargeState.nextChargeAt?.toString(),
             cards = drawnCards,
         )
     }

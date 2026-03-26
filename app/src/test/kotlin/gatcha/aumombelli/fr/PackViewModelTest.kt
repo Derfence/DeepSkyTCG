@@ -1,10 +1,15 @@
 package fr.aumombelli.gatcha
 
 import fr.aumombelli.gatcha.feature.packs.selection.PackEvent
+import fr.aumombelli.gatcha.data.StandaloneGameSettings
 import fr.aumombelli.gatcha.model.DrawPackResponse
 import fr.aumombelli.gatcha.model.ExtensionDefinition
 import fr.aumombelli.gatcha.model.StandaloneProgress
 import fr.aumombelli.gatcha.ui.viewmodel.PackViewModel
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneOffset
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
@@ -18,6 +23,10 @@ import org.junit.Test
 class PackViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
+    private val fixedNow = Instant.parse("2026-03-24T12:00:00Z")
+    private val gameSettings = StandaloneGameSettings(
+        clock = Clock.fixed(fixedNow, ZoneOffset.UTC),
+    )
 
     @Test
     fun `select extension and clear selection reset transient booster state`() = runTest {
@@ -25,6 +34,7 @@ class PackViewModelTest {
             catalogRepository = FakeCatalogGateway(),
             progressRepository = FakeProgressGateway(),
             packRepository = FakePackGateway(),
+            gameSettings = gameSettings,
         )
         advanceUntilIdle()
 
@@ -39,14 +49,15 @@ class PackViewModelTest {
     }
 
     @Test
-    fun `refresh loads extensions collection and next draw timestamp from local progress`() = runTest {
+    fun `refresh loads extensions collection and charge status from local progress`() = runTest {
         val catalogGateway = FakeCatalogGateway().apply {
             extensions = listOf(ExtensionDefinition("core-alpha", "Core Alpha", "cover"))
         }
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
                 collection = ownedCollectionOf("ALP-001" to 1).copy(version = 5),
-                nextDrawAt = "2026-03-24T00:00:00Z",
+                availableDrawCount = 4,
+                nextChargeAt = "2026-03-24T18:00:00Z",
             )
         }
 
@@ -54,11 +65,15 @@ class PackViewModelTest {
             catalogRepository = catalogGateway,
             progressRepository = progressGateway,
             packRepository = FakePackGateway(),
+            gameSettings = gameSettings,
         )
         advanceUntilIdle()
 
         assertEquals(false, viewModel.uiState.value.isLoading)
-        assertEquals("2026-03-24T00:00:00Z", viewModel.uiState.value.nextDrawAt)
+        assertEquals(4, viewModel.uiState.value.availableDrawCount)
+        assertEquals("2026-03-24T18:00:00Z", viewModel.uiState.value.nextChargeAt)
+        assertEquals(Duration.ofHours(6), viewModel.uiState.value.remainingDuration)
+        assertEquals(false, viewModel.uiState.value.isDrawLocked)
         assertEquals(1, viewModel.uiState.value.currentCollection.cards["ALP-001"]?.totalOwned)
     }
 
@@ -67,7 +82,8 @@ class PackViewModelTest {
         val response = DrawPackResponse(
             extensionId = "core-alpha",
             drawnAt = "2026-03-23T12:00:00Z",
-            nextDrawAt = "2026-03-24T00:00:00Z",
+            availableDrawCount = 9,
+            nextChargeAt = "2026-03-24T18:00:00Z",
             cards = listOf(
                 testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
                 testPackCard(
@@ -83,7 +99,8 @@ class PackViewModelTest {
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
                 collection = ownedCollectionOf("ALP-001" to 1).copy(version = 5),
-                nextDrawAt = null,
+                availableDrawCount = 10,
+                nextChargeAt = null,
             )
         }
         val packGateway = FakePackGateway().apply {
@@ -91,7 +108,8 @@ class PackViewModelTest {
             onOpenPack = {
                 progressGateway.progress = StandaloneProgress(
                     collection = ownedCollectionOf("ALP-001" to 2, "ALP-002" to 1).copy(version = 5),
-                    nextDrawAt = response.nextDrawAt,
+                    availableDrawCount = response.availableDrawCount,
+                    nextChargeAt = response.nextChargeAt,
                 )
             }
         }
@@ -103,6 +121,7 @@ class PackViewModelTest {
             catalogRepository = catalogGateway,
             progressRepository = progressGateway,
             packRepository = packGateway,
+            gameSettings = gameSettings,
         )
         advanceUntilIdle()
 
@@ -116,7 +135,9 @@ class PackViewModelTest {
         assertEquals(listOf("core-alpha"), packGateway.openPackCalls)
         assertEquals(2, viewModel.uiState.value.currentCollection.cards["ALP-001"]?.totalOwned)
         assertEquals(1, viewModel.uiState.value.currentCollection.cards["ALP-002"]?.totalOwned)
-        assertEquals("2026-03-24T00:00:00Z", viewModel.uiState.value.nextDrawAt)
+        assertEquals(9, viewModel.uiState.value.availableDrawCount)
+        assertEquals("2026-03-24T18:00:00Z", viewModel.uiState.value.nextChargeAt)
+        assertEquals(Duration.ofHours(6), viewModel.uiState.value.remainingDuration)
         assertEquals("core-alpha", viewModel.uiState.value.selectedExtensionId)
         assertEquals(2, viewModel.uiState.value.selectedBoosterIndex)
         assertEquals(false, viewModel.uiState.value.isAwaitingPackResult)
@@ -132,6 +153,7 @@ class PackViewModelTest {
             packRepository = FakePackGateway().apply {
                 openPackFailure = IllegalStateException()
             },
+            gameSettings = gameSettings,
         )
         advanceUntilIdle()
 

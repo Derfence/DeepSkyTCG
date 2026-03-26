@@ -3,10 +3,14 @@ package fr.aumombelli.gatcha.feature.packs.selection
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import fr.aumombelli.gatcha.data.CatalogGateway
+import fr.aumombelli.gatcha.data.DEFAULT_MAX_STORED_DRAWS
 import fr.aumombelli.gatcha.data.PackGateway
 import fr.aumombelli.gatcha.data.ProgressGateway
+import fr.aumombelli.gatcha.data.StandaloneGameSettings
+import fr.aumombelli.gatcha.data.buildPackChargeUiStatus
 import fr.aumombelli.gatcha.model.ExtensionDefinition
 import fr.aumombelli.gatcha.model.OwnedCollection
+import java.time.Duration
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -20,7 +24,12 @@ data class PackSelectionUiState(
     val isLoading: Boolean = true,
     val extensions: List<ExtensionDefinition> = emptyList(),
     val currentCollection: OwnedCollection = OwnedCollection(),
-    val nextDrawAt: String? = null,
+    val availableDrawCount: Int = DEFAULT_MAX_STORED_DRAWS,
+    val maxStoredDraws: Int = DEFAULT_MAX_STORED_DRAWS,
+    val nextChargeAt: String? = null,
+    val remainingDuration: Duration? = null,
+    val rechargeProgress: Float = 1f,
+    val isDrawLocked: Boolean = false,
     val selectedExtensionId: String? = null,
     val selectedBoosterIndex: Int? = null,
     val isAwaitingPackResult: Boolean = false,
@@ -35,6 +44,7 @@ class PackViewModel(
     private val catalogRepository: CatalogGateway,
     private val progressRepository: ProgressGateway,
     private val packRepository: PackGateway,
+    private val gameSettings: StandaloneGameSettings = StandaloneGameSettings(),
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PackSelectionUiState())
     val uiState: StateFlow<PackSelectionUiState> = _uiState.asStateFlow()
@@ -52,13 +62,15 @@ class PackViewModel(
             runCatching {
                 val extensions = catalogRepository.loadExtensions()
                 val progress = progressRepository.loadProgress()
-                Triple(extensions, progress.collection, progress.nextDrawAt)
-            }.onSuccess { (extensions, collection, nextDrawAt) ->
+                extensions to progress
+            }.onSuccess { (extensions, progress) ->
                 _uiState.value = PackSelectionUiState(
                     isLoading = false,
                     extensions = extensions,
-                    currentCollection = collection,
-                    nextDrawAt = nextDrawAt,
+                    currentCollection = progress.collection,
+                ).withPackChargeStatus(
+                    availableDrawCount = progress.availableDrawCount,
+                    nextChargeAt = progress.nextChargeAt,
                 )
             }.onFailure { exception ->
                 _uiState.value = PackSelectionUiState(
@@ -118,8 +130,10 @@ class PackViewModel(
                     it.copy(
                         isLoading = false,
                         currentCollection = progress.collection,
-                        nextDrawAt = progress.nextDrawAt,
                         isAwaitingPackResult = false,
+                    ).withPackChargeStatus(
+                        availableDrawCount = progress.availableDrawCount,
+                        nextChargeAt = progress.nextChargeAt,
                     )
                 }
                 _events.emit(PackEvent.PackReadyForReveal)
@@ -134,5 +148,26 @@ class PackViewModel(
                 }
             }
         }
+    }
+
+    private fun PackSelectionUiState.withPackChargeStatus(
+        availableDrawCount: Int,
+        nextChargeAt: String?,
+    ): PackSelectionUiState {
+        val chargeStatus = buildPackChargeUiStatus(
+            availableDrawCount = availableDrawCount,
+            nextChargeAt = nextChargeAt,
+            now = gameSettings.clock.instant(),
+            drawCooldown = gameSettings.drawCooldown,
+            maxStoredDraws = gameSettings.maxStoredDraws,
+        )
+        return copy(
+            availableDrawCount = chargeStatus.availableDrawCount,
+            maxStoredDraws = chargeStatus.maxStoredDraws,
+            nextChargeAt = chargeStatus.nextChargeAt,
+            remainingDuration = chargeStatus.remainingDuration,
+            rechargeProgress = chargeStatus.rechargeProgress,
+            isDrawLocked = chargeStatus.isDrawLocked,
+        )
     }
 }

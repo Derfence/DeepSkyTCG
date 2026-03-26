@@ -35,7 +35,8 @@ class PackOpeningScreenTest {
         val packResult = DrawPackResponse(
             extensionId = "astronomes-en-herbe",
             drawnAt = "2026-03-23T12:00:00Z",
-            nextDrawAt = "2026-03-24T00:00:00Z",
+            availableDrawCount = 9,
+            nextChargeAt = "2026-03-24T18:00:00Z",
             cards = listOf(
                 testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
                 testPackCard(
@@ -112,7 +113,8 @@ class PackOpeningScreenTest {
         val packResult = DrawPackResponse(
             extensionId = "astronomes-en-herbe",
             drawnAt = "2026-03-23T12:00:00Z",
-            nextDrawAt = "2026-03-24T00:00:00Z",
+            availableDrawCount = 9,
+            nextChargeAt = "2026-03-24T18:00:00Z",
             cards = listOf(
                 testPackCard(
                     "ALP-777",

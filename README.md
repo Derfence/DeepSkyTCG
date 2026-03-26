@@ -13,7 +13,7 @@ Au lancement, l'application :
 - enchaine vers le menu principal ;
 - permet d'ouvrir des packs localement ;
 - persiste la collection et le prochain tirage autorise ;
-- conserve le cooldown de 12 heures entre deux ouvertures de pack.
+- gere un stock local de 10 ouvertures, recharge a raison d'une ouverture toutes les 6 heures.
 
 ## Stack technique
 
@@ -29,11 +29,11 @@ Au lancement, l'application :
 - `app/` : orchestration des scenes, etat global et transitions visuelles.
 - `feature/start/` : ecran de demarrage et ViewModel du bouton `Commencer`.
 - `feature/library/` : lecture de la collection locale, bibliotheque et apercus.
-- `feature/packs/selection/` : choix d'extension, cooldown, lancement d'ouverture.
+- `feature/packs/selection/` : choix d'extension, stock d'ouvertures, barre de recharge et lancement d'ouverture.
 - `feature/packs/opening/` : reveal du pack, navigation locale et plein ecran.
-- `data/ProgressRepository.kt` : persistance DataStore de `collection_json` et `next_draw_at`.
+- `data/ProgressRepository.kt` : persistance DataStore de `collection_json`, `available_draw_count` et `next_charge_at`.
 - `data/CollectionRepository.kt` : chargement, sauvegarde et fusion locale de la collection.
-- `data/LocalPackEngine.kt` : tirage local pondere et verification du cooldown.
+- `data/LocalPackEngine.kt` : tirage local pondere, consommation des ouvertures et recharge par palier.
 - `data/PackRepository.kt` : orchestration du tirage local puis persistance de la progression.
 - `model/` : modeles de catalogue, collection, packs et progression locale.
 - `assets/catalog/` : catalogue embarque (`metadata.json`, `extensions.json`, `cards.json`, `variant_profiles.json`).
@@ -53,14 +53,16 @@ Le standalone est mono-profil. Aucun ecran de login, de creation de compte, de c
 La progression locale contient uniquement :
 
 - `collection_json` : la collection possedee ;
-- `next_draw_at` : la prochaine date ISO autorisant l'ouverture d'un pack.
+- `available_draw_count` : le nombre d'ouvertures actuellement disponibles ;
+- `next_charge_at` : la prochaine date ISO rechargeant une ouverture quand le stock est inferieur a 10.
 
 `OwnedCollection.version` reste migree via `CollectionMigrationService`. Au premier lancement, si aucune sauvegarde n'existe, l'application cree automatiquement une collection vide a la version du catalogue embarque. Si une sauvegarde ancienne est detectee, elle est migree puis reecrite localement.
 
 ## Regles de jeu offline
 
 - `cardsPerPack = 5`
-- `drawCooldown = 12h`
+- `drawCooldown = 6h`
+- `maxStoredDraws = 10`
 - tirage pondere des cartes par extension
 - tirage pondere de `skyQuality` et `finish`
 
@@ -74,7 +76,7 @@ Le standalone conserve :
 - les transitions de scenes ;
 - les animations de selection d'extension et d'ouverture de pack ;
 - la bibliotheque, les apercus et le plein ecran des cartes ;
-- le cooldown visible dans l'interface.
+- le stock disponible et la recharge visible dans l'interface.
 
 La seule simplification fonctionnelle voulue au demarrage est le remplacement du login par le bouton `Commencer`.
 
@@ -98,7 +100,7 @@ La couverture actuelle verifie notamment :
 - `PackRepository`
 - `PackViewModel`
 - les ecrans Compose du flux `Commencer`
-- le scenario offline `Commencer -> menu -> pack -> cooldown -> bibliotheque`
+- le scenario offline `Commencer -> menu -> pack -> recharge -> bibliotheque`
 
 ## Pre-requis locaux
 

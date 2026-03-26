@@ -18,13 +18,19 @@ class AppContainer(
     val catalogRepository: CatalogGateway,
     val collectionRepository: CollectionGateway,
     val packRepository: PackGateway,
+    val gameSettings: StandaloneGameSettings = StandaloneGameSettings(),
 ) {
     companion object {
         fun create(context: Context): AppContainer {
             val appContext = context.applicationContext
             val catalogRepository = GameCatalogRepository(appContext)
             val collectionMigrationService = CollectionMigrationService(catalogRepository)
-            val progressRepository = ProgressRepository.fromContext(appContext, collectionMigrationService)
+            val gameSettings = StandaloneGameSettings()
+            val progressRepository = ProgressRepository.fromContext(
+                context = appContext,
+                collectionMigrationService = collectionMigrationService,
+                settings = gameSettings,
+            )
             val collectionRepository = CollectionRepository(
                 progressRepository = progressRepository,
             )
@@ -33,7 +39,7 @@ class AppContainer(
                 collectionRepository = collectionRepository,
                 localPackEngine = LocalPackEngine(
                     catalogRepository = catalogRepository,
-                    settings = StandaloneGameSettings(),
+                    settings = gameSettings,
                 ),
             )
 
@@ -42,6 +48,7 @@ class AppContainer(
                 catalogRepository = catalogRepository,
                 collectionRepository = collectionRepository,
                 packRepository = packRepository,
+                gameSettings = gameSettings,
             )
         }
     }

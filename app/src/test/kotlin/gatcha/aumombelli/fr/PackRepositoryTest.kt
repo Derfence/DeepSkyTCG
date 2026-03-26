@@ -25,7 +25,8 @@ class PackRepositoryTest {
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
                 collection = ownedCollectionOf("ALP-001" to 1).copy(version = 5),
-                nextDrawAt = null,
+                availableDrawCount = 10,
+                nextChargeAt = null,
             )
         }
         val catalogGateway = FakeCatalogGateway().apply {
@@ -43,7 +44,8 @@ class PackRepositoryTest {
                 settings = StandaloneGameSettings(
                     cardsPerPack = 2,
                     clock = Clock.fixed(fixedNow, ZoneOffset.UTC),
-                    drawCooldown = Duration.ofHours(12),
+                    drawCooldown = Duration.ofHours(6),
+                    maxStoredDraws = 10,
                     random = Random(4),
                 ),
             ),
@@ -52,7 +54,8 @@ class PackRepositoryTest {
         val response = repository.openPack("astronomes-en-herbe")
 
         assertEquals(response, repository.currentPackResult().value)
-        assertEquals(response.nextDrawAt, progressGateway.progress.nextDrawAt)
+        assertEquals(response.availableDrawCount, progressGateway.progress.availableDrawCount)
+        assertEquals(response.nextChargeAt, progressGateway.progress.nextChargeAt)
         assertEquals(3, progressGateway.progress.collection.cards.values.sumOf { it.totalOwned })
     }
 

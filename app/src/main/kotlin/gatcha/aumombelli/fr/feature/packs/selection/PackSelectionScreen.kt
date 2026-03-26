@@ -9,12 +9,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,6 +24,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -30,7 +33,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import fr.aumombelli.gatcha.data.DEFAULT_DRAW_COOLDOWN
+import fr.aumombelli.gatcha.data.buildPackChargeUiStatus
 import fr.aumombelli.gatcha.ui.motion.MotionCard
 import fr.aumombelli.gatcha.ui.motion.PackRevealBounds
 import fr.aumombelli.gatcha.ui.screen.gatchaContentInsetsPadding
@@ -54,8 +60,25 @@ fun PackSelectionScreen(
     extensionListVisible: Boolean = true,
     interactionsEnabled: Boolean = true,
 ) {
-    val nextDrawAtText = formatNextDrawAt(state.nextDrawAt)
-    val drawLocked = state.nextDrawAt?.let { runCatching { Instant.parse(it).isAfter(Instant.now()) }.getOrDefault(false) } ?: false
+    val now by produceState(
+        initialValue = Instant.now(),
+        key1 = state.availableDrawCount,
+        key2 = state.nextChargeAt,
+    ) {
+        while (true) {
+            value = Instant.now()
+            delay(1_000)
+        }
+    }
+    val liveChargeStatus = buildPackChargeUiStatus(
+        availableDrawCount = state.availableDrawCount,
+        nextChargeAt = state.nextChargeAt,
+        now = now,
+        drawCooldown = DEFAULT_DRAW_COOLDOWN,
+        maxStoredDraws = state.maxStoredDraws,
+    )
+    val remainingDurationText = formatRemainingDuration(liveChargeStatus.remainingDuration)
+    val drawLocked = liveChargeStatus.isDrawLocked
     val selectedExtension = state.extensions.firstOrNull { it.id == state.selectedExtensionId }
     var displayedExtensionId by remember(state.extensions) { mutableStateOf<String?>(selectedExtension?.id) }
     val displayedExtension = state.extensions.firstOrNull { it.id == displayedExtensionId }
@@ -172,20 +195,18 @@ fun PackSelectionScreen(
             Text(
                 text = "Open Pack",
                 style = MaterialTheme.typography.headlineMedium,
-                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                fontWeight = FontWeight.Bold,
                 color = Color.White,
                 modifier = Modifier.graphicsLayer {
                     alpha = stageTextAlpha
                 },
             )
 
-            Text(
-                text = if (nextDrawAtText == null) {
-                    "Aucun cooldown actif. Choisis une extension puis un booster."
-                } else {
-                    "Prochain tirage disponible : $nextDrawAtText"
-                },
-                color = Color(0xFFD6E4F5),
+            PackChargeStatus(
+                availableDrawCount = liveChargeStatus.availableDrawCount,
+                maxStoredDraws = liveChargeStatus.maxStoredDraws,
+                rechargeProgress = liveChargeStatus.rechargeProgress,
+                remainingDurationText = remainingDurationText,
                 modifier = Modifier
                     .graphicsLayer {
                         alpha = stageTextAlpha
@@ -275,5 +296,55 @@ fun PackSelectionScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun PackChargeStatus(
+    availableDrawCount: Int,
+    maxStoredDraws: Int,
+    rechargeProgress: Float,
+    remainingDurationText: String?,
+    modifier: Modifier = Modifier,
+) {
+    val statusText = if (availableDrawCount >= maxStoredDraws) {
+        "Stock plein ${maxStoredDraws}/${maxStoredDraws}"
+    } else {
+        "Prochaine charge dans ${remainingDurationText ?: "..."}"
+    }
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier,
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(
+                text = "Ouvertures disponibles",
+                color = Color(0xFFD6E4F5),
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = "$availableDrawCount/$maxStoredDraws",
+                color = Color.White,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.testTag("pack-status-count"),
+            )
+        }
+        LinearProgressIndicator(
+            progress = { rechargeProgress },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(8.dp)
+                .testTag("pack-status-progress"),
+        )
+        Text(
+            text = statusText,
+            color = Color(0xFFD6E4F5),
+            modifier = Modifier.testTag("pack-status-remaining"),
+        )
     }
 }

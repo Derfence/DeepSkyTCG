@@ -43,59 +43,26 @@ internal fun CardPreviewDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(dismissOnClickOutside = true),
     ) {
-        Surface(
-            color = Color(0xFF07101A),
-            shape = RoundedCornerShape(30.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .gatchaContentInsetsPadding(includeBottom = true)
-                .padding(12.dp)
-                .testTag("library-card-preview"),
+        Column(
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+            modifier = Modifier.padding(16.dp),
         ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-                modifier = Modifier.padding(16.dp),
-            ) {
-                androidx.compose.foundation.layout.Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(
-                        text = "Apercu",
-                        color = Color.White,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.weight(1f),
+            AstroCardPreviewSurface(
+                displayCard = displayCard,
+                mode = AstroCardSurfaceMode.Preview,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("library-card-preview-surface"),
+                onClick = onExpand,
+                accessoryContent = {
+                    DisplayCardVariantSelector(
+                        variants = displayCard.availableVariants,
+                        selectedVariantKey = displayCard.activeVariant.key,
+                        onVariantSelected = { variant -> onVariantSelected(variant.key) },
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                    TextButton(
-                        onClick = onDismiss,
-                        modifier = Modifier.testTag("library-card-preview-close"),
-                    ) {
-                        Text("Fermer")
-                    }
-                }
-                AstroCardPreviewSurface(
-                    displayCard = displayCard,
-                    mode = AstroCardSurfaceMode.Preview,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("library-card-preview-surface"),
-                    onClick = onExpand,
-                    accessoryContent = {
-                        DisplayCardVariantSelector(
-                            variants = displayCard.availableVariants,
-                            selectedVariantKey = displayCard.activeVariant.key,
-                            onVariantSelected = { variant -> onVariantSelected(variant.key) },
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    },
-                )
-                Text(
-                    text = "Touchez la carte pour l'agrandir.",
-                    color = Color(0xFFD0E0F2),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
+                },
+            )
         }
     }
 }
@@ -124,14 +91,6 @@ internal fun FullscreenCardDialog(
                 .padding(14.dp)
                 .testTag("astro-card-fullscreen"),
         ) {
-            TextButton(
-                onClick = onDismiss,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .testTag("astro-card-fullscreen-close"),
-            ) {
-                Text("Fermer")
-            }
             AstroCardDetailsSurface(
                 displayCard = displayCard,
                 modifier = Modifier
