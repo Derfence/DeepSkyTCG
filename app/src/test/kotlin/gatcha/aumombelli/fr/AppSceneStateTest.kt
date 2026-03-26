@@ -4,7 +4,8 @@ import fr.aumombelli.gatcha.app.AppSceneUiState
 import fr.aumombelli.gatcha.app.enterPackOpening
 import fr.aumombelli.gatcha.app.finishPackOpeningToMenu
 import fr.aumombelli.gatcha.app.preparePackSelection
-import fr.aumombelli.gatcha.app.prepareReturnToLogin
+import fr.aumombelli.gatcha.app.resetLaunchSequence
+import fr.aumombelli.gatcha.app.showStartCard
 import fr.aumombelli.gatcha.ui.motion.AppScene
 import fr.aumombelli.gatcha.ui.motion.PackRevealBounds
 import org.junit.Assert.assertEquals
@@ -57,29 +58,29 @@ class AppSceneStateTest {
     }
 
     @Test
-    fun `prepare return to login increments key and resets scene overlays`() {
+    fun `reset launch sequence hides start card and logo lift`() {
         val initialState = AppSceneUiState(
-            currentScene = AppScene.MainMenu,
-            launchLogoVisible = false,
-            launchLogoRaised = false,
-            menuContentVisible = true,
-            libraryContentVisible = true,
-            packSceneVisible = true,
-            packExtensionListVisible = true,
-            loginViewModelKey = 6,
-            selectedPackRevealBounds = PackRevealBounds(1f, 2f, 3f, 4f),
+            currentScene = AppScene.Start,
+            launchLogoVisible = true,
+            launchLogoRaised = true,
+            startCardVisible = true,
         )
 
-        val nextState = initialState.prepareReturnToLogin(nextLoginViewModelKey = 7)
+        val nextState = initialState.resetLaunchSequence()
 
-        assertEquals(AppScene.Login, nextState.currentScene)
-        assertEquals(true, nextState.launchLogoVisible)
-        assertEquals(true, nextState.launchLogoRaised)
-        assertEquals(false, nextState.menuContentVisible)
-        assertEquals(false, nextState.libraryContentVisible)
-        assertEquals(false, nextState.packSceneVisible)
-        assertEquals(false, nextState.packExtensionListVisible)
-        assertEquals(7, nextState.loginViewModelKey)
-        assertNull(nextState.selectedPackRevealBounds)
+        assertEquals(AppScene.Start, nextState.currentScene)
+        assertEquals(false, nextState.launchLogoVisible)
+        assertEquals(false, nextState.launchLogoRaised)
+        assertEquals(false, nextState.startCardVisible)
+    }
+
+    @Test
+    fun `show start card only reveals the start overlay`() {
+        val state = AppSceneUiState(startCardVisible = false)
+
+        val nextState = state.showStartCard()
+
+        assertEquals(true, nextState.startCardVisible)
+        assertEquals(state.currentScene, nextState.currentScene)
     }
 }

@@ -1,177 +1,86 @@
-# Gatcha Client Android
+# Gatcha Client Android Standalone
 
-Client Android natif du projet Gatcha.
+Client Android natif autonome du projet Gatcha.
 
 ## Objectif
 
-Cette application permet au joueur de :
+Cette application fonctionne entierement hors ligne. Elle embarque le catalogue, gere une progression locale unique et ne depend d'aucun acces internet, d'aucun serveur et d'aucun flux d'authentification.
 
-- vérifier la compatibilité catalogue avec le serveur au démarrage ;
-- voir au lancement un logo animé devant un ciel étoilé choisi aléatoirement parmi les quatre qualités de ciel du jeu, puis apparaître le formulaire de connexion ;
-- créer un compte ;
-- se connecter ;
-- traverser une transition animée du login vers le menu principal puis rejouer l'inverse au `logout` ;
-- récupérer sa collection ;
-- consulter sa bibliothèque de cartes ;
-- traverser une transition animée de livre entre menu principal et bibliothèque ;
-- ouvrir l'aperçu d'une carte possédée depuis la bibliothèque puis l'agrandir en plein écran ;
-- ouvrir un pack par extension à travers une scène d'introduction animée ;
-- visualiser une animation d'extension, choisir un booster parmi quatre boosters visuels, voir une explosion de rareté dense et prolongée, puis révéler les cartes qui montent depuis le bas de l'écran ;
-- faire disparaître l'ouverture de pack par glissement vertical vers le haut pour revenir au menu ;
-- ouvrir une carte tirée en plein écran pour consulter ses informations scientifiques.
+Au lancement, l'application :
+
+- affiche le decor et les animations d'introduction existants ;
+- ouvre l'ecran de demarrage avec un unique bouton `Commencer` ;
+- enchaine vers le menu principal ;
+- permet d'ouvrir des packs localement ;
+- persiste la collection et le prochain tirage autorise ;
+- conserve le cooldown de 12 heures entre deux ouvertures de pack.
 
 ## Stack technique
 
 - Kotlin
 - Jetpack Compose
-- Navigation Compose
 - MVVM
-- Ktor Client
-- DataStore
+- DataStore Preferences
 
-## Structure fonctionnelle
+## Architecture
 
-- `MainActivity` : point d'entrée Android.
-- `GatchaApp` : façade stable qui délègue au shell Compose interne.
-- `app/` : composition root Compose, bootstrap, état de scène explicite et orchestration des transitions globales.
-- `feature/bootstrap/` : écran et ViewModel de blocage de compatibilité au démarrage.
-- `feature/auth/` : écran de login/création, formulaire et événements d'authentification.
-- `feature/library/` : chargement de la collection, assemblage des sections et dialogues d'aperçu/plein écran.
-- `feature/packs/selection/` : sélection d'extension, badges animés, scène de boosters et formatage de cooldown.
-- `feature/packs/opening/` : contrôleur local d'ouverture, couverture booster, reveal pager et plein écran.
-- `core/model` logique répartie dans `model/` : modèles catalogue/collection/display/astronomie et helpers purs.
-- `data/` : persistance locale, chiffrement de collection, migration de deck, repositories par capacité.
-- `network/` : client HTTP de l'API serveur.
-- `ui/component/` : primitives Compose partagées des cartes astro, maintenant découpées en surfaces, sections et décorations.
-- `ui/motion/` : primitives de motion design découpées par responsabilité (`backdrop`, `logo`, `book portal`, `pack card`, `burst`, géométrie).
-- `ui/viewmodel/` et `ui/screen/` : façades de compatibilité vers les features, conservées pour limiter l'impact des tests et des points d'entrée existants.
-- `assets/catalog/` : `metadata.json`, `extensions.json`, `cards.json` et `variant_profiles.json`.
-- `src/test/.../testsupport/` : fixtures métier et faux gateways mutualisés.
-- `src/androidTest/.../testsupport/` : builders d'`AppContainer` et doubles d'hôte partagés pour les tests UI.
+- `MainActivity` : point d'entree Android.
+- `GatchaApp` : facade stable qui instancie le shell Compose.
+- `app/` : orchestration des scenes, etat global et transitions visuelles.
+- `feature/start/` : ecran de demarrage et ViewModel du bouton `Commencer`.
+- `feature/library/` : lecture de la collection locale, bibliotheque et apercus.
+- `feature/packs/selection/` : choix d'extension, cooldown, lancement d'ouverture.
+- `feature/packs/opening/` : reveal du pack, navigation locale et plein ecran.
+- `data/ProgressRepository.kt` : persistance DataStore de `collection_json` et `next_draw_at`.
+- `data/CollectionRepository.kt` : chargement, sauvegarde et fusion locale de la collection.
+- `data/LocalPackEngine.kt` : tirage local pondere et verification du cooldown.
+- `data/PackRepository.kt` : orchestration du tirage local puis persistance de la progression.
+- `model/` : modeles de catalogue, collection, packs et progression locale.
+- `assets/catalog/` : catalogue embarque (`metadata.json`, `extensions.json`, `cards.json`, `variant_profiles.json`).
 
-## Flux visuel et animations
+## Flux utilisateur
 
-- Le client utilise un décor céleste partagé entre login, menu principal, sélection d'extension et scènes de pack.
-- Le lancement choisit aléatoirement une des quatre qualités de ciel existantes : `city`, `suburban`, `rural`, `mountain`.
-- Chaque qualité de ciel fait varier la densité d'étoiles scintillantes du fond, ainsi que le premier plan :
-  - `city` : grands immeubles ;
-  - `suburban` : maisons denses ;
-  - `rural` : deux ou trois maisons espacées ;
-  - `mountain` : relief montagneux sans lumières d'horizon.
-- La séquence de démarrage est la suivante :
-  - fondu du logo au centre ;
-  - montée lente du logo vers une position calculée dynamiquement entre le haut utile de l'écran et le formulaire, avec compensation de la barre de statut ;
-  - fondu du formulaire de connexion au centre.
-- Lors d'un login réussi, le formulaire disparaît d'abord en fondu ; ensuite seulement démarre la transition vers le menu principal.
-- La transition `login -> menu` fait disparaître le premier plan, déplace les étoiles avec ce mouvement, éteint les lumières colorées en même temps que le décor lorsqu'elles existent, puis ramène le ciel vers le rendu de la situation `mountain` sans passer par un noir pur.
-- Le `logout` depuis le menu principal joue exactement l'inverse de cette transition pour revenir au login.
-- La transition `menu -> bibliothèque` fait disparaître le menu en fondu, fait monter depuis le bas un livre fermé qui s'ouvre pendant son déplacement, puis fait apparaître la bibliothèque en fondu ; le retour rejoue cette chorégraphie en sens inverse.
-- Le livre de transition est rendu en Compose sans asset externe :
-  - deux couvertures en parallélogrammes marron ;
-  - deux blocs de pages plus fins en blanc cassé ;
-  - une reliure centrale arrondie en demi-cercle ;
-  - des textures simples sur les couvertures et les pages pour suggérer relief, tranches et matière.
-- Le fond bleu sombre de la bibliothèque est inclus dans le même fondu que le contenu pour éviter toute apparition brutale.
-- La transition `menu -> choix de l'extension` suit cette séquence :
-  - disparition du menu en fondu ;
-  - apparition en fondu de la nouvelle scène sans la liste ;
-  - apparition du titre `Choisis l'extension à contempler.` ;
-  - montée des blocs d'extension depuis le bas, comme une file qui s'arrête progressivement.
-- Les blocs de sélection d'extension n'affichent plus l'identifiant technique de l'extension.
-- Chaque bloc d'extension affiche à droite du titre un petit logo animé propre à l'extension ; son animation ne démarre qu'une fois le mouvement d'entrée du bloc terminé.
-- Lors du choix d'une extension, le bloc sélectionné grandit pour transitionner lui-même vers la scène suivante :
-  - le bouton d'entrée disparaît en fondu ;
-  - le titre reste affiché en haut et centré ;
-  - les quatre boosters visuels apparaissent un par un.
-- Le retour arrière depuis cette scène rejoue la transition inverse sans coupure visuelle entre les deux états.
-- Les quatre boosters affichés après choix d'extension sont purement visuels ; le tirage serveur reste unique et dépend uniquement de l'identifiant d'extension.
-- Le booster choisi conserve son logo déjà animé, se recentre exactement sur la future zone d'ouverture et les trois autres disparaissent en fondu.
-- Le passage vers l'ouverture conserve visuellement le même booster, sans relance du logo, avec fondu du reste de la scène.
-- L'ouverture joue ensuite une explosion de rareté :
-  - très dense, avec des étoiles dans toutes les directions ;
-  - plus grandes et étalées dans le temps ;
-  - émises depuis le centre du booster ;
-  - suivant une trajectoire balistique de type projectile lancé vers le haut puis retombant ;
-  - maintenues jusqu'à la fin de la descente du booster hors champ par le bas.
-- Une carte holographique ajoute une pluie supplémentaire d'étoiles tombant depuis le haut de l'écran.
-- Les cartes du pack n'apparaissent qu'après la fin complète de cette séquence, puis entrent depuis le bas de l'écran avant de prendre leur position de révélation.
-- `Astronomes en herbe` dispose d'une animation dédiée :
-  - le logo reprend la constellation de la Grande Casserole ;
-  - aucun point ni trait n'apparaît avant le début de l'apparition du logo ;
-  - les points apparaissent en même temps que les premiers traits qui les atteignent ;
-  - les points disparaissent dès que le dernier trait qui les touche commence à s'effacer ;
-  - au retour arrière, l'animation est jouée en sens inverse avec disparition synchronisée des points et des traits.
-- Les positions et connexions du dessin d'`Astronomes en herbe` sont définies dans `ui/motion/AppMotion.kt`, et leur rendu dans `ui/motion/ExtensionConstellationOverlay.kt`.
-- Une miniature de bibliothèque reste atténuée tant que la carte n'est pas possédée.
-- La bibliothèque trie les cartes d'une extension par rareté, de `Common` vers `Epic`.
-- Les miniatures de bibliothèque gardent un rendu simplifié et n'affichent plus le texte central de catalogue ni la variante au centre.
-- Un clic sur une carte possédée ouvre un aperçu centré au ratio de carte à collectionner ; un second clic ouvre le plein écran.
-- La fermeture du plein écran ouvert depuis la bibliothèque revient directement à la grille, sans repasser par l'aperçu.
-- L'écran d'ouverture de pack permet aussi d'ouvrir la carte révélée en plein écran.
-- Le retour du pack vers le menu principal se fait par glissement vertical vers le haut.
-- Les cartes d'aperçu de bibliothèque et les cartes révélées dans les packs utilisent un ratio fixe `hauteur / largeur = 1.754`.
-- Le fond de carte dépend de la qualité du ciel (`city`, `suburban`, `rural`, `mountain`).
-- Les cartes holographiques ajoutent une surcouche d'étoiles scintillantes.
-- Le badge de rareté utilise un logo étoilé dédié :
-  - `Common` : étoile blanche à 4 branches ;
-  - `Uncommon` : étoile bleue à 4 branches ;
-  - `Rare` : étoile or à 4 branches ;
-  - `Epic` : étoile violette à 6 branches.
-- Le plein écran intègre directement les données scientifiques du catalogue local : description, identité, coordonnées célestes et mesures.
+- Demarrage : animation d'introduction puis carte `Commencer`.
+- `Commencer -> menu principal` : transition visuelle conservee.
+- `Menu -> packs` : ouverture d'un booster local sans appel reseau.
+- `Menu -> bibliotheque` : consultation de la collection persistante.
+- Retour Android depuis le menu principal : fermeture de l'activite.
 
-## Compatibilité catalogue
+Le standalone est mono-profil. Aucun ecran de login, de creation de compte, de compatibilite client/serveur ou de logout n'est present.
 
-- Le client charge `assets/catalog/metadata.json` pour obtenir `catalogVersion`.
-- Au démarrage, l'application appelle `POST /api/app/status` et bloque l'UI tant que la compatibilité n'est pas validée.
-- Toutes les autres requêtes HTTP envoient `X-Gatcha-Catalog-Version`.
-- Si le serveur répond `client_update_required` ou `server_update_pending`, l'application rebascule sur l'écran bloquant.
-- `OwnedCollection.version` est la version de deck persistée dans le blob chiffré ; les blobs anciens sont migrés côté client avant usage et resauvegarde.
+## Persistance locale
 
-## Workflow de release
+La progression locale contient uniquement :
 
-- Toute nouvelle extension implique la mise à jour coordonnée de `metadata.json`, `extensions.json`, `cards.json` et `variant_profiles.json`.
-- Une évolution de format du deck doit ajouter une migration explicite `n -> n+1` avant publication.
-- Le catalogue source éditable est maintenant le fichier racine `catalogue_astronomie.csv`, appliqué via `python3 scripts/catalog_sync.py apply`.
+- `collection_json` : la collection possedee ;
+- `next_draw_at` : la prochaine date ISO autorisant l'ouverture d'un pack.
 
-## Branches Git prévues
+`OwnedCollection.version` reste migree via `CollectionMigrationService`. Au premier lancement, si aucune sauvegarde n'existe, l'application cree automatiquement une collection vide a la version du catalogue embarque. Si une sauvegarde ancienne est detectee, elle est migree puis reecrite localement.
 
-- `master` : branche stable destinée aux releases.
-- `dev` : branche d'intégration courante.
+## Regles de jeu offline
 
-## Releases
+- `cardsPerPack = 5`
+- `drawCooldown = 12h`
+- tirage pondere des cartes par extension
+- tirage pondere de `skyQuality` et `finish`
 
-L'état actuel du code doit correspondre à une première release technique `v0.3.0` une fois le dépôt Git initialisé.
+Le moteur local reutilise les profils de variantes embarques pour produire un resultat equivalent a un tirage serveur, mais entierement local.
 
-## Politique de tests recommandée
+## Animations et interface
 
-- Sur chaque `push` vers `dev` :
-  - build debug ;
-  - tests unitaires ;
-  - vérifications statiques légères.
-- Sur chaque PR de `dev` vers `master` :
-  - tests unitaires obligatoires ;
-  - tests UI/automatisés si disponibles ;
-  - build de validation de release.
-- Sur `master` :
-  - génération de release ;
-  - tag Git.
+Le standalone conserve :
 
-## Couverture de tests actuelle
+- le decor celeste partage ;
+- les transitions de scenes ;
+- les animations de selection d'extension et d'ouverture de pack ;
+- la bibliotheque, les apercus et le plein ecran des cartes ;
+- le cooldown visible dans l'interface.
 
-- Les tests unitaires couvrent maintenant aussi :
-  - la sélection déterministe d'une variante de ciel ;
-  - la résolution des animations d'extension ;
-  - la projection du dessin d'extension et la conservation de son orientation ;
-  - la synchronisation d'apparition et de disparition des points de constellation avec les traits ;
-  - le calcul de la rareté maximale et la détection holographique pour l'ouverture de pack ;
-  - les validations de formulaire, la normalisation du login et les nouveaux événements et états transitoires des ViewModels de login et de pack ;
-  - les branches de repli de compatibilité applicative et de persistance de collection.
-- Les tests Compose/instrumentés couvrent le splash de lancement, l'affichage du login, le basculement login/création, les états UI désactivés, la constellation de la Grande Casserole, le retour arrière depuis une extension sélectionnée, le cooldown de tirage, la carte d'erreur avec relance, la disparition des boosters non sélectionnés, l'ouverture de pack avec explosion, l'entrée des cartes depuis le bas et le retour par glissement vertical.
-- Les tests E2E attendent désormais la séquence complète : login -> menu -> extension -> booster -> ouverture -> swipe haut -> bibliothèque.
+La seule simplification fonctionnelle voulue au demarrage est le remplacement du login par le bouton `Commencer`.
 
-## Commandes utiles
+## Tests
 
-Depuis le dossier `client-android/` :
+Les tests du standalone se lancent depuis `client-android-standalone/`.
 
 ```powershell
 .\gradlew.bat :app:testDebugUnitTest
@@ -180,88 +89,37 @@ Depuis le dossier `client-android/` :
 .\gradlew.bat :app:connectedDebugAndroidTest
 ```
 
-Depuis la racine du dépôt principal :
+La couverture actuelle verifie notamment :
 
-```powershell
-.\test-all.bat
-.\test-all.bat e2e
-```
+- `StartViewModel`
+- `ProgressRepository`
+- `LocalPackEngine`
+- `CollectionRepository`
+- `PackRepository`
+- `PackViewModel`
+- les ecrans Compose du flux `Commencer`
+- le scenario offline `Commencer -> menu -> pack -> cooldown -> bibliotheque`
 
-## Pré-requis locaux
+## Pre-requis locaux
 
-- SDK Android Platform 36.
-- Android 16 QPR2 / SDK Platform `36.1`.
-- Android SDK Build-Tools `36.1.0`.
-- Le projet utilise `compileSdk { version = release(36) { minorApiLevel = 1 } }` pour cibler correctement l'API `36.1`.
-- Le projet force `buildToolsVersion = "36.1.0"` pour éviter l'utilisation par défaut de `35.0.0`.
-- Le fichier `local.properties` doit pointer vers un chemin Windows, par exemple :
+- SDK Android Platform 36
+- Android 16 QPR2 / SDK Platform `36.1`
+- Android SDK Build-Tools `36.1.0`
+
+Le fichier `local.properties` doit pointer vers le SDK Android Windows local, par exemple :
 
 ```properties
 sdk.dir=C\:\\Users\\Derfence\\AppData\\Local\\Android\\Sdk
 ```
 
-## Exécution locale recommandée
+Les tests instrumentes `connectedDebugAndroidTest` doivent etre lances depuis Windows avec un emulateur ou un appareil ADB disponible.
 
-- Les tests unitaires Android peuvent être lancés depuis Windows avec `gradlew.bat`.
-- Les tests instrumentés `connectedDebugAndroidTest` doivent être lancés depuis Windows lorsque le SDK Android installé est un SDK Windows.
-- Avant `connectedDebugAndroidTest`, démarrer un émulateur Android ou brancher un appareil puis vérifier `adb devices` depuis Windows.
-- Si Android Studio ou Gradle signale que `Build Tools 35.0.0` est corrompu, supprimer cette version dans le SDK Manager Windows ou supprimer le dossier `C:\Users\Derfence\AppData\Local\Android\Sdk\build-tools\35.0.0`, puis relancer.
-- Le dépôt racine fournit un lanceur `test-all.bat` qui enchaîne les tests unitaires Android, les tests instrumentés Android non-E2E, les tests serveur puis le scénario E2E local.
-- `.\test-all.bat e2e` reste accepté comme alias rétrocompatible et exécute exactement la même suite.
-- Comme l'E2E est désormais inclus dans la suite standard, `.\test-all.bat` requiert lui aussi un émulateur Android ou un appareil ADB déjà prêt.
+## Catalogue
 
-## Test bout en bout local
-
-- Le client pointe désormais vers `http://gatcha.aumombelli.fr:8080`.
-- Le démarrage appelle d'abord `POST /api/app/status`, il faut donc que le serveur local expose aussi la même `catalogVersion`.
-- Le package Android utilisé par l'application est `fr.aumombelli.gatcha`.
-- En build `debug`, le client résout localement `gatcha.aumombelli.fr` vers `127.0.0.1` dans l'appareil.
-- Le script racine `routage.bat` active ensuite un `adb reverse tcp:8080 tcp:8080`, ce qui redirige ce `localhost` de l'appareil vers la machine hôte.
-- Le lanceur racine `.\test-all.bat` orchestre automatiquement :
-  - l'activation du routage ;
-  - le `pm clear` de l'app ;
-  - le démarrage du serveur local ;
-  - l'exécution d'un vrai test instrumenté E2E ;
-  - les validations serveur côté hôte ;
-  - l'arrêt du serveur et la désactivation du routage.
-- Le scénario E2E vérifie aussi :
-  - l'ouverture plein écran d'une carte depuis l'écran d'ouverture de pack ;
-  - l'aperçu puis le plein écran d'une carte possédée depuis la bibliothèque.
-- Démarrer d'abord l'émulateur ou brancher un appareil, puis lancer le routage depuis un terminal Windows :
-
-```powershell
-.\routage.bat on
-```
-
-- Vérifier éventuellement l'état du routage :
-
-```powershell
-.\routage.bat status
-```
-
-- Lancer ensuite le serveur sur la machine hôte, par exemple depuis WSL :
+Le catalogue source editable reste le fichier racine `catalogue_astronomie.csv`, applique via :
 
 ```bash
-cd /mnt/c/Users/Derfence/Documents/Gatcha/server
-./gradlew run
+python3 scripts/catalog_sync.py apply
 ```
 
-- Depuis l'appareil, le domaine applicatif atteint alors la machine hôte via `localhost` + `adb reverse`.
-- Une fois le test terminé, couper la redirection :
-
-```powershell
-.\routage.bat off
-```
-
-Pour exécuter la chaîne complète locale, y compris l'E2E obligatoire :
-
-```powershell
-.\test-all.bat
-.\test-all.bat e2e
-```
-
-Le test E2E pilote la vraie app via des `testTag` stables et un utilisateur de test injecté par arguments d'instrumentation. `.\test-all.bat e2e` reste uniquement un alias de `.\test-all.bat`.
-
-## Dépendance au dépôt racine
-
-Ce dépôt a vocation à être référencé par le dépôt racine `Gatcha-game` en tant que sous-module Git.
+Toute evolution du format de collection doit continuer a fournir une migration explicite `n -> n+1`.

@@ -1,24 +1,16 @@
 package fr.aumombelli.gatcha.testsupport.fakes
 
-import fr.aumombelli.gatcha.data.AppCompatibilityState
-import fr.aumombelli.gatcha.data.AppStatusGateway
-import fr.aumombelli.gatcha.data.AuthGateway
 import fr.aumombelli.gatcha.data.CatalogGateway
 import fr.aumombelli.gatcha.data.CollectionGateway
 import fr.aumombelli.gatcha.data.PackGateway
-import fr.aumombelli.gatcha.data.SessionGateway
+import fr.aumombelli.gatcha.data.ProgressGateway
 import fr.aumombelli.gatcha.model.CatalogMetadata
 import fr.aumombelli.gatcha.model.CardDefinition
-import fr.aumombelli.gatcha.model.CreateAccountRequest
-import fr.aumombelli.gatcha.model.CreateAccountResponse
 import fr.aumombelli.gatcha.model.DrawPackResponse
 import fr.aumombelli.gatcha.model.ExtensionDefinition
-import fr.aumombelli.gatcha.model.LoginRequest
-import fr.aumombelli.gatcha.model.LoginResponse
 import fr.aumombelli.gatcha.model.OwnedCollection
 import fr.aumombelli.gatcha.model.PackCard
-import fr.aumombelli.gatcha.model.SessionCredentials
-import fr.aumombelli.gatcha.model.StoredSessionSnapshot
+import fr.aumombelli.gatcha.model.StandaloneProgress
 import fr.aumombelli.gatcha.model.VariantProfile
 import fr.aumombelli.gatcha.model.mergePackCards
 import fr.aumombelli.gatcha.testsupport.fixtures.testVariantProfiles
@@ -26,101 +18,42 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-class FakeAuthGateway : AuthGateway {
-    var createAccountResponse = CreateAccountResponse(username = "alice", createdAt = "2026-03-23T12:00:00Z")
-    var loginResponse = LoginResponse(username = "alice", lastSavedAt = null, nextDrawAt = null)
-    var createAccountFailure: Throwable? = null
-    var loginFailure: Throwable? = null
-    val createRequests = mutableListOf<CreateAccountRequest>()
-    val loginRequests = mutableListOf<LoginRequest>()
+class FakeProgressGateway : ProgressGateway {
+    var progress = StandaloneProgress(
+        collection = OwnedCollection(version = 5),
+        nextDrawAt = null,
+    )
+    var loadFailure: Throwable? = null
+    val savedProgress = mutableListOf<StandaloneProgress>()
+    var loadCallCount = AtomicInteger(0)
 
-    override suspend fun createAccount(request: CreateAccountRequest): CreateAccountResponse {
-        createRequests += request
-        createAccountFailure?.let { throw it }
-        return createAccountResponse
+    override suspend fun loadProgress(): StandaloneProgress {
+        loadCallCount.incrementAndGet()
+        loadFailure?.let { throw it }
+        return progress
     }
 
-    override suspend fun login(request: LoginRequest): LoginResponse {
-        loginRequests += request
-        loginFailure?.let { throw it }
-        return loginResponse
+    override suspend fun saveProgress(progress: StandaloneProgress) {
+        savedProgress += progress
+        this.progress = progress
     }
-}
-
-class FakeSessionGateway : SessionGateway {
-    var snapshot = StoredSessionSnapshot()
-    var activeSession: SessionCredentials? = null
-    val savedLoginMetadata = mutableListOf<Triple<String, String?, String?>>()
-    val committedCollections = mutableListOf<Triple<String, String?, String?>>()
-    val savedPendingPacks = mutableListOf<Pair<String, DrawPackResponse>>()
-
-    override fun setActiveSession(username: String, passwordHash: String) {
-        activeSession = SessionCredentials(username, passwordHash)
-    }
-
-    override fun clearActiveSession() {
-        activeSession = null
-    }
-
-    override fun requireActiveSession(): SessionCredentials =
-        checkNotNull(activeSession) { "No active session configured in test fake." }
-
-    override suspend fun readSnapshot(): StoredSessionSnapshot = snapshot
-
-    override suspend fun saveLoginMetadata(username: String, lastSavedAt: String?, nextDrawAt: String?) {
-        savedLoginMetadata += Triple(username, lastSavedAt, nextDrawAt)
-        snapshot = snapshot.copy(
-            lastUsername = username,
-            lastSavedAt = lastSavedAt,
-            nextDrawAt = nextDrawAt,
-        )
-    }
-
-    override suspend fun commitSavedCollection(collectionBlob: String, savedAt: String?, nextDrawAt: String?) {
-        committedCollections += Triple(collectionBlob, savedAt, nextDrawAt)
-        snapshot = snapshot.copy(
-            lastCollectionBlob = collectionBlob,
-            lastSavedAt = savedAt,
-            nextDrawAt = nextDrawAt,
-            pendingCollectionBlob = null,
-            pendingPackJson = null,
-        )
-    }
-
-    override suspend fun savePendingPack(collectionBlob: String, packResponse: DrawPackResponse) {
-        savedPendingPacks += collectionBlob to packResponse
-    }
-
-    override suspend fun clearPendingPack() {
-        snapshot = snapshot.copy(pendingCollectionBlob = null, pendingPackJson = null)
-    }
-
-    override suspend fun decodePendingPack(): DrawPackResponse? = null
 }
 
 class FakeCollectionGateway : CollectionGateway {
-    var serverCollection = OwnedCollection()
-    var cachedCollection = OwnedCollection()
-    var replayPendingSaveResult = false
+    var collection = OwnedCollection(version = 5)
     var loadCollectionFailure: Throwable? = null
-    var replayFailure: Throwable? = null
+    val savedCollections = mutableListOf<OwnedCollection>()
     var loadCollectionCallCount = AtomicInteger(0)
-    var replayPendingSaveCallCount = AtomicInteger(0)
 
-    override suspend fun loadCollectionFromServer(): OwnedCollection {
+    override suspend fun loadCollection(): OwnedCollection {
         loadCollectionCallCount.incrementAndGet()
         loadCollectionFailure?.let { throw it }
-        return serverCollection
+        return collection
     }
 
-    override suspend fun getCachedCollectionOrEmpty(): OwnedCollection = cachedCollection
-
-    override suspend fun saveCollection(collection: OwnedCollection): String = "2026-03-23T12:00:00Z"
-
-    override suspend fun replayPendingSaveIfNeeded(): Boolean {
-        replayPendingSaveCallCount.incrementAndGet()
-        replayFailure?.let { throw it }
-        return replayPendingSaveResult
+    override suspend fun saveCollection(collection: OwnedCollection) {
+        savedCollections += collection
+        this.collection = collection
     }
 
     override fun mergeCards(collection: OwnedCollection, cards: List<PackCard>): OwnedCollection =
@@ -162,7 +95,8 @@ class FakePackGateway : PackGateway {
     private val packFlow = MutableStateFlow<DrawPackResponse?>(null)
     var openPackResponse: DrawPackResponse? = null
     var openPackFailure: Throwable? = null
-    val openPackCalls = mutableListOf<Pair<String, OwnedCollection>>()
+    var onOpenPack: ((String) -> Unit)? = null
+    val openPackCalls = mutableListOf<String>()
 
     override fun currentPackResult(): StateFlow<DrawPackResponse?> = packFlow
 
@@ -170,27 +104,11 @@ class FakePackGateway : PackGateway {
         packFlow.value = null
     }
 
-    override suspend fun openPack(extensionId: String, currentCollection: OwnedCollection): DrawPackResponse {
-        openPackCalls += extensionId to currentCollection
+    override suspend fun openPack(extensionId: String): DrawPackResponse {
+        openPackCalls += extensionId
         openPackFailure?.let { throw it }
+        onOpenPack?.invoke(extensionId)
         return checkNotNull(openPackResponse) { "openPackResponse must be configured in FakePackGateway." }
             .also { packFlow.value = it }
-    }
-}
-
-class FakeAppStatusGateway : AppStatusGateway {
-    private val mutableState = MutableStateFlow<AppCompatibilityState>(AppCompatibilityState.Checking)
-    var verifyCallCount = AtomicInteger(0)
-    var onVerify: (suspend () -> Unit)? = null
-
-    override val state: StateFlow<AppCompatibilityState> = mutableState
-
-    override suspend fun verifyCompatibility() {
-        verifyCallCount.incrementAndGet()
-        onVerify?.invoke()
-    }
-
-    fun updateState(state: AppCompatibilityState) {
-        mutableState.value = state
     }
 }

@@ -4,21 +4,26 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
-import fr.aumombelli.gatcha.testsupport.compatibleTestAppContainer
+import fr.aumombelli.gatcha.testsupport.offlineMainActivityTestAppContainer
 import org.junit.After
 import org.junit.Rule
 import org.junit.Test
 
-class LoginScreenTest {
+class StartScreenTest {
     init {
-        MainActivity.appContainerFactory = { compatibleAppContainer() }
+        MainActivity.appContainerFactory = { context ->
+            offlineMainActivityTestAppContainer(
+                context = context,
+                dataStoreFileName = "start-screen.preferences_pb",
+            )
+        }
     }
 
     @get:Rule
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun login_screen_is_shown_on_launch() {
+    fun start_screen_is_shown_on_launch() {
         composeRule.waitUntil(timeoutMillis = 10_000) {
             composeRule.onAllNodesWithTag("app-launch-logo")
                 .fetchSemanticsNodes(atLeastOneRootRequired = false)
@@ -26,21 +31,17 @@ class LoginScreenTest {
         }
         composeRule.onNodeWithTag("app-launch-logo").assertIsDisplayed()
         composeRule.waitUntil(timeoutMillis = 10_000) {
-            composeRule.onAllNodesWithTag("app-launch-login-form")
+            composeRule.onAllNodesWithTag("app-launch-start-card")
                 .fetchSemanticsNodes(atLeastOneRootRequired = false)
                 .isNotEmpty()
         }
-        composeRule.onNodeWithTag("app-launch-login-form").assertIsDisplayed()
-        composeRule.onNodeWithTag("login-submit").assertIsDisplayed()
-        composeRule.onNodeWithTag("login-title").assertIsDisplayed()
+        composeRule.onNodeWithTag("app-launch-start-card").assertIsDisplayed()
+        composeRule.onNodeWithTag("start-begin").assertIsDisplayed()
+        composeRule.onNodeWithTag("start-title").assertIsDisplayed()
     }
 
     @After
     fun tearDown() {
         MainActivity.appContainerFactory = null
-    }
-
-    private fun compatibleAppContainer(): AppContainer {
-        return compatibleTestAppContainer()
     }
 }

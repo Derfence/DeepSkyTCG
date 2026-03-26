@@ -34,10 +34,10 @@ internal class AppSceneTransitionController(
         delay(900)
         writeState(readState().raiseLaunchLogo())
         delay(720)
-        writeState(readState().showLoginForm())
+        writeState(readState().showStartCard())
     }
 
-    suspend fun animateLoginToMenu() {
+    suspend fun animateStartToMenu() {
         val state = readState()
         if (state.transitionLocked) return
 
@@ -72,44 +72,6 @@ internal class AppSceneTransitionController(
             readState()
                 .enterMainMenu()
                 .showMenuContent()
-                .unlockTransitions(),
-        )
-    }
-
-    suspend fun animateMenuToLogin() {
-        val state = readState()
-        if (state.transitionLocked) return
-
-        writeState(state.lockTransitions().hideMenuContent())
-        delay(560)
-        appContainer.sessionRepository.clearActiveSession()
-        appContainer.packRepository.clearCurrentPackResult()
-        writeState(readState().prepareReturnToLogin(nextLoginViewModelKey = state.loginViewModelKey + 1))
-        coroutineScope {
-            launch {
-                cameraTilt.animateTo(
-                    targetValue = 0f,
-                    animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
-                )
-            }
-            launch {
-                mountainSkyBlend.animateTo(
-                    targetValue = 0f,
-                    animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
-                )
-            }
-            if (skyVariant.hasHorizonLights) {
-                launch {
-                    horizonLights.animateTo(
-                        targetValue = 1f,
-                        animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
-                    )
-                }
-            }
-        }
-        writeState(
-            readState()
-                .showLoginForm()
                 .unlockTransitions(),
         )
     }

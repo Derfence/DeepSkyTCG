@@ -32,7 +32,7 @@ class LibraryViewModelTest {
             )
         }
         val collectionGateway = FakeCollectionGateway().apply {
-            cachedCollection = ownedCollectionWithVariants(
+            collection = ownedCollectionWithVariants(
                 "MON-050",
                 OwnedVariantCount("city", "standard", 1),
                 OwnedVariantCount("mountain", "holographic", 1),

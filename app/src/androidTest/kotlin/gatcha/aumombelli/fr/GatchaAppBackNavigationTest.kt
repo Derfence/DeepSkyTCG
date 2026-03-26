@@ -5,7 +5,6 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTextInput
 import fr.aumombelli.gatcha.testsupport.backNavigationTestAppContainer
 import fr.aumombelli.gatcha.ui.theme.GatchaTheme
 import org.junit.Assert.assertTrue
@@ -19,7 +18,7 @@ class GatchaAppBackNavigationTest {
     @Test
     fun android_back_from_library_returns_to_main_menu() {
         setAppContent(backNavigationTestAppContainer())
-        loginAndReachMainMenu()
+        startAndReachMainMenu()
 
         composeRule.onNodeWithTag("menu-library").performClick()
         advanceBy(2_700)
@@ -33,7 +32,7 @@ class GatchaAppBackNavigationTest {
     @Test
     fun android_back_from_pack_selection_returns_to_extension_list_then_menu() {
         setAppContent(backNavigationTestAppContainer())
-        loginAndReachMainMenu()
+        startAndReachMainMenu()
 
         composeRule.onNodeWithTag("menu-open-pack").performClick()
         advanceBy(1_900)
@@ -53,7 +52,7 @@ class GatchaAppBackNavigationTest {
     @Test
     fun android_back_from_pack_opening_returns_to_main_menu() {
         setAppContent(backNavigationTestAppContainer())
-        loginAndReachMainMenu()
+        startAndReachMainMenu()
 
         composeRule.onNodeWithTag("menu-open-pack").performClick()
         advanceBy(1_900)
@@ -71,7 +70,7 @@ class GatchaAppBackNavigationTest {
     @Test
     fun android_back_from_main_menu_finishes_activity() {
         setAppContent(backNavigationTestAppContainer())
-        loginAndReachMainMenu()
+        startAndReachMainMenu()
 
         pressAndroidBack()
         composeRule.waitUntil(timeoutMillis = 5_000) { composeRule.activity.isFinishing }
@@ -88,10 +87,8 @@ class GatchaAppBackNavigationTest {
         advanceBy(2_200)
     }
 
-    private fun loginAndReachMainMenu() {
-        composeRule.onNodeWithTag("login-username").performTextInput("alice")
-        composeRule.onNodeWithTag("login-password").performTextInput("password")
-        composeRule.onNodeWithTag("login-submit").performClick()
+    private fun startAndReachMainMenu() {
+        composeRule.onNodeWithTag("start-begin").performClick()
         advanceBy(1_600)
         composeRule.onNodeWithTag("menu-open-pack").assertIsDisplayed()
     }

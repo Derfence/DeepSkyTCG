@@ -1,73 +1,45 @@
 package fr.aumombelli.gatcha
 
 import android.content.Context
-import fr.aumombelli.gatcha.data.AppCompatibilityController
-import fr.aumombelli.gatcha.data.AppStatusGateway
-import fr.aumombelli.gatcha.data.AppStatusRepository
-import fr.aumombelli.gatcha.data.AuthGateway
 import fr.aumombelli.gatcha.data.CatalogGateway
 import fr.aumombelli.gatcha.data.CollectionGateway
 import fr.aumombelli.gatcha.data.CollectionMigrationService
 import fr.aumombelli.gatcha.data.CollectionRepository
 import fr.aumombelli.gatcha.data.GameCatalogRepository
+import fr.aumombelli.gatcha.data.LocalPackEngine
 import fr.aumombelli.gatcha.data.PackGateway
 import fr.aumombelli.gatcha.data.PackRepository
-import fr.aumombelli.gatcha.data.SessionGateway
-import fr.aumombelli.gatcha.data.SessionRepository
-import fr.aumombelli.gatcha.network.GameApiService
-import fr.aumombelli.gatcha.network.LocalRoutingDns
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.okhttp.OkHttp
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.serialization.kotlinx.json.json
-import kotlinx.serialization.json.Json
+import fr.aumombelli.gatcha.data.ProgressGateway
+import fr.aumombelli.gatcha.data.ProgressRepository
+import fr.aumombelli.gatcha.data.StandaloneGameSettings
 
 class AppContainer(
-    val sessionRepository: SessionGateway,
+    val progressRepository: ProgressGateway,
     val catalogRepository: CatalogGateway,
-    val apiService: AuthGateway,
-    val appStatusRepository: AppStatusGateway,
     val collectionRepository: CollectionGateway,
     val packRepository: PackGateway,
 ) {
     companion object {
         fun create(context: Context): AppContainer {
             val appContext = context.applicationContext
-            val json = Json {
-                ignoreUnknownKeys = true
-                encodeDefaults = true
-                classDiscriminator = "detailType"
-            }
-
-            val httpClient = HttpClient(OkHttp) {
-                engine {
-                    config {
-                        dns(LocalRoutingDns())
-                    }
-                }
-                install(ContentNegotiation) {
-                    json(json)
-                }
-            }
-
-            val sessionRepository = SessionRepository(appContext)
             val catalogRepository = GameCatalogRepository(appContext)
-            val compatibilityController = AppCompatibilityController()
-            val apiService = GameApiService(httpClient, json, catalogRepository, compatibilityController)
             val collectionMigrationService = CollectionMigrationService(catalogRepository)
+            val progressRepository = ProgressRepository.fromContext(appContext, collectionMigrationService)
             val collectionRepository = CollectionRepository(
-                apiService = apiService,
-                sessionRepository = sessionRepository,
-                collectionMigrationService = collectionMigrationService,
+                progressRepository = progressRepository,
             )
-            val packRepository = PackRepository(apiService, sessionRepository, collectionRepository)
-            val appStatusRepository = AppStatusRepository(apiService, compatibilityController)
+            val packRepository = PackRepository(
+                progressRepository = progressRepository,
+                collectionRepository = collectionRepository,
+                localPackEngine = LocalPackEngine(
+                    catalogRepository = catalogRepository,
+                    settings = StandaloneGameSettings(),
+                ),
+            )
 
             return AppContainer(
-                sessionRepository = sessionRepository,
+                progressRepository = progressRepository,
                 catalogRepository = catalogRepository,
-                apiService = apiService,
-                appStatusRepository = appStatusRepository,
                 collectionRepository = collectionRepository,
                 packRepository = packRepository,
             )

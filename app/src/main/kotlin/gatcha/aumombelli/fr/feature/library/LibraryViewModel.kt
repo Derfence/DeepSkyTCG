@@ -35,7 +35,7 @@ class LibraryViewModel(
                 val extensions = catalogRepository.loadExtensions()
                 val cards = catalogRepository.loadCards()
                 val variantProfiles = catalogRepository.loadVariantProfiles()
-                val collection = collectionRepository.getCachedCollectionOrEmpty()
+                val collection = collectionRepository.loadCollection()
                 buildLibrarySections(
                     extensions = extensions,
                     cards = cards,
