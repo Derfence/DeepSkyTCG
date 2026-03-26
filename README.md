@@ -32,14 +32,22 @@ Cette application permet au joueur de :
 ## Structure fonctionnelle
 
 - `MainActivity` : point d'entrée Android.
-- `GatchaApp` : bootstrap de compatibilité puis navigation Compose.
-- `data/` : persistance locale, chiffrement de collection, migration de deck, repositories.
+- `GatchaApp` : façade stable qui délègue au shell Compose interne.
+- `app/` : composition root Compose, bootstrap, état de scène explicite et orchestration des transitions globales.
+- `feature/bootstrap/` : écran et ViewModel de blocage de compatibilité au démarrage.
+- `feature/auth/` : écran de login/création, formulaire et événements d'authentification.
+- `feature/library/` : chargement de la collection, assemblage des sections et dialogues d'aperçu/plein écran.
+- `feature/packs/selection/` : sélection d'extension, badges animés, scène de boosters et formatage de cooldown.
+- `feature/packs/opening/` : contrôleur local d'ouverture, couverture booster, reveal pager et plein écran.
+- `core/model` logique répartie dans `model/` : modèles catalogue/collection/display/astronomie et helpers purs.
+- `data/` : persistance locale, chiffrement de collection, migration de deck, repositories par capacité.
 - `network/` : client HTTP de l'API serveur.
-- `ui/component/` : rendu Compose partagé des cartes astro, badges de rareté et variantes visuelles.
-- `ui/motion/` : modèles de motion design, variantes de ciel, animations d'extension et composants de transition partagés.
-- `ui/viewmodel/` : logique d'écran.
-- `ui/screen/` : écrans Compose.
+- `ui/component/` : primitives Compose partagées des cartes astro, maintenant découpées en surfaces, sections et décorations.
+- `ui/motion/` : primitives de motion design découpées par responsabilité (`backdrop`, `logo`, `book portal`, `pack card`, `burst`, géométrie).
+- `ui/viewmodel/` et `ui/screen/` : façades de compatibilité vers les features, conservées pour limiter l'impact des tests et des points d'entrée existants.
 - `assets/catalog/` : `metadata.json`, `extensions.json`, `cards.json` et `variant_profiles.json`.
+- `src/test/.../testsupport/` : fixtures métier et faux gateways mutualisés.
+- `src/androidTest/.../testsupport/` : builders d'`AppContainer` et doubles d'hôte partagés pour les tests UI.
 
 ## Flux visuel et animations
 
@@ -93,7 +101,7 @@ Cette application permet au joueur de :
   - les points apparaissent en même temps que les premiers traits qui les atteignent ;
   - les points disparaissent dès que le dernier trait qui les touche commence à s'effacer ;
   - au retour arrière, l'animation est jouée en sens inverse avec disparition synchronisée des points et des traits.
-- Les positions et connexions du dessin d'`Astronomes en herbe` sont définies dans `ui/motion/AppMotion.kt`, et leur rendu dans `ui/motion/AppMotionComponents.kt`.
+- Les positions et connexions du dessin d'`Astronomes en herbe` sont définies dans `ui/motion/AppMotion.kt`, et leur rendu dans `ui/motion/ExtensionConstellationOverlay.kt`.
 - Une miniature de bibliothèque reste atténuée tant que la carte n'est pas possédée.
 - La bibliothèque trie les cartes d'une extension par rareté, de `Common` vers `Epic`.
 - Les miniatures de bibliothèque gardent un rendu simplifié et n'affichent plus le texte central de catalogue ni la variante au centre.

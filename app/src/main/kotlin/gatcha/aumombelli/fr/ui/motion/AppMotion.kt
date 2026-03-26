@@ -345,9 +345,3 @@ private fun easeOutCubic(value: Float): Float {
     val clamped = value.coerceIn(0f, 1f)
     return 1f - (1f - clamped) * (1f - clamped) * (1f - clamped)
 }
-
-private fun scalarLerp(
-    start: Float,
-    stop: Float,
-    fraction: Float,
-): Float = start + (stop - start) * fraction.coerceIn(0f, 1f)

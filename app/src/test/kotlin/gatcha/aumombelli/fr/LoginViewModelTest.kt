@@ -1,8 +1,8 @@
 package fr.aumombelli.gatcha
 
 import fr.aumombelli.gatcha.data.SecurityUtils
+import fr.aumombelli.gatcha.feature.auth.LoginEvent
 import fr.aumombelli.gatcha.network.ApiCallException
-import fr.aumombelli.gatcha.ui.viewmodel.LoginEvent
 import fr.aumombelli.gatcha.ui.viewmodel.LoginViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
