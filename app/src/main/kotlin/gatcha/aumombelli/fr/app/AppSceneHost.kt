@@ -28,6 +28,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.aumombelli.gatcha.AppContainer
+import fr.aumombelli.gatcha.feature.badges.BadgeBookScreen
+import fr.aumombelli.gatcha.feature.badges.BadgeBookViewModel
 import fr.aumombelli.gatcha.feature.library.LibraryScreen
 import fr.aumombelli.gatcha.feature.library.LibraryViewModel
 import fr.aumombelli.gatcha.feature.packs.opening.PackOpeningScreen
@@ -41,6 +43,7 @@ import fr.aumombelli.gatcha.feature.start.StartViewModel
 import fr.aumombelli.gatcha.ui.motion.AppScene
 import fr.aumombelli.gatcha.ui.motion.AppSkyBackdrop
 import fr.aumombelli.gatcha.ui.motion.BookPortalOverlay
+import fr.aumombelli.gatcha.ui.motion.ChestPortalOverlay
 import fr.aumombelli.gatcha.ui.motion.LaunchLogoMark
 import fr.aumombelli.gatcha.ui.motion.randomSkyBackdropVariant
 import fr.aumombelli.gatcha.ui.screen.MainMenuScreen
@@ -61,6 +64,8 @@ internal fun AppSceneHost(appContainer: AppContainer) {
     val horizonLights = remember { Animatable(1f) }
     val bookProgress = remember { Animatable(0f) }
     val bookOverlayAlpha = remember { Animatable(1f) }
+    val chestProgress = remember { Animatable(0f) }
+    val chestOverlayAlpha = remember { Animatable(1f) }
 
     val transitions = remember(appContainer, skyVariant) {
         AppSceneTransitionController(
@@ -71,6 +76,8 @@ internal fun AppSceneHost(appContainer: AppContainer) {
             horizonLights = horizonLights,
             bookProgress = bookProgress,
             bookOverlayAlpha = bookOverlayAlpha,
+            chestProgress = chestProgress,
+            chestOverlayAlpha = chestOverlayAlpha,
             readState = { sceneStateHolder.value },
             writeState = { sceneStateHolder.value = it },
             awaitNextFrame = { withFrameNanos { } },
@@ -163,6 +170,9 @@ internal fun AppSceneHost(appContainer: AppContainer) {
                     onOpenLibrary = {
                         scope.launch { transitions.animateMenuToLibrary() }
                     },
+                    onOpenBadgeBook = {
+                        scope.launch { transitions.animateMenuToBadgeBook() }
+                    },
                     showBackground = false,
                     contentVisible = sceneState.menuContentVisible,
                     interactionsEnabled = !sceneState.transitionLocked,
@@ -189,6 +199,29 @@ internal fun AppSceneHost(appContainer: AppContainer) {
                     state = uiState,
                     onRefresh = libraryViewModel::refresh,
                     contentVisible = sceneState.libraryContentVisible,
+                )
+            }
+
+            AppScene.BadgeBook -> {
+                val badgeBookViewModel: BadgeBookViewModel = viewModel(
+                    key = "badges-${sceneState.badgeBookViewModelKey}",
+                    factory = GatchaViewModelFactory {
+                        BadgeBookViewModel(
+                            catalogRepository = appContainer.catalogRepository,
+                            collectionRepository = appContainer.collectionRepository,
+                        )
+                    },
+                )
+                val uiState by badgeBookViewModel.uiState.collectAsState()
+
+                BackHandler(enabled = !sceneState.transitionLocked) {
+                    scope.launch { transitions.animateBadgeBookToMenu() }
+                }
+
+                BadgeBookScreen(
+                    state = uiState,
+                    onRefresh = badgeBookViewModel::refresh,
+                    contentVisible = sceneState.badgeBookContentVisible,
                 )
             }
 
@@ -291,6 +324,11 @@ internal fun AppSceneHost(appContainer: AppContainer) {
         BookPortalOverlay(
             progress = bookProgress.value,
             overlayAlpha = bookOverlayAlpha.value,
+        )
+
+        ChestPortalOverlay(
+            progress = chestProgress.value,
+            overlayAlpha = chestOverlayAlpha.value,
         )
     }
 }

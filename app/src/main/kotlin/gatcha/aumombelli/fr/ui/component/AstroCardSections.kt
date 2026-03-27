@@ -12,17 +12,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.platform.testTag
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -37,10 +35,6 @@ import fr.aumombelli.gatcha.model.LibraryCardItem
 import fr.aumombelli.gatcha.model.SkyEventDetails
 import fr.aumombelli.gatcha.model.StarDetails
 import fr.aumombelli.gatcha.model.toDisplayCard
-import fr.aumombelli.gatcha.ui.motion.ExtensionAnimationStyle
-import fr.aumombelli.gatcha.ui.motion.ExtensionConstellationOverlay
-import fr.aumombelli.gatcha.ui.motion.LaunchLogoMark
-import fr.aumombelli.gatcha.ui.motion.extensionAnimationSpec
 
 internal const val CardBackgroundArtTag = "astro-card-background-art"
 internal const val CardBackgroundFallbackAssetTag = "astro-card-background-fallback-asset"
@@ -238,35 +232,6 @@ private fun FooterTextBlock(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
-    }
-}
-
-@Composable
-private fun ExtensionLogoMark(
-    extensionId: String,
-    compact: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    val spec = remember(extensionId) { extensionAnimationSpec(extensionId) }
-    val size = if (compact) 32.dp else 40.dp
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier.size(size),
-    ) {
-        if (spec.style == ExtensionAnimationStyle.BigDipper) {
-            ExtensionConstellationOverlay(
-                spec = spec,
-                lineProgress = 1f,
-                isReversing = false,
-                modifier = Modifier.fillMaxSize(),
-                tag = null,
-            )
-        } else {
-            LaunchLogoMark(
-                showWordmark = false,
-                emblemSize = size,
-            )
-        }
     }
 }
 

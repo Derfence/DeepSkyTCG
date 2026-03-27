@@ -10,12 +10,14 @@ internal data class AppSceneUiState(
     val startCardVisible: Boolean = false,
     val menuContentVisible: Boolean = false,
     val libraryContentVisible: Boolean = false,
+    val badgeBookContentVisible: Boolean = false,
     val packSceneVisible: Boolean = false,
     val packExtensionListVisible: Boolean = false,
     val transitionLocked: Boolean = false,
     val rootHeightPx: Float = 0f,
     val startCardTopPx: Float = 0f,
     val libraryViewModelKey: Int = 0,
+    val badgeBookViewModelKey: Int = 0,
     val packFlowKey: Int = 0,
     val packReadySignal: Int = 0,
     val selectedPackRevealBounds: PackRevealBounds? = null,
@@ -49,6 +51,10 @@ internal fun AppSceneUiState.hideLibraryContent(): AppSceneUiState = copy(librar
 
 internal fun AppSceneUiState.showLibraryContent(): AppSceneUiState = copy(libraryContentVisible = true)
 
+internal fun AppSceneUiState.hideBadgeBookContent(): AppSceneUiState = copy(badgeBookContentVisible = false)
+
+internal fun AppSceneUiState.showBadgeBookContent(): AppSceneUiState = copy(badgeBookContentVisible = true)
+
 internal fun AppSceneUiState.hidePackSelectionScene(): AppSceneUiState = copy(
     packSceneVisible = false,
     packExtensionListVisible = false,
@@ -73,6 +79,14 @@ internal fun AppSceneUiState.prepareLibraryEntry(nextLibraryViewModelKey: Int): 
 )
 
 internal fun AppSceneUiState.enterLibrary(): AppSceneUiState = copy(currentScene = AppScene.Library)
+
+internal fun AppSceneUiState.prepareBadgeBookEntry(nextBadgeBookViewModelKey: Int): AppSceneUiState = copy(
+    menuContentVisible = false,
+    badgeBookContentVisible = false,
+    badgeBookViewModelKey = nextBadgeBookViewModelKey,
+)
+
+internal fun AppSceneUiState.enterBadgeBook(): AppSceneUiState = copy(currentScene = AppScene.BadgeBook)
 
 internal fun AppSceneUiState.preparePackSelection(nextPackFlowKey: Int): AppSceneUiState = copy(
     currentScene = AppScene.PackSelection,

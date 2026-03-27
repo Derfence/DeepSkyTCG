@@ -1,8 +1,10 @@
 package fr.aumombelli.gatcha
 
 import fr.aumombelli.gatcha.app.AppSceneUiState
+import fr.aumombelli.gatcha.app.enterBadgeBook
 import fr.aumombelli.gatcha.app.enterPackOpening
 import fr.aumombelli.gatcha.app.finishPackOpeningToMenu
+import fr.aumombelli.gatcha.app.prepareBadgeBookEntry
 import fr.aumombelli.gatcha.app.preparePackSelection
 import fr.aumombelli.gatcha.app.resetLaunchSequence
 import fr.aumombelli.gatcha.app.showStartCard
@@ -82,5 +84,32 @@ class AppSceneStateTest {
 
         assertEquals(true, nextState.startCardVisible)
         assertEquals(state.currentScene, nextState.currentScene)
+    }
+
+    @Test
+    fun `prepare badge book entry resets badge content and increments key`() {
+        val initialState = AppSceneUiState(
+            currentScene = AppScene.MainMenu,
+            menuContentVisible = true,
+            badgeBookContentVisible = true,
+            badgeBookViewModelKey = 2,
+        )
+
+        val nextState = initialState.prepareBadgeBookEntry(nextBadgeBookViewModelKey = 3)
+
+        assertEquals(AppScene.MainMenu, nextState.currentScene)
+        assertEquals(false, nextState.menuContentVisible)
+        assertEquals(false, nextState.badgeBookContentVisible)
+        assertEquals(3, nextState.badgeBookViewModelKey)
+    }
+
+    @Test
+    fun `enter badge book switches current scene only`() {
+        val state = AppSceneUiState(currentScene = AppScene.MainMenu)
+
+        val nextState = state.enterBadgeBook()
+
+        assertEquals(AppScene.BadgeBook, nextState.currentScene)
+        assertEquals(state.menuContentVisible, nextState.menuContentVisible)
     }
 }

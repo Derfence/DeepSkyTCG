@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 fun MainMenuScreen(
     onOpenPack: () -> Unit,
     onOpenLibrary: () -> Unit,
+    onOpenBadgeBook: () -> Unit,
     modifier: Modifier = Modifier,
     showBackground: Boolean = true,
     contentVisible: Boolean = true,
@@ -106,6 +107,15 @@ fun MainMenuScreen(
                         .testTag("menu-library"),
                 ) {
                     Text("Library")
+                }
+                Button(
+                    onClick = onOpenBadgeBook,
+                    enabled = interactionsEnabled,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("menu-badges"),
+                ) {
+                    Text("Badges")
                 }
             }
         }

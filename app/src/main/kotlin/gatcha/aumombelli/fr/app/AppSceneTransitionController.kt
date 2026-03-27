@@ -18,6 +18,8 @@ internal class AppSceneTransitionController(
     private val horizonLights: Animatable<Float, AnimationVector1D>,
     private val bookProgress: Animatable<Float, AnimationVector1D>,
     private val bookOverlayAlpha: Animatable<Float, AnimationVector1D>,
+    private val chestProgress: Animatable<Float, AnimationVector1D>,
+    private val chestOverlayAlpha: Animatable<Float, AnimationVector1D>,
     private val readState: () -> AppSceneUiState,
     private val writeState: (AppSceneUiState) -> Unit,
     private val awaitNextFrame: suspend () -> Unit,
@@ -115,6 +117,29 @@ internal class AppSceneTransitionController(
         writeState(readState().unlockTransitions())
     }
 
+    suspend fun animateMenuToBadgeBook() {
+        val state = readState()
+        if (state.transitionLocked) return
+
+        writeState(
+            state.lockTransitions()
+                .hideMenuContent()
+                .hideBadgeBookContent(),
+        )
+        delay(520)
+        writeState(readState().prepareBadgeBookEntry(nextBadgeBookViewModelKey = state.badgeBookViewModelKey + 1))
+        chestProgress.snapTo(0f)
+        chestOverlayAlpha.snapTo(1f)
+        chestProgress.animateTo(1f, animationSpec = tween(durationMillis = 980, easing = FastOutSlowInEasing))
+        writeState(readState().enterBadgeBook())
+        awaitNextFrame()
+        writeState(readState().showBadgeBookContent())
+        chestOverlayAlpha.animateTo(0f, animationSpec = tween(durationMillis = 960, easing = FastOutSlowInEasing))
+        chestProgress.snapTo(0f)
+        chestOverlayAlpha.snapTo(1f)
+        writeState(readState().unlockTransitions())
+    }
+
     suspend fun animatePackSelectionToMenu() {
         val state = readState()
         if (state.transitionLocked) return
@@ -153,6 +178,27 @@ internal class AppSceneTransitionController(
         bookOverlayAlpha.animateTo(1f, animationSpec = tween(durationMillis = 960, easing = FastOutSlowInEasing))
         writeState(readState().enterMainMenu())
         bookProgress.animateTo(0f, animationSpec = tween(durationMillis = 980, easing = FastOutSlowInEasing))
+        writeState(
+            readState()
+                .showMenuContent()
+                .unlockTransitions(),
+        )
+    }
+
+    suspend fun animateBadgeBookToMenu() {
+        val state = readState()
+        if (state.transitionLocked) return
+
+        writeState(
+            state.lockTransitions()
+                .hideMenuContent()
+                .hideBadgeBookContent(),
+        )
+        chestProgress.snapTo(1f)
+        chestOverlayAlpha.snapTo(0f)
+        chestOverlayAlpha.animateTo(1f, animationSpec = tween(durationMillis = 960, easing = FastOutSlowInEasing))
+        writeState(readState().enterMainMenu())
+        chestProgress.animateTo(0f, animationSpec = tween(durationMillis = 980, easing = FastOutSlowInEasing))
         writeState(
             readState()
                 .showMenuContent()

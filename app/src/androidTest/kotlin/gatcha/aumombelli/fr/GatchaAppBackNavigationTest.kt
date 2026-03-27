@@ -30,6 +30,30 @@ class GatchaAppBackNavigationTest {
     }
 
     @Test
+    fun android_back_from_badge_book_closes_detail_then_returns_to_main_menu() {
+        setAppContent(backNavigationTestAppContainer())
+        startAndReachMainMenu()
+
+        composeRule.onNodeWithTag("menu-badges").performClick()
+        advanceBy(800)
+        composeRule.onNodeWithTag("app-transition-chest").assertIsDisplayed()
+        advanceBy(2_000)
+        composeRule.onNodeWithTag("badge-book-scroll").assertIsDisplayed()
+
+        composeRule.onNodeWithTag("badge-coin-astronomes-en-herbe::sky::city").performClick()
+        advanceBy(700)
+        composeRule.onNodeWithTag("badge-detail").assertIsDisplayed()
+
+        pressAndroidBack()
+        advanceBy(700)
+        composeRule.onNodeWithTag("badge-book-scroll").assertIsDisplayed()
+
+        pressAndroidBack()
+        advanceBy(2_100)
+        composeRule.onNodeWithTag("menu-open-pack").assertIsDisplayed()
+    }
+
+    @Test
     fun android_back_from_pack_selection_returns_to_extension_list_then_menu() {
         setAppContent(backNavigationTestAppContainer())
         startAndReachMainMenu()

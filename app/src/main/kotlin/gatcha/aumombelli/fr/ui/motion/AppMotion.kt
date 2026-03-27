@@ -42,6 +42,7 @@ enum class AppScene {
     Start,
     MainMenu,
     Library,
+    BadgeBook,
     PackSelection,
     PackOpening,
 }
