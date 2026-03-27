@@ -5,6 +5,7 @@ import fr.aumombelli.gatcha.model.OwnedCardEntry
 import fr.aumombelli.gatcha.model.OwnedVariantCount
 import fr.aumombelli.gatcha.model.raritySortPriority
 import fr.aumombelli.gatcha.model.toDisplayVariants
+import fr.aumombelli.gatcha.ui.component.cardHeadlineContent
 import fr.aumombelli.gatcha.ui.theme.rarityBadgeStyle
 import fr.aumombelli.gatcha.ui.theme.skyQualityPalette
 import org.junit.Assert.assertEquals
@@ -57,5 +58,50 @@ class CardDisplayModelsTest {
         assertEquals(Color(0xFF8E845F), skyQualityPalette("city").top)
         assertEquals(Color(0xFF5F4A46), skyQualityPalette("suburban").top)
         assertEquals(Color(0xFF010308), skyQualityPalette("mountain").bottom)
+    }
+
+    @Test
+    fun `card headline prefers common name and keeps catalog line`() {
+        val definition = testCardDefinition(
+            id = "M42",
+            name = "Nebuleuse d'Orion",
+            commonName = "Nebuleuse d'Orion",
+            catalogNumber = "M42",
+        )
+
+        val headline = cardHeadlineContent(definition)
+
+        assertEquals("Nebuleuse d'Orion", headline.title)
+        assertEquals("M42", headline.catalogLine)
+    }
+
+    @Test
+    fun `card headline falls back to catalog number when common name is missing`() {
+        val definition = testCardDefinition(
+            id = "NGC7000",
+            name = "Nebuleuse catalogue",
+            commonName = null,
+            catalogNumber = "NGC 7000",
+        )
+
+        val headline = cardHeadlineContent(definition)
+
+        assertEquals("NGC 7000", headline.title)
+        assertEquals(null, headline.catalogLine)
+    }
+
+    @Test
+    fun `card headline avoids duplicating catalog line when common name matches catalog number`() {
+        val definition = testCardDefinition(
+            id = "M42",
+            name = "M42",
+            commonName = "M42",
+            catalogNumber = "M42",
+        )
+
+        val headline = cardHeadlineContent(definition)
+
+        assertEquals("M42", headline.title)
+        assertEquals(null, headline.catalogLine)
     }
 }

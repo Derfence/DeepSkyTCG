@@ -2,19 +2,15 @@ package fr.aumombelli.gatcha.ui.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.gatcha.model.DisplayCard
 import fr.aumombelli.gatcha.ui.theme.skyQualityPalette
@@ -33,7 +29,6 @@ fun AstroCardPreviewSurface(
     modifier: Modifier = Modifier,
     mode: AstroCardSurfaceMode = AstroCardSurfaceMode.Preview,
     onClick: (() -> Unit)? = null,
-    accessoryContent: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
     val palette = skyQualityPalette(displayCard.activeVariant.skyQuality)
     val compact = mode == AstroCardSurfaceMode.Thumbnail
@@ -51,13 +46,7 @@ fun AstroCardPreviewSurface(
     ) {
         Box(
             modifier = Modifier
-                .then(
-                    if (mode == AstroCardSurfaceMode.Thumbnail) {
-                        Modifier.fillMaxWidth()
-                    } else {
-                        Modifier.fillMaxSize()
-                    },
-                )
+                .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
                         listOf(
@@ -65,39 +54,45 @@ fun AstroCardPreviewSurface(
                             palette.bottom,
                         ),
                     ),
-                )
-                .padding(if (compact) 14.dp else 20.dp),
+                ),
         ) {
+            CardArtBackground(
+                definition = displayCard.definition,
+                palette = palette,
+                modifier = Modifier.fillMaxSize(),
+            )
             HeroAtmosphere(palette = palette)
+            CardFaceScrim(modifier = Modifier.fillMaxSize())
             if (displayCard.activeVariant.isHolographic) {
                 TwinklingStarsOverlay(modifier = Modifier.fillMaxSize())
             }
-            Column(
-                verticalArrangement = Arrangement.spacedBy(if (compact) 10.dp else 14.dp),
-                modifier = if (compact) {
-                    Modifier.fillMaxWidth()
-                } else {
-                    Modifier.fillMaxSize()
-                },
-            ) {
-                CardHeader(
-                    displayCard = displayCard,
-                    compact = compact,
-                )
-                accessoryContent?.invoke(this)
-                CardHero(
-                    displayCard = displayCard,
-                    mode = mode,
-                )
-                if (!compact) {
-                    Spacer(modifier = Modifier.weight(1f))
-                }
-                CardFooter(
-                    definition = displayCard.definition,
-                    rarityLabel = displayCard.definition.rarityLabel,
-                    compact = compact,
-                )
-            }
+            CardFaceContent(
+                displayCard = displayCard,
+                compact = compact,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(if (compact) 14.dp else 20.dp),
+            )
         }
     }
+}
+
+@Composable
+private fun CardFaceScrim(
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier.background(
+            Brush.verticalGradient(
+                colorStops = arrayOf(
+                    0.0f to Color.Black.copy(alpha = 0.54f),
+                    0.18f to Color.Black.copy(alpha = 0.18f),
+                    0.4f to Color.Transparent,
+                    0.6f to Color.Transparent,
+                    0.82f to Color.Black.copy(alpha = 0.22f),
+                    1.0f to Color.Black.copy(alpha = 0.56f),
+                ),
+            ),
+        ),
+    )
 }

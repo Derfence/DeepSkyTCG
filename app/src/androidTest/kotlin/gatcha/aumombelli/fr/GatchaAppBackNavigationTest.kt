@@ -60,7 +60,7 @@ class GatchaAppBackNavigationTest {
         advanceBy(1_900)
         composeRule.onNodeWithTag("pack-booster-0").performClick()
         advanceBy(6_400)
-        composeRule.onNodeWithTag("pack-opening-card-id").assertIsDisplayed()
+        composeRule.onNodeWithTag("pack-opening-card-surface").assertIsDisplayed()
 
         pressAndroidBack()
         advanceBy(700)

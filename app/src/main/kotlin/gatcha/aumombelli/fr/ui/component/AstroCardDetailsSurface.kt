@@ -6,9 +6,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Card
@@ -54,24 +55,16 @@ fun AstroCardDetailsSurface(
                     .verticalScroll(rememberScrollState())
                     .padding(start = 22.dp, top = 22.dp, end = 22.dp, bottom = 44.dp),
             ) {
-                CardHeader(
-                    displayCard = displayCard,
-                    compact = false,
-                )
-                accessoryContent?.invoke(this)
-                CardHero(
+                AstroCardPreviewSurface(
                     displayCard = displayCard,
                     mode = AstroCardSurfaceMode.Preview,
+                    modifier = Modifier.fillMaxWidth(),
                 )
+                accessoryContent?.invoke(this)
                 DescriptionBlock(displayCard.definition)
                 IdentitySection(displayCard)
                 CoordinatesSection(displayCard)
                 MeasurementsSection(displayCard)
-                CardFooter(
-                    definition = displayCard.definition,
-                    rarityLabel = displayCard.definition.rarityLabel,
-                    compact = false,
-                )
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }

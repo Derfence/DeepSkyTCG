@@ -1,16 +1,16 @@
 package fr.aumombelli.gatcha
 
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.swipeUp
 import fr.aumombelli.gatcha.model.DrawPackResponse
 import fr.aumombelli.gatcha.model.toDisplayCard
@@ -85,7 +85,10 @@ class PackOpeningScreenTest {
 
         composeRule.onNodeWithTag("pack-opening-burst").assertIsDisplayed()
         composeRule.onNodeWithTag("pack-opening-progress").assertIsDisplayed()
-        composeRule.onNodeWithTag("pack-opening-card-id").assertTextContains("ALP-001")
+        composeRule.onAllNodesWithTag("pack-opening-card-id").assertCountEquals(0)
+        assertEquals("ALP-001", composeRule.readCurrentPackOpeningCardId())
+        composeRule.onAllNodesWithTag("pack-opening-arrow-left").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("pack-opening-arrow-right").assertCountEquals(1)
         composeRule.onAllNodesWithTag("pack-opening-card-name").assertCountEquals(0)
         composeRule.assertApproxCardRatio("pack-opening-card-surface")
         composeRule.firstNodeWithTag("pack-opening-card-surface").performClick()
@@ -93,15 +96,16 @@ class PackOpeningScreenTest {
         composeRule.onNodeWithTag("astro-card-fullscreen-close").assertIsDisplayed()
         composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("pack-opening-card-id").assertTextContains("ALP-001")
+        assertEquals("ALP-001", composeRule.readCurrentPackOpeningCardId())
         composeRule.firstNodeWithTag("pack-opening-card-surface").performTouchInput { swipeLeft() }
         composeRule.waitUntil(timeoutMillis = 5_000) {
             runCatching {
-                composeRule.onNodeWithTag("pack-opening-card-id").assertTextContains("ALP-002")
-                true
+                composeRule.readCurrentPackOpeningCardId() == "ALP-002"
             }.getOrDefault(false)
         }
-        composeRule.onNodeWithTag("pack-opening-card-id").assertTextContains("ALP-002")
+        assertEquals("ALP-002", composeRule.readCurrentPackOpeningCardId())
+        composeRule.onAllNodesWithTag("pack-opening-arrow-left").assertCountEquals(1)
+        composeRule.onAllNodesWithTag("pack-opening-arrow-right").assertCountEquals(0)
         composeRule.firstNodeWithTag("pack-opening-card-surface").performTouchInput { swipeUp() }
         composeRule.waitUntil(timeoutMillis = 5_000) { doneCallCount == 1 }
         assertEquals(1, doneCallCount)
@@ -154,6 +158,97 @@ class PackOpeningScreenTest {
         composeRule.onNodeWithTag("pack-opening-burst-rain").assertIsDisplayed()
     }
 
+    @Test
+    fun pack_opening_shows_middle_arrows_and_last_card_nudge_stops_on_navigation_and_fullscreen() {
+        val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
+        val secondCard = testCardDefinition("ALP-002", name = "Galaxie d'Andromede")
+        val thirdCard = testCardDefinition("ALP-003", name = "Amas globulaire")
+        val packResult = DrawPackResponse(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            availableDrawCount = 7,
+            nextChargeAt = "2026-03-24T18:00:00Z",
+            cards = listOf(
+                testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
+                testPackCard("ALP-002", "Galaxie d'Andromede", "Rare", "steam_golem"),
+                testPackCard("ALP-003", "Amas globulaire", "Uncommon", "cluster"),
+            ),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackOpeningScreen(
+                state = PackOpeningUiState(
+                    packResult = packResult,
+                    displayCards = listOf(
+                        firstCard.toDisplayCard(
+                            extensionName = "Astronomes en herbe",
+                            activeVariant = packResult.cards[0].variant.toDisplayVariant(),
+                        ),
+                        secondCard.toDisplayCard(
+                            extensionName = "Astronomes en herbe",
+                            activeVariant = packResult.cards[1].variant.toDisplayVariant(),
+                        ),
+                        thirdCard.toDisplayCard(
+                            extensionName = "Astronomes en herbe",
+                            activeVariant = packResult.cards[2].variant.toDisplayVariant(),
+                        ),
+                    ),
+                    highestBurstRarity = "Rare",
+                    hasHolographicBurst = false,
+                ),
+                onDone = {},
+            )
+        }
+
+        composeRule.mainClock.advanceTimeBy(3_000)
+        composeRule.mainClock.autoAdvance = true
+        composeRule.waitForIdle()
+
+        composeRule.firstNodeWithTag("pack-opening-card-surface").performTouchInput { swipeLeft() }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.safeReadCurrentPackOpeningCardId() == "ALP-002"
+        }
+        composeRule.onAllNodesWithTag("pack-opening-arrow-left").assertCountEquals(1)
+        composeRule.onAllNodesWithTag("pack-opening-arrow-right").assertCountEquals(1)
+        composeRule.onAllNodesWithTag("pack-opening-last-card-nudge").assertCountEquals(0)
+
+        composeRule.firstNodeWithTag("pack-opening-card-surface").performTouchInput { swipeLeft() }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.safeReadCurrentPackOpeningCardId() == "ALP-003"
+        }
+        composeRule.onAllNodesWithTag("pack-opening-arrow-left").assertCountEquals(1)
+        composeRule.onAllNodesWithTag("pack-opening-arrow-right").assertCountEquals(0)
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.mainClock.advanceTimeBy(1_900)
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithTag("pack-opening-last-card-nudge").assertCountEquals(0)
+        composeRule.mainClock.advanceTimeBy(200)
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithTag("pack-opening-last-card-nudge").assertCountEquals(1)
+
+        composeRule.mainClock.autoAdvance = true
+        composeRule.firstNodeWithTag("pack-opening-card-surface").performTouchInput { swipeRight() }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.safeReadCurrentPackOpeningCardId() == "ALP-002"
+        }
+        composeRule.onAllNodesWithTag("pack-opening-last-card-nudge").assertCountEquals(0)
+
+        composeRule.firstNodeWithTag("pack-opening-card-surface").performTouchInput { swipeLeft() }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.safeReadCurrentPackOpeningCardId() == "ALP-003"
+        }
+        composeRule.mainClock.autoAdvance = false
+        composeRule.mainClock.advanceTimeBy(2_100)
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithTag("pack-opening-last-card-nudge").assertCountEquals(1)
+        composeRule.firstNodeWithTag("pack-opening-card-surface").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("astro-card-fullscreen-close").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("pack-opening-last-card-nudge").assertCountEquals(0)
+    }
+
     private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertApproxCardRatio(
         tag: String,
         tolerance: Float = 0.03f,
@@ -170,4 +265,16 @@ class PackOpeningScreenTest {
         tag: String,
         useUnmergedTree: Boolean = false,
     ) = onAllNodesWithTag(tag, useUnmergedTree = useUnmergedTree)[0]
+
+    private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.readCurrentPackOpeningCardId(): String =
+        safeReadCurrentPackOpeningCardId() ?: error("No current pack opening card id was found")
+
+    private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.safeReadCurrentPackOpeningCardId(): String? {
+        val nodes = onAllNodesWithTag("pack-opening-current-card-id", useUnmergedTree = true)
+            .fetchSemanticsNodes(atLeastOneRootRequired = false)
+        val node = nodes.firstOrNull() ?: return null
+        if (!node.config.contains(SemanticsProperties.Text)) return null
+        val textValues = node.config[SemanticsProperties.Text]
+        return textValues.joinToString(separator = "") { annotated -> annotated.toString() }
+    }
 }

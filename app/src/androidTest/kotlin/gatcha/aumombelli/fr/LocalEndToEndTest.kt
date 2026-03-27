@@ -64,9 +64,9 @@ class LocalEndToEndTest {
         composeRule.onNodeWithTag("pack-booster-0").performClick()
 
         composeRule.waitUntilTagExists("pack-opening-title", timeoutMillis = 20_000)
-        composeRule.waitUntilTagExists("pack-opening-card-id", timeoutMillis = 10_000)
+        composeRule.waitUntilTagExists("pack-opening-current-card-id", timeoutMillis = 10_000)
 
-        val firstDrawnCardId = composeRule.readText("pack-opening-card-id")
+        val firstDrawnCardId = composeRule.readText("pack-opening-current-card-id")
         composeRule.firstNodeWithTag("pack-opening-card-surface").performClick()
         composeRule.waitUntilTagExists("astro-card-fullscreen-close", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
@@ -117,7 +117,9 @@ class LocalEndToEndTest {
         timeoutMillis: Long = 5_000,
     ) {
         waitUntil(timeoutMillis) {
-            onAllNodesWithTag(tag).fetchSemanticsNodes(atLeastOneRootRequired = false).isNotEmpty()
+            onAllNodesWithTag(tag, useUnmergedTree = true)
+                .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                .isNotEmpty()
         }
     }
 
@@ -126,7 +128,9 @@ class LocalEndToEndTest {
         timeoutMillis: Long = 5_000,
     ) {
         waitUntil(timeoutMillis) {
-            onAllNodesWithTag(tag).fetchSemanticsNodes(atLeastOneRootRequired = false).isEmpty()
+            onAllNodesWithTag(tag, useUnmergedTree = true)
+                .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                .isEmpty()
         }
     }
 
