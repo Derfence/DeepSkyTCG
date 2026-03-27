@@ -1,13 +1,18 @@
 package fr.aumombelli.gatcha.feature.packs.selection
 
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import java.time.Duration
 
-internal fun formatNextDrawAt(nextDrawAt: String?): String? {
-    val instant = nextDrawAt?.let { runCatching { Instant.parse(it) }.getOrNull() } ?: return null
-    if (!instant.isAfter(Instant.now())) return null
-    return DateTimeFormatter.ofPattern("dd/MM HH:mm")
-        .withZone(ZoneId.systemDefault())
-        .format(instant)
+internal fun formatRemainingDuration(remainingDuration: Duration?): String? {
+    val duration = remainingDuration ?: return null
+    val totalSeconds = duration.seconds.coerceAtLeast(0)
+    val hours = totalSeconds / 3_600
+    val minutes = (totalSeconds % 3_600) / 60
+    val seconds = totalSeconds % 60
+
+    return when {
+        hours > 0 && minutes > 0 -> "${hours}h ${minutes}min"
+        hours > 0 -> "${hours}h"
+        minutes > 0 -> "${minutes}min"
+        else -> "${seconds}s"
+    }
 }

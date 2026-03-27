@@ -2,12 +2,17 @@ package fr.aumombelli.gatcha
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import fr.aumombelli.gatcha.data.CollectionMigrationService
 import fr.aumombelli.gatcha.data.ProgressRepository
+import fr.aumombelli.gatcha.data.StandaloneGameSettings
 import fr.aumombelli.gatcha.model.OwnedCollection
 import fr.aumombelli.gatcha.model.StandaloneProgress
 import java.io.File
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -24,6 +29,7 @@ class ProgressRepositoryTest {
     val temporaryFolder = TemporaryFolder()
 
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+    private val fixedNow = Instant.parse("2026-03-24T12:00:00Z")
 
     @Test
     fun `first load creates an empty collection at the current catalog version`() = runTest {
@@ -38,22 +44,25 @@ class ProgressRepositoryTest {
             5,
             decodeStoredCollection(dataStore).version,
         )
+        assertEquals(10, dataStore.data.first()[AvailableDrawCountKey])
     }
 
     @Test
-    fun `save progress persists collection and next draw timestamp`() = runTest {
+    fun `save progress persists collection and charge state`() = runTest {
         val dataStore = newDataStore(backgroundScope, "saved.preferences_pb")
         val repository = newRepository(dataStore)
         val progress = StandaloneProgress(
             collection = ownedCollectionOf("ALP-001" to 2).copy(version = 5),
-            nextDrawAt = "2026-03-25T00:00:00Z",
+            availableDrawCount = 4,
+            nextChargeAt = "2026-03-25T00:00:00Z",
         )
 
         repository.saveProgress(progress)
         val reloaded = repository.loadProgress()
 
         assertEquals(progress, reloaded)
-        assertEquals("2026-03-25T00:00:00Z", dataStore.data.first()[NextDrawAtKey])
+        assertEquals(4, dataStore.data.first()[AvailableDrawCountKey])
+        assertEquals("2026-03-25T00:00:00Z", dataStore.data.first()[NextChargeAtKey])
     }
 
     @Test
@@ -64,15 +73,38 @@ class ProgressRepositoryTest {
                 OwnedCollection.serializer(),
                 ownedCollectionOf("ALP-001" to 1).copy(version = 1),
             )
-            preferences[NextDrawAtKey] = "2026-03-25T00:00:00Z"
+            preferences[AvailableDrawCountKey] = 4
+            preferences[NextChargeAtKey] = "2026-03-25T00:00:00Z"
         }
         val repository = newRepository(dataStore)
 
         val progress = repository.loadProgress()
 
         assertEquals(5, progress.collection.version)
-        assertEquals("2026-03-25T00:00:00Z", progress.nextDrawAt)
+        assertEquals(4, progress.availableDrawCount)
+        assertEquals("2026-03-25T00:00:00Z", progress.nextChargeAt)
         assertEquals(5, decodeStoredCollection(dataStore).version)
+    }
+
+    @Test
+    fun `load progress replenishes charges from elapsed cooldowns and caps at ten`() = runTest {
+        val dataStore = newDataStore(backgroundScope, "recharged.preferences_pb")
+        dataStore.edit { preferences ->
+            preferences[CollectionJsonKey] = json.encodeToString(
+                OwnedCollection.serializer(),
+                ownedCollectionOf("ALP-001" to 1).copy(version = 5),
+            )
+            preferences[AvailableDrawCountKey] = 7
+            preferences[NextChargeAtKey] = "2026-03-24T00:00:00Z"
+        }
+        val repository = newRepository(dataStore)
+
+        val progress = repository.loadProgress()
+
+        assertEquals(10, progress.availableDrawCount)
+        assertEquals(null, progress.nextChargeAt)
+        assertEquals(10, dataStore.data.first()[AvailableDrawCountKey])
+        assertEquals(null, dataStore.data.first()[NextChargeAtKey])
     }
 
     private fun newRepository(
@@ -80,6 +112,9 @@ class ProgressRepositoryTest {
     ): ProgressRepository = ProgressRepository(
         dataStore = dataStore,
         collectionMigrationService = CollectionMigrationService(FakeCatalogGateway()),
+        settings = StandaloneGameSettings(
+            clock = Clock.fixed(fixedNow, ZoneOffset.UTC),
+        ),
     )
 
     private fun newDataStore(
@@ -101,6 +136,7 @@ class ProgressRepositoryTest {
 
     private companion object {
         val CollectionJsonKey = stringPreferencesKey("collection_json")
-        val NextDrawAtKey = stringPreferencesKey("next_draw_at")
+        val AvailableDrawCountKey = intPreferencesKey("available_draw_count")
+        val NextChargeAtKey = stringPreferencesKey("next_charge_at")
     }
 }

@@ -17,6 +17,7 @@ import fr.aumombelli.gatcha.model.ExtensionDefinition
 import fr.aumombelli.gatcha.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.gatcha.ui.screen.PackSelectionScreen
 import fr.aumombelli.gatcha.ui.viewmodel.PackSelectionUiState
+import java.time.Duration
 import kotlin.math.abs
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -197,7 +198,11 @@ class PackSelectionScreenTest {
                     extensions = listOf(
                         ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
                     ),
-                    nextDrawAt = "2999-01-01T00:00:00Z",
+                    availableDrawCount = 0,
+                    nextChargeAt = "2999-01-01T00:00:00Z",
+                    remainingDuration = Duration.ofHours(6),
+                    rechargeProgress = 0f,
+                    isDrawLocked = true,
                 ),
                 onRefresh = {},
                 onSelectExtension = {},
@@ -209,8 +214,10 @@ class PackSelectionScreenTest {
             )
         }
 
-        composeRule.onNodeWithTag("pack-status")
-            .assertTextContains("Prochain tirage disponible", substring = true)
+        composeRule.onNodeWithTag("pack-status-count").assertTextContains("0/10")
+        composeRule.onNodeWithTag("pack-status-remaining")
+            .assertTextContains("Prochaine charge dans", substring = true)
+        composeRule.onNodeWithTag("pack-status-progress").assertIsDisplayed()
         composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").assertIsNotEnabled()
     }
 

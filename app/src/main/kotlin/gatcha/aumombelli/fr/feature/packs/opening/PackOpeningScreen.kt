@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
@@ -46,11 +47,14 @@ fun PackOpeningScreen(
     var fullscreenPage by remember(packResult?.drawnAt) { mutableStateOf<Int?>(null) }
     var swipeOffset by remember(packResult?.drawnAt) { mutableFloatStateOf(0f) }
     var dismissRequested by remember(packResult?.drawnAt) { mutableStateOf(false) }
+    var verticalDragActive by remember(packResult?.drawnAt) { mutableStateOf(false) }
+    var lastCardNudgeActive by remember(packResult?.drawnAt) { mutableStateOf(false) }
     var rootHeightPx by remember(packResult?.drawnAt) { mutableFloatStateOf(0f) }
     val scale = remember(packResult?.drawnAt) { Animatable(1f) }
     val burstProgress = remember(packResult?.drawnAt) { Animatable(0f) }
     val cardsEntranceProgress = remember(packResult?.drawnAt) { Animatable(0f) }
     val dismissProgress = remember(packResult?.drawnAt) { Animatable(0f) }
+    val lastCardNudgeOffset = remember(packResult?.drawnAt) { Animatable(0f) }
 
     LaunchedEffect(packResult?.drawnAt) {
         if (packResult == null) return@LaunchedEffect
@@ -58,10 +62,13 @@ fun PackOpeningScreen(
         fullscreenPage = null
         swipeOffset = 0f
         dismissRequested = false
+        verticalDragActive = false
+        lastCardNudgeActive = false
         scale.snapTo(1f)
         burstProgress.snapTo(0f)
         cardsEntranceProgress.snapTo(0f)
         dismissProgress.snapTo(0f)
+        lastCardNudgeOffset.snapTo(0f)
         burstProgress.animateTo(1f, animationSpec = tween(durationMillis = 4800, easing = FastOutSlowInEasing))
         cardsVisible = true
         cardsEntranceProgress.animateTo(
@@ -82,11 +89,22 @@ fun PackOpeningScreen(
     val swipeModifier = if (displayCards.isNotEmpty() && state.errorMessage == null) {
         Modifier.pointerInput(packResult?.drawnAt) {
             detectVerticalDragGestures(
+                onDragStart = {
+                    verticalDragActive = true
+                },
                 onVerticalDrag = { change, dragAmount ->
                     change.consume()
+                    if (!verticalDragActive) {
+                        verticalDragActive = true
+                    }
                     swipeOffset = (swipeOffset + dragAmount).coerceAtMost(0f)
                 },
+                onDragCancel = {
+                    verticalDragActive = false
+                    swipeOffset = 0f
+                },
                 onDragEnd = {
+                    verticalDragActive = false
                     if (swipeOffset < -220f) {
                         swipeOffset = 0f
                         dismissRequested = true
@@ -169,6 +187,51 @@ fun PackOpeningScreen(
 
                 if (displayCards.isNotEmpty()) {
                     val pagerState = rememberPagerState(pageCount = { displayCards.size })
+                    val currentPage = pagerState.currentPage
+                    val currentCard = displayCards.getOrNull(currentPage)
+
+                    LaunchedEffect(
+                        packResult.drawnAt,
+                        cardsVisible,
+                        currentPage,
+                        fullscreenPage,
+                        dismissRequested,
+                        verticalDragActive,
+                    ) {
+                        lastCardNudgeActive = false
+                        lastCardNudgeOffset.snapTo(0f)
+                        val shouldAnimateLastCard =
+                            cardsVisible &&
+                                currentPage == displayCards.lastIndex &&
+                                fullscreenPage == null &&
+                                !dismissRequested &&
+                                !verticalDragActive
+                        if (!shouldAnimateLastCard) return@LaunchedEffect
+
+                        delay(2_000)
+                        lastCardNudgeActive = true
+                        while (true) {
+                            lastCardNudgeOffset.animateTo(
+                                targetValue = -26f,
+                                animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
+                            )
+                            lastCardNudgeOffset.animateTo(
+                                targetValue = 0f,
+                                animationSpec = tween(durationMillis = 360, easing = FastOutSlowInEasing),
+                            )
+                            delay(1_150)
+                        }
+                    }
+
+                    if (currentCard != null) {
+                        androidx.compose.material3.Text(
+                            text = currentCard.definition.id,
+                            modifier = Modifier
+                                .size(0.dp)
+                                .testTag("pack-opening-current-card-id"),
+                        )
+                    }
+
                     HorizontalPager(
                         state = pagerState,
                         modifier = Modifier
@@ -183,6 +246,10 @@ fun PackOpeningScreen(
                             displayCard = displayCards[page],
                             page = page + 1,
                             total = displayCards.size,
+                            showPreviousArrow = page == currentPage && page > 0,
+                            showNextArrow = page == currentPage && page < displayCards.lastIndex,
+                            cardTranslationY = if (page == currentPage) lastCardNudgeOffset.value else 0f,
+                            nudgeActive = page == currentPage && lastCardNudgeActive,
                             onOpenFullscreen = { fullscreenPage = page },
                         )
                     }

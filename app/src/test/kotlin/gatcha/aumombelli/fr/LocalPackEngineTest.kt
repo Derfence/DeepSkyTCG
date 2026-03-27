@@ -41,10 +41,15 @@ class LocalPackEngineTest {
             ),
         )
 
-        val response = engine.drawPack("astronomes-en-herbe", nextDrawAt = null)
+        val response = engine.drawPack(
+            extensionId = "astronomes-en-herbe",
+            availableDrawCount = 10,
+            nextChargeAt = null,
+        )
 
         assertEquals("2026-03-24T12:00:00Z", response.drawnAt)
-        assertEquals("2026-03-25T00:00:00Z", response.nextDrawAt)
+        assertEquals(9, response.availableDrawCount)
+        assertEquals("2026-03-24T18:00:00Z", response.nextChargeAt)
         assertEquals(listOf("ALP-001", "ALP-001"), response.cards.map { it.cardId })
         assertEquals(listOf("Montagne", "Montagne"), response.cards.map { it.variant.skyQualityLabel })
         assertEquals(listOf("Holographique", "Holographique"), response.cards.map { it.variant.finishLabel })
@@ -71,7 +76,11 @@ class LocalPackEngineTest {
 
         val counts = mutableMapOf("HEAVY" to 0, "LIGHT" to 0)
         repeat(200) {
-            val cardId = engine.drawPack("astronomes-en-herbe", nextDrawAt = null).cards.single().cardId
+            val cardId = engine.drawPack(
+                extensionId = "astronomes-en-herbe",
+                availableDrawCount = 10,
+                nextChargeAt = null,
+            ).cards.single().cardId
             counts[cardId] = counts.getValue(cardId) + 1
         }
 
@@ -79,20 +88,86 @@ class LocalPackEngineTest {
     }
 
     @Test
-    fun `draw pack blocks when cooldown is still active`() = runTest {
+    fun `draw pack blocks when no charge is available yet`() = runTest {
         val engine = LocalPackEngine(
             catalogRepository = FakeCatalogGateway(),
             settings = StandaloneGameSettings(clock = fixedClock()),
         )
 
         val exception = try {
-            engine.drawPack("astronomes-en-herbe", nextDrawAt = "2026-03-24T18:00:00Z")
+            engine.drawPack(
+                extensionId = "astronomes-en-herbe",
+                availableDrawCount = 0,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            )
             error("Expected PackCooldownException")
         } catch (error: PackCooldownException) {
             error
         }
 
         assertEquals("2026-03-24T18:00:00Z", exception.retryAt)
+    }
+
+    @Test
+    fun `draw pack preserves an existing recharge chain when stock is already partial`() = runTest {
+        val catalogGateway = FakeCatalogGateway().apply {
+            cards = listOf(
+                testCardDefinition(
+                    id = "ALP-001",
+                    name = "Nebuleuse d'Orion",
+                    variantProfileId = "local-pack-profile",
+                ),
+            )
+            variantProfiles = listOf(localPackProfile())
+        }
+        val engine = LocalPackEngine(
+            catalogRepository = catalogGateway,
+            settings = StandaloneGameSettings(
+                cardsPerPack = 1,
+                clock = fixedClock(),
+                random = Random(0),
+            ),
+        )
+
+        val response = engine.drawPack(
+            extensionId = "astronomes-en-herbe",
+            availableDrawCount = 5,
+            nextChargeAt = "2026-03-24T14:00:00Z",
+        )
+
+        assertEquals(4, response.availableDrawCount)
+        assertEquals("2026-03-24T14:00:00Z", response.nextChargeAt)
+    }
+
+    @Test
+    fun `draw pack replenishes elapsed charges before consuming one and caps at ten`() = runTest {
+        val catalogGateway = FakeCatalogGateway().apply {
+            cards = listOf(
+                testCardDefinition(
+                    id = "ALP-001",
+                    name = "Nebuleuse d'Orion",
+                    variantProfileId = "local-pack-profile",
+                ),
+            )
+            variantProfiles = listOf(localPackProfile())
+        }
+        val engine = LocalPackEngine(
+            catalogRepository = catalogGateway,
+            settings = StandaloneGameSettings(
+                cardsPerPack = 1,
+                clock = fixedClock(),
+                random = Random(0),
+            ),
+        )
+
+        val response = engine.drawPack(
+            extensionId = "astronomes-en-herbe",
+            availableDrawCount = 7,
+            nextChargeAt = "2026-03-24T00:00:00Z",
+        )
+
+        assertEquals(9, response.availableDrawCount)
+        assertEquals("2026-03-24T18:00:00Z", response.nextChargeAt)
     }
 
     @Test
@@ -107,7 +182,11 @@ class LocalPackEngineTest {
         )
 
         val exception = try {
-            engine.drawPack("astronomes-en-herbe", nextDrawAt = null)
+            engine.drawPack(
+                extensionId = "astronomes-en-herbe",
+                availableDrawCount = 10,
+                nextChargeAt = null,
+            )
             error("Expected IllegalStateException")
         } catch (error: IllegalStateException) {
             error

@@ -1,6 +1,5 @@
 package fr.aumombelli.gatcha.ui.component
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,21 +7,22 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -37,146 +37,236 @@ import fr.aumombelli.gatcha.model.LibraryCardItem
 import fr.aumombelli.gatcha.model.SkyEventDetails
 import fr.aumombelli.gatcha.model.StarDetails
 import fr.aumombelli.gatcha.model.toDisplayCard
+import fr.aumombelli.gatcha.ui.motion.ExtensionAnimationStyle
+import fr.aumombelli.gatcha.ui.motion.ExtensionConstellationOverlay
+import fr.aumombelli.gatcha.ui.motion.LaunchLogoMark
+import fr.aumombelli.gatcha.ui.motion.extensionAnimationSpec
+
+internal const val CardBackgroundArtTag = "astro-card-background-art"
+internal const val CardBackgroundFallbackAssetTag = "astro-card-background-fallback-asset"
+internal const val CardBackgroundPlaceholderTag = "astro-card-background-placeholder"
+internal const val CardFooterTag = "astro-card-footer"
+internal const val CardCatalogNumberTag = "astro-card-catalog-number"
+internal const val CardVariationTag = "astro-card-variation"
+internal const val CardExtensionLogoTag = "astro-card-extension-logo"
+
+internal const val CardArtFallbackAssetPath = "card_art/_fallbacks/missing.webp"
+
+internal data class CardHeadlineContent(
+    val title: String,
+    val catalogLine: String?,
+)
+
+internal fun cardArtAssetPath(definition: CardDefinition): String =
+    "card_art/${definition.extensionId}/${definition.imageRef}.webp"
+
+internal fun cardHeadlineContent(definition: CardDefinition): CardHeadlineContent {
+    val catalogNumber = definition.astronomy.catalogNumber.trim()
+    val commonName = definition.astronomy.commonName
+        ?.trim()
+        ?.takeIf { it.isNotEmpty() && !it.equals(catalogNumber, ignoreCase = true) }
+    return if (commonName != null) {
+        CardHeadlineContent(
+            title = commonName,
+            catalogLine = catalogNumber,
+        )
+    } else {
+        CardHeadlineContent(
+            title = catalogNumber,
+            catalogLine = null,
+        )
+    }
+}
+
+@Composable
+internal fun CardFaceContent(
+    displayCard: DisplayCard,
+    compact: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier,
+    ) {
+        CardHeader(
+            displayCard = displayCard,
+            compact = compact,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth(),
+        )
+        CardFooter(
+            displayCard = displayCard,
+            compact = compact,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth(),
+        )
+    }
+}
 
 @Composable
 internal fun CardHeader(
     displayCard: DisplayCard,
     compact: Boolean,
+    modifier: Modifier = Modifier,
 ) {
-    Text(
-        text = displayCard.definition.name,
-        color = Color.White,
-        textAlign = TextAlign.Center,
-        fontWeight = FontWeight.Bold,
-        style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineMedium,
-        modifier = Modifier.fillMaxWidth(),
-        maxLines = if (compact) 2 else Int.MAX_VALUE,
-        overflow = if (compact) TextOverflow.Ellipsis else TextOverflow.Clip,
-    )
-    Text(
-        text = displayCard.extensionName,
-        color = Color(0xFFE6EFF8),
-        textAlign = TextAlign.Center,
-        style = if (compact) MaterialTheme.typography.labelLarge else MaterialTheme.typography.titleSmall,
-        modifier = Modifier.fillMaxWidth(),
-        maxLines = if (compact) 1 else Int.MAX_VALUE,
-        overflow = if (compact) TextOverflow.Ellipsis else TextOverflow.Clip,
-    )
-}
+    val headline = cardHeadlineContent(displayCard.definition)
 
-@Composable
-internal fun CardHero(
-    displayCard: DisplayCard,
-    mode: AstroCardSurfaceMode,
-) {
-    val compact = mode == AstroCardSurfaceMode.Thumbnail
-
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(if (compact) 160.dp else 230.dp)
-            .clip(RoundedCornerShape(if (compact) 20.dp else 28.dp))
-            .background(
-                Brush.radialGradient(
-                    listOf(
-                        Color.White.copy(alpha = 0.18f),
-                        Color.Transparent,
-                    ),
-                ),
-            ),
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 6.dp),
+        modifier = modifier
+            .heightIn(min = if (compact) 86.dp else 122.dp)
+            .padding(horizontal = if (compact) 8.dp else 14.dp),
     ) {
-        if (mode == AstroCardSurfaceMode.Thumbnail) {
-            Box(
+        Text(
+            text = headline.title,
+            color = Color.White,
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.Bold,
+            style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.fillMaxWidth(),
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+        headline.catalogLine?.let { catalogLine ->
+            Text(
+                text = catalogLine,
+                color = Color(0xFFE9F2FC),
+                textAlign = TextAlign.Center,
+                style = if (compact) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge,
                 modifier = Modifier
-                    .size(88.dp)
-                    .clip(androidx.compose.foundation.shape.CircleShape)
-                    .background(
-                        Brush.radialGradient(
-                            colors = listOf(
-                                Color.White.copy(alpha = 0.2f),
-                                Color.White.copy(alpha = 0.06f),
-                                Color.Transparent,
-                            ),
-                        ),
-                    ),
+                    .fillMaxWidth()
+                    .testTag(CardCatalogNumberTag),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
-        } else {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.padding(12.dp),
-            ) {
-                Text(
-                    text = displayCard.definition.astronomy.catalogNumber,
-                    color = Color.White,
-                    fontWeight = FontWeight.Black,
-                    style = (if (compact) {
-                        MaterialTheme.typography.headlineMedium
-                    } else {
-                        MaterialTheme.typography.displaySmall
-                    }).copy(
-                        shadow = Shadow(
-                            color = Color.Black.copy(alpha = 0.35f),
-                            offset = Offset(0f, 5f),
-                            blurRadius = 18f,
-                        ),
-                    ),
-                    textAlign = TextAlign.Center,
-                )
-                Text(
-                    text = displayCard.definition.astronomy.objectTypeLabel,
-                    color = Color(0xFFF4F8FC),
-                    textAlign = TextAlign.Center,
-                    style = if (compact) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.titleMedium,
-                )
-                Surface(
-                    color = Color.Black.copy(alpha = 0.22f),
-                    shape = RoundedCornerShape(50),
-                ) {
-                    Text(
-                        text = buildVariantLine(displayCard.activeVariant),
-                        color = Color(0xFFF9F4DA),
-                        textAlign = TextAlign.Center,
-                        style = if (compact) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                    )
-                }
-            }
         }
+        Text(
+            text = buildVariantLine(displayCard.activeVariant),
+            color = Color(0xFFF7EEC7),
+            textAlign = TextAlign.Center,
+            style = if (compact) MaterialTheme.typography.labelMedium else MaterialTheme.typography.titleSmall,
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag(CardVariationTag),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
 @Composable
 internal fun CardFooter(
-    definition: CardDefinition,
-    rarityLabel: String,
+    displayCard: DisplayCard,
     compact: Boolean,
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Bottom,
+        modifier = modifier
+            .height(if (compact) 62.dp else 74.dp)
+            .testTag(CardFooterTag),
     ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(2.dp),
+        FooterTextBlock(
+            label = "Constellation",
+            value = displayCard.definition.astronomy.constellation,
+            compact = compact,
+            horizontalAlignment = Alignment.Start,
             modifier = Modifier.weight(1f),
+        )
+        Box(
+            contentAlignment = Alignment.BottomCenter,
+            modifier = Modifier
+                .weight(1f)
+                .wrapContentHeight(align = Alignment.Bottom),
         ) {
-            Text(
-                text = "Constellation",
-                color = Color(0xFFBDD4EA),
-                style = if (compact) MaterialTheme.typography.labelSmall else MaterialTheme.typography.labelMedium,
-            )
-            Text(
-                text = definition.astronomy.constellation,
-                color = Color.White,
-                fontWeight = FontWeight.SemiBold,
-                style = if (compact) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.titleSmall,
+            ExtensionLogoMark(
+                extensionId = displayCard.definition.extensionId,
+                compact = compact,
+                modifier = Modifier.testTag(CardExtensionLogoTag),
             )
         }
-        RarityStarBadge(
-            rarityLabel = rarityLabel,
-            modifier = Modifier.size(if (compact) 36.dp else 48.dp),
+        Column(
+            horizontalAlignment = Alignment.End,
+            verticalArrangement = Arrangement.Bottom,
+            modifier = Modifier
+                .weight(1f)
+                .wrapContentHeight(align = Alignment.Bottom),
+        ) {
+            RarityStarBadge(
+                rarityLabel = displayCard.definition.rarityLabel,
+                modifier = Modifier
+                    .size(if (compact) 36.dp else 48.dp)
+                    .testTag(rarityBadgeTag(displayCard.definition.rarityLabel)),
+            )
+        }
+    }
+}
+
+@Composable
+private fun FooterTextBlock(
+    label: String,
+    value: String,
+    compact: Boolean,
+    horizontalAlignment: Alignment.Horizontal,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        horizontalAlignment = horizontalAlignment,
+        verticalArrangement = Arrangement.Bottom,
+        modifier = modifier.wrapContentHeight(align = Alignment.Bottom),
+    ) {
+        Text(
+            text = label,
+            color = Color(0xFFBDD4EA),
+            style = if (compact) MaterialTheme.typography.labelSmall else MaterialTheme.typography.labelMedium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
+        Text(
+            text = value,
+            color = Color.White,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = when (horizontalAlignment) {
+                Alignment.CenterHorizontally -> TextAlign.Center
+                Alignment.End -> TextAlign.End
+                else -> TextAlign.Start
+            },
+            style = if (compact) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.titleSmall,
+            modifier = Modifier.fillMaxWidth(),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun ExtensionLogoMark(
+    extensionId: String,
+    compact: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val spec = remember(extensionId) { extensionAnimationSpec(extensionId) }
+    val size = if (compact) 32.dp else 40.dp
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier.size(size),
+    ) {
+        if (spec.style == ExtensionAnimationStyle.BigDipper) {
+            ExtensionConstellationOverlay(
+                spec = spec,
+                lineProgress = 1f,
+                isReversing = false,
+                modifier = Modifier.fillMaxSize(),
+                tag = null,
+            )
+        } else {
+            LaunchLogoMark(
+                showWordmark = false,
+                emblemSize = size,
+            )
+        }
     }
 }
 
@@ -312,6 +402,9 @@ internal fun buildVariantLine(variant: DisplayCardVariant): String = buildString
     append(" · ")
     append(variant.finishLabel)
 }
+
+internal fun rarityBadgeTag(rarityLabel: String): String =
+    "astro-card-rarity-${rarityLabel.lowercase()}"
 
 internal fun fallbackDisplayCard(item: LibraryCardItem) =
     item.definition.toDisplayCard(

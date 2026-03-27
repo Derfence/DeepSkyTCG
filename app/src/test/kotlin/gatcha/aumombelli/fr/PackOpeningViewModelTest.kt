@@ -31,7 +31,8 @@ class PackOpeningViewModelTest {
             openPackResponse = DrawPackResponse(
                 extensionId = "astronomes-en-herbe",
                 drawnAt = "2026-03-24T12:00:00Z",
-                nextDrawAt = "2026-03-25T12:00:00Z",
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
                 cards = listOf(
                     testPackCard(
                         cardId = "M42",

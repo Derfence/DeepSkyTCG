@@ -21,7 +21,8 @@ import kotlinx.coroutines.flow.StateFlow
 class FakeProgressGateway : ProgressGateway {
     var progress = StandaloneProgress(
         collection = OwnedCollection(version = 5),
-        nextDrawAt = null,
+        availableDrawCount = 10,
+        nextChargeAt = null,
     )
     var loadFailure: Throwable? = null
     val savedProgress = mutableListOf<StandaloneProgress>()

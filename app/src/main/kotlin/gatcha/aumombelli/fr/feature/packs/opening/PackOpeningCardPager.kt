@@ -7,6 +7,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -14,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.window.Dialog
@@ -30,6 +35,10 @@ internal fun RevealCard(
     displayCard: DisplayCard,
     page: Int,
     total: Int,
+    showPreviousArrow: Boolean,
+    showNextArrow: Boolean,
+    cardTranslationY: Float,
+    nudgeActive: Boolean,
     onOpenFullscreen: () -> Unit,
 ) {
     Column(
@@ -45,25 +54,75 @@ internal fun RevealCard(
             style = MaterialTheme.typography.labelLarge,
             modifier = Modifier.testTag("pack-opening-progress"),
         )
-        Text(
-            text = displayCard.definition.id,
-            color = Color(0xFFEAF4FF),
-            modifier = Modifier.testTag("pack-opening-card-id"),
-        )
         Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth(),
         ) {
-            AstroCardPreviewSurface(
-                displayCard = displayCard,
-                mode = AstroCardSurfaceMode.PackReveal,
+            if (showPreviousArrow) {
+                NavigationHintArrow(
+                    direction = NavigationHintDirection.Left,
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .testTag("pack-opening-arrow-left"),
+                )
+            }
+            if (showNextArrow) {
+                NavigationHintArrow(
+                    direction = NavigationHintDirection.Right,
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .testTag("pack-opening-arrow-right"),
+                )
+            }
+            Box(
                 modifier = Modifier
+                    .align(Alignment.Center)
                     .fillMaxWidth()
-                    .testTag("pack-opening-card-surface"),
-                onClick = onOpenFullscreen,
-            )
+                    .padding(horizontal = 28.dp)
+                    .graphicsLayer {
+                        translationY = cardTranslationY
+                    },
+            ) {
+                AstroCardPreviewSurface(
+                    displayCard = displayCard,
+                    mode = AstroCardSurfaceMode.PackReveal,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("pack-opening-card-surface"),
+                    onClick = onOpenFullscreen,
+                )
+            }
+            if (nudgeActive) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .testTag("pack-opening-last-card-nudge"),
+                )
+            }
         }
     }
+}
+
+private enum class NavigationHintDirection {
+    Left,
+    Right,
+}
+
+@Composable
+private fun NavigationHintArrow(
+    direction: NavigationHintDirection,
+    modifier: Modifier = Modifier,
+) {
+    Icon(
+        imageVector = when (direction) {
+            NavigationHintDirection.Left -> Icons.AutoMirrored.Filled.KeyboardArrowLeft
+            NavigationHintDirection.Right -> Icons.AutoMirrored.Filled.KeyboardArrowRight
+        },
+        contentDescription = null,
+        tint = Color.White.copy(alpha = 0.74f),
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -86,14 +145,6 @@ internal fun PackOpeningFullscreenDialog(
                 .padding(14.dp)
                 .testTag("astro-card-fullscreen"),
         ) {
-            TextButton(
-                onClick = onDismiss,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .testTag("astro-card-fullscreen-close"),
-            ) {
-                Text("Fermer")
-            }
             AstroCardDetailsSurface(
                 displayCard = displayCard,
                 modifier = Modifier
