@@ -67,17 +67,17 @@ class LocalEndToEndTest {
         composeRule.waitUntilTagExists("pack-opening-current-card-id", timeoutMillis = 10_000)
 
         val firstDrawnCardId = composeRule.readText("pack-opening-current-card-id")
-        composeRule.firstNodeWithTag("pack-opening-card-surface").performClick()
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performClick()
         composeRule.waitUntilTagExists("astro-card-fullscreen-close", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
-        composeRule.waitUntilTagExists("pack-opening-card-surface", timeoutMillis = 10_000)
+        composeRule.waitUntilTagExists("pack-opening-current-card-surface", timeoutMillis = 10_000)
 
         repeat(4) {
-            composeRule.firstNodeWithTag("pack-opening-card-surface").performTouchInput { swipeLeft() }
+            composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeLeft() }
             composeRule.waitForIdle()
         }
 
-        composeRule.firstNodeWithTag("pack-opening-card-surface").performTouchInput { swipeUp() }
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeUp() }
         composeRule.waitUntilTagEnabled("menu-open-pack", timeoutMillis = 10_000)
         return firstDrawnCardId
     }

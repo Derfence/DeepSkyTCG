@@ -50,26 +50,32 @@ internal fun CardArtBackground(
             }
 
             cardArt.fallback != null -> {
-                CardArtImage(
-                    bitmap = cardArt.fallback,
-                    modifier = Modifier.testTag(CardBackgroundFallbackAssetTag),
-                )
+                Box(modifier = Modifier.testTag(CardBackgroundFallbackAssetTag)) {
+                    CardArtImage(
+                        bitmap = cardArt.fallback,
+                        modifier = Modifier,
+                    )
+                }
             }
 
             else -> {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.radialGradient(
-                                colors = listOf(
-                                    Color.White.copy(alpha = 0.14f),
-                                    Color.Transparent,
+                    modifier = Modifier.testTag(CardBackgroundFallbackAssetTag),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.radialGradient(
+                                    colors = listOf(
+                                        Color.White.copy(alpha = 0.14f),
+                                        Color.Transparent,
+                                    ),
                                 ),
-                            ),
-                        )
-                        .testTag(CardBackgroundPlaceholderTag),
-                )
+                            )
+                            .testTag(CardBackgroundPlaceholderTag),
+                    )
+                }
             }
         }
     }

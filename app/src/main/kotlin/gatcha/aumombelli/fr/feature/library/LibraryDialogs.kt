@@ -17,6 +17,7 @@ import androidx.compose.ui.window.DialogProperties
 import fr.aumombelli.gatcha.model.LibraryCardItem
 import fr.aumombelli.gatcha.model.toDisplayCard
 import fr.aumombelli.gatcha.ui.component.AstroCardDetailsSurface
+import fr.aumombelli.gatcha.ui.component.AstroCardFullscreenCloseButton
 import fr.aumombelli.gatcha.ui.component.AstroCardPreviewSurface
 import fr.aumombelli.gatcha.ui.component.AstroCardSurfaceMode
 import fr.aumombelli.gatcha.ui.component.DisplayCardVariantSelector
@@ -38,7 +39,9 @@ internal fun CardPreviewDialog(
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(14.dp),
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier
+                .padding(16.dp)
+                .testTag("library-card-preview"),
         ) {
             AstroCardPreviewSurface(
                 displayCard = displayCard,
@@ -96,6 +99,7 @@ internal fun FullscreenCardDialog(
                     )
                 },
             )
+            AstroCardFullscreenCloseButton(onClick = onDismiss)
         }
     }
 }

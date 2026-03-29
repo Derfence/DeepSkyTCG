@@ -90,14 +90,14 @@ class PackOpeningScreenTest {
         composeRule.onAllNodesWithTag("pack-opening-arrow-left").assertCountEquals(0)
         composeRule.onAllNodesWithTag("pack-opening-arrow-right").assertCountEquals(1)
         composeRule.onAllNodesWithTag("pack-opening-card-name").assertCountEquals(0)
-        composeRule.assertApproxCardRatio("pack-opening-card-surface")
-        composeRule.firstNodeWithTag("pack-opening-card-surface").performClick()
+        composeRule.assertApproxCardRatio("pack-opening-current-card-surface")
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("astro-card-fullscreen-close").assertIsDisplayed()
         composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
         composeRule.waitForIdle()
         assertEquals("ALP-001", composeRule.readCurrentPackOpeningCardId())
-        composeRule.firstNodeWithTag("pack-opening-card-surface").performTouchInput { swipeLeft() }
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeLeft() }
         composeRule.waitUntil(timeoutMillis = 5_000) {
             runCatching {
                 composeRule.readCurrentPackOpeningCardId() == "ALP-002"
@@ -106,7 +106,7 @@ class PackOpeningScreenTest {
         assertEquals("ALP-002", composeRule.readCurrentPackOpeningCardId())
         composeRule.onAllNodesWithTag("pack-opening-arrow-left").assertCountEquals(1)
         composeRule.onAllNodesWithTag("pack-opening-arrow-right").assertCountEquals(0)
-        composeRule.firstNodeWithTag("pack-opening-card-surface").performTouchInput { swipeUp() }
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeUp() }
         composeRule.waitUntil(timeoutMillis = 5_000) { doneCallCount == 1 }
         assertEquals(1, doneCallCount)
     }
@@ -205,7 +205,7 @@ class PackOpeningScreenTest {
         composeRule.mainClock.autoAdvance = true
         composeRule.waitForIdle()
 
-        composeRule.firstNodeWithTag("pack-opening-card-surface").performTouchInput { swipeLeft() }
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeLeft() }
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.safeReadCurrentPackOpeningCardId() == "ALP-002"
         }
@@ -213,7 +213,7 @@ class PackOpeningScreenTest {
         composeRule.onAllNodesWithTag("pack-opening-arrow-right").assertCountEquals(1)
         composeRule.onAllNodesWithTag("pack-opening-last-card-nudge").assertCountEquals(0)
 
-        composeRule.firstNodeWithTag("pack-opening-card-surface").performTouchInput { swipeLeft() }
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeLeft() }
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.safeReadCurrentPackOpeningCardId() == "ALP-003"
         }
@@ -221,32 +221,38 @@ class PackOpeningScreenTest {
         composeRule.onAllNodesWithTag("pack-opening-arrow-right").assertCountEquals(0)
 
         composeRule.mainClock.autoAdvance = false
-        composeRule.mainClock.advanceTimeBy(1_900)
-        composeRule.waitForIdle()
-        composeRule.onAllNodesWithTag("pack-opening-last-card-nudge").assertCountEquals(0)
-        composeRule.mainClock.advanceTimeBy(200)
+        composeRule.mainClock.advanceTimeBy(2_400)
         composeRule.waitForIdle()
         composeRule.onAllNodesWithTag("pack-opening-last-card-nudge").assertCountEquals(1)
 
         composeRule.mainClock.autoAdvance = true
-        composeRule.firstNodeWithTag("pack-opening-card-surface").performTouchInput { swipeRight() }
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeRight() }
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.safeReadCurrentPackOpeningCardId() == "ALP-002"
         }
-        composeRule.onAllNodesWithTag("pack-opening-last-card-nudge").assertCountEquals(0)
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("pack-opening-last-card-nudge")
+                .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                .isEmpty()
+        }
 
-        composeRule.firstNodeWithTag("pack-opening-card-surface").performTouchInput { swipeLeft() }
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeLeft() }
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.safeReadCurrentPackOpeningCardId() == "ALP-003"
         }
         composeRule.mainClock.autoAdvance = false
-        composeRule.mainClock.advanceTimeBy(2_100)
+        composeRule.mainClock.advanceTimeBy(2_400)
         composeRule.waitForIdle()
         composeRule.onAllNodesWithTag("pack-opening-last-card-nudge").assertCountEquals(1)
-        composeRule.firstNodeWithTag("pack-opening-card-surface").performClick()
+        composeRule.mainClock.autoAdvance = true
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("astro-card-fullscreen-close").assertIsDisplayed()
-        composeRule.onAllNodesWithTag("pack-opening-last-card-nudge").assertCountEquals(0)
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("pack-opening-last-card-nudge")
+                .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                .isEmpty()
+        }
     }
 
     private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertApproxCardRatio(

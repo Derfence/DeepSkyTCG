@@ -188,12 +188,13 @@ fun PackOpeningScreen(
                 if (displayCards.isNotEmpty()) {
                     val pagerState = rememberPagerState(pageCount = { displayCards.size })
                     val currentPage = pagerState.currentPage
+                    val settledPage = pagerState.settledPage
                     val currentCard = displayCards.getOrNull(currentPage)
 
                     LaunchedEffect(
                         packResult.drawnAt,
                         cardsVisible,
-                        currentPage,
+                        settledPage,
                         fullscreenPage,
                         dismissRequested,
                         verticalDragActive,
@@ -202,7 +203,7 @@ fun PackOpeningScreen(
                         lastCardNudgeOffset.snapTo(0f)
                         val shouldAnimateLastCard =
                             cardsVisible &&
-                                currentPage == displayCards.lastIndex &&
+                                settledPage == displayCards.lastIndex &&
                                 fullscreenPage == null &&
                                 !dismissRequested &&
                                 !verticalDragActive
@@ -246,11 +247,15 @@ fun PackOpeningScreen(
                             displayCard = displayCards[page],
                             page = page + 1,
                             total = displayCards.size,
+                            isCurrentPage = page == currentPage,
                             showPreviousArrow = page == currentPage && page > 0,
                             showNextArrow = page == currentPage && page < displayCards.lastIndex,
                             cardTranslationY = if (page == currentPage) lastCardNudgeOffset.value else 0f,
-                            nudgeActive = page == currentPage && lastCardNudgeActive,
-                            onOpenFullscreen = { fullscreenPage = page },
+                            nudgeActive = page == settledPage && settledPage == displayCards.lastIndex && lastCardNudgeActive,
+                            onOpenFullscreen = {
+                                lastCardNudgeActive = false
+                                fullscreenPage = page
+                            },
                         )
                     }
                 }

@@ -44,8 +44,8 @@ class AstroCardThumbnailTest {
         composeRule.onAllNodesWithText("Nebuleuse d'Orion").assertCountEquals(1)
         composeRule.onAllNodesWithText("M42").assertCountEquals(1)
         composeRule.onAllNodesWithText("Ville · Standard").assertCountEquals(1)
-        composeRule.onAllNodesWithTag(CARD_CATALOG_NUMBER_TAG).assertCountEquals(1)
-        composeRule.onAllNodesWithTag(CARD_VARIATION_TAG).assertCountEquals(1)
+        composeRule.onAllNodesWithTag(CARD_CATALOG_NUMBER_TAG, useUnmergedTree = true).assertCountEquals(1)
+        composeRule.onAllNodesWithTag(CARD_VARIATION_TAG, useUnmergedTree = true).assertCountEquals(1)
     }
 
     @Test
@@ -72,7 +72,7 @@ class AstroCardThumbnailTest {
         }
 
         composeRule.onAllNodesWithText("NGC 7000").assertCountEquals(1)
-        composeRule.onAllNodesWithTag(CARD_CATALOG_NUMBER_TAG).assertCountEquals(0)
+        composeRule.onAllNodesWithTag(CARD_CATALOG_NUMBER_TAG, useUnmergedTree = true).assertCountEquals(0)
     }
 
     @Test
@@ -204,8 +204,8 @@ class AstroCardThumbnailTest {
         composeRule.onAllNodesWithText("Orion").assertCountEquals(1)
         composeRule.onAllNodesWithText("Astronomes en herbe").assertCountEquals(0)
         composeRule.onAllNodesWithText("Rareté").assertCountEquals(0)
-        composeRule.onAllNodesWithTag(CARD_EXTENSION_LOGO_TAG).assertCountEquals(1)
-        composeRule.onAllNodesWithTag("astro-card-rarity-rare").assertCountEquals(1)
+        composeRule.onAllNodesWithTag(CARD_EXTENSION_LOGO_TAG, useUnmergedTree = true).assertCountEquals(1)
+        composeRule.onAllNodesWithTag("astro-card-rarity-rare", useUnmergedTree = true).assertCountEquals(1)
     }
 
     @Test
@@ -230,7 +230,7 @@ class AstroCardThumbnailTest {
             )
         }
 
-        composeRule.onAllNodesWithTag(CARD_BACKGROUND_FALLBACK_ASSET_TAG).assertCountEquals(1)
+        composeRule.onAllNodesWithTag(CARD_BACKGROUND_FALLBACK_ASSET_TAG, useUnmergedTree = true).assertCountEquals(1)
     }
 
     private companion object {

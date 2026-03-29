@@ -59,7 +59,10 @@ class BadgeBookScreenTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag("badge-detail").assertIsDisplayed()
-        composeRule.onNodeWithTag("badge-detail-progress").assertTextContains("1 / 3")
+        composeRule.onNodeWithTag("badge-detail-progress", useUnmergedTree = true).assertTextContains(
+            "1 / 3",
+            substring = true,
+        )
         composeRule.onNodeWithTag("badge-detail-description").assertTextContains(
             "holographique",
             substring = true,

@@ -13,7 +13,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,6 +25,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.gatcha.model.DisplayCard
 import fr.aumombelli.gatcha.ui.component.AstroCardDetailsSurface
+import fr.aumombelli.gatcha.ui.component.AstroCardFullscreenCloseButton
 import fr.aumombelli.gatcha.ui.component.AstroCardPreviewSurface
 import fr.aumombelli.gatcha.ui.component.AstroCardSurfaceMode
 import fr.aumombelli.gatcha.ui.screen.gatchaContentInsetsPadding
@@ -35,6 +35,7 @@ internal fun RevealCard(
     displayCard: DisplayCard,
     page: Int,
     total: Int,
+    isCurrentPage: Boolean,
     showPreviousArrow: Boolean,
     showNextArrow: Boolean,
     cardTranslationY: Float,
@@ -89,7 +90,13 @@ internal fun RevealCard(
                     mode = AstroCardSurfaceMode.PackReveal,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .testTag("pack-opening-card-surface"),
+                        .testTag(
+                            if (isCurrentPage) {
+                                "pack-opening-current-card-surface"
+                            } else {
+                                "pack-opening-card-surface"
+                            },
+                        ),
                     onClick = onOpenFullscreen,
                 )
             }
@@ -151,6 +158,7 @@ internal fun PackOpeningFullscreenDialog(
                     .fillMaxSize()
                     .padding(top = 42.dp),
             )
+            AstroCardFullscreenCloseButton(onClick = onDismiss)
         }
     }
 }
