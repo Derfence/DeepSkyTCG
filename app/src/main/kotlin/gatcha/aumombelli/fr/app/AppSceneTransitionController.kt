@@ -104,7 +104,7 @@ internal class AppSceneTransitionController(
                 .hideLibraryContent(),
         )
         delay(520)
-        writeState(readState().prepareLibraryEntry(nextLibraryViewModelKey = state.libraryViewModelKey + 1))
+        writeState(readState().prepareLibraryEntry(nextLibraryRefreshSignal = state.libraryRefreshSignal + 1))
         bookProgress.snapTo(0f)
         bookOverlayAlpha.snapTo(1f)
         bookProgress.animateTo(1f, animationSpec = tween(durationMillis = 980, easing = FastOutSlowInEasing))
@@ -124,7 +124,7 @@ internal class AppSceneTransitionController(
         writeState(state.lockTransitions().hideMenuContent().hidePackSelectionScene())
         delay(520)
         appContainer.packRepository.clearCurrentPackResult()
-        writeState(readState().preparePackSelection(nextPackFlowKey = state.packFlowKey + 1))
+        writeState(readState().preparePackSelection(nextPackRefreshSignal = state.packRefreshSignal + 1))
         awaitNextFrame()
         writeState(readState().showPackScene())
         delay(460)
@@ -143,7 +143,7 @@ internal class AppSceneTransitionController(
                 .hideBadgeBookContent(),
         )
         delay(520)
-        writeState(readState().prepareBadgeBookEntry(nextBadgeBookViewModelKey = state.badgeBookViewModelKey + 1))
+        writeState(readState().prepareBadgeBookEntry(nextBadgeBookRefreshSignal = state.badgeBookRefreshSignal + 1))
         chestProgress.snapTo(0f)
         chestOverlayAlpha.snapTo(1f)
         chestProgress.animateTo(1f, animationSpec = tween(durationMillis = 980, easing = FastOutSlowInEasing))

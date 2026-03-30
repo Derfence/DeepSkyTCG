@@ -38,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.gatcha.data.DEFAULT_DRAW_COOLDOWN
 import fr.aumombelli.gatcha.data.buildPackChargeUiStatus
+import fr.aumombelli.gatcha.performance.LocalAppPerformanceProfile
 import fr.aumombelli.gatcha.ui.motion.MotionCard
 import fr.aumombelli.gatcha.ui.motion.PackRevealBounds
 import fr.aumombelli.gatcha.ui.screen.gatchaContentInsetsPadding
@@ -61,18 +62,30 @@ fun PackSelectionScreen(
     extensionListVisible: Boolean = true,
     interactionsEnabled: Boolean = true,
 ) {
+    val performanceProfile = LocalAppPerformanceProfile.current
+    val shouldTickChargeStatus = state.availableDrawCount < state.maxStoredDraws && state.nextChargeAt != null
     val now by produceState(
         initialValue = state.trustedNow,
         state.availableDrawCount,
         state.nextChargeAt,
         state.trustedNow,
         state.trustedElapsedRealtimeMs,
+        shouldTickChargeStatus,
     ) {
+        value = computeTrustedNow(
+            trustedNow = state.trustedNow,
+            trustedElapsedRealtimeMs = state.trustedElapsedRealtimeMs,
+        )
+        if (!shouldTickChargeStatus) {
+            return@produceState
+        }
+
         while (true) {
-            val elapsedSinceReference = (SystemClock.elapsedRealtime() - state.trustedElapsedRealtimeMs)
-                .coerceAtLeast(0L)
-            value = state.trustedNow.plusMillis(elapsedSinceReference)
             delay(1_000)
+            value = computeTrustedNow(
+                trustedNow = state.trustedNow,
+                trustedElapsedRealtimeMs = state.trustedElapsedRealtimeMs,
+            )
         }
     }
     val liveChargeStatus = buildPackChargeUiStatus(
@@ -271,7 +284,9 @@ fun PackSelectionScreen(
                         interactionsEnabled = interactionsEnabled && displayedExtension == null,
                         highlightedExtensionId = displayedExtensionId,
                         highlightProgress = heroProgress.value,
-                        badgeAnimationsEnabled = extensionListVisible && displayedExtension == null,
+                        badgeAnimationsEnabled = !performanceProfile.isLowRamDevice &&
+                            extensionListVisible &&
+                            displayedExtension == null,
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(top = EXTENSION_LIST_TOP_PADDING)
@@ -302,6 +317,15 @@ fun PackSelectionScreen(
             }
         }
     }
+}
+
+private fun computeTrustedNow(
+    trustedNow: Instant,
+    trustedElapsedRealtimeMs: Long,
+): Instant {
+    val elapsedSinceReference = (SystemClock.elapsedRealtime() - trustedElapsedRealtimeMs)
+        .coerceAtLeast(0L)
+    return trustedNow.plusMillis(elapsedSinceReference)
 }
 
 @Composable

@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.gatcha.model.DisplayCard
+import fr.aumombelli.gatcha.performance.LocalAppPerformanceProfile
 import fr.aumombelli.gatcha.ui.theme.skyQualityPalette
 
 const val TRADING_CARD_WIDTH_OVER_HEIGHT = 1f / 1.754f
@@ -33,6 +34,7 @@ fun AstroCardPreviewSurface(
     onClick: (() -> Unit)? = null,
 ) {
     val palette = skyQualityPalette(displayCard.activeVariant.skyQuality)
+    val performanceProfile = LocalAppPerformanceProfile.current
     val compact = mode == AstroCardSurfaceMode.Thumbnail
     val shape = RoundedCornerShape(if (compact) 24.dp else 30.dp)
     val artInset = cardArtInset(mode)
@@ -61,6 +63,7 @@ fun AstroCardPreviewSurface(
         ) {
             CardArtBackground(
                 definition = displayCard.definition,
+                mode = mode,
                 palette = palette,
                 inset = artInset,
                 artShape = cardArtShape(mode),
@@ -69,7 +72,11 @@ fun AstroCardPreviewSurface(
             HeroAtmosphere(palette = palette)
             CardFaceScrim(modifier = Modifier.fillMaxSize())
             if (displayCard.activeVariant.isHolographic) {
-                TwinklingStarsOverlay(modifier = Modifier.fillMaxSize())
+                TwinklingStarsOverlay(
+                    animated = mode != AstroCardSurfaceMode.Thumbnail ||
+                        performanceProfile.enableAnimatedThumbnailTwinkles,
+                    modifier = Modifier.fillMaxSize(),
+                )
             }
             CardFaceContent(
                 displayCard = displayCard,

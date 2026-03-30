@@ -18,6 +18,8 @@ TARGET_WIDTH = 1024
 TARGET_HEIGHT = 1796
 TARGET_RATIO = TARGET_WIDTH / TARGET_HEIGHT
 DEFAULT_QUALITY = 90
+RAW_ART_ROOT = Path("artwork/card_art/raw")
+RUNTIME_ART_ROOT = Path("app/src/main/assets/card_art")
 IMAGE_EXTENSIONS = {
     ".jpg",
     ".jpeg",
@@ -48,7 +50,7 @@ def parse_args() -> argparse.Namespace:
         help=(
             "Output .webp path for a single file, or output root for a directory input. "
             "Defaults to the source filename with a .webp extension for files, and to the "
-            "matching sibling path outside `raw/` for directories."
+            "matching runtime asset folder for directories under artwork/card_art/raw/."
         ),
     )
     parser.add_argument(
@@ -70,10 +72,13 @@ def resolve_directory_output_root(input_dir: Path, output_root: Path | None) -> 
     if output_root is not None:
         return output_root
 
-    parts = list(input_dir.parts)
-    if "raw" in parts:
-        raw_index = len(parts) - 1 - parts[::-1].index("raw")
-        return Path(*parts[:raw_index], *parts[raw_index + 1 :])
+    raw_art_root = RAW_ART_ROOT.resolve()
+    runtime_art_root = RUNTIME_ART_ROOT.resolve()
+    try:
+        relative_to_raw = input_dir.relative_to(raw_art_root)
+        return runtime_art_root / relative_to_raw
+    except ValueError:
+        pass
 
     return input_dir.parent / f"{input_dir.name}_prepared"
 

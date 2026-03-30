@@ -1,6 +1,7 @@
 package fr.aumombelli.gatcha.feature.packs.selection
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
@@ -116,7 +117,10 @@ private fun BoosterField(
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val horizontalGap = 18.dp
         val verticalGap = 20.dp
-        val revealWidth = maxWidth * PACK_REVEAL_WIDTH_FRACTION
+        val revealWidth = minOf(
+            maxWidth * PACK_REVEAL_WIDTH_FRACTION,
+            maxHeight * TRADING_CARD_WIDTH_OVER_HEIGHT,
+        )
         val revealHeight = revealWidth / TRADING_CARD_WIDTH_OVER_HEIGHT
         val gridPackWidth = minOf(
             (maxWidth - horizontalGap) / 2,
@@ -177,9 +181,9 @@ private fun BoosterField(
                     extensionId = extension.id,
                     modifier = Modifier
                         .align(Alignment.TopStart)
-                        .padding(
-                            start = currentCenterX - currentWidth / 2,
-                            top = currentCenterY - currentHeight / 2,
+                        .absoluteOffset(
+                            x = currentCenterX - currentWidth / 2,
+                            y = currentCenterY - currentHeight / 2,
                         )
                         .graphicsLayer {
                             this.alpha = alpha

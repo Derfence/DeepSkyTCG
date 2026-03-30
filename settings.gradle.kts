@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "gatcha-android"
 include(":app")
+include(":benchmark")

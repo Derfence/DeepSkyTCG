@@ -49,9 +49,9 @@ class AesGcmProgressCipher(
     private val secureRandom: SecureRandom = SecureRandom(),
 ) : ProgressCipher {
     override fun encrypt(plaintext: ByteArray): EncryptedPayload {
-        val iv = ByteArray(IV_SIZE_BYTES).also(secureRandom::nextBytes)
-        val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.ENCRYPT_MODE, keyProvider(), GCMParameterSpec(TAG_SIZE_BITS, iv))
+        val iv = ByteArray(AesGcmCipherSupport.IV_SIZE_BYTES).also(secureRandom::nextBytes)
+        val cipher = AesGcmCipherSupport.newCipher()
+        cipher.init(Cipher.ENCRYPT_MODE, keyProvider(), AesGcmCipherSupport.specFor(iv))
         return EncryptedPayload(
             iv = iv,
             ciphertext = cipher.doFinal(plaintext),
@@ -59,26 +59,32 @@ class AesGcmProgressCipher(
     }
 
     override fun decrypt(payload: EncryptedPayload): ByteArray {
-        val cipher = Cipher.getInstance(TRANSFORMATION)
-        cipher.init(Cipher.DECRYPT_MODE, keyProvider(), GCMParameterSpec(TAG_SIZE_BITS, payload.iv))
+        val cipher = AesGcmCipherSupport.newCipher()
+        cipher.init(Cipher.DECRYPT_MODE, keyProvider(), AesGcmCipherSupport.specFor(payload.iv))
         return cipher.doFinal(payload.ciphertext)
-    }
-
-    companion object {
-        private const val TRANSFORMATION = "AES/GCM/NoPadding"
-        private const val IV_SIZE_BYTES = 12
-        private const val TAG_SIZE_BITS = 128
     }
 }
 
 class AndroidKeystoreProgressCipher(
     private val alias: String = DEFAULT_ALIAS,
 ) : ProgressCipher {
-    private val delegate = AesGcmProgressCipher(keyProvider = ::getOrCreateSecretKey)
+    override fun encrypt(plaintext: ByteArray): EncryptedPayload {
+        val cipher = AesGcmCipherSupport.newCipher()
+        cipher.init(Cipher.ENCRYPT_MODE, getOrCreateSecretKey())
+        val iv = checkNotNull(cipher.iv) {
+            "Android Keystore AES/GCM must generate an IV during encryption."
+        }
+        return EncryptedPayload(
+            iv = iv,
+            ciphertext = cipher.doFinal(plaintext),
+        )
+    }
 
-    override fun encrypt(plaintext: ByteArray): EncryptedPayload = delegate.encrypt(plaintext)
-
-    override fun decrypt(payload: EncryptedPayload): ByteArray = delegate.decrypt(payload)
+    override fun decrypt(payload: EncryptedPayload): ByteArray {
+        val cipher = AesGcmCipherSupport.newCipher()
+        cipher.init(Cipher.DECRYPT_MODE, getOrCreateSecretKey(), AesGcmCipherSupport.specFor(payload.iv))
+        return cipher.doFinal(payload.ciphertext)
+    }
 
     private fun getOrCreateSecretKey(): SecretKey {
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
@@ -95,6 +101,7 @@ class AndroidKeystoreProgressCipher(
             )
                 .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
                 .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+                .setRandomizedEncryptionRequired(true)
                 .setKeySize(256)
                 .build(),
         )
@@ -105,6 +112,16 @@ class AndroidKeystoreProgressCipher(
         private const val ANDROID_KEYSTORE = "AndroidKeyStore"
         private const val DEFAULT_ALIAS = "gatcha_standalone_progress_key"
     }
+}
+
+private object AesGcmCipherSupport {
+    const val IV_SIZE_BYTES = 12
+    private const val TAG_SIZE_BITS = 128
+    private const val TRANSFORMATION = "AES/GCM/NoPadding"
+
+    fun newCipher(): Cipher = Cipher.getInstance(TRANSFORMATION)
+
+    fun specFor(iv: ByteArray): GCMParameterSpec = GCMParameterSpec(TAG_SIZE_BITS, iv)
 }
 
 @Serializable

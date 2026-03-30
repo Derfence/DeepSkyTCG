@@ -135,7 +135,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--output-dir",
         type=Path,
-        default=Path("app/src/main/assets/card_art/raw/astronomes-en-herbes"),
+        default=Path("artwork/card_art/raw/astronomes-en-herbes"),
         help="Folder where the raw downloaded images will be stored",
     )
     parser.add_argument(

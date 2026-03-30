@@ -106,8 +106,11 @@ class PackOpeningScreenTest {
         assertEquals("ALP-002", composeRule.readCurrentPackOpeningCardId())
         composeRule.onAllNodesWithTag("pack-opening-arrow-left").assertCountEquals(1)
         composeRule.onAllNodesWithTag("pack-opening-arrow-right").assertCountEquals(0)
+        composeRule.mainClock.autoAdvance = false
         composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeUp() }
-        composeRule.waitUntil(timeoutMillis = 5_000) { doneCallCount == 1 }
+        composeRule.mainClock.advanceTimeBy(1_000)
+        composeRule.runOnIdle { }
+        composeRule.mainClock.autoAdvance = true
         assertEquals(1, doneCallCount)
     }
 

@@ -21,11 +21,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.aumombelli.gatcha.AppContainer
 import fr.aumombelli.gatcha.feature.badges.BadgeBookScreen
@@ -51,18 +54,25 @@ import fr.aumombelli.gatcha.ui.screen.MainMenuScreen
 import fr.aumombelli.gatcha.ui.viewmodel.GatchaViewModelFactory
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-internal fun AppSceneHost(appContainer: AppContainer) {
+internal fun AppSceneHost(
+    appContainer: AppContainer,
+    launchConfig: AppLaunchConfig = AppLaunchConfig(),
+) {
     val scope = rememberCoroutineScope()
     val activity = LocalContext.current.findActivity()
     val skyVariant = remember { randomSkyBackdropVariant() }
     val density = LocalDensity.current
-    val sceneStateHolder = remember { mutableStateOf(AppSceneUiState()) }
+    val startsAtMainMenu = launchConfig.scene == AppLaunchScene.MainMenu
+    val sceneStateHolder = remember(launchConfig) {
+        mutableStateOf(initialAppSceneUiState(launchConfig))
+    }
     val sceneState = sceneStateHolder.value
 
-    val cameraTilt = remember { Animatable(0f) }
-    val mountainSkyBlend = remember { Animatable(0f) }
-    val horizonLights = remember { Animatable(1f) }
+    val cameraTilt = remember(launchConfig) { Animatable(if (startsAtMainMenu) 1f else 0f) }
+    val mountainSkyBlend = remember(launchConfig) { Animatable(if (startsAtMainMenu) 1f else 0f) }
+    val horizonLights = remember(launchConfig) { Animatable(if (startsAtMainMenu) 0f else 1f) }
     val bookProgress = remember { Animatable(0f) }
     val bookOverlayAlpha = remember { Animatable(1f) }
     val chestProgress = remember { Animatable(0f) }
@@ -102,13 +112,24 @@ internal fun AppSceneHost(appContainer: AppContainer) {
         -(220f - statusBarInsetPx * 0.18f)
     }
 
-    LaunchedEffect(Unit) {
-        transitions.runLaunchSequence()
+    LaunchedEffect(launchConfig) {
+        if (launchConfig.scene == AppLaunchScene.Start) {
+            transitions.runLaunchSequence()
+        } else if (launchConfig.resetProgressOnLaunch) {
+            runCatching {
+                appContainer.progressRepository.resetProgress()
+                appContainer.packRepository.clearCurrentPackResult()
+            }
+            sceneStateHolder.value = sceneStateHolder.value.showMenuContent()
+        }
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .semantics {
+                testTagsAsResourceId = true
+            }
             .onSizeChanged { size ->
                 sceneStateHolder.value = sceneStateHolder.value.withRootHeight(size.height.toFloat())
             },
@@ -186,7 +207,7 @@ internal fun AppSceneHost(appContainer: AppContainer) {
 
             AppScene.Library -> {
                 val libraryViewModel: LibraryViewModel = viewModel(
-                    key = "library-${sceneState.libraryViewModelKey}",
+                    key = "library",
                     factory = GatchaViewModelFactory {
                         LibraryViewModel(
                             catalogRepository = appContainer.catalogRepository,
@@ -195,6 +216,12 @@ internal fun AppSceneHost(appContainer: AppContainer) {
                     },
                 )
                 val uiState by libraryViewModel.uiState.collectAsState()
+
+                LaunchedEffect(sceneState.libraryRefreshSignal) {
+                    if (!uiState.isLoading || uiState.sections.isNotEmpty() || uiState.errorMessage != null) {
+                        libraryViewModel.refresh()
+                    }
+                }
 
                 BackHandler(enabled = !sceneState.transitionLocked) {
                     scope.launch { transitions.animateLibraryToMenu() }
@@ -209,7 +236,7 @@ internal fun AppSceneHost(appContainer: AppContainer) {
 
             AppScene.BadgeBook -> {
                 val badgeBookViewModel: BadgeBookViewModel = viewModel(
-                    key = "badges-${sceneState.badgeBookViewModelKey}",
+                    key = "badges",
                     factory = GatchaViewModelFactory {
                         BadgeBookViewModel(
                             catalogRepository = appContainer.catalogRepository,
@@ -218,6 +245,12 @@ internal fun AppSceneHost(appContainer: AppContainer) {
                     },
                 )
                 val uiState by badgeBookViewModel.uiState.collectAsState()
+
+                LaunchedEffect(sceneState.badgeBookRefreshSignal) {
+                    if (!uiState.isLoading || uiState.sections.isNotEmpty() || uiState.errorMessage != null) {
+                        badgeBookViewModel.refresh()
+                    }
+                }
 
                 BackHandler(enabled = !sceneState.transitionLocked) {
                     scope.launch { transitions.animateBadgeBookToMenu() }
@@ -234,7 +267,7 @@ internal fun AppSceneHost(appContainer: AppContainer) {
             AppScene.PackOpening,
             -> {
                 val packViewModel: PackViewModel = viewModel(
-                    key = "pack-${sceneState.packFlowKey}",
+                    key = "pack",
                     factory = GatchaViewModelFactory {
                         PackViewModel(
                             catalogRepository = appContainer.catalogRepository,
@@ -245,6 +278,17 @@ internal fun AppSceneHost(appContainer: AppContainer) {
                     },
                 )
                 val uiState by packViewModel.uiState.collectAsState()
+
+                LaunchedEffect(sceneState.packRefreshSignal) {
+                    if (
+                        !uiState.isLoading ||
+                        uiState.extensions.isNotEmpty() ||
+                        uiState.errorMessage != null ||
+                        uiState.selectedExtensionId != null
+                    ) {
+                        packViewModel.refresh()
+                    }
+                }
 
                 LaunchedEffect(packViewModel) {
                     packViewModel.events.collect { event ->
@@ -296,7 +340,7 @@ internal fun AppSceneHost(appContainer: AppContainer) {
 
                 if (sceneState.currentScene == AppScene.PackOpening) {
                     val openingViewModel: PackOpeningViewModel = viewModel(
-                        key = "pack-opening-${sceneState.packFlowKey}",
+                        key = "pack-opening",
                         factory = GatchaViewModelFactory {
                             PackOpeningViewModel(
                                 catalogRepository = appContainer.catalogRepository,

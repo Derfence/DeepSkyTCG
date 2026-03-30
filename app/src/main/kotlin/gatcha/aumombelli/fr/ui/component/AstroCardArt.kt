@@ -1,6 +1,6 @@
 package fr.aumombelli.gatcha.ui.component
 
-import android.graphics.BitmapFactory
+import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -12,7 +12,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
@@ -22,19 +21,40 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.gatcha.model.CardDefinition
+import fr.aumombelli.gatcha.performance.LocalAppPerformanceProfile
 import fr.aumombelli.gatcha.ui.theme.SkyQualityPalette
 
 @Composable
 internal fun CardArtBackground(
     definition: CardDefinition,
+    mode: AstroCardSurfaceMode,
     palette: SkyQualityPalette,
     inset: Dp = 0.dp,
     artShape: Shape = RectangleShape,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
-    val cardArt = remember(context, definition.extensionId, definition.imageRef) {
-        loadCardArt(definition = definition, contextAssets = context.assets)
+    val appContext = LocalContext.current.applicationContext
+    val performanceProfile = LocalAppPerformanceProfile.current
+    val cardArtLoader = LocalCardArtBitmapLoader.current ?: remember(
+        appContext,
+        performanceProfile.cardArtCacheMaxBytes,
+    ) {
+        CardArtBitmapLoader(
+            assetManager = appContext.assets,
+            maxCacheBytes = performanceProfile.cardArtCacheMaxBytes,
+        )
+    }
+    val bitmapRequest = remember(mode, performanceProfile) {
+        cardArtBitmapRequest(
+            mode = mode,
+            performanceProfile = performanceProfile,
+        )
+    }
+    val cardArt = remember(cardArtLoader, definition.extensionId, definition.imageRef, bitmapRequest) {
+        cardArtLoader.loadCardArt(
+            definition = definition,
+            request = bitmapRequest,
+        )
     }
     val artModifier = Modifier
         .fillMaxSize()
@@ -95,63 +115,14 @@ internal fun CardArtBackground(
 
 @Composable
 private fun CardArtImage(
-    bitmap: ImageBitmap,
+    bitmap: Bitmap,
     modifier: Modifier = Modifier,
 ) {
+    val imageBitmap = remember(bitmap) { bitmap.asImageBitmap() }
     Image(
-        bitmap = bitmap,
+        bitmap = imageBitmap,
         contentDescription = null,
         contentScale = ContentScale.Crop,
         modifier = modifier.fillMaxSize(),
     )
 }
-
-private data class LoadedCardArt(
-    val primary: ImageBitmap?,
-    val fallback: ImageBitmap?,
-)
-
-private fun loadCardArt(
-    definition: CardDefinition,
-    contextAssets: android.content.res.AssetManager,
-): LoadedCardArt {
-    val primary = loadBitmapFromAsset(
-        contextAssets = contextAssets,
-        path = cardArtAssetPath(definition),
-    )
-    if (primary != null) {
-        return LoadedCardArt(
-            primary = primary,
-            fallback = null,
-        )
-    }
-    return LoadedCardArt(
-        primary = null,
-        fallback = loadBitmapFromAsset(
-            contextAssets = contextAssets,
-            path = CardArtFallbackAssetPath,
-        ),
-    )
-}
-
-private fun loadBitmapFromAsset(
-    contextAssets: android.content.res.AssetManager,
-    path: String,
-): ImageBitmap? {
-    synchronized(cardArtBitmapCache) {
-        if (cardArtBitmapCache.containsKey(path)) {
-            return cardArtBitmapCache.getValue(path)
-        }
-
-        val bitmap = runCatching {
-            contextAssets.open(path).use { stream ->
-                BitmapFactory.decodeStream(stream)?.asImageBitmap()
-            }
-        }.getOrNull()
-
-        cardArtBitmapCache[path] = bitmap
-        return bitmap
-    }
-}
-
-private val cardArtBitmapCache = mutableMapOf<String, ImageBitmap?>()

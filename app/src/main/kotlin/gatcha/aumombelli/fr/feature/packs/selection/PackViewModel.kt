@@ -68,8 +68,16 @@ class PackViewModel(
     }
 
     fun refresh() {
+        _uiState.update {
+            it.copy(
+                isLoading = true,
+                selectedExtensionId = null,
+                selectedBoosterIndex = null,
+                isAwaitingPackResult = false,
+                errorMessage = null,
+            )
+        }
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             runCatching {
                 val extensions = catalogRepository.loadExtensions()
                 val loadedProgress = progressRepository.loadProgress().requireUsableProgress()

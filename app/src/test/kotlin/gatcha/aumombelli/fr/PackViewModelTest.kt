@@ -73,6 +73,30 @@ class PackViewModelTest {
     }
 
     @Test
+    fun `refresh immediately clears transient pack selection state`() = runTest {
+        val viewModel = PackViewModel(
+            catalogRepository = FakeCatalogGateway().apply {
+                extensions = listOf(ExtensionDefinition("core-alpha", "Core Alpha", "cover"))
+            },
+            progressRepository = FakeProgressGateway(),
+            packRepository = FakePackGateway(),
+            gameSettings = gameSettings,
+        )
+        advanceUntilIdle()
+
+        viewModel.selectExtension("core-alpha")
+        viewModel.selectBooster(1)
+
+        viewModel.refresh()
+
+        assertEquals(true, viewModel.uiState.value.isLoading)
+        assertEquals(null, viewModel.uiState.value.selectedExtensionId)
+        assertEquals(null, viewModel.uiState.value.selectedBoosterIndex)
+        assertEquals(false, viewModel.uiState.value.isAwaitingPackResult)
+        assertEquals(null, viewModel.uiState.value.errorMessage)
+    }
+
+    @Test
     fun `open pack reloads saved progress and emits navigation`() = runTest {
         val response = DrawPackResponse(
             extensionId = "core-alpha",

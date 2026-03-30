@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.width
+import fr.aumombelli.gatcha.performance.LocalAppPerformanceProfile
 import fr.aumombelli.gatcha.ui.component.ExtensionLogoMark
 import fr.aumombelli.gatcha.ui.motion.LaunchLogoMark
 import fr.aumombelli.gatcha.ui.component.TwinklingStarsOverlay
@@ -84,6 +85,7 @@ internal fun BadgeCoinFace(
     onClick: (() -> Unit)? = null,
 ) {
     val palette = badgePalette(badge)
+    val performanceProfile = LocalAppPerformanceProfile.current
     val backgroundBrush = badgeBackgroundBrush(badge, palette)
     val interactionSource = remember { MutableInteractionSource() }
 
@@ -155,6 +157,7 @@ internal fun BadgeCoinFace(
 
         if (badgeUsesTwinklingStars(badge)) {
             TwinklingStarsOverlay(
+                animated = performanceProfile.enableAnimatedBadgeCoins,
                 modifier = Modifier
                     .fillMaxSize()
                     .clip(CircleShape),

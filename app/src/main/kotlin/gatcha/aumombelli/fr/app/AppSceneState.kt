@@ -18,9 +18,9 @@ internal data class AppSceneUiState(
     val transitionLocked: Boolean = false,
     val rootHeightPx: Float = 0f,
     val startCardTopPx: Float = 0f,
-    val libraryViewModelKey: Int = 0,
-    val badgeBookViewModelKey: Int = 0,
-    val packFlowKey: Int = 0,
+    val libraryRefreshSignal: Int = 0,
+    val badgeBookRefreshSignal: Int = 0,
+    val packRefreshSignal: Int = 0,
     val packReadySignal: Int = 0,
     val selectedPackRevealBounds: PackRevealBounds? = null,
     val packOpeningExitSignal: Int = 0,
@@ -77,28 +77,28 @@ internal fun AppSceneUiState.unlockTransitions(): AppSceneUiState = copy(transit
 
 internal fun AppSceneUiState.enterMainMenu(): AppSceneUiState = copy(currentScene = AppScene.MainMenu)
 
-internal fun AppSceneUiState.prepareLibraryEntry(nextLibraryViewModelKey: Int): AppSceneUiState = copy(
+internal fun AppSceneUiState.prepareLibraryEntry(nextLibraryRefreshSignal: Int): AppSceneUiState = copy(
     menuContentVisible = false,
     libraryContentVisible = false,
-    libraryViewModelKey = nextLibraryViewModelKey,
+    libraryRefreshSignal = nextLibraryRefreshSignal,
 )
 
 internal fun AppSceneUiState.enterLibrary(): AppSceneUiState = copy(currentScene = AppScene.Library)
 
-internal fun AppSceneUiState.prepareBadgeBookEntry(nextBadgeBookViewModelKey: Int): AppSceneUiState = copy(
+internal fun AppSceneUiState.prepareBadgeBookEntry(nextBadgeBookRefreshSignal: Int): AppSceneUiState = copy(
     menuContentVisible = false,
     badgeBookContentVisible = false,
-    badgeBookViewModelKey = nextBadgeBookViewModelKey,
+    badgeBookRefreshSignal = nextBadgeBookRefreshSignal,
 )
 
 internal fun AppSceneUiState.enterBadgeBook(): AppSceneUiState = copy(currentScene = AppScene.BadgeBook)
 
-internal fun AppSceneUiState.preparePackSelection(nextPackFlowKey: Int): AppSceneUiState = copy(
+internal fun AppSceneUiState.preparePackSelection(nextPackRefreshSignal: Int): AppSceneUiState = copy(
     currentScene = AppScene.PackSelection,
     menuContentVisible = false,
     packSceneVisible = false,
     packExtensionListVisible = false,
-    packFlowKey = nextPackFlowKey,
+    packRefreshSignal = nextPackRefreshSignal,
     packReadySignal = 0,
     selectedPackRevealBounds = null,
     packOpeningExitSignal = 0,

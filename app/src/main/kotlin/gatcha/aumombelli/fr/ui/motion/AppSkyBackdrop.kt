@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.testTag
+import fr.aumombelli.gatcha.performance.LocalAppPerformanceProfile
 import fr.aumombelli.gatcha.ui.theme.EmberGold
 import fr.aumombelli.gatcha.ui.theme.skyQualityPalette
 import kotlin.math.PI
@@ -35,22 +36,33 @@ fun AppSkyBackdrop(
     horizonLightAlpha: Float = 1f,
     mountainBlendProgress: Float = 0f,
 ) {
+    val performanceProfile = LocalAppPerformanceProfile.current
     val sourcePalette = skyQualityPalette(variant.skyQuality)
     val mountainPalette = skyQualityPalette("mountain")
     val paletteTop = lerp(sourcePalette.top, mountainPalette.top, mountainBlendProgress)
     val paletteBottom = lerp(sourcePalette.bottom, mountainPalette.bottom, mountainBlendProgress)
     val paletteGlow = lerp(sourcePalette.glow, mountainPalette.glow, mountainBlendProgress)
-    val twinkleTransition = rememberInfiniteTransition(label = "app-backdrop-twinkle")
-    val twinkleProgress by twinkleTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 4200, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "app-backdrop-twinkle-progress",
-    )
-    val stars = remember(variant) { buildSkyStars(variant) }
+    val twinkleProgress = if (performanceProfile.enableAnimatedBackdrop) {
+        val twinkleTransition = rememberInfiniteTransition(label = "app-backdrop-twinkle")
+        val animatedProgress by twinkleTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 4200, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
+            label = "app-backdrop-twinkle-progress",
+        )
+        animatedProgress
+    } else {
+        0.24f
+    }
+    val stars = remember(variant, performanceProfile.backdropStarDensityMultiplier) {
+        buildSkyStars(
+            variant = variant,
+            densityMultiplier = performanceProfile.backdropStarDensityMultiplier,
+        )
+    }
     val lights = remember(variant) { buildHorizonLights(variant) }
 
     Canvas(
@@ -260,10 +272,13 @@ private fun buildMountainForegroundPath(
     close()
 }
 
-private fun buildSkyStars(variant: SkyBackdropVariant): List<SkyStar> {
+private fun buildSkyStars(
+    variant: SkyBackdropVariant,
+    densityMultiplier: Float,
+): List<SkyStar> {
     val random = Random(variant.ordinal * 11 + 19)
     val generatedStarCount = ceil(
-        variant.twinklingStarCount * (VISIBLE_STAR_BAND + STAR_TOP_OVERFLOW) / VISIBLE_STAR_BAND,
+        variant.twinklingStarCount * densityMultiplier * (VISIBLE_STAR_BAND + STAR_TOP_OVERFLOW) / VISIBLE_STAR_BAND,
     ).toInt()
     return List(generatedStarCount) {
         SkyStar(

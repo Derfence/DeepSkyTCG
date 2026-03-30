@@ -124,18 +124,24 @@ internal fun RarityStarBadge(
 
 @Composable
 internal fun TwinklingStarsOverlay(
+    animated: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
-    val transition = rememberInfiniteTransition(label = "twinkle")
-    val progress by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 3600, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "twinkle-progress",
-    )
+    val progress = if (animated) {
+        val transition = rememberInfiniteTransition(label = "twinkle")
+        val animatedProgress by transition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 3600, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
+            label = "twinkle-progress",
+        )
+        animatedProgress
+    } else {
+        0.27f
+    }
 
     Canvas(modifier = modifier) {
         TwinkleStars.forEach { star ->

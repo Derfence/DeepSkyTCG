@@ -27,7 +27,7 @@ class AppSceneStateTest {
         val initialState = AppSceneUiState(
             currentScene = AppScene.MainMenu,
             menuContentVisible = true,
-            packFlowKey = 2,
+            packRefreshSignal = 2,
             packReadySignal = 4,
             selectedPackRevealBounds = PackRevealBounds(
                 leftPx = 10f,
@@ -39,13 +39,13 @@ class AppSceneStateTest {
             pendingBadgeCelebration = listOf(sampleBadge()),
         )
 
-        val nextState = initialState.preparePackSelection(nextPackFlowKey = 3)
+        val nextState = initialState.preparePackSelection(nextPackRefreshSignal = 3)
 
         assertEquals(AppScene.PackSelection, nextState.currentScene)
         assertEquals(false, nextState.menuContentVisible)
         assertEquals(false, nextState.packSceneVisible)
         assertEquals(false, nextState.packExtensionListVisible)
-        assertEquals(3, nextState.packFlowKey)
+        assertEquals(3, nextState.packRefreshSignal)
         assertEquals(0, nextState.packReadySignal)
         assertEquals(0, nextState.packOpeningExitSignal)
         assertEquals(emptyList<BadgeItem>(), nextState.pendingBadgeCelebration)
@@ -99,20 +99,20 @@ class AppSceneStateTest {
     }
 
     @Test
-    fun `prepare badge book entry resets badge content and increments key`() {
+    fun `prepare badge book entry resets badge content and bumps refresh signal`() {
         val initialState = AppSceneUiState(
             currentScene = AppScene.MainMenu,
             menuContentVisible = true,
             badgeBookContentVisible = true,
-            badgeBookViewModelKey = 2,
+            badgeBookRefreshSignal = 2,
         )
 
-        val nextState = initialState.prepareBadgeBookEntry(nextBadgeBookViewModelKey = 3)
+        val nextState = initialState.prepareBadgeBookEntry(nextBadgeBookRefreshSignal = 3)
 
         assertEquals(AppScene.MainMenu, nextState.currentScene)
         assertEquals(false, nextState.menuContentVisible)
         assertEquals(false, nextState.badgeBookContentVisible)
-        assertEquals(3, nextState.badgeBookViewModelKey)
+        assertEquals(3, nextState.badgeBookRefreshSignal)
     }
 
     @Test

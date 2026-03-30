@@ -7,40 +7,40 @@
       "sourcePage": "https://commons.wikimedia.org/wiki/File:46P_Wirtanen_12-11-18.jpg"
     },
     "albireo": {
-      "artist": "Rafael Schmall",
-      "credit": "NOIRLab (via  )",
+      "artist": "Robert Gillette",
+      "credit": "Albireo",
       "license": "CC BY 4.0",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Albireo_in_Cygnus_with_Starlink_Satellites.jpg"
+      "sourcePage": "https://app.astrobin.com/i/4ifviu"
     },
     "algol": {
-      "artist": "Pablo Carlos Budassi",
-      "credit": "Own work",
+      "artist": "ESO/L. Calçada",
+      "credit": "Vue d'artiste",
       "license": "CC BY-SA 4.0",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Algol.png"
+      "sourcePage": "https://www.eso.org/public/france/images/eso1311a/?lang"
     },
     "almach": {
-      "artist": "AnyOldBiscuit",
-      "credit": "Own work",
+      "artist": "Damian Peach",
+      "credit": "Almach star system showing A, B and C components",
       "license": "CC BY-SA 4.0",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:GammaAnd_SIZE.png"
+      "sourcePage": "https://x.com/peachastro/status/1820856581313192079"
     },
     "altair": {
-      "artist": "J. Aleu",
-      "credit": "Altair",
-      "license": "Public domain",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Altair,_Tarazed_and_Alshain.jpg"
+      "artist": "Joostie",
+      "credit": "Barnard 142",
+      "license": "CC BY-NC-ND",
+      "sourcePage": "https://app.astrobin.com/i/sz5495"
     },
     "andromeda_constellation": {
-      "artist": "NASA, ESA, Benjamin F. Williams (UWashington), Zhuo Chen (UWashington), L. Clifton Johnson (Northwestern); Image Processing: Joseph DePasquale (STScI).",
-      "credit": "https://science.nasa.gov/missions/hubble/nasas-hubble-traces-hidden-history-of-andromeda-galaxy/",
-      "license": "Public domain",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Andromeda_Galaxy_Hubble_M31Mosaic_2025_42208x9870.jpg"
+      "artist": "Stellarium software",
+      "credit": "Capture d'écran",
+      "license": "CC BY",
+      "sourcePage": "https://stellarium-web.org/"
     },
     "arcturus": {
-      "artist": "Free Photos, CCO from World",
-      "credit": "Arcturus, Ursa Major",
-      "license": "CC0",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Arcturus,_Ursa_Major_(50155436703).jpg"
+      "artist": "Vital",
+      "credit": "Stars",
+      "license": "CC BY-ND",
+      "sourcePage": "https://app.astrobin.com/i/227129?r=I"
     },
     "aurora_borealis": {
       "artist": "Profpcde",
@@ -49,10 +49,10 @@
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Aurora_borealis_near_Salzdahlum_2024-10-10.jpg"
     },
     "betelgeuse": {
-      "artist": "Giuseppe Donatiello",
-      "credit": "Betelgeuse",
-      "license": "CC0",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Betelgeuse_(30036871174).jpg"
+      "artist": "Eric Coles (coles44)",
+      "credit": "The Unexpected Betelgeuse",
+      "license": "CC BY-NC-ND",
+      "sourcePage": "https://app.astrobin.com/i/7lsw64"
     },
     "capella": {
       "artist": "Axel Lindahl",
@@ -187,10 +187,10 @@
       "sourcePage": "https://commons.wikimedia.org/wiki/File:M27,_NGC_6853,_Dumbbell_Nebula_(noao-02674).jpg"
     },
     "m31_andromeda": {
-      "artist": "NASA, ESA, Benjamin F. Williams (UWashington), Zhuo Chen (UWashington), L. Clifton Johnson (Northwestern); Image Processing: Joseph DePasquale (STScI).",
-      "credit": "https://science.nasa.gov/missions/hubble/nasas-hubble-traces-hidden-history-of-andromeda-galaxy/",
-      "license": "Public domain",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Andromeda_Galaxy_Hubble_M31Mosaic_2025_42208x9870.jpg"
+      "artist": "Deep Sky West (Lloyd)",
+      "credit": "M31 - Deep Sky West Remote Observatory",
+      "license": "CC BY-NC-ND",
+      "sourcePage": "https://app.astrobin.com/i/366493?r=H"
     },
     "m33_triangulum": {
       "artist": "NASA/JPL-Caltech",

@@ -49,7 +49,7 @@ class LocalEndToEndTest {
     }
 
     private fun startAndReachMainMenu() {
-        composeRule.waitUntilTagDisplayed("start-begin", timeoutMillis = 20_000)
+        composeRule.waitUntilTagEnabled("start-begin", timeoutMillis = 20_000)
         composeRule.onNodeWithTag("start-begin").performClick()
         composeRule.waitUntilTagEnabled("menu-open-pack", timeoutMillis = 20_000)
         composeRule.onNodeWithTag("menu-open-pack").assertIsDisplayed()
