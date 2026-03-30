@@ -1,0 +1,63 @@
+package fr.aumombelli.gatcha.data
+
+import fr.aumombelli.gatcha.model.OwnedCollection
+import fr.aumombelli.gatcha.model.StandaloneProgress
+import java.time.Instant
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class ProgressSnapshot(
+    val installId: String,
+    val schemaVersion: Int = CURRENT_SCHEMA_VERSION,
+    val collection: OwnedCollection,
+    val availableDrawCount: Int = DEFAULT_MAX_STORED_DRAWS,
+    val nextChargeAt: String? = null,
+    val openedPackCount: Int = 0,
+    val lastTrustedWallClockUtc: String,
+    val lastTrustedElapsedRealtimeMs: Long = 0L,
+    val lastObservedBootMarker: String,
+    val tamperFlag: Boolean = false,
+) {
+    fun toProgress(): StandaloneProgress = StandaloneProgress(
+        collection = collection,
+        availableDrawCount = availableDrawCount,
+        nextChargeAt = nextChargeAt,
+        openedPackCount = openedPackCount,
+    )
+
+    companion object {
+        const val CURRENT_SCHEMA_VERSION: Int = 1
+    }
+}
+
+data class LoadedProgress(
+    val progress: StandaloneProgress,
+    val trustedNow: Instant,
+)
+
+sealed interface ProgressLoadResult {
+    data class Ok(
+        val progress: StandaloneProgress,
+        val trustedNow: Instant,
+    ) : ProgressLoadResult
+
+    data class Recovered(
+        val progress: StandaloneProgress,
+        val trustedNow: Instant,
+        val noticeMessage: String,
+    ) : ProgressLoadResult
+
+    data class Compromised(
+        val message: String,
+    ) : ProgressLoadResult
+}
+
+class CompromisedProgressException(
+    message: String,
+) : IllegalStateException(message)
+
+fun ProgressLoadResult.requireUsableProgress(): LoadedProgress = when (this) {
+    is ProgressLoadResult.Ok -> LoadedProgress(progress = progress, trustedNow = trustedNow)
+    is ProgressLoadResult.Recovered -> LoadedProgress(progress = progress, trustedNow = trustedNow)
+    is ProgressLoadResult.Compromised -> throw CompromisedProgressException(message)
+}

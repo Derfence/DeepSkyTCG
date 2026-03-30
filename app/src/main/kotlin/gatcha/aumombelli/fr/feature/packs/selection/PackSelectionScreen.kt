@@ -1,5 +1,6 @@
 package fr.aumombelli.gatcha.feature.packs.selection
 
+import android.os.SystemClock
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -61,12 +62,16 @@ fun PackSelectionScreen(
     interactionsEnabled: Boolean = true,
 ) {
     val now by produceState(
-        initialValue = Instant.now(),
-        key1 = state.availableDrawCount,
-        key2 = state.nextChargeAt,
+        initialValue = state.trustedNow,
+        state.availableDrawCount,
+        state.nextChargeAt,
+        state.trustedNow,
+        state.trustedElapsedRealtimeMs,
     ) {
         while (true) {
-            value = Instant.now()
+            val elapsedSinceReference = (SystemClock.elapsedRealtime() - state.trustedElapsedRealtimeMs)
+                .coerceAtLeast(0L)
+            value = state.trustedNow.plusMillis(elapsedSinceReference)
             delay(1_000)
         }
     }

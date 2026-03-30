@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import fr.aumombelli.gatcha.data.CatalogGateway
 import fr.aumombelli.gatcha.data.ProgressGateway
+import fr.aumombelli.gatcha.data.requireUsableProgress
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,7 +29,7 @@ class BadgeBookViewModel(
                 val extensions = catalogRepository.loadExtensions()
                 val cards = catalogRepository.loadCards()
                 val variantProfiles = catalogRepository.loadVariantProfiles()
-                val progress = progressRepository.loadProgress()
+                val progress = progressRepository.loadProgress().requireUsableProgress().progress
                 buildBadgeBookSections(
                     extensions = extensions,
                     cards = cards,

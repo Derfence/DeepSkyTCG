@@ -2,16 +2,12 @@ package fr.aumombelli.gatcha
 
 import fr.aumombelli.gatcha.data.LocalPackEngine
 import fr.aumombelli.gatcha.data.PackCooldownException
-import fr.aumombelli.gatcha.data.StandaloneGameSettings
 import fr.aumombelli.gatcha.model.CardFinishDefinition
 import fr.aumombelli.gatcha.model.SkyQualityDefinition
 import fr.aumombelli.gatcha.model.VariantProfile
 import fr.aumombelli.gatcha.model.WeightedCode
-import java.time.Clock
 import java.time.Duration
 import java.time.Instant
-import java.time.ZoneOffset
-import kotlin.random.Random
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -34,10 +30,10 @@ class LocalPackEngineTest {
         }
         val engine = LocalPackEngine(
             catalogRepository = catalogGateway,
-            settings = StandaloneGameSettings(
+            settings = testGameSettings(
                 cardsPerPack = 2,
-                clock = fixedClock(),
-                random = Random(0),
+                now = fixedNow,
+                randomSeed = 0,
             ),
         )
 
@@ -45,6 +41,7 @@ class LocalPackEngineTest {
             extensionId = "astronomes-en-herbe",
             availableDrawCount = 10,
             nextChargeAt = null,
+            now = fixedNow,
         )
 
         assertEquals("2026-03-24T12:00:00Z", response.drawnAt)
@@ -66,11 +63,11 @@ class LocalPackEngineTest {
         }
         val engine = LocalPackEngine(
             catalogRepository = catalogGateway,
-            settings = StandaloneGameSettings(
+            settings = testGameSettings(
                 cardsPerPack = 1,
+                now = fixedNow,
                 drawCooldown = Duration.ZERO,
-                clock = fixedClock(),
-                random = Random(1234),
+                randomSeed = 1234,
             ),
         )
 
@@ -80,6 +77,7 @@ class LocalPackEngineTest {
                 extensionId = "astronomes-en-herbe",
                 availableDrawCount = 10,
                 nextChargeAt = null,
+                now = fixedNow,
             ).cards.single().cardId
             counts[cardId] = counts.getValue(cardId) + 1
         }
@@ -91,7 +89,7 @@ class LocalPackEngineTest {
     fun `draw pack blocks when no charge is available yet`() = runTest {
         val engine = LocalPackEngine(
             catalogRepository = FakeCatalogGateway(),
-            settings = StandaloneGameSettings(clock = fixedClock()),
+            settings = testGameSettings(now = fixedNow),
         )
 
         val exception = try {
@@ -99,6 +97,7 @@ class LocalPackEngineTest {
                 extensionId = "astronomes-en-herbe",
                 availableDrawCount = 0,
                 nextChargeAt = "2026-03-24T18:00:00Z",
+                now = fixedNow,
             )
             error("Expected PackCooldownException")
         } catch (error: PackCooldownException) {
@@ -122,10 +121,10 @@ class LocalPackEngineTest {
         }
         val engine = LocalPackEngine(
             catalogRepository = catalogGateway,
-            settings = StandaloneGameSettings(
+            settings = testGameSettings(
                 cardsPerPack = 1,
-                clock = fixedClock(),
-                random = Random(0),
+                now = fixedNow,
+                randomSeed = 0,
             ),
         )
 
@@ -133,6 +132,7 @@ class LocalPackEngineTest {
             extensionId = "astronomes-en-herbe",
             availableDrawCount = 5,
             nextChargeAt = "2026-03-24T14:00:00Z",
+            now = fixedNow,
         )
 
         assertEquals(4, response.availableDrawCount)
@@ -153,10 +153,10 @@ class LocalPackEngineTest {
         }
         val engine = LocalPackEngine(
             catalogRepository = catalogGateway,
-            settings = StandaloneGameSettings(
+            settings = testGameSettings(
                 cardsPerPack = 1,
-                clock = fixedClock(),
-                random = Random(0),
+                now = fixedNow,
+                randomSeed = 0,
             ),
         )
 
@@ -164,6 +164,7 @@ class LocalPackEngineTest {
             extensionId = "astronomes-en-herbe",
             availableDrawCount = 7,
             nextChargeAt = "2026-03-24T00:00:00Z",
+            now = fixedNow,
         )
 
         assertEquals(9, response.availableDrawCount)
@@ -178,7 +179,7 @@ class LocalPackEngineTest {
         }
         val engine = LocalPackEngine(
             catalogRepository = catalogGateway,
-            settings = StandaloneGameSettings(clock = fixedClock()),
+            settings = testGameSettings(now = fixedNow),
         )
 
         val exception = try {
@@ -186,6 +187,7 @@ class LocalPackEngineTest {
                 extensionId = "astronomes-en-herbe",
                 availableDrawCount = 10,
                 nextChargeAt = null,
+                now = fixedNow,
             )
             error("Expected IllegalStateException")
         } catch (error: IllegalStateException) {
@@ -194,9 +196,6 @@ class LocalPackEngineTest {
 
         assertEquals("No cards were found for this extension.", exception.message)
     }
-
-    private fun fixedClock(): Clock = Clock.fixed(fixedNow, ZoneOffset.UTC)
-
     private fun localPackProfile(): VariantProfile = VariantProfile(
         id = "local-pack-profile",
         skyQualities = listOf(

@@ -7,12 +7,11 @@ import fr.aumombelli.gatcha.model.mergePackCards
 class CollectionRepository(
     private val progressRepository: ProgressGateway,
 ) : CollectionGateway {
-    override suspend fun loadCollection(): OwnedCollection {
-        return progressRepository.loadProgress().collection
-    }
+    override suspend fun loadCollection(): OwnedCollection =
+        progressRepository.loadProgress().requireUsableProgress().progress.collection
 
     override suspend fun saveCollection(collection: OwnedCollection) {
-        val progress = progressRepository.loadProgress()
+        val progress = progressRepository.loadProgress().requireUsableProgress().progress
         progressRepository.saveProgress(
             progress.copy(
                 collection = collection,

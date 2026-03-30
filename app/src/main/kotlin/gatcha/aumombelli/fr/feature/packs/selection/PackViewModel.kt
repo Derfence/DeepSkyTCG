@@ -4,16 +4,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import fr.aumombelli.gatcha.data.CatalogGateway
 import fr.aumombelli.gatcha.data.DEFAULT_MAX_STORED_DRAWS
+import fr.aumombelli.gatcha.data.LoadedProgress
 import fr.aumombelli.gatcha.data.PackGateway
 import fr.aumombelli.gatcha.data.ProgressGateway
 import fr.aumombelli.gatcha.data.StandaloneGameSettings
 import fr.aumombelli.gatcha.data.buildPackChargeUiStatus
+import fr.aumombelli.gatcha.data.requireUsableProgress
 import fr.aumombelli.gatcha.feature.badges.BadgeItem
 import fr.aumombelli.gatcha.feature.badges.buildNewlyUnlockedBadges
 import fr.aumombelli.gatcha.model.ExtensionDefinition
 import fr.aumombelli.gatcha.model.OwnedCollection
 import fr.aumombelli.gatcha.model.StandaloneProgress
 import java.time.Duration
+import java.time.Instant
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -33,6 +36,8 @@ data class PackSelectionUiState(
     val remainingDuration: Duration? = null,
     val rechargeProgress: Float = 1f,
     val isDrawLocked: Boolean = false,
+    val trustedNow: Instant = Instant.EPOCH,
+    val trustedElapsedRealtimeMs: Long = 0L,
     val selectedExtensionId: String? = null,
     val selectedBoosterIndex: Int? = null,
     val isAwaitingPackResult: Boolean = false,
@@ -53,6 +58,7 @@ class PackViewModel(
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PackSelectionUiState())
     val uiState: StateFlow<PackSelectionUiState> = _uiState.asStateFlow()
+    private var isPackRequestInFlight: Boolean = false
 
     private val _events = MutableSharedFlow<PackEvent>()
     val events: SharedFlow<PackEvent> = _events.asSharedFlow()
@@ -66,16 +72,15 @@ class PackViewModel(
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             runCatching {
                 val extensions = catalogRepository.loadExtensions()
-                val progress = progressRepository.loadProgress()
-                extensions to progress
-            }.onSuccess { (extensions, progress) ->
+                val loadedProgress = progressRepository.loadProgress().requireUsableProgress()
+                extensions to loadedProgress
+            }.onSuccess { (extensions, loadedProgress) ->
                 _uiState.value = PackSelectionUiState(
                     isLoading = false,
                     extensions = extensions,
-                    currentCollection = progress.collection,
+                    currentCollection = loadedProgress.progress.collection,
                 ).withPackChargeStatus(
-                    availableDrawCount = progress.availableDrawCount,
-                    nextChargeAt = progress.nextChargeAt,
+                    loadedProgress = loadedProgress,
                 )
             }.onFailure { exception ->
                 _uiState.value = PackSelectionUiState(
@@ -118,6 +123,11 @@ class PackViewModel(
     }
 
     fun openPack(extensionId: String) {
+        if (isPackRequestInFlight) {
+            return
+        }
+
+        isPackRequestInFlight = true
         viewModelScope.launch {
             _uiState.update {
                 it.copy(
@@ -126,36 +136,39 @@ class PackViewModel(
                     errorMessage = null,
                 )
             }
-            runCatching {
-                val beforeProgress = progressRepository.loadProgress()
-                val response = packRepository.openPack(extensionId)
-                val progress = progressRepository.loadProgress()
-                val newlyUnlockedBadges = loadNewlyUnlockedBadges(
-                    beforeProgress = beforeProgress,
-                    afterProgress = progress,
-                )
-                Triple(response, progress, newlyUnlockedBadges)
-            }.onSuccess { (_, progress, newlyUnlockedBadges) ->
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        currentCollection = progress.collection,
-                        isAwaitingPackResult = false,
-                    ).withPackChargeStatus(
-                        availableDrawCount = progress.availableDrawCount,
-                        nextChargeAt = progress.nextChargeAt,
+            try {
+                runCatching {
+                    val beforeProgress = progressRepository.loadProgress().requireUsableProgress().progress
+                    val response = packRepository.openPack(extensionId)
+                    val loadedProgress = progressRepository.loadProgress().requireUsableProgress()
+                    val newlyUnlockedBadges = loadNewlyUnlockedBadges(
+                        beforeProgress = beforeProgress,
+                        afterProgress = loadedProgress.progress,
                     )
+                    Triple(response, loadedProgress, newlyUnlockedBadges)
+                }.onSuccess { (_, loadedProgress, newlyUnlockedBadges) ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            currentCollection = loadedProgress.progress.collection,
+                            isAwaitingPackResult = false,
+                        ).withPackChargeStatus(
+                            loadedProgress = loadedProgress,
+                        )
+                    }
+                    _events.emit(PackEvent.PackReadyForReveal(newlyUnlockedBadges = newlyUnlockedBadges))
+                }.onFailure { exception ->
+                    _uiState.update {
+                        it.copy(
+                            isLoading = false,
+                            selectedBoosterIndex = null,
+                            isAwaitingPackResult = false,
+                            errorMessage = exception.message ?: "Unable to open the pack.",
+                        )
+                    }
                 }
-                _events.emit(PackEvent.PackReadyForReveal(newlyUnlockedBadges = newlyUnlockedBadges))
-            }.onFailure { exception ->
-                _uiState.update {
-                    it.copy(
-                        isLoading = false,
-                        selectedBoosterIndex = null,
-                        isAwaitingPackResult = false,
-                        errorMessage = exception.message ?: "Unable to open the pack.",
-                    )
-                }
+            } finally {
+                isPackRequestInFlight = false
             }
         }
     }
@@ -174,13 +187,13 @@ class PackViewModel(
     }.getOrElse { emptyList() }
 
     private fun PackSelectionUiState.withPackChargeStatus(
-        availableDrawCount: Int,
-        nextChargeAt: String?,
+        loadedProgress: LoadedProgress,
     ): PackSelectionUiState {
+        val referenceEvidence = gameSettings.timeSource.now()
         val chargeStatus = buildPackChargeUiStatus(
-            availableDrawCount = availableDrawCount,
-            nextChargeAt = nextChargeAt,
-            now = gameSettings.clock.instant(),
+            availableDrawCount = loadedProgress.progress.availableDrawCount,
+            nextChargeAt = loadedProgress.progress.nextChargeAt,
+            now = loadedProgress.trustedNow,
             drawCooldown = gameSettings.drawCooldown,
             maxStoredDraws = gameSettings.maxStoredDraws,
         )
@@ -191,6 +204,8 @@ class PackViewModel(
             remainingDuration = chargeStatus.remainingDuration,
             rechargeProgress = chargeStatus.rechargeProgress,
             isDrawLocked = chargeStatus.isDrawLocked,
+            trustedNow = loadedProgress.trustedNow,
+            trustedElapsedRealtimeMs = referenceEvidence.elapsedRealtimeMs,
         )
     }
 }

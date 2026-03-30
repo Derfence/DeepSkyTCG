@@ -1,18 +1,24 @@
 package fr.aumombelli.gatcha.testsupport
 
 import android.content.Context
+import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import fr.aumombelli.gatcha.AppContainer
+import fr.aumombelli.gatcha.data.AesGcmProgressCipher
+import fr.aumombelli.gatcha.data.AndroidTrustedTimeSource
 import fr.aumombelli.gatcha.data.CatalogGateway
 import fr.aumombelli.gatcha.data.CollectionGateway
 import fr.aumombelli.gatcha.data.CollectionMigrationService
 import fr.aumombelli.gatcha.data.CollectionRepository
+import fr.aumombelli.gatcha.data.EncryptedProgressEnvelopeSerializer
 import fr.aumombelli.gatcha.data.GameCatalogRepository
 import fr.aumombelli.gatcha.data.LocalPackEngine
 import fr.aumombelli.gatcha.data.PackGateway
 import fr.aumombelli.gatcha.data.PackRepository
+import fr.aumombelli.gatcha.data.ProgressLoadResult
 import fr.aumombelli.gatcha.data.ProgressGateway
 import fr.aumombelli.gatcha.data.ProgressRepository
+import fr.aumombelli.gatcha.data.RandomEntropySource
 import fr.aumombelli.gatcha.data.StandaloneGameSettings
 import fr.aumombelli.gatcha.model.CatalogMetadata
 import fr.aumombelli.gatcha.model.CardDefinition
@@ -30,13 +36,15 @@ import fr.aumombelli.gatcha.model.mergePackCards
 import fr.aumombelli.gatcha.testCardDefinition
 import fr.aumombelli.gatcha.testPackCard
 import java.io.File
-import java.time.Clock
+import java.time.Instant
 import kotlin.random.Random
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import javax.crypto.KeyGenerator
+import javax.crypto.SecretKey
 
 internal fun offlineMainActivityTestAppContainer(
     context: Context,
@@ -44,17 +52,32 @@ internal fun offlineMainActivityTestAppContainer(
     randomSeed: Int = 12345,
 ): AppContainer {
     val appContext = context.applicationContext
-    val file = File(appContext.cacheDir, dataStoreFileName)
-    file.delete()
+    val secureFile = File(appContext.cacheDir, dataStoreFileName.replace(".preferences_pb", ".secure.json"))
+    val legacyFile = File(appContext.cacheDir, dataStoreFileName)
+    secureFile.delete()
+    legacyFile.delete()
     val catalogRepository = GameCatalogRepository(appContext)
     val migrationService = CollectionMigrationService(catalogRepository)
-    val dataStore = PreferenceDataStoreFactory.create(
+    val secureDataStore = DataStoreFactory.create(
+        serializer = EncryptedProgressEnvelopeSerializer,
         scope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
-        produceFile = { file },
+        produceFile = { secureFile },
+    )
+    val legacyDataStore = PreferenceDataStoreFactory.create(
+        scope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
+        produceFile = { legacyFile },
+    )
+    val gameSettings = StandaloneGameSettings(
+        timeSource = AndroidTrustedTimeSource(appContext),
+        entropySource = RandomEntropySource(Random(randomSeed)),
     )
     val progressRepository = ProgressRepository(
-        dataStore = dataStore,
+        secureDataStore = secureDataStore,
+        legacyDataStore = legacyDataStore,
         collectionMigrationService = migrationService,
+        catalogRepository = catalogRepository,
+        settings = gameSettings,
+        progressCipher = AesGcmProgressCipher(keyProvider = ::newTestSecretKey),
     )
     val collectionRepository = CollectionRepository(progressRepository)
     val packRepository = PackRepository(
@@ -62,10 +85,7 @@ internal fun offlineMainActivityTestAppContainer(
         collectionRepository = collectionRepository,
         localPackEngine = LocalPackEngine(
             catalogRepository = catalogRepository,
-            settings = StandaloneGameSettings(
-                clock = Clock.systemUTC(),
-                random = Random(randomSeed),
-            ),
+            settings = gameSettings,
         ),
     )
 
@@ -74,6 +94,7 @@ internal fun offlineMainActivityTestAppContainer(
         catalogRepository = catalogRepository,
         collectionRepository = collectionRepository,
         packRepository = packRepository,
+        gameSettings = gameSettings,
     )
 }
 
@@ -144,6 +165,9 @@ private fun navigationTestAppContainer(
         ),
         collectionRepository = collectionRepository,
         packRepository = NavigationPackGateway(progressRepository, packResponse),
+        gameSettings = StandaloneGameSettings(
+            entropySource = RandomEntropySource(Random(12345)),
+        ),
     )
 }
 
@@ -151,11 +175,23 @@ private class MutableProgressGateway(
     initialProgress: StandaloneProgress,
 ) : ProgressGateway {
     private var progress = initialProgress
+    private val trustedNow = Instant.parse("2026-03-24T12:00:00Z")
 
-    override suspend fun loadProgress(): StandaloneProgress = progress
+    override suspend fun loadProgress(): ProgressLoadResult = ProgressLoadResult.Ok(
+        progress = progress,
+        trustedNow = trustedNow,
+    )
 
     override suspend fun saveProgress(progress: StandaloneProgress) {
         this.progress = progress
+    }
+
+    override suspend fun resetProgress() {
+        progress = StandaloneProgress(
+            collection = OwnedCollection(version = 5),
+            availableDrawCount = 10,
+            nextChargeAt = null,
+        )
     }
 }
 
@@ -185,10 +221,11 @@ private class NavigationCatalogGateway(
 private class NavigationCollectionGateway(
     private val progressRepository: MutableProgressGateway,
 ) : CollectionGateway {
-    override suspend fun loadCollection(): OwnedCollection = progressRepository.loadProgress().collection
+    override suspend fun loadCollection(): OwnedCollection =
+        (progressRepository.loadProgress() as ProgressLoadResult.Ok).progress.collection
 
     override suspend fun saveCollection(collection: OwnedCollection) {
-        val progress = progressRepository.loadProgress()
+        val progress = (progressRepository.loadProgress() as ProgressLoadResult.Ok).progress
         progressRepository.saveProgress(progress.copy(collection = collection))
     }
 
@@ -209,7 +246,7 @@ private class NavigationPackGateway(
     }
 
     override suspend fun openPack(extensionId: String): DrawPackResponse {
-        val progress = progressRepository.loadProgress()
+        val progress = (progressRepository.loadProgress() as ProgressLoadResult.Ok).progress
         val mergedCollection = progress.collection.mergePackCards(openPackResponse.cards)
         progressRepository.saveProgress(
             progress.copy(
@@ -223,3 +260,9 @@ private class NavigationPackGateway(
         return openPackResponse
     }
 }
+
+private val instrumentationTestSecretKey: SecretKey by lazy {
+    KeyGenerator.getInstance("AES").apply { init(256) }.generateKey()
+}
+
+private fun newTestSecretKey(): SecretKey = instrumentationTestSecretKey

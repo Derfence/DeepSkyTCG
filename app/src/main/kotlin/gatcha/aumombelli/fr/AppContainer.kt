@@ -1,6 +1,7 @@
 package fr.aumombelli.gatcha
 
 import android.content.Context
+import fr.aumombelli.gatcha.data.AndroidKeystoreProgressCipher
 import fr.aumombelli.gatcha.data.CatalogGateway
 import fr.aumombelli.gatcha.data.CollectionGateway
 import fr.aumombelli.gatcha.data.CollectionMigrationService
@@ -18,18 +19,20 @@ class AppContainer(
     val catalogRepository: CatalogGateway,
     val collectionRepository: CollectionGateway,
     val packRepository: PackGateway,
-    val gameSettings: StandaloneGameSettings = StandaloneGameSettings(),
+    val gameSettings: StandaloneGameSettings,
 ) {
     companion object {
         fun create(context: Context): AppContainer {
             val appContext = context.applicationContext
             val catalogRepository = GameCatalogRepository(appContext)
             val collectionMigrationService = CollectionMigrationService(catalogRepository)
-            val gameSettings = StandaloneGameSettings()
+            val gameSettings = StandaloneGameSettings.offlineDefault(appContext)
             val progressRepository = ProgressRepository.fromContext(
                 context = appContext,
+                catalogRepository = catalogRepository,
                 collectionMigrationService = collectionMigrationService,
                 settings = gameSettings,
+                progressCipher = AndroidKeystoreProgressCipher(),
             )
             val collectionRepository = CollectionRepository(
                 progressRepository = progressRepository,

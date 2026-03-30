@@ -1,15 +1,12 @@
 package fr.aumombelli.gatcha
 
 import fr.aumombelli.gatcha.feature.packs.selection.PackEvent
-import fr.aumombelli.gatcha.data.StandaloneGameSettings
 import fr.aumombelli.gatcha.model.DrawPackResponse
 import fr.aumombelli.gatcha.model.ExtensionDefinition
 import fr.aumombelli.gatcha.model.StandaloneProgress
 import fr.aumombelli.gatcha.ui.viewmodel.PackViewModel
-import java.time.Clock
 import java.time.Duration
 import java.time.Instant
-import java.time.ZoneOffset
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
@@ -24,9 +21,7 @@ class PackViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
     private val fixedNow = Instant.parse("2026-03-24T12:00:00Z")
-    private val gameSettings = StandaloneGameSettings(
-        clock = Clock.fixed(fixedNow, ZoneOffset.UTC),
-    )
+    private val gameSettings = testGameSettings(now = fixedNow)
 
     @Test
     fun `select extension and clear selection reset transient booster state`() = runTest {

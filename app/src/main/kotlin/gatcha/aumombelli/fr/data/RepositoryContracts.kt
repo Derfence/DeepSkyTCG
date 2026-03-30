@@ -18,8 +18,9 @@ interface CatalogGateway {
 }
 
 interface ProgressGateway {
-    suspend fun loadProgress(): StandaloneProgress
+    suspend fun loadProgress(): ProgressLoadResult
     suspend fun saveProgress(progress: StandaloneProgress)
+    suspend fun resetProgress()
 }
 
 interface CollectionGateway {

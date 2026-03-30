@@ -149,6 +149,7 @@ internal fun AppSceneHost(appContainer: AppContainer) {
                 StartScreen(
                     state = uiState,
                     onBegin = startViewModel::begin,
+                    onResetProgress = startViewModel::resetProgress,
                     onCardTopChanged = { topPx ->
                         sceneStateHolder.value = sceneStateHolder.value.withStartCardTop(topPx)
                     },

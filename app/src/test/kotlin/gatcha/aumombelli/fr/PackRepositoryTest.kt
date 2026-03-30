@@ -3,17 +3,13 @@ package fr.aumombelli.gatcha
 import fr.aumombelli.gatcha.data.CollectionRepository
 import fr.aumombelli.gatcha.data.LocalPackEngine
 import fr.aumombelli.gatcha.data.PackRepository
-import fr.aumombelli.gatcha.data.StandaloneGameSettings
 import fr.aumombelli.gatcha.model.CardFinishDefinition
 import fr.aumombelli.gatcha.model.SkyQualityDefinition
 import fr.aumombelli.gatcha.model.StandaloneProgress
 import fr.aumombelli.gatcha.model.VariantProfile
 import fr.aumombelli.gatcha.model.WeightedCode
-import java.time.Clock
 import java.time.Duration
 import java.time.Instant
-import java.time.ZoneOffset
-import kotlin.random.Random
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -41,12 +37,12 @@ class PackRepositoryTest {
             collectionRepository = CollectionRepository(progressGateway),
             localPackEngine = LocalPackEngine(
                 catalogRepository = catalogGateway,
-                settings = StandaloneGameSettings(
+                settings = testGameSettings(
                     cardsPerPack = 2,
-                    clock = Clock.fixed(fixedNow, ZoneOffset.UTC),
+                    now = fixedNow,
                     drawCooldown = Duration.ofHours(6),
                     maxStoredDraws = 10,
-                    random = Random(4),
+                    randomSeed = 4,
                 ),
             ),
         )

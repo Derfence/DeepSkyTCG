@@ -3,6 +3,7 @@ package fr.aumombelli.gatcha.testsupport.fakes
 import fr.aumombelli.gatcha.data.CatalogGateway
 import fr.aumombelli.gatcha.data.CollectionGateway
 import fr.aumombelli.gatcha.data.PackGateway
+import fr.aumombelli.gatcha.data.ProgressLoadResult
 import fr.aumombelli.gatcha.data.ProgressGateway
 import fr.aumombelli.gatcha.model.CatalogMetadata
 import fr.aumombelli.gatcha.model.CardDefinition
@@ -14,6 +15,7 @@ import fr.aumombelli.gatcha.model.StandaloneProgress
 import fr.aumombelli.gatcha.model.VariantProfile
 import fr.aumombelli.gatcha.model.mergePackCards
 import fr.aumombelli.gatcha.testsupport.fixtures.testVariantProfiles
+import java.time.Instant
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,18 +27,44 @@ class FakeProgressGateway : ProgressGateway {
         nextChargeAt = null,
     )
     var loadFailure: Throwable? = null
+    var compromisedMessage: String? = null
+    var recoveryNotice: String? = null
+    var trustedNow: Instant = Instant.parse("2026-03-24T12:00:00Z")
     val savedProgress = mutableListOf<StandaloneProgress>()
     var loadCallCount = AtomicInteger(0)
+    var resetCallCount = AtomicInteger(0)
 
-    override suspend fun loadProgress(): StandaloneProgress {
+    override suspend fun loadProgress(): ProgressLoadResult {
         loadCallCount.incrementAndGet()
         loadFailure?.let { throw it }
-        return progress
+        compromisedMessage?.let { return ProgressLoadResult.Compromised(it) }
+        recoveryNotice?.let {
+            return ProgressLoadResult.Recovered(
+                progress = progress,
+                trustedNow = trustedNow,
+                noticeMessage = it,
+            )
+        }
+        return ProgressLoadResult.Ok(
+            progress = progress,
+            trustedNow = trustedNow,
+        )
     }
 
     override suspend fun saveProgress(progress: StandaloneProgress) {
         savedProgress += progress
         this.progress = progress
+    }
+
+    override suspend fun resetProgress() {
+        resetCallCount.incrementAndGet()
+        compromisedMessage = null
+        recoveryNotice = null
+        progress = StandaloneProgress(
+            collection = OwnedCollection(version = 5),
+            availableDrawCount = 10,
+            nextChargeAt = null,
+        )
     }
 }
 

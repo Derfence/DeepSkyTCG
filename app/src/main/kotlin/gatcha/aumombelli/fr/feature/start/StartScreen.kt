@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 fun StartScreen(
     state: StartUiState,
     onBegin: () -> Unit,
+    onResetProgress: () -> Unit,
     modifier: Modifier = Modifier,
     showBackground: Boolean = true,
     contentVisible: Boolean = true,
@@ -52,6 +53,7 @@ fun StartScreen(
             state = state,
             cardAlpha = cardAlpha,
             onBegin = onBegin,
+            onResetProgress = onResetProgress,
             onCardTopChanged = onCardTopChanged,
         )
     }

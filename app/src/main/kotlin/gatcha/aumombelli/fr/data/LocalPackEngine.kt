@@ -1,5 +1,6 @@
 package fr.aumombelli.gatcha.data
 
+import android.content.Context
 import fr.aumombelli.gatcha.model.CardVariant
 import fr.aumombelli.gatcha.model.DrawPackResponse
 import fr.aumombelli.gatcha.model.PackCard
@@ -9,7 +10,6 @@ import fr.aumombelli.gatcha.model.requireSkyQualityDefinition
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
-import kotlin.random.Random
 
 class PackCooldownException(
     val retryAt: String,
@@ -19,9 +19,16 @@ data class StandaloneGameSettings(
     val cardsPerPack: Int = 5,
     val drawCooldown: Duration = DEFAULT_DRAW_COOLDOWN,
     val maxStoredDraws: Int = DEFAULT_MAX_STORED_DRAWS,
-    val clock: Clock = Clock.systemUTC(),
-    val random: Random = Random.Default,
-)
+    val timeSource: TrustedTimeSource = ClockTrustedTimeSource(Clock.systemUTC()),
+    val entropySource: EntropySource = RandomEntropySource(kotlin.random.Random.Default),
+) {
+    companion object {
+        fun offlineDefault(context: Context): StandaloneGameSettings = StandaloneGameSettings(
+            timeSource = AndroidTrustedTimeSource(context),
+            entropySource = SecureEntropySource(),
+        )
+    }
+}
 
 class LocalPackEngine(
     private val catalogRepository: CatalogGateway,
@@ -31,8 +38,8 @@ class LocalPackEngine(
         extensionId: String,
         availableDrawCount: Int,
         nextChargeAt: String?,
+        now: Instant,
     ): DrawPackResponse {
-        val now = settings.clock.instant()
         val normalizedChargeState = normalizePackChargeState(
             availableDrawCount = availableDrawCount,
             nextChargeAt = nextChargeAt,
@@ -97,7 +104,7 @@ class LocalPackEngine(
     private fun <T> pickWeighted(entries: List<T>, weightOf: (T) -> Int): T {
         val totalWeight = entries.sumOf(weightOf)
         require(totalWeight > 0) { "Weights must be strictly positive." }
-        var cursor = settings.random.nextInt(totalWeight)
+        var cursor = settings.entropySource.nextInt(totalWeight)
         for (entry in entries) {
             cursor -= weightOf(entry)
             if (cursor < 0) {

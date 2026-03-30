@@ -2,6 +2,7 @@ package fr.aumombelli.gatcha.feature.start
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import fr.aumombelli.gatcha.data.ProgressLoadResult
 import fr.aumombelli.gatcha.data.ProgressGateway
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +17,9 @@ data class StartUiState(
     val isLoading: Boolean = true,
     val isTransitioningToMenu: Boolean = false,
     val errorMessage: String? = null,
+    val warningMessage: String? = null,
+    val canResetProgress: Boolean = false,
+    val isResettingProgress: Boolean = false,
 )
 
 sealed interface StartEvent {
@@ -32,29 +36,74 @@ class StartViewModel(
     val events: SharedFlow<StartEvent> = _events.asSharedFlow()
 
     init {
-        viewModelScope.launch {
-            runCatching { progressRepository.loadProgress() }
-                .onSuccess {
-                    _uiState.value = StartUiState(isLoading = false)
-                }
-                .onFailure { exception ->
-                    _uiState.value = StartUiState(
-                        isLoading = false,
-                        errorMessage = exception.message ?: "Unable to load local progress.",
-                    )
-                }
-        }
+        refreshProgressState()
     }
 
     fun begin() {
         val state = _uiState.value
-        if (state.isLoading || state.errorMessage != null || state.isTransitioningToMenu) {
+        if (
+            state.isLoading ||
+            state.errorMessage != null ||
+            state.isTransitioningToMenu ||
+            state.isResettingProgress
+        ) {
             return
         }
 
         viewModelScope.launch {
             _uiState.update { it.copy(isTransitioningToMenu = true) }
             _events.emit(StartEvent.ReadyToEnterMenu)
+        }
+    }
+
+    fun resetProgress() {
+        val state = _uiState.value
+        if (!state.canResetProgress || state.isResettingProgress) {
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isResettingProgress = true) }
+            runCatching { progressRepository.resetProgress() }
+                .onSuccess {
+                    refreshProgressState()
+                }
+                .onFailure { exception ->
+                    _uiState.value = StartUiState(
+                        isLoading = false,
+                        errorMessage = exception.message ?: "Unable to reset local progress.",
+                        canResetProgress = true,
+                    )
+                }
+        }
+    }
+
+    private fun refreshProgressState() {
+        viewModelScope.launch {
+            _uiState.value = StartUiState(isLoading = true)
+            runCatching { progressRepository.loadProgress() }
+                .onSuccess { result ->
+                    _uiState.value = when (result) {
+                        is ProgressLoadResult.Ok -> StartUiState(isLoading = false)
+                        is ProgressLoadResult.Recovered -> StartUiState(
+                            isLoading = false,
+                            warningMessage = result.noticeMessage,
+                        )
+
+                        is ProgressLoadResult.Compromised -> StartUiState(
+                            isLoading = false,
+                            errorMessage = result.message,
+                            canResetProgress = true,
+                        )
+                    }
+                }
+                .onFailure { exception ->
+                    _uiState.value = StartUiState(
+                        isLoading = false,
+                        errorMessage = exception.message ?: "Unable to load local progress.",
+                        canResetProgress = true,
+                    )
+                }
         }
     }
 }

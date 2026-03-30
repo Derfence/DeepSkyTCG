@@ -1,7 +1,6 @@
 package fr.aumombelli.gatcha.data
 
 import fr.aumombelli.gatcha.model.OwnedCollection
-import fr.aumombelli.gatcha.model.normalized
 
 class CollectionMigrationService(
     private val catalogGateway: CatalogGateway,
@@ -21,19 +20,19 @@ class CollectionMigrationService(
             )
         }
 
-        var current = collection.normalized()
+        var current = collection.copy(cards = collection.cards.toSortedMap())
         while (current.version < targetVersion) {
             current = migrateStep(current)
         }
-        return current.normalized()
+        return current.copy(cards = current.cards.toSortedMap())
     }
 
     private fun migrateStep(collection: OwnedCollection): OwnedCollection =
         when (collection.version) {
-            1 -> collection.copy(version = 2).normalized()
-            2 -> collection.copy(version = 3).normalized()
-            3 -> collection.copy(version = 4).normalized()
-            4 -> collection.copy(version = 5).normalized()
+            1 -> collection.copy(version = 2)
+            2 -> collection.copy(version = 3)
+            3 -> collection.copy(version = 4)
+            4 -> collection.copy(version = 5)
             else -> throw IllegalStateException(
                 "No migration path exists for collection version ${collection.version}.",
             )

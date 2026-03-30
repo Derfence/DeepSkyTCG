@@ -29,6 +29,7 @@ internal fun BoxScope.StartCard(
     state: StartUiState,
     cardAlpha: Float,
     onBegin: () -> Unit,
+    onResetProgress: () -> Unit,
     onCardTopChanged: (Float) -> Unit,
 ) {
     Card(
@@ -71,9 +72,21 @@ internal fun BoxScope.StartCard(
                 )
             }
 
+            state.warningMessage?.let { warning ->
+                Text(
+                    text = warning,
+                    color = Color(0xFFFFD28A),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.testTag("start-warning"),
+                )
+            }
+
             Button(
                 onClick = onBegin,
-                enabled = !state.isLoading && !state.isTransitioningToMenu && state.errorMessage == null,
+                enabled = !state.isLoading &&
+                    !state.isTransitioningToMenu &&
+                    state.errorMessage == null &&
+                    !state.isResettingProgress,
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("start-begin"),
@@ -86,6 +99,18 @@ internal fun BoxScope.StartCard(
                     )
                 } else {
                     Text("Commencer")
+                }
+            }
+
+            if (state.canResetProgress) {
+                Button(
+                    onClick = onResetProgress,
+                    enabled = !state.isLoading && !state.isResettingProgress,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("start-reset-progress"),
+                ) {
+                    Text("Réinitialiser la progression")
                 }
             }
         }
