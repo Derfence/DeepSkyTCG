@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -38,6 +39,7 @@ import kotlinx.coroutines.delay
 fun PackOpeningScreen(
     state: PackOpeningUiState,
     onDone: () -> Unit,
+    dismissSignal: Int = 0,
     initialBoosterBounds: PackRevealBounds? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -47,6 +49,7 @@ fun PackOpeningScreen(
     var fullscreenPage by remember(packResult?.drawnAt) { mutableStateOf<Int?>(null) }
     var swipeOffset by remember(packResult?.drawnAt) { mutableFloatStateOf(0f) }
     var dismissRequested by remember(packResult?.drawnAt) { mutableStateOf(false) }
+    var handledDismissSignal by remember(packResult?.drawnAt) { mutableIntStateOf(dismissSignal) }
     var verticalDragActive by remember(packResult?.drawnAt) { mutableStateOf(false) }
     var lastCardNudgeActive by remember(packResult?.drawnAt) { mutableStateOf(false) }
     var rootHeightPx by remember(packResult?.drawnAt) { mutableFloatStateOf(0f) }
@@ -84,6 +87,12 @@ fun PackOpeningScreen(
             animationSpec = tween(durationMillis = 420, easing = FastOutSlowInEasing),
         )
         onDone()
+    }
+
+    LaunchedEffect(dismissSignal) {
+        if (dismissSignal == handledDismissSignal || dismissRequested) return@LaunchedEffect
+        handledDismissSignal = dismissSignal
+        dismissRequested = true
     }
 
     val swipeModifier = if (displayCards.isNotEmpty() && state.errorMessage == null) {

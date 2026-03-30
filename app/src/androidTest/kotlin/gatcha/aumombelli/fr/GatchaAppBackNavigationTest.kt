@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import fr.aumombelli.gatcha.testsupport.badgeCelebrationBackNavigationTestAppContainer
 import fr.aumombelli.gatcha.testsupport.backNavigationTestAppContainer
 import fr.aumombelli.gatcha.ui.theme.GatchaTheme
 import org.junit.Assert.assertTrue
@@ -88,6 +89,28 @@ class GatchaAppBackNavigationTest {
 
         pressAndroidBack()
         advanceBy(700)
+        composeRule.onNodeWithTag("menu-open-pack").assertIsDisplayed()
+    }
+
+    @Test
+    fun android_back_from_pack_opening_with_new_badge_shows_menu_celebration() {
+        setAppContent(badgeCelebrationBackNavigationTestAppContainer())
+        startAndReachMainMenu()
+
+        composeRule.onNodeWithTag("menu-open-pack").performClick()
+        advanceBy(1_900)
+        composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").performClick()
+        advanceBy(1_900)
+        composeRule.onNodeWithTag("pack-booster-0").performClick()
+        advanceBy(6_400)
+        composeRule.onNodeWithTag("pack-opening-current-card-surface").assertIsDisplayed()
+
+        pressAndroidBack()
+        advanceBy(1_000)
+        composeRule.onNodeWithTag("badge-unlock-celebration").assertIsDisplayed()
+        composeRule.onNodeWithTag("badge-unlock-celebration-coin-astronomes-en-herbe::sky::city").assertIsDisplayed()
+
+        advanceBy(1_400)
         composeRule.onNodeWithTag("menu-open-pack").assertIsDisplayed()
     }
 

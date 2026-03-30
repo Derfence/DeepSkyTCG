@@ -30,6 +30,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.aumombelli.gatcha.AppContainer
 import fr.aumombelli.gatcha.feature.badges.BadgeBookScreen
 import fr.aumombelli.gatcha.feature.badges.BadgeBookViewModel
+import fr.aumombelli.gatcha.feature.badges.BadgeUnlockCelebrationOverlay
 import fr.aumombelli.gatcha.feature.library.LibraryScreen
 import fr.aumombelli.gatcha.feature.library.LibraryViewModel
 import fr.aumombelli.gatcha.feature.packs.opening.PackOpeningScreen
@@ -176,6 +177,9 @@ internal fun AppSceneHost(appContainer: AppContainer) {
                     showBackground = false,
                     contentVisible = sceneState.menuContentVisible,
                     interactionsEnabled = !sceneState.transitionLocked,
+                    onBadgeButtonBoundsChanged = { bounds ->
+                        sceneStateHolder.value = sceneStateHolder.value.withMenuBadgeButtonBounds(bounds)
+                    },
                 )
             }
 
@@ -244,8 +248,10 @@ internal fun AppSceneHost(appContainer: AppContainer) {
                 LaunchedEffect(packViewModel) {
                     packViewModel.events.collect { event ->
                         when (event) {
-                            PackEvent.PackReadyForReveal -> {
-                                sceneStateHolder.value = sceneStateHolder.value.registerPackReady()
+                            is PackEvent.PackReadyForReveal -> {
+                                sceneStateHolder.value = sceneStateHolder.value.registerPackReady(
+                                    event.newlyUnlockedBadges,
+                                )
                             }
                         }
                     }
@@ -262,8 +268,8 @@ internal fun AppSceneHost(appContainer: AppContainer) {
                         }
                     }
                 } else {
-                    BackHandler(enabled = true) {
-                        transitions.finishPackOpeningToMenu()
+                    BackHandler(enabled = sceneState.packOpeningExitSignal == 0) {
+                        sceneStateHolder.value = sceneStateHolder.value.requestPackOpeningExit()
                     }
                 }
 
@@ -302,7 +308,10 @@ internal fun AppSceneHost(appContainer: AppContainer) {
                     PackOpeningScreen(
                         state = uiState,
                         initialBoosterBounds = sceneState.selectedPackRevealBounds,
-                        onDone = transitions::finishPackOpeningToMenu,
+                        dismissSignal = sceneState.packOpeningExitSignal,
+                        onDone = {
+                            scope.launch { transitions.finishPackOpeningToMenu() }
+                        },
                     )
                 }
             }
@@ -329,6 +338,14 @@ internal fun AppSceneHost(appContainer: AppContainer) {
         ChestPortalOverlay(
             progress = chestProgress.value,
             overlayAlpha = chestOverlayAlpha.value,
+        )
+
+        BadgeUnlockCelebrationOverlay(
+            badges = sceneState.pendingBadgeCelebration,
+            targetBounds = sceneState.menuBadgeButtonBounds,
+            visible = sceneState.currentScene == AppScene.MainMenu && sceneState.menuContentVisible,
+            onFinished = transitions::completeBadgeCelebration,
+            modifier = Modifier.fillMaxSize(),
         )
     }
 }

@@ -1,5 +1,7 @@
 package fr.aumombelli.gatcha.app
 
+import androidx.compose.ui.geometry.Rect
+import fr.aumombelli.gatcha.feature.badges.BadgeItem
 import fr.aumombelli.gatcha.ui.motion.AppScene
 import fr.aumombelli.gatcha.ui.motion.PackRevealBounds
 
@@ -21,6 +23,9 @@ internal data class AppSceneUiState(
     val packFlowKey: Int = 0,
     val packReadySignal: Int = 0,
     val selectedPackRevealBounds: PackRevealBounds? = null,
+    val packOpeningExitSignal: Int = 0,
+    val pendingBadgeCelebration: List<BadgeItem> = emptyList(),
+    val menuBadgeButtonBounds: Rect? = null,
 )
 
 internal fun AppSceneUiState.withRootHeight(heightPx: Float): AppSceneUiState = copy(rootHeightPx = heightPx)
@@ -96,30 +101,53 @@ internal fun AppSceneUiState.preparePackSelection(nextPackFlowKey: Int): AppScen
     packFlowKey = nextPackFlowKey,
     packReadySignal = 0,
     selectedPackRevealBounds = null,
+    packOpeningExitSignal = 0,
+    pendingBadgeCelebration = emptyList(),
 )
 
 internal fun AppSceneUiState.switchPackSelectionToMenu(): AppSceneUiState = copy(
     currentScene = AppScene.MainMenu,
     selectedPackRevealBounds = null,
+    packOpeningExitSignal = 0,
+    pendingBadgeCelebration = emptyList(),
 )
 
 internal fun AppSceneUiState.enterPackOpening(): AppSceneUiState = copy(
     currentScene = AppScene.PackOpening,
     packSceneVisible = false,
     packExtensionListVisible = false,
+    packOpeningExitSignal = 0,
 )
 
-internal fun AppSceneUiState.finishPackOpeningToMenu(): AppSceneUiState = copy(
+internal fun AppSceneUiState.preparePackOpeningReturnToMenu(): AppSceneUiState = copy(
     currentScene = AppScene.MainMenu,
-    menuContentVisible = true,
+    menuContentVisible = false,
     packSceneVisible = false,
     packExtensionListVisible = false,
     selectedPackRevealBounds = null,
+    packOpeningExitSignal = 0,
+)
+
+internal fun AppSceneUiState.finishPackOpeningToMenu(): AppSceneUiState = preparePackOpeningReturnToMenu().copy(
+    menuContentVisible = true,
 )
 
 internal fun AppSceneUiState.withPackRevealBounds(bounds: PackRevealBounds?): AppSceneUiState =
     copy(selectedPackRevealBounds = bounds)
 
-internal fun AppSceneUiState.registerPackReady(): AppSceneUiState = copy(
+internal fun AppSceneUiState.registerPackReady(newlyUnlockedBadges: List<BadgeItem>): AppSceneUiState = copy(
     packReadySignal = packReadySignal + 1,
+    pendingBadgeCelebration = newlyUnlockedBadges,
+)
+
+internal fun AppSceneUiState.requestPackOpeningExit(): AppSceneUiState = copy(
+    packOpeningExitSignal = packOpeningExitSignal + 1,
+)
+
+internal fun AppSceneUiState.clearPendingBadgeCelebration(): AppSceneUiState = copy(
+    pendingBadgeCelebration = emptyList(),
+)
+
+internal fun AppSceneUiState.withMenuBadgeButtonBounds(bounds: Rect?): AppSceneUiState = copy(
+    menuBadgeButtonBounds = bounds,
 )

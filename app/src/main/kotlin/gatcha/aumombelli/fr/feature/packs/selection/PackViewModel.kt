@@ -8,6 +8,8 @@ import fr.aumombelli.gatcha.data.PackGateway
 import fr.aumombelli.gatcha.data.ProgressGateway
 import fr.aumombelli.gatcha.data.StandaloneGameSettings
 import fr.aumombelli.gatcha.data.buildPackChargeUiStatus
+import fr.aumombelli.gatcha.feature.badges.BadgeItem
+import fr.aumombelli.gatcha.feature.badges.buildNewlyUnlockedBadges
 import fr.aumombelli.gatcha.model.ExtensionDefinition
 import fr.aumombelli.gatcha.model.OwnedCollection
 import java.time.Duration
@@ -37,7 +39,9 @@ data class PackSelectionUiState(
 )
 
 sealed interface PackEvent {
-    data object PackReadyForReveal : PackEvent
+    data class PackReadyForReveal(
+        val newlyUnlockedBadges: List<BadgeItem> = emptyList(),
+    ) : PackEvent
 }
 
 class PackViewModel(
@@ -122,10 +126,15 @@ class PackViewModel(
                 )
             }
             runCatching {
+                val beforeCollection = progressRepository.loadProgress().collection
                 val response = packRepository.openPack(extensionId)
                 val progress = progressRepository.loadProgress()
-                response to progress
-            }.onSuccess { (response, progress) ->
+                val newlyUnlockedBadges = loadNewlyUnlockedBadges(
+                    beforeCollection = beforeCollection,
+                    afterCollection = progress.collection,
+                )
+                Triple(response, progress, newlyUnlockedBadges)
+            }.onSuccess { (_, progress, newlyUnlockedBadges) ->
                 _uiState.update {
                     it.copy(
                         isLoading = false,
@@ -136,7 +145,7 @@ class PackViewModel(
                         nextChargeAt = progress.nextChargeAt,
                     )
                 }
-                _events.emit(PackEvent.PackReadyForReveal)
+                _events.emit(PackEvent.PackReadyForReveal(newlyUnlockedBadges = newlyUnlockedBadges))
             }.onFailure { exception ->
                 _uiState.update {
                     it.copy(
@@ -149,6 +158,19 @@ class PackViewModel(
             }
         }
     }
+
+    private suspend fun loadNewlyUnlockedBadges(
+        beforeCollection: OwnedCollection,
+        afterCollection: OwnedCollection,
+    ): List<BadgeItem> = runCatching {
+        buildNewlyUnlockedBadges(
+            extensions = catalogRepository.loadExtensions(),
+            cards = catalogRepository.loadCards(),
+            variantProfiles = catalogRepository.loadVariantProfiles(),
+            beforeCollection = beforeCollection,
+            afterCollection = afterCollection,
+        )
+    }.getOrElse { emptyList() }
 
     private fun PackSelectionUiState.withPackChargeStatus(
         availableDrawCount: Int,

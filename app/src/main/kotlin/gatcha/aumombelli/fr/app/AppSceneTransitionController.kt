@@ -24,9 +24,25 @@ internal class AppSceneTransitionController(
     private val writeState: (AppSceneUiState) -> Unit,
     private val awaitNextFrame: suspend () -> Unit,
 ) {
-    fun finishPackOpeningToMenu() {
+    suspend fun finishPackOpeningToMenu() {
+        val state = readState()
+        if (state.transitionLocked) return
+
+        writeState(state.lockTransitions().preparePackOpeningReturnToMenu())
+        awaitNextFrame()
         appContainer.packRepository.clearCurrentPackResult()
-        writeState(readState().finishPackOpeningToMenu())
+        writeState(readState().showMenuContent())
+        if (readState().pendingBadgeCelebration.isEmpty()) {
+            writeState(readState().unlockTransitions())
+        }
+    }
+
+    fun completeBadgeCelebration() {
+        writeState(
+            readState()
+                .clearPendingBadgeCelebration()
+                .unlockTransitions(),
+        )
     }
 
     suspend fun runLaunchSequence() {

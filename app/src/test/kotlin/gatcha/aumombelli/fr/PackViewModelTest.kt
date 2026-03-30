@@ -131,7 +131,7 @@ class PackViewModelTest {
         viewModel.openPack("core-alpha")
         advanceUntilIdle()
 
-        assertEquals(PackEvent.PackReadyForReveal, event.await())
+        assertEquals(PackEvent.PackReadyForReveal(), event.await())
         assertEquals(listOf("core-alpha"), packGateway.openPackCalls)
         assertEquals(2, viewModel.uiState.value.currentCollection.cards["ALP-001"]?.totalOwned)
         assertEquals(1, viewModel.uiState.value.currentCollection.cards["ALP-002"]?.totalOwned)
@@ -141,6 +141,57 @@ class PackViewModelTest {
         assertEquals("core-alpha", viewModel.uiState.value.selectedExtensionId)
         assertEquals(2, viewModel.uiState.value.selectedBoosterIndex)
         assertEquals(false, viewModel.uiState.value.isAwaitingPackResult)
+    }
+
+    @Test
+    fun `open pack emits newly unlocked badges when collection crosses a badge threshold`() = runTest {
+        val response = DrawPackResponse(
+            extensionId = "core-alpha",
+            drawnAt = "2026-03-23T12:00:00Z",
+            availableDrawCount = 9,
+            nextChargeAt = null,
+            cards = listOf(
+                testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
+            ),
+        )
+        val progressGateway = FakeProgressGateway().apply {
+            progress = StandaloneProgress(
+                collection = ownedCollectionOf().copy(version = 5),
+                availableDrawCount = 10,
+                nextChargeAt = null,
+            )
+        }
+        val packGateway = FakePackGateway().apply {
+            openPackResponse = response
+            onOpenPack = {
+                progressGateway.progress = StandaloneProgress(
+                    collection = ownedCollectionOf("ALP-001" to 1).copy(version = 5),
+                    availableDrawCount = response.availableDrawCount,
+                    nextChargeAt = response.nextChargeAt,
+                )
+            }
+        }
+        val catalogGateway = FakeCatalogGateway().apply {
+            extensions = listOf(ExtensionDefinition("core-alpha", "Core Alpha", "cover"))
+            cards = listOf(testCardDefinition("ALP-001", extensionId = "core-alpha"))
+        }
+
+        val viewModel = PackViewModel(
+            catalogRepository = catalogGateway,
+            progressRepository = progressGateway,
+            packRepository = packGateway,
+            gameSettings = gameSettings,
+        )
+        advanceUntilIdle()
+
+        val event = async { viewModel.events.first() }
+        viewModel.openPack("core-alpha")
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf("core-alpha::sky::city"),
+            (event.await() as PackEvent.PackReadyForReveal).newlyUnlockedBadges.map { it.id },
+        )
     }
 
     @Test

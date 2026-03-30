@@ -1,6 +1,7 @@
 package fr.aumombelli.gatcha
 
 import fr.aumombelli.gatcha.feature.badges.buildBadgeBookSections
+import fr.aumombelli.gatcha.feature.badges.buildNewlyUnlockedBadges
 import fr.aumombelli.gatcha.model.ExtensionDefinition
 import fr.aumombelli.gatcha.model.OwnedCollection
 import fr.aumombelli.gatcha.model.OwnedVariantCount
@@ -107,5 +108,31 @@ class BadgeAssemblerTest {
 
         assertTrue(perfectBadge.isUnlocked)
         assertEquals("1 / 1 cartes valides", perfectBadge.progress.label)
+    }
+
+    @Test
+    fun `newly unlocked badges are diffed and sorted for celebration`() {
+        val newlyUnlockedBadges = buildNewlyUnlockedBadges(
+            extensions = listOf(ExtensionDefinition("astro", "Astro", "cover")),
+            cards = listOf(testCardDefinition("AST-001", extensionId = "astro")),
+            variantProfiles = testVariantProfiles(),
+            beforeCollection = OwnedCollection(version = 5),
+            afterCollection = ownedCollectionWithVariants(
+                "AST-001",
+                OwnedVariantCount("mountain", "holographic", 1),
+            ),
+        )
+
+        assertEquals(
+            listOf(
+                "astro::finish::mountain-holographic",
+                "astro::finish::holographic",
+                "astro::sky::mountain",
+                "astro::sky::rural",
+                "astro::sky::suburban",
+                "astro::sky::city",
+            ),
+            newlyUnlockedBadges.map { it.id },
+        )
     }
 }

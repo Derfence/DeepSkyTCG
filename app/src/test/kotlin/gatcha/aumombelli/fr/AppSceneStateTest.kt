@@ -1,13 +1,20 @@
 package fr.aumombelli.gatcha
 
 import fr.aumombelli.gatcha.app.AppSceneUiState
+import fr.aumombelli.gatcha.app.clearPendingBadgeCelebration
 import fr.aumombelli.gatcha.app.enterBadgeBook
 import fr.aumombelli.gatcha.app.enterPackOpening
 import fr.aumombelli.gatcha.app.finishPackOpeningToMenu
 import fr.aumombelli.gatcha.app.prepareBadgeBookEntry
+import fr.aumombelli.gatcha.app.preparePackOpeningReturnToMenu
 import fr.aumombelli.gatcha.app.preparePackSelection
+import fr.aumombelli.gatcha.app.registerPackReady
 import fr.aumombelli.gatcha.app.resetLaunchSequence
+import fr.aumombelli.gatcha.app.requestPackOpeningExit
 import fr.aumombelli.gatcha.app.showStartCard
+import fr.aumombelli.gatcha.feature.badges.BadgeItem
+import fr.aumombelli.gatcha.feature.badges.BadgeProgress
+import fr.aumombelli.gatcha.feature.badges.BadgeRequirementType
 import fr.aumombelli.gatcha.ui.motion.AppScene
 import fr.aumombelli.gatcha.ui.motion.PackRevealBounds
 import org.junit.Assert.assertEquals
@@ -28,6 +35,8 @@ class AppSceneStateTest {
                 widthPx = 30f,
                 heightPx = 40f,
             ),
+            packOpeningExitSignal = 2,
+            pendingBadgeCelebration = listOf(sampleBadge()),
         )
 
         val nextState = initialState.preparePackSelection(nextPackFlowKey = 3)
@@ -38,17 +47,19 @@ class AppSceneStateTest {
         assertEquals(false, nextState.packExtensionListVisible)
         assertEquals(3, nextState.packFlowKey)
         assertEquals(0, nextState.packReadySignal)
+        assertEquals(0, nextState.packOpeningExitSignal)
+        assertEquals(emptyList<BadgeItem>(), nextState.pendingBadgeCelebration)
         assertNull(nextState.selectedPackRevealBounds)
     }
 
     @Test
-    fun `finish pack opening returns to menu and clears reveal state`() {
+    fun `finish pack opening returns to menu and keeps pending celebration until cleared`() {
         val openedState = AppSceneUiState(
             currentScene = AppScene.PackSelection,
             packSceneVisible = true,
             packExtensionListVisible = true,
             selectedPackRevealBounds = PackRevealBounds(1f, 2f, 3f, 4f),
-        ).enterPackOpening()
+        ).enterPackOpening().registerPackReady(listOf(sampleBadge()))
 
         val nextState = openedState.finishPackOpeningToMenu()
 
@@ -56,6 +67,7 @@ class AppSceneStateTest {
         assertEquals(true, nextState.menuContentVisible)
         assertEquals(false, nextState.packSceneVisible)
         assertEquals(false, nextState.packExtensionListVisible)
+        assertEquals(listOf(sampleBadge()), nextState.pendingBadgeCelebration)
         assertNull(nextState.selectedPackRevealBounds)
     }
 
@@ -112,4 +124,55 @@ class AppSceneStateTest {
         assertEquals(AppScene.BadgeBook, nextState.currentScene)
         assertEquals(state.menuContentVisible, nextState.menuContentVisible)
     }
+
+    @Test
+    fun `request pack opening exit increments dismiss signal`() {
+        val state = AppSceneUiState(
+            currentScene = AppScene.PackOpening,
+            packOpeningExitSignal = 1,
+        )
+
+        val nextState = state.requestPackOpeningExit()
+
+        assertEquals(2, nextState.packOpeningExitSignal)
+    }
+
+    @Test
+    fun `prepare return to menu hides menu until the controller reveals it`() {
+        val state = AppSceneUiState(
+            currentScene = AppScene.PackOpening,
+            menuContentVisible = true,
+            selectedPackRevealBounds = PackRevealBounds(1f, 2f, 3f, 4f),
+            packOpeningExitSignal = 1,
+        )
+
+        val nextState = state.preparePackOpeningReturnToMenu()
+
+        assertEquals(AppScene.MainMenu, nextState.currentScene)
+        assertEquals(false, nextState.menuContentVisible)
+        assertEquals(0, nextState.packOpeningExitSignal)
+        assertNull(nextState.selectedPackRevealBounds)
+    }
+
+    @Test
+    fun `clear pending celebration removes transient badge payload`() {
+        val state = AppSceneUiState(
+            pendingBadgeCelebration = listOf(sampleBadge()),
+        )
+
+        val nextState = state.clearPendingBadgeCelebration()
+
+        assertEquals(emptyList<BadgeItem>(), nextState.pendingBadgeCelebration)
+    }
+
+    private fun sampleBadge(): BadgeItem = BadgeItem(
+        id = "astro::sky::city",
+        extensionId = "astro",
+        extensionName = "Astro",
+        title = "Ville",
+        description = "Description",
+        requirementType = BadgeRequirementType.SkyQuality,
+        progress = BadgeProgress(matchedCards = 1, totalCards = 1),
+        skyQualityCode = "city",
+    )
 }

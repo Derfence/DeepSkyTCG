@@ -19,9 +19,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -35,6 +38,7 @@ fun MainMenuScreen(
     showBackground: Boolean = true,
     contentVisible: Boolean = true,
     interactionsEnabled: Boolean = true,
+    onBadgeButtonBoundsChanged: (Rect?) -> Unit = {},
 ) {
     val panelAlpha by animateFloatAsState(
         targetValue = if (contentVisible) 1f else 0f,
@@ -113,6 +117,11 @@ fun MainMenuScreen(
                     enabled = interactionsEnabled,
                     modifier = Modifier
                         .fillMaxWidth()
+                        .onGloballyPositioned { coordinates ->
+                            if (contentVisible) {
+                                onBadgeButtonBoundsChanged(coordinates.boundsInRoot())
+                            }
+                        }
                         .testTag("menu-badges"),
                 ) {
                     Text("Badges")

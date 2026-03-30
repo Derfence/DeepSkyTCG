@@ -78,6 +78,34 @@ internal fun offlineMainActivityTestAppContainer(
 }
 
 internal fun backNavigationTestAppContainer(): AppContainer {
+    return navigationTestAppContainer(
+        initialCollection = OwnedCollection(
+            version = 5,
+            cards = mapOf(
+                "ALP-001" to fr.aumombelli.gatcha.model.OwnedCardEntry(
+                    totalOwned = 1,
+                    variants = listOf(
+                        OwnedVariantCount(
+                            skyQuality = "city",
+                            finish = "standard",
+                            count = 1,
+                        ),
+                    ),
+                ),
+            ),
+        ),
+    )
+}
+
+internal fun badgeCelebrationBackNavigationTestAppContainer(): AppContainer {
+    return navigationTestAppContainer(
+        initialCollection = OwnedCollection(version = 5),
+    )
+}
+
+private fun navigationTestAppContainer(
+    initialCollection: OwnedCollection,
+): AppContainer {
     val extension = ExtensionDefinition(
         id = "astronomes-en-herbe",
         name = "Astronomes en herbe",
@@ -86,21 +114,7 @@ internal fun backNavigationTestAppContainer(): AppContainer {
     val cardDefinition = testCardDefinition("ALP-001")
     val progressRepository = MutableProgressGateway(
         initialProgress = StandaloneProgress(
-            collection = OwnedCollection(
-                version = 5,
-                cards = mapOf(
-                    "ALP-001" to fr.aumombelli.gatcha.model.OwnedCardEntry(
-                        totalOwned = 1,
-                        variants = listOf(
-                            OwnedVariantCount(
-                                skyQuality = "city",
-                                finish = "standard",
-                                count = 1,
-                            ),
-                        ),
-                    ),
-                ),
-            ),
+            collection = initialCollection,
             availableDrawCount = 10,
             nextChargeAt = null,
         ),
