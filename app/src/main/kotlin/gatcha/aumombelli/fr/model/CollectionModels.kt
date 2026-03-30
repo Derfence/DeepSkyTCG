@@ -4,7 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class OwnedCollection(
-    val version: Int = 1,
     val cards: Map<String, OwnedCardEntry> = emptyMap(),
 )
 

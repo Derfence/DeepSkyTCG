@@ -31,7 +31,6 @@ internal val Context.secureStandaloneProgressDataStore: DataStore<EncryptedProgr
 class ProgressRepository(
     private val secureDataStore: DataStore<EncryptedProgressEnvelope>,
     private val legacyDataStore: DataStore<Preferences>,
-    private val collectionMigrationService: CollectionMigrationService,
     private val catalogRepository: CatalogGateway,
     private val settings: StandaloneGameSettings = StandaloneGameSettings(),
     private val progressCipher: ProgressCipher,
@@ -51,9 +50,7 @@ class ProgressRepository(
         }
 
         val timeEvidence = settings.timeSource.now()
-        val normalizedCollection = sanitizeCollection(
-            collectionMigrationService.migrateToCurrentVersion(progress.collection),
-        )
+        val normalizedCollection = sanitizeCollection(progress.collection)
         val effectiveNow = currentRecord.trustedNow ?: timeEvidence.wallClockUtc
         val normalizedProgress = progress.copy(
             collection = normalizedCollection,
@@ -85,7 +82,7 @@ class ProgressRepository(
         val timeEvidence = settings.timeSource.now()
         val snapshot = ProgressSnapshot(
             installId = installIdFactory(),
-            collection = collectionMigrationService.emptyCollection(),
+            collection = emptyCollection(),
             availableDrawCount = settings.maxStoredDraws,
             nextChargeAt = null,
             openedPackCount = 0,
@@ -127,7 +124,7 @@ class ProgressRepository(
             normalizeSnapshot(
                 snapshot = ProgressSnapshot(
                     installId = installIdFactory(),
-                    collection = collectionMigrationService.emptyCollection(),
+                    collection = emptyCollection(),
                     availableDrawCount = settings.maxStoredDraws,
                     nextChargeAt = null,
                     openedPackCount = 0,
@@ -148,12 +145,7 @@ class ProgressRepository(
         forcePersist: Boolean,
     ): ProgressRecord {
         val trustedTime = resolveTrustedTime(snapshot)
-        val migratedCollection = try {
-            collectionMigrationService.migrateToCurrentVersion(snapshot.collection)
-        } catch (_: IllegalStateException) {
-            return ProgressRecord(result = compromisedResult(), snapshot = null, trustedNow = null)
-        }
-        val sanitizedCollection = sanitizeCollection(migratedCollection)
+        val sanitizedCollection = sanitizeCollection(snapshot.collection)
         val normalizedProgress = StandaloneProgress(
             collection = sanitizedCollection,
             availableDrawCount = snapshot.availableDrawCount,
@@ -235,7 +227,7 @@ class ProgressRepository(
         }
 
         val collection = storedCollectionJson?.let(::decodeCollection)
-            ?: collectionMigrationService.emptyCollection()
+            ?: emptyCollection()
         val timeEvidence = settings.timeSource.now()
         return ProgressSnapshot(
             installId = installIdFactory(),
@@ -255,6 +247,8 @@ class ProgressRepository(
     } catch (exception: SerializationException) {
         throw IllegalStateException("Saved progression could not be read.", exception)
     }
+
+    private fun emptyCollection(): OwnedCollection = OwnedCollection()
 
     private suspend fun writeSnapshot(snapshot: ProgressSnapshot) {
         val payload = progressCipher.encrypt(
@@ -394,13 +388,11 @@ class ProgressRepository(
         fun fromContext(
             context: Context,
             catalogRepository: CatalogGateway,
-            collectionMigrationService: CollectionMigrationService,
             settings: StandaloneGameSettings = StandaloneGameSettings(),
             progressCipher: ProgressCipher,
         ): ProgressRepository = ProgressRepository(
             secureDataStore = context.secureStandaloneProgressDataStore,
             legacyDataStore = context.legacyStandaloneProgressDataStore,
-            collectionMigrationService = collectionMigrationService,
             catalogRepository = catalogRepository,
             settings = settings,
             progressCipher = progressCipher,

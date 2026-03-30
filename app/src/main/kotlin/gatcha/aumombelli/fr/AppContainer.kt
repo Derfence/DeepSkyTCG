@@ -4,7 +4,6 @@ import android.content.Context
 import fr.aumombelli.gatcha.data.AndroidKeystoreProgressCipher
 import fr.aumombelli.gatcha.data.CatalogGateway
 import fr.aumombelli.gatcha.data.CollectionGateway
-import fr.aumombelli.gatcha.data.CollectionMigrationService
 import fr.aumombelli.gatcha.data.CollectionRepository
 import fr.aumombelli.gatcha.data.GameCatalogRepository
 import fr.aumombelli.gatcha.data.LocalPackEngine
@@ -25,12 +24,10 @@ class AppContainer(
         fun create(context: Context): AppContainer {
             val appContext = context.applicationContext
             val catalogRepository = GameCatalogRepository(appContext)
-            val collectionMigrationService = CollectionMigrationService(catalogRepository)
             val gameSettings = StandaloneGameSettings.offlineDefault(appContext)
             val progressRepository = ProgressRepository.fromContext(
                 context = appContext,
                 catalogRepository = catalogRepository,
-                collectionMigrationService = collectionMigrationService,
                 settings = gameSettings,
                 progressCipher = AndroidKeystoreProgressCipher(),
             )

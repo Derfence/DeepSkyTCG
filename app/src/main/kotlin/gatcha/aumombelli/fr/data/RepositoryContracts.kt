@@ -1,7 +1,6 @@
 package fr.aumombelli.gatcha.data
 
 import fr.aumombelli.gatcha.model.CardDefinition
-import fr.aumombelli.gatcha.model.CatalogMetadata
 import fr.aumombelli.gatcha.model.DrawPackResponse
 import fr.aumombelli.gatcha.model.ExtensionDefinition
 import fr.aumombelli.gatcha.model.OwnedCollection
@@ -11,7 +10,6 @@ import fr.aumombelli.gatcha.model.VariantProfile
 import kotlinx.coroutines.flow.StateFlow
 
 interface CatalogGateway {
-    suspend fun loadMetadata(): CatalogMetadata
     suspend fun loadExtensions(): List<ExtensionDefinition>
     suspend fun loadCards(): List<CardDefinition>
     suspend fun loadVariantProfiles(): List<VariantProfile>

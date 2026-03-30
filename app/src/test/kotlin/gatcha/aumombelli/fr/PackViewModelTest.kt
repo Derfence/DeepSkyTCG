@@ -50,7 +50,7 @@ class PackViewModelTest {
         }
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
-                collection = ownedCollectionOf("ALP-001" to 1).copy(version = 5),
+                collection = ownedCollectionOf("ALP-001" to 1),
                 availableDrawCount = 4,
                 nextChargeAt = "2026-03-24T18:00:00Z",
             )
@@ -93,7 +93,7 @@ class PackViewModelTest {
         )
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
-                collection = ownedCollectionOf("ALP-001" to 1).copy(version = 5),
+                collection = ownedCollectionOf("ALP-001" to 1),
                 availableDrawCount = 10,
                 nextChargeAt = null,
             )
@@ -102,7 +102,7 @@ class PackViewModelTest {
             openPackResponse = response
             onOpenPack = {
                 progressGateway.progress = StandaloneProgress(
-                    collection = ownedCollectionOf("ALP-001" to 2, "ALP-002" to 1).copy(version = 5),
+                    collection = ownedCollectionOf("ALP-001" to 2, "ALP-002" to 1),
                     availableDrawCount = response.availableDrawCount,
                     nextChargeAt = response.nextChargeAt,
                 )
@@ -151,7 +151,7 @@ class PackViewModelTest {
         )
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
-                collection = ownedCollectionOf().copy(version = 5),
+                collection = ownedCollectionOf(),
                 availableDrawCount = 10,
                 nextChargeAt = null,
             )
@@ -160,7 +160,7 @@ class PackViewModelTest {
             openPackResponse = response
             onOpenPack = {
                 progressGateway.progress = StandaloneProgress(
-                    collection = ownedCollectionOf("ALP-001" to 1).copy(version = 5),
+                    collection = ownedCollectionOf("ALP-001" to 1),
                     availableDrawCount = response.availableDrawCount,
                     nextChargeAt = response.nextChargeAt,
                 )
@@ -200,7 +200,7 @@ class PackViewModelTest {
         )
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
-                collection = ownedCollectionOf().copy(version = 5),
+                collection = ownedCollectionOf(),
                 availableDrawCount = 10,
                 nextChargeAt = null,
                 openedPackCount = 0,
@@ -210,7 +210,7 @@ class PackViewModelTest {
             openPackResponse = response
             onOpenPack = {
                 progressGateway.progress = StandaloneProgress(
-                    collection = ownedCollectionOf().copy(version = 5),
+                    collection = ownedCollectionOf(),
                     availableDrawCount = response.availableDrawCount,
                     nextChargeAt = response.nextChargeAt,
                     openedPackCount = 1,

@@ -5,7 +5,6 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import fr.aumombelli.gatcha.data.CollectionMigrationService
 import fr.aumombelli.gatcha.data.EncryptedProgressEnvelope
 import fr.aumombelli.gatcha.data.EncryptedProgressEnvelopeSerializer
 import fr.aumombelli.gatcha.data.ProgressLoadResult
@@ -34,13 +33,13 @@ class ProgressRepositoryTest {
     private val fixedNow = Instant.parse("2026-03-24T12:00:00Z")
 
     @Test
-    fun `first load creates an empty collection at the current catalog version`() = runTest {
+    fun `first load creates an empty collection`() = runTest {
         val fixture = newFixture()
 
         val result = fixture.repository.loadProgress()
 
         val loaded = result.requireUsableProgress()
-        assertEquals(5, loaded.progress.collection.version)
+        assertEquals(OwnedCollection(), loaded.progress.collection)
         assertEquals(emptyMap<String, Int>(), loaded.progress.collection.cards.mapValues { it.value.totalOwned })
         assertEquals(10, loaded.progress.availableDrawCount)
         assertEquals(0, loaded.progress.openedPackCount)
@@ -51,7 +50,7 @@ class ProgressRepositoryTest {
     fun `save progress persists encrypted snapshot`() = runTest {
         val fixture = newFixture()
         val progress = StandaloneProgress(
-            collection = ownedCollectionOf("ALP-001" to 2).copy(version = 5),
+            collection = ownedCollectionOf("ALP-001" to 2),
             availableDrawCount = 4,
             nextChargeAt = "2026-03-25T00:00:00Z",
             openedPackCount = 3,
@@ -67,13 +66,10 @@ class ProgressRepositoryTest {
     }
 
     @Test
-    fun `load progress migrates legacy collection and rewrites secure storage`() = runTest {
+    fun `load progress accepts a legacy collection json with deprecated version field`() = runTest {
         val fixture = newFixture()
         fixture.legacyDataStore.edit { preferences ->
-            preferences[CollectionJsonKey] = json.encodeToString(
-                OwnedCollection.serializer(),
-                ownedCollectionOf("ALP-001" to 1).copy(version = 1),
-            )
+            preferences[CollectionJsonKey] = legacyVersionedCollectionJson(cardId = "ALP-001", totalOwned = 1)
             preferences[AvailableDrawCountKey] = 4
             preferences[NextChargeAtKey] = "2026-03-25T00:00:00Z"
         }
@@ -82,11 +78,52 @@ class ProgressRepositoryTest {
 
         assertTrue(result is ProgressLoadResult.Recovered)
         val loaded = result.requireUsableProgress()
-        assertEquals(5, loaded.progress.collection.version)
+        assertEquals(ownedCollectionOf("ALP-001" to 1), loaded.progress.collection)
         assertEquals(4, loaded.progress.availableDrawCount)
         assertEquals("2026-03-25T00:00:00Z", loaded.progress.nextChargeAt)
         assertEquals(null, fixture.legacyDataStore.data.first()[CollectionJsonKey])
         assertFalse(fixture.secureDataStore.data.first().isEmpty())
+    }
+
+    @Test
+    fun `load progress accepts a secure snapshot whose collection still has a version field`() = runTest {
+        val fixture = newFixture()
+        writeRawSecureSnapshot(
+            fixture = fixture,
+            snapshotJson = """
+                {
+                  "installId": "install-1",
+                  "schemaVersion": 1,
+                  "collection": {
+                    "version": 5,
+                    "cards": {
+                      "ALP-001": {
+                        "totalOwned": 1,
+                        "variants": [
+                          {
+                            "skyQuality": "city",
+                            "finish": "standard",
+                            "count": 1
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "availableDrawCount": 10,
+                  "nextChargeAt": null,
+                  "openedPackCount": 0,
+                  "lastTrustedWallClockUtc": "${fixedNow}",
+                  "lastTrustedElapsedRealtimeMs": 1000,
+                  "lastObservedBootMarker": "test-boot",
+                  "tamperFlag": false
+                }
+            """.trimIndent(),
+        )
+
+        val result = fixture.repository.loadProgress()
+
+        assertTrue(result is ProgressLoadResult.Ok)
+        assertEquals(ownedCollectionOf("ALP-001" to 1), result.requireUsableProgress().progress.collection)
     }
 
     @Test
@@ -97,7 +134,6 @@ class ProgressRepositoryTest {
             snapshot = ProgressSnapshot(
                 installId = "install-1",
                 collection = OwnedCollection(
-                    version = 5,
                     cards = mapOf(
                         "ALP-001" to OwnedCardEntry(
                             totalOwned = 99,
@@ -141,7 +177,7 @@ class ProgressRepositoryTest {
         val fixture = newFixture()
         fixture.repository.saveProgress(
             StandaloneProgress(
-                collection = ownedCollectionOf("ALP-001" to 1).copy(version = 5),
+                collection = ownedCollectionOf("ALP-001" to 1),
                 availableDrawCount = 10,
                 nextChargeAt = null,
             ),
@@ -167,7 +203,7 @@ class ProgressRepositoryTest {
             fixture = fixture,
             snapshot = ProgressSnapshot(
                 installId = "install-1",
-                collection = ownedCollectionOf("ALP-001" to 1).copy(version = 5),
+                collection = ownedCollectionOf("ALP-001" to 1),
                 availableDrawCount = 4,
                 nextChargeAt = "2026-03-24T18:00:00Z",
                 openedPackCount = 0,
@@ -202,7 +238,7 @@ class ProgressRepositoryTest {
             fixture = fixture,
             snapshot = ProgressSnapshot(
                 installId = "install-1",
-                collection = ownedCollectionOf("ALP-001" to 1).copy(version = 5),
+                collection = ownedCollectionOf("ALP-001" to 1),
                 availableDrawCount = 0,
                 nextChargeAt = "2026-03-24T18:00:00Z",
                 openedPackCount = 0,
@@ -243,7 +279,6 @@ class ProgressRepositoryTest {
             repository = ProgressRepository(
                 secureDataStore = secureDataStore,
                 legacyDataStore = legacyDataStore,
-                collectionMigrationService = CollectionMigrationService(FakeCatalogGateway()),
                 catalogRepository = FakeCatalogGateway().apply {
                     cards = listOf(testCardDefinition("ALP-001", variantProfileId = "observation-default"))
                 },
@@ -267,6 +302,37 @@ class ProgressRepositoryTest {
             EncryptedProgressEnvelope.fromPayload(payload)
         }
     }
+
+    private suspend fun writeRawSecureSnapshot(
+        fixture: RepositoryFixture,
+        snapshotJson: String,
+    ) {
+        val payload = fixture.cipher.encrypt(snapshotJson.encodeToByteArray())
+        fixture.secureDataStore.updateData {
+            EncryptedProgressEnvelope.fromPayload(payload)
+        }
+    }
+
+    private fun legacyVersionedCollectionJson(
+        cardId: String,
+        totalOwned: Int,
+    ): String = """
+        {
+          "version": 1,
+          "cards": {
+            "$cardId": {
+              "totalOwned": $totalOwned,
+              "variants": [
+                {
+                  "skyQuality": "city",
+                  "finish": "standard",
+                  "count": $totalOwned
+                }
+              ]
+            }
+          }
+        }
+    """.trimIndent()
 
     private data class RepositoryFixture(
         val secureDataStore: DataStore<EncryptedProgressEnvelope>,

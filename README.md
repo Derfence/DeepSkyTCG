@@ -36,7 +36,7 @@ Au lancement, l'application :
 - `data/LocalPackEngine.kt` : tirage local pondere, consommation des ouvertures et recharge par palier.
 - `data/PackRepository.kt` : orchestration du tirage local puis persistance de la progression.
 - `model/` : modeles de catalogue, collection, packs et progression locale.
-- `assets/catalog/` : catalogue embarque (`metadata.json`, `extensions.json`, `cards.json`, `variant_profiles.json`).
+- `assets/catalog/` : catalogue embarque (`extensions.json`, `cards.json`, `variant_profiles.json`).
 
 ## Flux utilisateur
 
@@ -56,7 +56,7 @@ La progression locale contient uniquement :
 - `available_draw_count` : le nombre d'ouvertures actuellement disponibles ;
 - `next_charge_at` : la prochaine date ISO rechargeant une ouverture quand le stock est inferieur a 10.
 
-`OwnedCollection.version` reste migree via `CollectionMigrationService`. Au premier lancement, si aucune sauvegarde n'existe, l'application cree automatiquement une collection vide a la version du catalogue embarque. Si une sauvegarde ancienne est detectee, elle est migree puis reecrite localement.
+La collection locale ne porte plus de version de catalogue. Au premier lancement, l'application cree automatiquement une collection vide. Les anciennes sauvegardes contenant encore `collection.version` restent lisibles grace a la deserialisation tolerante, puis sont reecrites au prochain reset ou a la prochaine sauvegarde.
 
 ## Regles de jeu offline
 
@@ -124,4 +124,4 @@ Le catalogue source editable reste le fichier racine `catalogue_astronomie.csv`,
 python3 scripts/catalog_sync.py apply
 ```
 
-Toute evolution du format de collection doit continuer a fournir une migration explicite `n -> n+1`.
+Toute evolution du format de persistance securisee doit continuer a passer par `ProgressSnapshot.schemaVersion`.

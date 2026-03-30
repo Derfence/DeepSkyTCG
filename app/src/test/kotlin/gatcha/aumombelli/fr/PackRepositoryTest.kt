@@ -20,7 +20,7 @@ class PackRepositoryTest {
         val fixedNow = Instant.parse("2026-03-24T12:00:00Z")
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
-                collection = ownedCollectionOf("ALP-001" to 1).copy(version = 5),
+                collection = ownedCollectionOf("ALP-001" to 1),
                 availableDrawCount = 10,
                 nextChargeAt = null,
             )

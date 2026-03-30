@@ -11,7 +11,7 @@ class CollectionRepositoryTest {
     fun `load collection returns persisted local collection`() = runTest {
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
-                collection = ownedCollectionOf("ALP-001" to 1).copy(version = 5),
+                collection = ownedCollectionOf("ALP-001" to 1),
                 availableDrawCount = 4,
                 nextChargeAt = "2026-03-25T00:00:00Z",
             )
@@ -21,20 +21,19 @@ class CollectionRepositoryTest {
         val collection = repository.loadCollection()
 
         assertEquals(1, collection.cards["ALP-001"]?.totalOwned)
-        assertEquals(5, collection.version)
     }
 
     @Test
     fun `save collection preserves stored draw charges inside progress`() = runTest {
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
-                collection = ownedCollectionOf("ALP-001" to 1).copy(version = 5),
+                collection = ownedCollectionOf("ALP-001" to 1),
                 availableDrawCount = 4,
                 nextChargeAt = "2026-03-25T00:00:00Z",
             )
         }
         val repository = CollectionRepository(progressGateway)
-        val newCollection = ownedCollectionOf("ALP-002" to 3).copy(version = 5)
+        val newCollection = ownedCollectionOf("ALP-002" to 3)
 
         repository.saveCollection(newCollection)
 

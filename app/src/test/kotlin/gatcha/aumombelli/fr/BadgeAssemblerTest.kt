@@ -125,7 +125,7 @@ class BadgeAssemblerTest {
             extensions = listOf(ExtensionDefinition("astro", "Astro", "cover")),
             cards = listOf(testCardDefinition("AST-001", extensionId = "astro")),
             variantProfiles = testVariantProfiles(),
-            beforeProgress = badgeProgress(OwnedCollection(version = 5)),
+            beforeProgress = badgeProgress(OwnedCollection()),
             afterProgress = badgeProgress(
                 collection = ownedCollectionWithVariants(
                     "AST-001",
@@ -154,7 +154,7 @@ class BadgeAssemblerTest {
             cards = listOf(testCardDefinition("AST-001", extensionId = "astro")),
             variantProfiles = testVariantProfiles(),
             progress = badgeProgress(
-                collection = OwnedCollection(version = 5),
+                collection = OwnedCollection(),
                 openedPackCount = 1,
             ),
         )

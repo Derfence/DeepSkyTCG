@@ -2,7 +2,6 @@ package fr.aumombelli.gatcha.data
 
 import android.content.Context
 import fr.aumombelli.gatcha.model.CardDefinition
-import fr.aumombelli.gatcha.model.CatalogMetadata
 import fr.aumombelli.gatcha.model.ExtensionDefinition
 import fr.aumombelli.gatcha.model.VariantProfile
 import kotlinx.coroutines.Dispatchers
@@ -17,19 +16,11 @@ class GameCatalogRepository(
         classDiscriminator = "detailType"
     }
     @Volatile
-    private var metadataCache: CatalogMetadata? = null
-    @Volatile
     private var extensionsCache: List<ExtensionDefinition>? = null
     @Volatile
     private var cardsCache: List<CardDefinition>? = null
     @Volatile
     private var variantProfilesCache: List<VariantProfile>? = null
-
-    override suspend fun loadMetadata(): CatalogMetadata = metadataCache ?: withContext(Dispatchers.IO) {
-        metadataCache ?: context.assets.open("catalog/metadata.json").bufferedReader().use { reader ->
-            json.decodeFromString<CatalogMetadata>(reader.readText()).also { metadataCache = it }
-        }
-    }
 
     override suspend fun loadExtensions(): List<ExtensionDefinition> = withContext(Dispatchers.IO) {
         extensionsCache ?: context.assets.open("catalog/extensions.json").bufferedReader().use { reader ->

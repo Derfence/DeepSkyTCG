@@ -20,7 +20,7 @@ class StartViewModelTest {
     @Test
     fun `init loads local progress and clears loading state`() = runTest {
         val progressGateway = FakeProgressGateway().apply {
-            progress = progress.copy(collection = ownedCollectionOf("ALP-001" to 1).copy(version = 5))
+            progress = progress.copy(collection = ownedCollectionOf("ALP-001" to 1))
         }
 
         val viewModel = StartViewModel(progressGateway)

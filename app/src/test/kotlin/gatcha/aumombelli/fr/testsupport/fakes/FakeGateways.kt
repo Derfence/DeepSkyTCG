@@ -5,7 +5,6 @@ import fr.aumombelli.gatcha.data.CollectionGateway
 import fr.aumombelli.gatcha.data.PackGateway
 import fr.aumombelli.gatcha.data.ProgressLoadResult
 import fr.aumombelli.gatcha.data.ProgressGateway
-import fr.aumombelli.gatcha.model.CatalogMetadata
 import fr.aumombelli.gatcha.model.CardDefinition
 import fr.aumombelli.gatcha.model.DrawPackResponse
 import fr.aumombelli.gatcha.model.ExtensionDefinition
@@ -22,7 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 
 class FakeProgressGateway : ProgressGateway {
     var progress = StandaloneProgress(
-        collection = OwnedCollection(version = 5),
+        collection = OwnedCollection(),
         availableDrawCount = 10,
         nextChargeAt = null,
     )
@@ -61,7 +60,7 @@ class FakeProgressGateway : ProgressGateway {
         compromisedMessage = null
         recoveryNotice = null
         progress = StandaloneProgress(
-            collection = OwnedCollection(version = 5),
+            collection = OwnedCollection(),
             availableDrawCount = 10,
             nextChargeAt = null,
         )
@@ -69,7 +68,7 @@ class FakeProgressGateway : ProgressGateway {
 }
 
 class FakeCollectionGateway : CollectionGateway {
-    var collection = OwnedCollection(version = 5)
+    var collection = OwnedCollection()
     var loadCollectionFailure: Throwable? = null
     val savedCollections = mutableListOf<OwnedCollection>()
     var loadCollectionCallCount = AtomicInteger(0)
@@ -90,19 +89,12 @@ class FakeCollectionGateway : CollectionGateway {
 }
 
 class FakeCatalogGateway : CatalogGateway {
-    var metadata = CatalogMetadata(catalogVersion = 5)
     var extensions: List<ExtensionDefinition> = emptyList()
     var cards: List<CardDefinition> = emptyList()
     var variantProfiles: List<VariantProfile> = testVariantProfiles()
-    var metadataFailure: Throwable? = null
     var extensionsFailure: Throwable? = null
     var cardsFailure: Throwable? = null
     var variantProfilesFailure: Throwable? = null
-
-    override suspend fun loadMetadata(): CatalogMetadata {
-        metadataFailure?.let { throw it }
-        return metadata
-    }
 
     override suspend fun loadExtensions(): List<ExtensionDefinition> {
         extensionsFailure?.let { throw it }

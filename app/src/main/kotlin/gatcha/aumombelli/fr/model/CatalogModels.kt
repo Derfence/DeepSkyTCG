@@ -3,11 +3,6 @@ package fr.aumombelli.gatcha.model
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class CatalogMetadata(
-    val catalogVersion: Int,
-)
-
-@Serializable
 data class ExtensionDefinition(
     val id: String,
     val name: String,

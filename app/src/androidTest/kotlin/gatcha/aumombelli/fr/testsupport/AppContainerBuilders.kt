@@ -8,7 +8,6 @@ import fr.aumombelli.gatcha.data.AesGcmProgressCipher
 import fr.aumombelli.gatcha.data.AndroidTrustedTimeSource
 import fr.aumombelli.gatcha.data.CatalogGateway
 import fr.aumombelli.gatcha.data.CollectionGateway
-import fr.aumombelli.gatcha.data.CollectionMigrationService
 import fr.aumombelli.gatcha.data.CollectionRepository
 import fr.aumombelli.gatcha.data.EncryptedProgressEnvelopeSerializer
 import fr.aumombelli.gatcha.data.GameCatalogRepository
@@ -20,7 +19,6 @@ import fr.aumombelli.gatcha.data.ProgressGateway
 import fr.aumombelli.gatcha.data.ProgressRepository
 import fr.aumombelli.gatcha.data.RandomEntropySource
 import fr.aumombelli.gatcha.data.StandaloneGameSettings
-import fr.aumombelli.gatcha.model.CatalogMetadata
 import fr.aumombelli.gatcha.model.CardDefinition
 import fr.aumombelli.gatcha.model.CardFinishDefinition
 import fr.aumombelli.gatcha.model.DrawPackResponse
@@ -57,7 +55,6 @@ internal fun offlineMainActivityTestAppContainer(
     secureFile.delete()
     legacyFile.delete()
     val catalogRepository = GameCatalogRepository(appContext)
-    val migrationService = CollectionMigrationService(catalogRepository)
     val secureDataStore = DataStoreFactory.create(
         serializer = EncryptedProgressEnvelopeSerializer,
         scope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
@@ -74,7 +71,6 @@ internal fun offlineMainActivityTestAppContainer(
     val progressRepository = ProgressRepository(
         secureDataStore = secureDataStore,
         legacyDataStore = legacyDataStore,
-        collectionMigrationService = migrationService,
         catalogRepository = catalogRepository,
         settings = gameSettings,
         progressCipher = AesGcmProgressCipher(keyProvider = ::newTestSecretKey),
@@ -101,7 +97,6 @@ internal fun offlineMainActivityTestAppContainer(
 internal fun backNavigationTestAppContainer(): AppContainer {
     return navigationTestAppContainer(
         initialCollection = OwnedCollection(
-            version = 5,
             cards = mapOf(
                 "ALP-001" to fr.aumombelli.gatcha.model.OwnedCardEntry(
                     totalOwned = 1,
@@ -120,7 +115,7 @@ internal fun backNavigationTestAppContainer(): AppContainer {
 
 internal fun badgeCelebrationBackNavigationTestAppContainer(): AppContainer {
     return navigationTestAppContainer(
-        initialCollection = OwnedCollection(version = 5),
+        initialCollection = OwnedCollection(),
     )
 }
 
@@ -188,7 +183,7 @@ private class MutableProgressGateway(
 
     override suspend fun resetProgress() {
         progress = StandaloneProgress(
-            collection = OwnedCollection(version = 5),
+            collection = OwnedCollection(),
             availableDrawCount = 10,
             nextChargeAt = null,
         )
@@ -212,7 +207,6 @@ private class NavigationCatalogGateway(
     private val cards: List<CardDefinition>,
     private val variantProfiles: List<VariantProfile>,
 ) : CatalogGateway {
-    override suspend fun loadMetadata(): CatalogMetadata = CatalogMetadata(catalogVersion = 5)
     override suspend fun loadExtensions(): List<ExtensionDefinition> = extensions
     override suspend fun loadCards(): List<CardDefinition> = cards
     override suspend fun loadVariantProfiles(): List<VariantProfile> = variantProfiles
