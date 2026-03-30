@@ -25,4 +25,5 @@ data class StandaloneProgress(
     val collection: OwnedCollection,
     val availableDrawCount: Int = 10,
     val nextChargeAt: String? = null,
+    val openedPackCount: Int = 0,
 )

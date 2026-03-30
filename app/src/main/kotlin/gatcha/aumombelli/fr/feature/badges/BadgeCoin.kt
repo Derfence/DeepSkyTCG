@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.width
 import fr.aumombelli.gatcha.ui.component.ExtensionLogoMark
+import fr.aumombelli.gatcha.ui.motion.LaunchLogoMark
 import fr.aumombelli.gatcha.ui.component.TwinklingStarsOverlay
 import fr.aumombelli.gatcha.ui.theme.SkyQualityPalette
 import fr.aumombelli.gatcha.ui.theme.skyQualityPalette
@@ -152,7 +153,7 @@ internal fun BadgeCoinFace(
             )
         }
 
-        if (badge.requirementType != BadgeRequirementType.SkyQuality) {
+        if (badgeUsesTwinklingStars(badge)) {
             TwinklingStarsOverlay(
                 modifier = Modifier
                     .fillMaxSize()
@@ -176,10 +177,9 @@ internal fun BadgeCoinFace(
                 ),
         )
 
-        ExtensionLogoMark(
-            extensionId = badge.extensionId,
-            compact = false,
-            emblemSize = logoSize,
+        BadgeCenterMark(
+            badge = badge,
+            logoSize = logoSize,
             modifier = Modifier.size(logoSize),
         )
 
@@ -195,6 +195,12 @@ internal fun BadgeCoinFace(
 }
 
 private fun badgePalette(badge: BadgeItem): SkyQualityPalette = when (badge.requirementType) {
+    BadgeRequirementType.FirstPackOpened -> SkyQualityPalette(
+        top = Color(0xFFF8C95E),
+        bottom = Color(0xFFB66C10),
+        glow = Color(0xAAFFE29B),
+        mist = Color(0x55F8BE57),
+    )
     BadgeRequirementType.SkyQuality -> skyQualityPalette(badge.skyQualityCode.orEmpty())
     BadgeRequirementType.Holographic -> SkyQualityPalette(
         top = Color(0xFF9EA4B1),
@@ -227,10 +233,49 @@ private fun badgeBackgroundBrush(
             1.00f to skyQualityPalette("city").bottom,
         ),
     )
+    BadgeRequirementType.FirstPackOpened -> Brush.verticalGradient(
+        colors = listOf(
+            Color(0xFFFFD77D),
+            Color(0xFFE09B24),
+            Color(0xFF8D4E0B),
+        ),
+    )
     else -> Brush.verticalGradient(
         colors = listOf(
             palette.top,
             palette.bottom,
         ),
     )
+}
+
+@Composable
+private fun BadgeCenterMark(
+    badge: BadgeItem,
+    logoSize: Dp,
+    modifier: Modifier = Modifier,
+) {
+    if (badge.requirementType == BadgeRequirementType.FirstPackOpened) {
+        LaunchLogoMark(
+            showWordmark = false,
+            emblemSize = logoSize,
+            modifier = modifier,
+        )
+    } else {
+        ExtensionLogoMark(
+            extensionId = badge.extensionId,
+            compact = false,
+            emblemSize = logoSize,
+            modifier = modifier,
+        )
+    }
+}
+
+private fun badgeUsesTwinklingStars(badge: BadgeItem): Boolean = when (badge.requirementType) {
+    BadgeRequirementType.FirstPackOpened,
+    BadgeRequirementType.SkyQuality,
+    -> false
+    BadgeRequirementType.Holographic,
+    BadgeRequirementType.MountainHolographic,
+    BadgeRequirementType.PerfectCollection,
+    -> true
 }

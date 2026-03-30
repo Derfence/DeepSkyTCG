@@ -6,16 +6,23 @@ data class BadgeBookUiState(
     val errorMessage: String? = null,
 )
 
+enum class BadgeSectionType {
+    General,
+    Extension,
+}
+
 data class BadgeSection(
     val extensionId: String,
     val extensionName: String,
     val badges: List<BadgeItem>,
+    val sectionType: BadgeSectionType = BadgeSectionType.Extension,
 ) {
     val unlockedCount: Int
         get() = badges.count { it.isUnlocked }
 }
 
 enum class BadgeRequirementType {
+    FirstPackOpened,
     SkyQuality,
     Holographic,
     MountainHolographic,
@@ -25,12 +32,13 @@ enum class BadgeRequirementType {
 data class BadgeProgress(
     val matchedCards: Int,
     val totalCards: Int,
+    val unitLabel: String = "cartes valides",
 ) {
     val isComplete: Boolean
         get() = totalCards > 0 && matchedCards >= totalCards
 
     val label: String
-        get() = "$matchedCards / $totalCards cartes valides"
+        get() = "$matchedCards / $totalCards $unitLabel"
 }
 
 data class BadgeItem(

@@ -12,6 +12,7 @@ import fr.aumombelli.gatcha.feature.badges.BadgeItem
 import fr.aumombelli.gatcha.feature.badges.buildNewlyUnlockedBadges
 import fr.aumombelli.gatcha.model.ExtensionDefinition
 import fr.aumombelli.gatcha.model.OwnedCollection
+import fr.aumombelli.gatcha.model.StandaloneProgress
 import java.time.Duration
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -126,12 +127,12 @@ class PackViewModel(
                 )
             }
             runCatching {
-                val beforeCollection = progressRepository.loadProgress().collection
+                val beforeProgress = progressRepository.loadProgress()
                 val response = packRepository.openPack(extensionId)
                 val progress = progressRepository.loadProgress()
                 val newlyUnlockedBadges = loadNewlyUnlockedBadges(
-                    beforeCollection = beforeCollection,
-                    afterCollection = progress.collection,
+                    beforeProgress = beforeProgress,
+                    afterProgress = progress,
                 )
                 Triple(response, progress, newlyUnlockedBadges)
             }.onSuccess { (_, progress, newlyUnlockedBadges) ->
@@ -160,15 +161,15 @@ class PackViewModel(
     }
 
     private suspend fun loadNewlyUnlockedBadges(
-        beforeCollection: OwnedCollection,
-        afterCollection: OwnedCollection,
+        beforeProgress: StandaloneProgress,
+        afterProgress: StandaloneProgress,
     ): List<BadgeItem> = runCatching {
         buildNewlyUnlockedBadges(
             extensions = catalogRepository.loadExtensions(),
             cards = catalogRepository.loadCards(),
             variantProfiles = catalogRepository.loadVariantProfiles(),
-            beforeCollection = beforeCollection,
-            afterCollection = afterCollection,
+            beforeProgress = beforeProgress,
+            afterProgress = afterProgress,
         )
     }.getOrElse { emptyList() }
 

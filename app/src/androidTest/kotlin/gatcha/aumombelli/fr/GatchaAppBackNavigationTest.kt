@@ -1,8 +1,11 @@
 package fr.aumombelli.gatcha
 
 import androidx.activity.ComponentActivity
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import fr.aumombelli.gatcha.testsupport.badgeCelebrationBackNavigationTestAppContainer
@@ -110,7 +113,9 @@ class GatchaAppBackNavigationTest {
         composeRule.onNodeWithTag("badge-unlock-celebration").assertIsDisplayed()
         composeRule.onNodeWithTag("badge-unlock-celebration-coin-astronomes-en-herbe::sky::city").assertIsDisplayed()
 
-        advanceBy(1_400)
+        advanceBy(1_800)
+        composeRule.onAllNodesWithTag("badge-unlock-celebration").assertCountEquals(0)
+        composeRule.onNodeWithTag("menu-open-pack").assertIsEnabled()
         composeRule.onNodeWithTag("menu-open-pack").assertIsDisplayed()
     }
 

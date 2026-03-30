@@ -5,6 +5,7 @@ import fr.aumombelli.gatcha.feature.badges.buildNewlyUnlockedBadges
 import fr.aumombelli.gatcha.model.ExtensionDefinition
 import fr.aumombelli.gatcha.model.OwnedCollection
 import fr.aumombelli.gatcha.model.OwnedVariantCount
+import fr.aumombelli.gatcha.model.StandaloneProgress
 import fr.aumombelli.gatcha.testsupport.fixtures.testCardDefinition
 import fr.aumombelli.gatcha.testsupport.fixtures.testVariantProfiles
 import org.junit.Assert.assertEquals
@@ -19,11 +20,13 @@ class BadgeAssemblerTest {
             extensions = listOf(ExtensionDefinition("astro", "Astro", "cover")),
             cards = listOf(testCardDefinition("AST-001", extensionId = "astro")),
             variantProfiles = testVariantProfiles(),
-            collection = ownedCollectionWithVariants(
-                "AST-001",
-                OwnedVariantCount("rural", "standard", 1),
+            progress = badgeProgress(
+                collection = ownedCollectionWithVariants(
+                    "AST-001",
+                    OwnedVariantCount("rural", "standard", 1),
+                ),
             ),
-        ).single()
+        ).first { it.extensionId == "astro" }
 
         val badgesById = section.badges.associateBy { it.id }
 
@@ -39,11 +42,13 @@ class BadgeAssemblerTest {
             extensions = listOf(ExtensionDefinition("astro", "Astro", "cover")),
             cards = listOf(testCardDefinition("AST-001", extensionId = "astro")),
             variantProfiles = testVariantProfiles(),
-            collection = ownedCollectionWithVariants(
-                "AST-001",
-                OwnedVariantCount("city", "holographic", 1),
+            progress = badgeProgress(
+                collection = ownedCollectionWithVariants(
+                    "AST-001",
+                    OwnedVariantCount("city", "holographic", 1),
+                ),
             ),
-        ).single()
+        ).first { it.extensionId == "astro" }
 
         val badgesById = section.badges.associateBy { it.id }
 
@@ -60,19 +65,21 @@ class BadgeAssemblerTest {
                 testCardDefinition("AST-002", extensionId = "astro"),
             ),
             variantProfiles = testVariantProfiles(),
-            collection = OwnedCollection(
-                cards = sortedMapOf(
-                    "AST-001" to fr.aumombelli.gatcha.model.OwnedCardEntry(
-                        totalOwned = 1,
-                        variants = listOf(OwnedVariantCount("mountain", "holographic", 1)),
-                    ),
-                    "AST-002" to fr.aumombelli.gatcha.model.OwnedCardEntry(
-                        totalOwned = 1,
-                        variants = listOf(OwnedVariantCount("mountain", "standard", 1)),
+            progress = badgeProgress(
+                collection = OwnedCollection(
+                    cards = sortedMapOf(
+                        "AST-001" to fr.aumombelli.gatcha.model.OwnedCardEntry(
+                            totalOwned = 1,
+                            variants = listOf(OwnedVariantCount("mountain", "holographic", 1)),
+                        ),
+                        "AST-002" to fr.aumombelli.gatcha.model.OwnedCardEntry(
+                            totalOwned = 1,
+                            variants = listOf(OwnedVariantCount("mountain", "standard", 1)),
+                        ),
                     ),
                 ),
             ),
-        ).single()
+        ).first { it.extensionId == "astro" }
 
         val holographicBadge = section.badges.first { it.id == "astro::finish::holographic" }
         val mountainHolographicBadge = section.badges.first {
@@ -91,18 +98,20 @@ class BadgeAssemblerTest {
             extensions = listOf(ExtensionDefinition("astro", "Astro", "cover")),
             cards = listOf(testCardDefinition("AST-001", extensionId = "astro")),
             variantProfiles = testVariantProfiles(),
-            collection = ownedCollectionWithVariants(
-                "AST-001",
-                OwnedVariantCount("city", "standard", 1),
-                OwnedVariantCount("city", "holographic", 1),
-                OwnedVariantCount("suburban", "standard", 1),
-                OwnedVariantCount("suburban", "holographic", 1),
-                OwnedVariantCount("rural", "standard", 1),
-                OwnedVariantCount("rural", "holographic", 1),
-                OwnedVariantCount("mountain", "standard", 1),
-                OwnedVariantCount("mountain", "holographic", 1),
+            progress = badgeProgress(
+                collection = ownedCollectionWithVariants(
+                    "AST-001",
+                    OwnedVariantCount("city", "standard", 1),
+                    OwnedVariantCount("city", "holographic", 1),
+                    OwnedVariantCount("suburban", "standard", 1),
+                    OwnedVariantCount("suburban", "holographic", 1),
+                    OwnedVariantCount("rural", "standard", 1),
+                    OwnedVariantCount("rural", "holographic", 1),
+                    OwnedVariantCount("mountain", "standard", 1),
+                    OwnedVariantCount("mountain", "holographic", 1),
+                ),
             ),
-        ).single()
+        ).first { it.extensionId == "astro" }
 
         val perfectBadge = section.badges.first { it.id == "astro::collection::perfect" }
 
@@ -116,10 +125,12 @@ class BadgeAssemblerTest {
             extensions = listOf(ExtensionDefinition("astro", "Astro", "cover")),
             cards = listOf(testCardDefinition("AST-001", extensionId = "astro")),
             variantProfiles = testVariantProfiles(),
-            beforeCollection = OwnedCollection(version = 5),
-            afterCollection = ownedCollectionWithVariants(
-                "AST-001",
-                OwnedVariantCount("mountain", "holographic", 1),
+            beforeProgress = badgeProgress(OwnedCollection(version = 5)),
+            afterProgress = badgeProgress(
+                collection = ownedCollectionWithVariants(
+                    "AST-001",
+                    OwnedVariantCount("mountain", "holographic", 1),
+                ),
             ),
         )
 
@@ -135,4 +146,33 @@ class BadgeAssemblerTest {
             newlyUnlockedBadges.map { it.id },
         )
     }
+
+    @Test
+    fun `general section contains first pack opened badge`() {
+        val sections = buildBadgeBookSections(
+            extensions = listOf(ExtensionDefinition("astro", "Astro", "cover")),
+            cards = listOf(testCardDefinition("AST-001", extensionId = "astro")),
+            variantProfiles = testVariantProfiles(),
+            progress = badgeProgress(
+                collection = OwnedCollection(version = 5),
+                openedPackCount = 1,
+            ),
+        )
+
+        val generalSection = sections.first()
+        val firstPackBadge = generalSection.badges.single()
+
+        assertEquals("general", generalSection.extensionId)
+        assertEquals("General", generalSection.extensionName)
+        assertTrue(firstPackBadge.isUnlocked)
+        assertEquals("1 / 1 pack ouvert", firstPackBadge.progress.label)
+    }
+
+    private fun badgeProgress(
+        collection: OwnedCollection,
+        openedPackCount: Int = 0,
+    ): StandaloneProgress = StandaloneProgress(
+        collection = collection,
+        openedPackCount = openedPackCount,
+    )
 }

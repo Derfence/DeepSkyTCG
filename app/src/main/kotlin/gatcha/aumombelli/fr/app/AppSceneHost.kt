@@ -212,7 +212,7 @@ internal fun AppSceneHost(appContainer: AppContainer) {
                     factory = GatchaViewModelFactory {
                         BadgeBookViewModel(
                             catalogRepository = appContainer.catalogRepository,
-                            collectionRepository = appContainer.collectionRepository,
+                            progressRepository = appContainer.progressRepository,
                         )
                     },
                 )

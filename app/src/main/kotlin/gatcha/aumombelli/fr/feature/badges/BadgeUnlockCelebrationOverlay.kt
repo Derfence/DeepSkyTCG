@@ -14,7 +14,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -33,6 +35,8 @@ import kotlin.math.PI
 import kotlin.math.min
 import kotlin.math.sin
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 
 @Composable
 internal fun BadgeUnlockCelebrationOverlay(
@@ -48,6 +52,7 @@ internal fun BadgeUnlockCelebrationOverlay(
     val density = LocalDensity.current
     val glowSizePx = with(density) { 220.dp.toPx() }
     val coinSizePx = with(density) { 92.dp.toPx() }
+    val latestTargetBounds by rememberUpdatedState(targetBounds)
     var rootSize by remember(sortedBadges) { mutableStateOf(IntSize.Zero) }
     var resolvedTargetBounds by remember(sortedBadges) { mutableStateOf<Rect?>(null) }
     var animationStarted by remember(sortedBadges) { mutableStateOf(false) }
@@ -55,10 +60,15 @@ internal fun BadgeUnlockCelebrationOverlay(
     val flightProgress = remember(sortedBadges) { Animatable(0f) }
     val fadeOutProgress = remember(sortedBadges) { Animatable(0f) }
 
-    LaunchedEffect(sortedBadges, rootSize, targetBounds, visible) {
-        if (!visible || animationStarted || rootSize == IntSize.Zero) return@LaunchedEffect
+    LaunchedEffect(sortedBadges, visible) {
+        if (!visible || animationStarted) return@LaunchedEffect
+        if (rootSize == IntSize.Zero) {
+            snapshotFlow { rootSize }
+                .filter { it != IntSize.Zero }
+                .first()
+        }
 
-        resolvedTargetBounds = targetBounds ?: fallbackBadgeCelebrationBounds(rootSize)
+        resolvedTargetBounds = latestTargetBounds ?: fallbackBadgeCelebrationBounds(rootSize)
         animationStarted = true
         overlayAlpha.snapTo(0f)
         flightProgress.snapTo(0f)

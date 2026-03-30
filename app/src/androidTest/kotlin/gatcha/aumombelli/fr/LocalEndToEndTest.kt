@@ -78,7 +78,7 @@ class LocalEndToEndTest {
         }
 
         composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeUp() }
-        composeRule.waitUntilTagEnabled("menu-open-pack", timeoutMillis = 10_000)
+        composeRule.waitForPackReturnToMenu()
         return firstDrawnCardId
     }
 
@@ -152,11 +152,26 @@ class LocalEndToEndTest {
         }
     }
 
+    private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.waitForPackReturnToMenu() {
+        waitUntil(timeoutMillis = 12_000) {
+            isTagPresent("badge-unlock-celebration") || isTagDisplayed("menu-open-pack")
+        }
+        if (isTagPresent("badge-unlock-celebration")) {
+            waitUntilTagGone("badge-unlock-celebration", timeoutMillis = 5_000)
+        }
+        waitUntilTagEnabled("menu-open-pack", timeoutMillis = 10_000)
+    }
+
     private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.isTagDisplayed(tag: String): Boolean =
         runCatching {
             onNodeWithTag(tag).assertIsDisplayed()
             true
         }.getOrDefault(false)
+
+    private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.isTagPresent(tag: String): Boolean =
+        onAllNodesWithTag(tag, useUnmergedTree = true)
+            .fetchSemanticsNodes(atLeastOneRootRequired = false)
+            .isNotEmpty()
 
     private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.isTagEnabled(tag: String): Boolean =
         runCatching {

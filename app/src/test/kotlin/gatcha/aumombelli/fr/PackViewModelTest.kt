@@ -195,6 +195,56 @@ class PackViewModelTest {
     }
 
     @Test
+    fun `open pack emits first pack opened badge when progress count increases to one`() = runTest {
+        val response = DrawPackResponse(
+            extensionId = "core-alpha",
+            drawnAt = "2026-03-23T12:00:00Z",
+            availableDrawCount = 9,
+            nextChargeAt = null,
+            cards = emptyList(),
+        )
+        val progressGateway = FakeProgressGateway().apply {
+            progress = StandaloneProgress(
+                collection = ownedCollectionOf().copy(version = 5),
+                availableDrawCount = 10,
+                nextChargeAt = null,
+                openedPackCount = 0,
+            )
+        }
+        val packGateway = FakePackGateway().apply {
+            openPackResponse = response
+            onOpenPack = {
+                progressGateway.progress = StandaloneProgress(
+                    collection = ownedCollectionOf().copy(version = 5),
+                    availableDrawCount = response.availableDrawCount,
+                    nextChargeAt = response.nextChargeAt,
+                    openedPackCount = 1,
+                )
+            }
+        }
+        val catalogGateway = FakeCatalogGateway().apply {
+            extensions = listOf(ExtensionDefinition("core-alpha", "Core Alpha", "cover"))
+        }
+
+        val viewModel = PackViewModel(
+            catalogRepository = catalogGateway,
+            progressRepository = progressGateway,
+            packRepository = packGateway,
+            gameSettings = gameSettings,
+        )
+        advanceUntilIdle()
+
+        val event = async { viewModel.events.first() }
+        viewModel.openPack("core-alpha")
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf("general::pack::first-opened"),
+            (event.await() as PackEvent.PackReadyForReveal).newlyUnlockedBadges.map { it.id },
+        )
+    }
+
+    @Test
     fun `open pack generic failure resets booster selection and uses default message`() = runTest {
         val viewModel = PackViewModel(
             catalogRepository = FakeCatalogGateway().apply {

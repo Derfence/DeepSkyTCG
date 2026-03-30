@@ -45,6 +45,8 @@ class ProgressRepositoryTest {
             decodeStoredCollection(dataStore).version,
         )
         assertEquals(10, dataStore.data.first()[AvailableDrawCountKey])
+        assertEquals(0, progress.openedPackCount)
+        assertEquals(0, dataStore.data.first()[OpenedPackCountKey])
     }
 
     @Test
@@ -55,6 +57,7 @@ class ProgressRepositoryTest {
             collection = ownedCollectionOf("ALP-001" to 2).copy(version = 5),
             availableDrawCount = 4,
             nextChargeAt = "2026-03-25T00:00:00Z",
+            openedPackCount = 3,
         )
 
         repository.saveProgress(progress)
@@ -63,6 +66,7 @@ class ProgressRepositoryTest {
         assertEquals(progress, reloaded)
         assertEquals(4, dataStore.data.first()[AvailableDrawCountKey])
         assertEquals("2026-03-25T00:00:00Z", dataStore.data.first()[NextChargeAtKey])
+        assertEquals(3, dataStore.data.first()[OpenedPackCountKey])
     }
 
     @Test
@@ -83,6 +87,7 @@ class ProgressRepositoryTest {
         assertEquals(5, progress.collection.version)
         assertEquals(4, progress.availableDrawCount)
         assertEquals("2026-03-25T00:00:00Z", progress.nextChargeAt)
+        assertEquals(0, progress.openedPackCount)
         assertEquals(5, decodeStoredCollection(dataStore).version)
     }
 
@@ -103,6 +108,7 @@ class ProgressRepositoryTest {
 
         assertEquals(10, progress.availableDrawCount)
         assertEquals(null, progress.nextChargeAt)
+        assertEquals(0, progress.openedPackCount)
         assertEquals(10, dataStore.data.first()[AvailableDrawCountKey])
         assertEquals(null, dataStore.data.first()[NextChargeAtKey])
     }
@@ -138,5 +144,6 @@ class ProgressRepositoryTest {
         val CollectionJsonKey = stringPreferencesKey("collection_json")
         val AvailableDrawCountKey = intPreferencesKey("available_draw_count")
         val NextChargeAtKey = stringPreferencesKey("next_charge_at")
+        val OpenedPackCountKey = intPreferencesKey("opened_pack_count")
     }
 }

@@ -5,6 +5,7 @@ import fr.aumombelli.gatcha.model.ExtensionDefinition
 import fr.aumombelli.gatcha.model.OwnedCollection
 import fr.aumombelli.gatcha.model.OwnedVariantCount
 import fr.aumombelli.gatcha.model.SkyQualityDefinition
+import fr.aumombelli.gatcha.model.StandaloneProgress
 import fr.aumombelli.gatcha.model.VariantProfile
 import fr.aumombelli.gatcha.model.normalized
 
@@ -12,72 +13,103 @@ internal fun buildBadgeBookSections(
     extensions: List<ExtensionDefinition>,
     cards: List<CardDefinition>,
     variantProfiles: List<VariantProfile>,
-    collection: OwnedCollection,
+    progress: StandaloneProgress,
 ): List<BadgeSection> {
     val variantProfilesById = variantProfiles.associateBy { it.id }
+    val collection = progress.collection
 
-    return extensions.map { extension ->
-        val extensionCards = cards
-            .filter { it.extensionId == extension.id }
-            .sortedBy { it.id }
-        val profilesByCardId = extensionCards.associate { card ->
-            card.id to checkNotNull(variantProfilesById[card.variantProfileId]) {
-                "Unknown variant profile '${card.variantProfileId}' for '${card.id}'."
-            }
-        }
-        val profiles = profilesByCardId.values.toList()
-
-        BadgeSection(
-            extensionId = extension.id,
-            extensionName = extension.name,
-            badges = buildList {
-                commonSkyQualities(profiles).forEach { skyQuality ->
-                    add(
-                        buildSkyQualityBadge(
-                            extension = extension,
-                            cards = extensionCards,
-                            collection = collection,
-                            profilesByCardId = profilesByCardId,
-                            skyQuality = skyQuality,
-                        ),
-                    )
+    return buildList {
+        add(buildGeneralSection(progress))
+        addAll(
+            extensions.map { extension ->
+                val extensionCards = cards
+                    .filter { it.extensionId == extension.id }
+                    .sortedBy { it.id }
+                val profilesByCardId = extensionCards.associate { card ->
+                    card.id to checkNotNull(variantProfilesById[card.variantProfileId]) {
+                        "Unknown variant profile '${card.variantProfileId}' for '${card.id}'."
+                    }
                 }
+                val profiles = profilesByCardId.values.toList()
 
-                if (supportsHolographicBadges(profiles)) {
-                    add(
-                        buildHolographicBadge(
-                            extension = extension,
-                            cards = extensionCards,
-                            collection = collection,
-                            profilesByCardId = profilesByCardId,
-                        ),
-                    )
-                }
+                BadgeSection(
+                    extensionId = extension.id,
+                    extensionName = extension.name,
+                    sectionType = BadgeSectionType.Extension,
+                    badges = buildList {
+                        commonSkyQualities(profiles).forEach { skyQuality ->
+                            add(
+                                buildSkyQualityBadge(
+                                    extension = extension,
+                                    cards = extensionCards,
+                                    collection = collection,
+                                    profilesByCardId = profilesByCardId,
+                                    skyQuality = skyQuality,
+                                ),
+                            )
+                        }
 
-                if (supportsMountainHolographicBadges(profiles)) {
-                    add(
-                        buildMountainHolographicBadge(
-                            extension = extension,
-                            cards = extensionCards,
-                            collection = collection,
-                            profilesByCardId = profilesByCardId,
-                        ),
-                    )
-                }
+                        if (supportsHolographicBadges(profiles)) {
+                            add(
+                                buildHolographicBadge(
+                                    extension = extension,
+                                    cards = extensionCards,
+                                    collection = collection,
+                                    profilesByCardId = profilesByCardId,
+                                ),
+                            )
+                        }
 
-                if (supportsPerfectCollectionBadge(profiles)) {
-                    add(
-                        buildPerfectCollectionBadge(
-                            extension = extension,
-                            cards = extensionCards,
-                            collection = collection,
-                            profilesByCardId = profilesByCardId,
-                        ),
-                    )
-                }
+                        if (supportsMountainHolographicBadges(profiles)) {
+                            add(
+                                buildMountainHolographicBadge(
+                                    extension = extension,
+                                    cards = extensionCards,
+                                    collection = collection,
+                                    profilesByCardId = profilesByCardId,
+                                ),
+                            )
+                        }
+
+                        if (supportsPerfectCollectionBadge(profiles)) {
+                            add(
+                                buildPerfectCollectionBadge(
+                                    extension = extension,
+                                    cards = extensionCards,
+                                    collection = collection,
+                                    profilesByCardId = profilesByCardId,
+                                ),
+                            )
+                        }
+                    },
+                )
             },
         )
     }
+}
+
+private fun buildGeneralSection(progress: StandaloneProgress): BadgeSection = BadgeSection(
+    extensionId = GeneralBadgeSectionId,
+    extensionName = "General",
+    sectionType = BadgeSectionType.General,
+    badges = listOf(buildFirstPackOpenedBadge(progress)),
+)
+
+private fun buildFirstPackOpenedBadge(progress: StandaloneProgress): BadgeItem {
+    val openedPackProgress = progress.openedPackCount.coerceIn(0, 1)
+    return BadgeItem(
+        id = "$GeneralBadgeSectionId::pack::first-opened",
+        extensionId = GeneralBadgeSectionId,
+        extensionName = "General",
+        title = "Premier pack ouvert",
+        description = "Ouvre ton premier pack pour lancer ta collection et debloquer ce badge general.",
+        requirementType = BadgeRequirementType.FirstPackOpened,
+        progress = BadgeProgress(
+            matchedCards = openedPackProgress,
+            totalCards = 1,
+            unitLabel = "pack ouvert",
+        ),
+    )
 }
 
 private fun buildSkyQualityBadge(
@@ -277,3 +309,5 @@ private fun VariantProfile.isAtLeastSkyQuality(
     if (candidateIndex < 0 || thresholdIndex < 0) return false
     return candidateIndex >= thresholdIndex
 }
+
+internal const val GeneralBadgeSectionId: String = "general"

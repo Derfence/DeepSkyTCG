@@ -27,6 +27,7 @@ class ProgressRepository(
         val storedCollectionJson = preferences[Keys.collectionJson]
         val availableDrawCount = preferences[Keys.availableDrawCount] ?: settings.maxStoredDraws
         val nextChargeAt = preferences[Keys.nextChargeAt]
+        val openedPackCount = preferences[Keys.openedPackCount] ?: 0
 
         val originalCollection = storedCollectionJson?.let(::decodeCollection)
             ?: collectionMigrationService.emptyCollection()
@@ -35,6 +36,7 @@ class ProgressRepository(
             collection = migratedCollection,
             availableDrawCount = availableDrawCount,
             nextChargeAt = nextChargeAt,
+            openedPackCount = openedPackCount,
         ).withNormalizedPackCharge(
             now = settings.clock.instant(),
             drawCooldown = settings.drawCooldown,
@@ -46,6 +48,7 @@ class ProgressRepository(
             migratedCollection != originalCollection ||
             availableDrawCount != progress.availableDrawCount ||
             nextChargeAt != progress.nextChargeAt ||
+            preferences[Keys.openedPackCount] == null ||
             preferences[Keys.legacyNextDrawAt] != null
         ) {
             saveProgress(progress)
@@ -64,6 +67,7 @@ class ProgressRepository(
             preferences[Keys.collectionJson] = json.encodeToString(OwnedCollection.serializer(), normalizedProgress.collection)
             preferences[Keys.availableDrawCount] = normalizedProgress.availableDrawCount
             setOrRemove(preferences, Keys.nextChargeAt, normalizedProgress.nextChargeAt)
+            preferences[Keys.openedPackCount] = normalizedProgress.openedPackCount.coerceAtLeast(0)
             preferences.remove(Keys.legacyNextDrawAt)
         }
     }
@@ -87,6 +91,7 @@ class ProgressRepository(
         val collectionJson = stringPreferencesKey("collection_json")
         val availableDrawCount = intPreferencesKey("available_draw_count")
         val nextChargeAt = stringPreferencesKey("next_charge_at")
+        val openedPackCount = intPreferencesKey("opened_pack_count")
         val legacyNextDrawAt = stringPreferencesKey("next_draw_at")
     }
 

@@ -234,10 +234,14 @@ private fun BadgeSectionCard(
                 val cellWidth = ((maxWidth - spacing * 2) / 3f).coerceAtLeast(84.dp)
                 val coinSize = (cellWidth * 0.74f).coerceIn(64.dp, 92.dp)
                 val perfectBadge = section.badges.firstOrNull {
+                    section.sectionType == BadgeSectionType.Extension &&
                     it.requirementType == BadgeRequirementType.PerfectCollection
                 }
                 val regularRows = section.badges
-                    .filterNot { it.requirementType == BadgeRequirementType.PerfectCollection }
+                    .filterNot {
+                        section.sectionType == BadgeSectionType.Extension &&
+                            it.requirementType == BadgeRequirementType.PerfectCollection
+                    }
                     .chunked(3)
 
                 Column(
@@ -286,24 +290,21 @@ private fun BadgeGridRow(
     onBadgeClick: (BadgeItem) -> Unit,
 ) {
     Row(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        repeat(3) { index ->
-            val badge = badges.getOrNull(index)
+        badges.forEach { badge ->
             Box(
                 contentAlignment = Alignment.TopCenter,
                 modifier = Modifier.width(cellWidth),
             ) {
-                if (badge != null) {
-                    BadgeCoinCard(
-                        badge = badge,
-                        coinSize = coinSize,
-                        isCoinHidden = hiddenBadgeId == badge.id,
-                        onCoinPositioned = { bounds -> onBadgePositioned(badge.id, bounds) },
-                        onClick = { onBadgeClick(badge) },
-                    )
-                }
+                BadgeCoinCard(
+                    badge = badge,
+                    coinSize = coinSize,
+                    isCoinHidden = hiddenBadgeId == badge.id,
+                    onCoinPositioned = { bounds -> onBadgePositioned(badge.id, bounds) },
+                    onClick = { onBadgeClick(badge) },
+                )
             }
         }
     }

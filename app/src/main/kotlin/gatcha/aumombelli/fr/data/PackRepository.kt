@@ -31,6 +31,7 @@ class PackRepository(
                 collection = mergedCollection,
                 availableDrawCount = packResponse.availableDrawCount,
                 nextChargeAt = packResponse.nextChargeAt,
+                openedPackCount = progress.openedPackCount + 1,
             ),
         )
         currentPackResult.value = packResponse

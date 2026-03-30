@@ -27,21 +27,26 @@ class BadgeBookViewModelTest {
                 testCardDefinition("MON-001", extensionId = "moon-dawn"),
             )
         }
-        val collectionGateway = FakeCollectionGateway().apply {
-            collection = ownedCollectionWithVariants(
-                "MON-001",
-                OwnedVariantCount("city", "standard", 1),
+        val progressGateway = FakeProgressGateway().apply {
+            progress = progress.copy(
+                collection = ownedCollectionWithVariants(
+                    "MON-001",
+                    OwnedVariantCount("city", "standard", 1),
+                ),
+                openedPackCount = 1,
             )
         }
 
-        val viewModel = BadgeBookViewModel(catalogGateway, collectionGateway)
+        val viewModel = BadgeBookViewModel(catalogGateway, progressGateway)
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
         assertEquals(false, state.isLoading)
-        assertEquals(listOf("core-alpha", "moon-dawn"), state.sections.map { it.extensionId })
-        assertEquals("Moon Dawn", state.sections[1].extensionName)
-        assertEquals("1 / 1 cartes valides", state.sections[1].badges.first().progress.label)
+        assertEquals(listOf("general", "core-alpha", "moon-dawn"), state.sections.map { it.extensionId })
+        assertEquals("General", state.sections.first().extensionName)
+        assertEquals("1 / 1 pack ouvert", state.sections.first().badges.single().progress.label)
+        assertEquals("Moon Dawn", state.sections[2].extensionName)
+        assertEquals("1 / 1 cartes valides", state.sections[2].badges.first().progress.label)
     }
 
     @Test
@@ -50,7 +55,7 @@ class BadgeBookViewModelTest {
             extensionsFailure = IllegalStateException("Catalog unavailable")
         }
 
-        val viewModel = BadgeBookViewModel(catalogGateway, FakeCollectionGateway())
+        val viewModel = BadgeBookViewModel(catalogGateway, FakeProgressGateway())
         advanceUntilIdle()
 
         assertEquals("Catalog unavailable", viewModel.uiState.value.errorMessage)

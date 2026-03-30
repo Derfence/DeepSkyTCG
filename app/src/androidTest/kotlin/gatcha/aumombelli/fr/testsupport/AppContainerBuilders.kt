@@ -216,6 +216,7 @@ private class NavigationPackGateway(
                 collection = mergedCollection,
                 availableDrawCount = openPackResponse.availableDrawCount,
                 nextChargeAt = openPackResponse.nextChargeAt,
+                openedPackCount = progress.openedPackCount + 1,
             ),
         )
         packFlow.value = openPackResponse

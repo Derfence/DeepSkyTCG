@@ -20,7 +20,7 @@ import org.junit.Test
 
 class PackRepositoryTest {
     @Test
-    fun `open pack persists merged collection next draw timestamp and current pack result`() = runTest {
+    fun `open pack persists merged collection pack count next draw timestamp and current pack result`() = runTest {
         val fixedNow = Instant.parse("2026-03-24T12:00:00Z")
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
@@ -56,6 +56,7 @@ class PackRepositoryTest {
         assertEquals(response, repository.currentPackResult().value)
         assertEquals(response.availableDrawCount, progressGateway.progress.availableDrawCount)
         assertEquals(response.nextChargeAt, progressGateway.progress.nextChargeAt)
+        assertEquals(1, progressGateway.progress.openedPackCount)
         assertEquals(3, progressGateway.progress.collection.cards.values.sumOf { it.totalOwned })
     }
 
