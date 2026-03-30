@@ -9,19 +9,19 @@
     "albireo": {
       "artist": "Robert Gillette",
       "credit": "Albireo",
-      "license": "CC BY 4.0",
+      "license": "CC BY",
       "sourcePage": "https://app.astrobin.com/i/4ifviu"
     },
     "algol": {
       "artist": "ESO/L. Calçada",
       "credit": "Vue d'artiste",
-      "license": "CC BY-SA 4.0",
+      "license": "CC BY-SA",
       "sourcePage": "https://www.eso.org/public/france/images/eso1311a/?lang"
     },
     "almach": {
       "artist": "Damian Peach",
       "credit": "Almach star system showing A, B and C components",
-      "license": "CC BY-SA 4.0",
+      "license": "CC BY-SA",
       "sourcePage": "https://x.com/peachastro/status/1820856581313192079"
     },
     "altair": {
@@ -55,52 +55,40 @@
       "sourcePage": "https://app.astrobin.com/i/7lsw64"
     },
     "capella": {
-      "artist": "Axel Lindahl",
-      "credit": "Nasjonalbiblioteket Tilvekstnummer: NF.WL 02757",
-      "license": "Public domain",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:DS_Capella_i_Hammerfest.jpg"
+      "artist": "Harold Freckhaus",
+      "credit": "Capella",
+      "license": "CC BY-NC-ND",
+      "sourcePage": "https://app.astrobin.com/i/397388"
     },
     "cassiopeia_constellation": {
-      "artist": "X-ray: NASA/CXC/SAO, NASA/JPL/Caltech/NuStar; Optical: NASA/STScI/HST; IR: NASA/STScI/JWST, NASA/JPL/CalTech/SST; Image Processing: NASA/CXC/SAO/J. Schmidt, N. Wolk, and K. Arcand",
-      "credit": "Adding Dimension to Cassiopeia A",
-      "license": "Public domain",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Cassiopeia_A_(Cas_A)_is_a_supernova_remnant_located_about_11,000_light-years_from_Earth_in_the_constellation_Cassiopeia_(adding-dimension-to-cassiopeia-a).jpg"
+      "artist": "Wolfgang Rafelt",
+      "credit": "Constellation Cassiopeia",
+      "license": "CC BY",
+      "sourcePage": "https://app.astrobin.com/i/cpgza9"
     },
     "coathanger": {
-      "artist": "Giuseppe Donatiello",
-      "credit": "CR399 DSS - Brocchi's Cluster",
-      "license": "CC0",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:CR399_DSS_-_Brocchi%27s_Cluster_(29449085766).jpg"
+      "artist": "Jim Morse",
+      "credit": "Brocchi's Cluster (the Coathanger) and lots of Dark Nebulosity in the Heart of the Vulpecula Milky Way",
+      "license": "CC BY",
+      "sourcePage": "https://app.astrobin.com/i/q1n0bt"
     },
     "comet_neowise": {
       "artist": "Igorzinchenko",
       "credit": "Own work",
-      "license": "CC BY 4.0",
+      "license": "CC BY",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Comet_NEOWISE_and_meteor.jpg"
     },
     "cor_caroli": {
-      "artist": "Department of the Navy. Office of the Chief of Naval Operations. Intelligence Division. Office of Naval Records and Library. (1922 - 10/10/1945)",
-      "credit": "This file was contributed to Wikimedia Commons by National Archives at College Park - Textual Reference as part of a cooperation project. The donation was facilitated by the Digital Public Library of America , via its partner Digital Public Library of America . Record in source catalog DPLA identifier: e36f5a9a8fee84bba474326c74632021 National Archives Identifier: 139916747",
-      "license": "Public domain",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:USS_COR_CAROLI_-_War_Diary,_2-1-28-45_-_DPLA_-_e36f5a9a8fee84bba474326c74632021.jpg"
+      "artist": "Stellarium software",
+      "credit": "Capture d'écran",
+      "license": "CC BY",
+      "sourcePage": "https://stellarium-web.org/"
     },
     "cygnus_constellation": {
-      "artist": "NASA/JPL-Caltech",
-      "credit": "http://www.nasa.gov/mission_pages/galex/pia15415.html ; see also http://www.nasa.gov/multimedia/imagegallery/image_feature_2205.html and https://photojournal.jpl.nasa.gov/catalog/PIA15415",
-      "license": "Public domain",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Cygnus_Loop_Nebula.jpg"
-    },
-    "delta_cephei": {
-      "artist": "NASA/JPL-Caltech/M. Marengo (Iowa State)",
-      "credit": "http://www.spitzer.caltech.edu/images/3470-ssc2011-01a-Standard-Candle-in-the-Wind",
-      "license": "Public domain",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Standard_Candle_in_the_Wind.jpg"
-    },
-    "deneb": {
-      "artist": "Giuseppe Donatiello from Oria (Brindisi), Italy",
-      "credit": "NGC 7000 - IC 5070 - Deneb (Alpha Cygni)",
-      "license": "CC0",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:NGC_7000_-_IC_5070_-_Deneb_(Alpha_Cygni)_-_Flickr_-_gjdonatiello.jpg"
+      "artist": "Wolfgang Rafelt ",
+      "credit": "Constellation Cygnus",
+      "license": "CC BY",
+      "sourcePage": "https://app.astrobin.com/i/7inlpn"
     },
     "double_cluster": {
       "artist": "Andy Weeks",
@@ -109,81 +97,81 @@
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Double_Cluster_in_Perseus_-_Flickr_-_astrophotography_andy.jpg"
     },
     "gemini_constellation": {
-      "artist": "International Gemini Observatory/NOIRLab/NSF/AURA/J. Warner",
-      "credit": "https://storage.noirlab.edu/media/archives/images/large/iotw2541a.jpg",
-      "license": "CC BY 4.0",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Stars_and_Satellites_over_Gemini_North.jpg"
+      "artist": "Stellarium software",
+      "credit": "Capture d'écran",
+      "license": "CC BY",
+      "sourcePage": "https://stellarium-web.org/"
     },
     "geminids_meteor_shower": {
       "artist": "International Gemini Observatory/NOIRLab/NSF/AURA",
       "credit": "Geminids over Gemini North 2020",
-      "license": "CC BY 4.0",
+      "license": "CC BY",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Geminids_over_Gemini_North_2020_(20201213_sworl-cc).tiff"
     },
     "halley_comet": {
-      "artist": "Kuiper Airborne Observatory, C141 aircraft April 8/9, 1986, New Zealand Expedition",
-      "credit": "http://www.nasa.gov/centers/ames/multimedia/images/2005/comets1.html",
-      "license": "Public domain",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Comet_Halley.jpg"
+      "artist": "John Reed",
+      "credit": "Halley's Comet 1986",
+      "license": "CC BY-NC",
+      "sourcePage": "https://app.astrobin.com/i/kpv7oe"
     },
     "hyades": {
       "artist": "NOIRLab/NSF/AURA/Digitized Sky Survey",
       "credit": "Location of K2-25 (No Annotations)",
-      "license": "CC BY 4.0",
+      "license": "CC BY",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Location_of_K2-25_(No_Annotations)_(Hyades_DSS_16b_B-RI-Aug2020).jpg"
     },
     "leonids_meteor_shower": {
-      "artist": "NOIRLab/NSF/AURA",
-      "credit": "https://noirlab.edu/public/images/noao-4127A/",
-      "license": "CC BY 4.0",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Four_views_of_the_Leonid_meteor_shower_of_1966_Noao-4127A.jpg"
+      "artist": "Francisco Bitto",
+      "credit": "Geminids meteor shower 2023",
+      "license": "CC BY-NC-ND",
+      "sourcePage": "https://app.astrobin.com/i/a7suzp"
     },
     "lyra_constellation": {
-      "artist": "E. Slawik/NOIRLab/NSF/AURA/M. Zamani",
-      "credit": "Lyra",
-      "license": "CC BY 4.0",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Photo_of_the_constellation_Lyra_produced_by_NOIRLab_in_collaboration_with_Eckhard_Slawik,_a_German_astrophotographer_(lyra).jpg"
+      "artist": "Stellarium software",
+      "credit": "Capture d'écran",
+      "license": "CC BY",
+      "sourcePage": "https://stellarium-web.org/"
     },
     "m11_wild_duck_cluster": {
       "artist": "Brainandforce",
       "credit": "Own work",
-      "license": "CC BY 4.0",
+      "license": "CC BY",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Wild_Duck_Cluster_(M11).png"
     },
     "m13_hercules": {
       "artist": "Brainandforce",
       "credit": "Own work",
-      "license": "CC BY 4.0",
+      "license": "CC BY",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Messier_13_(infrared,_red,_green).jpg"
     },
     "m16_eagle_nebula": {
-      "artist": "NASA, ESA, and the Hubble Heritage Team (STScI/AURA)",
-      "credit": "http://hubblesite.org/image/3471/news_release/2015-01",
-      "license": "Public domain",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Pillars_of_creation_2014_HST_WFC3-UVIS_full-res_denoised.jpg"
+      "artist": "Min Xie",
+      "credit": "Messier 16 (The Eagle Nebula) in Hubble SHO Palette",
+      "license": "CC BY-NC",
+      "sourcePage": "https://app.astrobin.com/i/lqnbr1"
     },
     "m17_swan_nebula": {
-      "artist": "NASA , H. Ford (JHU), G. Illingworth (UCSC/LO), M.Clampin ( STScI ), G. Hartig ( STScI ), the ACS Science Team, and ESA . . The ACS Science Team: H. Ford, G. Illingworth, M. Clampin, G. Hartig, T. Allen, K. Anderson, F. Bartko, N. Benitez, J. Blakeslee, R. Bouwens, T. Broadhurst, R. Brown, C. Burrows, D. Campbell, E. Cheng, N. Cross, P. Feldman, M. Franx, D. Golimowski, C. Gronwall, R. Kimble, J. Krist, M. Lesser, D. Magee, A. Martel, W. J. McCann, G. Meurer, G. Miley, M. Postman, P. Rosati, M. Sirianni, W. Sparks, P. Sullivan, H. Tran, Z. Tsvetanov, R. White, and R. Woodruff.",
-      "credit": "Omega Nebula/Swan Nebula/M17 (ACS Full Field Image)",
-      "license": "Public domain",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Omega_Nebula-Swan_Nebula-M17_(ACS_Full_Field_Image)_(heic0206g).jpg"
+      "artist": "Jeff Coldrey",
+      "credit": "m17 Swan Nebula in HOO",
+      "license": "CC BY",
+      "sourcePage": "https://app.astrobin.com/i/ac5bde"
     },
     "m22_globular_cluster": {
-      "artist": "NASA , ESA & K. Sahu ( STScI )",
-      "credit": "Hint of planet-sized drifters bewilders Hubble scientists (combined view)",
-      "license": "Public domain",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Hint_of_planet-sized_drifters_bewilders_Hubble_scientists_(combined_view)_(heic0107a).tiff"
+      "artist": "Michel",
+      "credit": "Messier 22 Globular Cluster",
+      "license": "CC BY-NC-ND",
+      "sourcePage": "https://app.astrobin.com/i/dbk0us"
     },
     "m24_star_cloud": {
       "artist": "Vanessa Harvey, REU program/NOIRLab/ NSF /AURA",
       "credit": "Sagittarius Star Cloud",
-      "license": "CC BY 4.0",
+      "license": "CC BY",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Sagittarius_Star_Cloud_(noao-m24).jpg"
     },
     "m27_dumbbell": {
       "artist": "Bill Schoening/NOIRLab/ NSF /AURA",
       "credit": "M27, NGC 6853, Dumbbell Nebula",
-      "license": "CC BY 4.0",
+      "license": "CC BY",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:M27,_NGC_6853,_Dumbbell_Nebula_(noao-02674).jpg"
     },
     "m31_andromeda": {
@@ -207,13 +195,13 @@
     "m36_open_cluster": {
       "artist": "StudentAstronomyGroupUoC",
       "credit": "Own work",
-      "license": "CC BY 4.0",
+      "license": "CC BY",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:M36_AOFPK.jpg"
     },
     "m37_open_cluster": {
       "artist": "StudentAstronomyGroupUoC",
       "credit": "Own work",
-      "license": "CC BY 4.0",
+      "license": "CC BY",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:M37_AOFPK.jpg"
     },
     "m38_open_cluster": {
@@ -235,10 +223,10 @@
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Messier_41_(55014509491).jpg"
     },
     "m42_orion_nebula": {
-      "artist": "Dylan O'Donnell",
-      "credit": "Own work",
-      "license": "CC0",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:M42_Orion_Nebula_%26_M43_De_Marian%27s_Nebula.jpg"
+      "artist": "Min Xie",
+      "credit": "Messier 42 & Neighborhood",
+      "license": "CC BY-NC",
+      "sourcePage": "https://app.astrobin.com/i/lqs9k8"
     },
     "m44_praesepe": {
       "artist": "Taavi Niittee",
@@ -253,22 +241,22 @@
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Plejades_(M45).jpg"
     },
     "m46_open_cluster": {
-      "artist": "Giuseppe Donatiello from Oria (Brindisi), Italy",
-      "credit": "M46, NGC 2423, M47 and NGC 2425 open clusters",
-      "license": "CC0",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:M46,_NGC_2423,_M47_and_NGC_2425_open_clusters_-_Flickr_-_gjdonatiello.jpg"
+      "artist": "Gary Imm",
+      "credit": "M46",
+      "license": "CC BY-NC",
+      "sourcePage": "https://app.astrobin.com/i/r7fjbl"
     },
     "m47_open_cluster": {
-      "artist": "Giuseppe Donatiello from Oria (Brindisi), Italy",
-      "credit": "M46, NGC 2423, M47 and NGC 2425 open clusters",
-      "license": "CC0",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:M46,_NGC_2423,_M47_and_NGC_2425_open_clusters_-_Flickr_-_gjdonatiello.jpg"
+      "artist": "Seokhee Kim",
+      "credit": "M47",
+      "license": "CC BY-NC",
+      "sourcePage": "https://app.astrobin.com/i/cqcbhg"
     },
     "m52_open_cluster": {
-      "artist": "玄史生",
-      "credit": "Own work",
-      "license": "CC0",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:M52_105mm_Self-propelled_Howitzer_at_Tanks_Park,_Armor_School_20130302.jpg"
+      "artist": "Gary Imm",
+      "credit": "M52",
+      "license": "CC BY-NC",
+      "sourcePage": "https://app.astrobin.com/i/l7qd2w?r=B"
     },
     "m57_ring": {
       "artist": "Arthomnix",
@@ -309,13 +297,13 @@
     "mira": {
       "artist": "DSS 2/ESO",
       "credit": "http://www.eso.org/public/images/eso1212d/",
-      "license": "CC BY 4.0",
+      "license": "CC BY",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:A_Wide-field_view_of_the_sky_around_a_field_studied_in_the_MASSIV_survey.jpg"
     },
     "mizar_alcor": {
       "artist": "Thomas Bresson",
       "credit": "Own work",
-      "license": "CC BY 3.0",
+      "license": "CC BY",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:2012-03-12_22-07-31-mizar-32f-19d-20o.jpg"
     },
     "ngc457_owl_cluster": {
@@ -327,13 +315,13 @@
     "ngc7000_north_america": {
       "artist": "Carsten Frenzl from Deutschland",
       "credit": "NGC7000, IC5070 - North America and Pelican Nebula",
-      "license": "CC BY 2.0",
+      "license": "CC BY",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:NGC7000,_IC5070_-_North_America_and_Pelican_Nebula_-_Flickr_-_castro.pic.jpg"
     },
     "ngc752_open_cluster": {
       "artist": "C messier",
       "credit": "Own work",
-      "license": "CC BY 4.0",
+      "license": "CC BY",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:NGC_752_60f_GraXpert.jpg"
     },
     "orion_constellation": {
@@ -343,22 +331,22 @@
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Orion_constellation.jpg"
     },
     "perseids_meteor_shower": {
-      "artist": "Joel Kowsky",
-      "credit": "https://www.flickr.com/photos/nasahqphoto/20359334789/",
-      "license": "Public domain",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Perseid_Meteor_Shower_(201508130003HQ).jpg"
+      "artist": "tjm8874",
+      "credit": "Tau Herculids meteor shower",
+      "license": "CC BY-ND",
+      "sourcePage": "https://app.astrobin.com/i/m56aj5"
     },
     "perseus_constellation": {
-      "artist": "NASA/JPL-Caltech",
-      "credit": "https://photojournal.jpl.nasa.gov/figures/PIA23405.jpg",
-      "license": "Attribution",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:PIA23405-PerseusMolecularCloud-FullRez.jpg"
+      "artist": "Stellarium software",
+      "credit": "Capture d'écran",
+      "license": "CC BY",
+      "sourcePage": "https://stellarium-web.org/"
     },
     "polaris": {
-      "artist": "NASA/HST",
-      "credit": "http://hubblesite.org/newscenter/newsdesk/archive/releases/2006/02/image/a (Image: STScI-2006-02)",
-      "license": "Public domain",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Polaris_alpha_ursae_minoris.jpg"
+      "artist": "Prath Pavaskar",
+      "credit": "Polaris region: IFN",
+      "license": "CC BY-ND",
+      "sourcePage": "https://app.astrobin.com/i/ziyhun"
     },
     "sirius": {
       "artist": "NASA, ESA and G. Bacon (STScI)",

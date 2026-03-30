@@ -3273,56 +3273,6 @@
     }
   },
   {
-    "id": "aeh-deneb",
-    "extensionId": "astronomes-en-herbe",
-    "name": "Deneb",
-    "rarityLabel": "Common",
-    "drawWeight": 21,
-    "imageRef": "deneb",
-    "variantProfileId": "observation-default",
-    "astronomy": {
-      "commonName": "Deneb",
-      "primaryCatalogName": "Bayer",
-      "catalogNumber": "Alpha Cygni",
-      "objectFamily": "star",
-      "objectTypeLabel": "Supergeante blanche",
-      "constellation": "Cygne",
-      "mainSeason": "Ete",
-      "coordinates": {
-        "rightAscension": {
-          "hours": 20,
-          "minutes": 41,
-          "seconds": 25.9,
-          "label": "AD 20h 41m 25,9s"
-        },
-        "declination": {
-          "sign": "+",
-          "degrees": 45,
-          "arcMinutes": 16,
-          "arcSeconds": 49,
-          "label": "+45° 16′ 49″"
-        },
-        "label": "AD 20h 41m 25,9s ; Dec +45° 16′ 49″"
-      },
-      "shortDescription": "Deneb ferme le Triangle d'Ete avec Vega et Altair. Brillante et bien placee, elle est ideale pour apprendre les grands asterismes visibles a l'oeil nu.",
-      "details": {
-        "detailType": "star",
-        "distance": {
-          "lightYears": 2600.0,
-          "label": "2 600 annees-lumiere"
-        },
-        "realSize": {
-          "lightYears": 0.0000298,
-          "label": "0,0000298 annee-lumiere"
-        },
-        "absoluteMagnitude": {
-          "value": -8.4,
-          "label": "-8.4"
-        }
-      }
-    }
-  },
-  {
     "id": "aeh-altair",
     "extensionId": "astronomes-en-herbe",
     "name": "Altair",
@@ -3368,56 +3318,6 @@
         "absoluteMagnitude": {
           "value": 2.2,
           "label": "2.2"
-        }
-      }
-    }
-  },
-  {
-    "id": "aeh-delta-cephei",
-    "extensionId": "astronomes-en-herbe",
-    "name": "Delta Cephei",
-    "rarityLabel": "Uncommon",
-    "drawWeight": 11,
-    "imageRef": "delta_cephei",
-    "variantProfileId": "observation-default",
-    "astronomy": {
-      "commonName": "Delta Cephei",
-      "primaryCatalogName": "Bayer",
-      "catalogNumber": "Delta Cephei",
-      "objectFamily": "star",
-      "objectTypeLabel": "Etoile variable cepheide",
-      "constellation": "Cephee",
-      "mainSeason": "Automne",
-      "coordinates": {
-        "rightAscension": {
-          "hours": 22,
-          "minutes": 29,
-          "seconds": 10.3,
-          "label": "AD 22h 29m 10,3s"
-        },
-        "declination": {
-          "sign": "+",
-          "degrees": 58,
-          "arcMinutes": 24,
-          "arcSeconds": 55,
-          "label": "+58° 24′ 55″"
-        },
-        "label": "AD 22h 29m 10,3s ; Dec +58° 24′ 55″"
-      },
-      "shortDescription": "Delta Cephei est l'etoile type des cepheides, dont l'eclat varie regulierement. Elle constitue une belle introduction a l'observation suivie des variables a l'oeil nu ou aux jumelles.",
-      "details": {
-        "detailType": "star",
-        "distance": {
-          "lightYears": 887.0,
-          "label": "887 annees-lumiere"
-        },
-        "realSize": {
-          "lightYears": 0.00000632,
-          "label": "0,00000632 annee-lumiere"
-        },
-        "absoluteMagnitude": {
-          "value": -3.5,
-          "label": "-3.5"
         }
       }
     }
