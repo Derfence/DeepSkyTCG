@@ -1,9 +1,7 @@
 package fr.aumombelli.gatcha.feature.packs.opening
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -11,18 +9,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.compose.ui.unit.dp
 import fr.aumombelli.gatcha.model.DisplayCard
 import fr.aumombelli.gatcha.ui.component.AstroCardDetailsSurface
 import fr.aumombelli.gatcha.ui.component.AstroCardFullscreenCloseButton
@@ -33,8 +28,6 @@ import fr.aumombelli.gatcha.ui.screen.gatchaContentInsetsPadding
 @Composable
 internal fun RevealCard(
     displayCard: DisplayCard,
-    page: Int,
-    total: Int,
     isCurrentPage: Boolean,
     showPreviousArrow: Boolean,
     showNextArrow: Boolean,
@@ -42,71 +35,59 @@ internal fun RevealCard(
     nudgeActive: Boolean,
     onOpenFullscreen: () -> Unit,
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(vertical = 18.dp, horizontal = 12.dp),
     ) {
-        Text(
-            text = "$page / $total",
-            color = Color.White.copy(alpha = 0.9f),
-            style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.testTag("pack-opening-progress"),
-        )
         Box(
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
+                .align(Alignment.Center)
+                .fillMaxWidth()
+                .padding(horizontal = 28.dp)
+                .graphicsLayer {
+                    translationY = cardTranslationY
+                },
         ) {
-            if (showPreviousArrow) {
-                NavigationHintArrow(
-                    direction = NavigationHintDirection.Left,
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .testTag("pack-opening-arrow-left"),
-                )
-            }
-            if (showNextArrow) {
-                NavigationHintArrow(
-                    direction = NavigationHintDirection.Right,
-                    modifier = Modifier
-                        .align(Alignment.CenterEnd)
-                        .testTag("pack-opening-arrow-right"),
-                )
-            }
+            AstroCardPreviewSurface(
+                displayCard = displayCard,
+                mode = AstroCardSurfaceMode.PackReveal,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(
+                        if (isCurrentPage) {
+                            "pack-opening-current-card-surface"
+                        } else {
+                            "pack-opening-card-surface"
+                        },
+                    ),
+                onClick = onOpenFullscreen,
+            )
+        }
+
+        if (showPreviousArrow) {
+            NavigationHintArrow(
+                direction = NavigationHintDirection.Left,
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .testTag("pack-opening-arrow-left"),
+            )
+        }
+        if (showNextArrow) {
+            NavigationHintArrow(
+                direction = NavigationHintDirection.Right,
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .testTag("pack-opening-arrow-right"),
+            )
+        }
+
+        if (nudgeActive) {
             Box(
                 modifier = Modifier
-                    .align(Alignment.Center)
-                    .fillMaxWidth()
-                    .padding(horizontal = 28.dp)
-                    .graphicsLayer {
-                        translationY = cardTranslationY
-                    },
-            ) {
-                AstroCardPreviewSurface(
-                    displayCard = displayCard,
-                    mode = AstroCardSurfaceMode.PackReveal,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag(
-                            if (isCurrentPage) {
-                                "pack-opening-current-card-surface"
-                            } else {
-                                "pack-opening-card-surface"
-                            },
-                        ),
-                    onClick = onOpenFullscreen,
-                )
-            }
-            if (nudgeActive) {
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .testTag("pack-opening-last-card-nudge"),
-                )
-            }
+                    .align(Alignment.TopCenter)
+                    .testTag("pack-opening-last-card-nudge"),
+            )
         }
     }
 }

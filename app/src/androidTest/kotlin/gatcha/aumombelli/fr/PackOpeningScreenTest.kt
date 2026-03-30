@@ -1,5 +1,8 @@
 package fr.aumombelli.gatcha
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -18,9 +21,10 @@ import fr.aumombelli.gatcha.model.toDisplayVariant
 import fr.aumombelli.gatcha.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.gatcha.ui.screen.PackOpeningScreen
 import fr.aumombelli.gatcha.ui.viewmodel.PackOpeningUiState
+import androidx.compose.ui.unit.dp
 import kotlin.math.abs
-import org.junit.Assert.assertTrue
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -302,6 +306,56 @@ class PackOpeningScreenTest {
 
         assertTrue("Expected pack reveal art width to leave a visible border", artBounds.width < surfaceBounds.width - 1f)
         assertTrue("Expected pack reveal art height to leave a visible border", artBounds.height < surfaceBounds.height - 1f)
+    }
+
+    @Test
+    fun pack_opening_progress_repositions_to_avoid_overlapping_card_on_compact_height() {
+        val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
+        val packResult = DrawPackResponse(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            availableDrawCount = 9,
+            nextChargeAt = "2026-03-24T18:00:00Z",
+            cards = listOf(
+                testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
+            ),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            Box(modifier = Modifier.size(width = 320.dp, height = 420.dp)) {
+                PackOpeningScreen(
+                    state = PackOpeningUiState(
+                        packResult = packResult,
+                        displayCards = listOf(
+                            firstCard.toDisplayCard(
+                                extensionName = "Astronomes en herbe",
+                                activeVariant = packResult.cards[0].variant.toDisplayVariant(),
+                            ),
+                        ),
+                        highestBurstRarity = "Common",
+                        hasHolographicBurst = false,
+                    ),
+                    onDone = {},
+                )
+            }
+        }
+
+        composeRule.mainClock.advanceTimeBy(3_000)
+        composeRule.mainClock.autoAdvance = true
+        composeRule.waitForIdle()
+
+        val progressBounds = composeRule
+            .onNodeWithTag("pack-opening-progress", useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot
+        val cardBounds = composeRule
+            .firstNodeWithTag("pack-opening-current-card-surface", useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot
+
+        assertTrue(
+            "Expected progress indicator to stay outside the revealed card bounds. Progress=$progressBounds Card=$cardBounds",
+            progressBounds.bottom <= cardBounds.top || progressBounds.top >= cardBounds.bottom,
+        )
     }
 
     private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertApproxCardRatio(

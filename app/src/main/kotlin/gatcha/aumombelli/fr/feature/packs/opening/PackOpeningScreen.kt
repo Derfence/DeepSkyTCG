@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -29,9 +30,11 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.gatcha.ui.motion.PackRevealBounds
 import fr.aumombelli.gatcha.ui.motion.RarityBurstOverlay
+import fr.aumombelli.gatcha.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.gatcha.ui.screen.gatchaContentInsetsPadding
 import kotlinx.coroutines.delay
 
@@ -170,9 +173,7 @@ fun PackOpeningScreen(
                     },
             )
         } else {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(18.dp),
+            BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxSize()
                     .gatchaContentInsetsPadding(includeBottom = true)
@@ -182,90 +183,113 @@ fun PackOpeningScreen(
                     }
                     .padding(20.dp),
             ) {
-                androidx.compose.material3.Text(
-                    text = "Pack Opening",
-                    style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    modifier = Modifier.testTag("pack-opening-title"),
-                )
-                androidx.compose.material3.Text(
-                    text = "Extension: ${packOpeningExtensionLabel(displayCards, packResult)}",
-                    color = Color(0xFFD8E6F8),
+                val progressBelowPager = shouldPlacePackOpeningProgressBelowPager(
+                    availableWidth = maxWidth,
+                    availableHeight = maxHeight,
                 )
 
-                if (displayCards.isNotEmpty()) {
-                    val pagerState = rememberPagerState(pageCount = { displayCards.size })
-                    val currentPage = pagerState.currentPage
-                    val settledPage = pagerState.settledPage
-                    val currentCard = displayCards.getOrNull(currentPage)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(18.dp),
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    androidx.compose.material3.Text(
+                        text = "Pack Opening",
+                        style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        modifier = Modifier.testTag("pack-opening-title"),
+                    )
+                    androidx.compose.material3.Text(
+                        text = "Extension: ${packOpeningExtensionLabel(displayCards, packResult)}",
+                        color = Color(0xFFD8E6F8),
+                    )
 
-                    LaunchedEffect(
-                        packResult.drawnAt,
-                        cardsVisible,
-                        settledPage,
-                        fullscreenPage,
-                        dismissRequested,
-                        verticalDragActive,
-                    ) {
-                        lastCardNudgeActive = false
-                        lastCardNudgeOffset.snapTo(0f)
-                        val shouldAnimateLastCard =
-                            cardsVisible &&
-                                settledPage == displayCards.lastIndex &&
-                                fullscreenPage == null &&
-                                !dismissRequested &&
-                                !verticalDragActive
-                        if (!shouldAnimateLastCard) return@LaunchedEffect
+                    if (displayCards.isNotEmpty()) {
+                        val pagerState = rememberPagerState(pageCount = { displayCards.size })
+                        val currentPage = pagerState.currentPage
+                        val settledPage = pagerState.settledPage
+                        val currentCard = displayCards.getOrNull(currentPage)
 
-                        delay(2_000)
-                        lastCardNudgeActive = true
-                        while (true) {
-                            lastCardNudgeOffset.animateTo(
-                                targetValue = -26f,
-                                animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
-                            )
-                            lastCardNudgeOffset.animateTo(
-                                targetValue = 0f,
-                                animationSpec = tween(durationMillis = 360, easing = FastOutSlowInEasing),
-                            )
-                            delay(1_150)
+                        LaunchedEffect(
+                            packResult.drawnAt,
+                            cardsVisible,
+                            settledPage,
+                            fullscreenPage,
+                            dismissRequested,
+                            verticalDragActive,
+                        ) {
+                            lastCardNudgeActive = false
+                            lastCardNudgeOffset.snapTo(0f)
+                            val shouldAnimateLastCard =
+                                cardsVisible &&
+                                    settledPage == displayCards.lastIndex &&
+                                    fullscreenPage == null &&
+                                    !dismissRequested &&
+                                    !verticalDragActive
+                            if (!shouldAnimateLastCard) return@LaunchedEffect
+
+                            delay(2_000)
+                            lastCardNudgeActive = true
+                            while (true) {
+                                lastCardNudgeOffset.animateTo(
+                                    targetValue = -26f,
+                                    animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
+                                )
+                                lastCardNudgeOffset.animateTo(
+                                    targetValue = 0f,
+                                    animationSpec = tween(durationMillis = 360, easing = FastOutSlowInEasing),
+                                )
+                                delay(1_150)
+                            }
                         }
-                    }
 
-                    if (currentCard != null) {
-                        androidx.compose.material3.Text(
-                            text = currentCard.definition.id,
+                        if (!progressBelowPager) {
+                            PackOpeningProgressIndicator(
+                                currentPage = currentPage,
+                                total = displayCards.size,
+                            )
+                        }
+
+                        if (currentCard != null) {
+                            androidx.compose.material3.Text(
+                                text = currentCard.definition.id,
+                                modifier = Modifier
+                                    .size(0.dp)
+                                    .testTag("pack-opening-current-card-id"),
+                            )
+                        }
+
+                        HorizontalPager(
+                            state = pagerState,
                             modifier = Modifier
-                                .size(0.dp)
-                                .testTag("pack-opening-current-card-id"),
-                        )
-                    }
+                                .weight(1f)
+                                .graphicsLayer {
+                                    alpha = cardsEntranceProgress.value
+                                    translationY = (1f - cardsEntranceProgress.value) *
+                                        if (rootHeightPx > 0f) rootHeightPx else 960f
+                                },
+                        ) { page ->
+                            RevealCard(
+                                displayCard = displayCards[page],
+                                isCurrentPage = page == currentPage,
+                                showPreviousArrow = page == currentPage && page > 0,
+                                showNextArrow = page == currentPage && page < displayCards.lastIndex,
+                                cardTranslationY = if (page == currentPage) lastCardNudgeOffset.value else 0f,
+                                nudgeActive = page == settledPage && settledPage == displayCards.lastIndex && lastCardNudgeActive,
+                                onOpenFullscreen = {
+                                    lastCardNudgeActive = false
+                                    fullscreenPage = page
+                                },
+                            )
+                        }
 
-                    HorizontalPager(
-                        state = pagerState,
-                        modifier = Modifier
-                            .weight(1f)
-                            .graphicsLayer {
-                                alpha = cardsEntranceProgress.value
-                                translationY = (1f - cardsEntranceProgress.value) *
-                                    if (rootHeightPx > 0f) rootHeightPx else 960f
-                            },
-                    ) { page ->
-                        RevealCard(
-                            displayCard = displayCards[page],
-                            page = page + 1,
-                            total = displayCards.size,
-                            isCurrentPage = page == currentPage,
-                            showPreviousArrow = page == currentPage && page > 0,
-                            showNextArrow = page == currentPage && page < displayCards.lastIndex,
-                            cardTranslationY = if (page == currentPage) lastCardNudgeOffset.value else 0f,
-                            nudgeActive = page == settledPage && settledPage == displayCards.lastIndex && lastCardNudgeActive,
-                            onOpenFullscreen = {
-                                lastCardNudgeActive = false
-                                fullscreenPage = page
-                            },
-                        )
+                        if (progressBelowPager) {
+                            PackOpeningProgressIndicator(
+                                currentPage = currentPage,
+                                total = displayCards.size,
+                            )
+                        }
                     }
                 }
             }
@@ -287,3 +311,30 @@ fun PackOpeningScreen(
         }
     }
 }
+
+@Composable
+private fun PackOpeningProgressIndicator(
+    currentPage: Int,
+    total: Int,
+) {
+    androidx.compose.material3.Text(
+        text = "${currentPage + 1} / $total",
+        color = Color.White.copy(alpha = 0.9f),
+        style = androidx.compose.material3.MaterialTheme.typography.labelLarge,
+        modifier = Modifier.testTag("pack-opening-progress"),
+    )
+}
+
+private fun shouldPlacePackOpeningProgressBelowPager(
+    availableWidth: Dp,
+    availableHeight: Dp,
+): Boolean {
+    val estimatedCardWidth = (availableWidth - PackOpeningRevealHorizontalChrome).coerceAtLeast(0.dp)
+    val estimatedCardHeight = estimatedCardWidth / TRADING_CARD_WIDTH_OVER_HEIGHT
+    val estimatedPagerBudget = (availableHeight - PackOpeningRevealHeaderEstimate).coerceAtLeast(0.dp)
+    return estimatedCardHeight > estimatedPagerBudget - PackOpeningProgressReserve
+}
+
+private val PackOpeningRevealHorizontalChrome = 80.dp
+private val PackOpeningRevealHeaderEstimate = 112.dp
+private val PackOpeningProgressReserve = 40.dp
