@@ -13,9 +13,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.gatcha.model.DisplayCard
 import fr.aumombelli.gatcha.ui.theme.skyQualityPalette
@@ -27,6 +33,7 @@ fun AstroCardDetailsSurface(
     accessoryContent: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
     val palette = skyQualityPalette(displayCard.activeVariant.skyQuality)
+    val imageCredit = rememberCardArtCredit(displayCard.definition)
 
     Card(
         shape = androidx.compose.foundation.shape.RoundedCornerShape(34.dp),
@@ -65,8 +72,38 @@ fun AstroCardDetailsSurface(
                 IdentitySection(displayCard)
                 CoordinatesSection(displayCard)
                 MeasurementsSection(displayCard)
+                ImageCreditLine(
+                    artistName = cardArtCreditArtistName(imageCredit?.artist),
+                    modifier = Modifier.fillMaxWidth(),
+                )
                 Spacer(modifier = Modifier.height(24.dp))
             }
         }
+    }
+}
+
+@Composable
+private fun ImageCreditLine(
+    artistName: String,
+    modifier: Modifier = Modifier,
+) {
+    androidx.compose.foundation.layout.Column(
+        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp),
+        modifier = modifier,
+    ) {
+        Text(
+            text = "Credit image",
+            color = Color(0xFFBDD4EA),
+            style = MaterialTheme.typography.labelMedium,
+        )
+        Text(
+            text = artistName,
+            color = Color.White,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.testTag(CardImageCreditTag),
+            maxLines = 3,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }

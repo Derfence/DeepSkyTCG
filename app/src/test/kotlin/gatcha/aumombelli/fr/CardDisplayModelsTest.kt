@@ -5,6 +5,7 @@ import fr.aumombelli.gatcha.model.OwnedCardEntry
 import fr.aumombelli.gatcha.model.OwnedVariantCount
 import fr.aumombelli.gatcha.model.raritySortPriority
 import fr.aumombelli.gatcha.model.toDisplayVariants
+import fr.aumombelli.gatcha.ui.component.cardArtCreditArtistName
 import fr.aumombelli.gatcha.ui.component.cardHeadlineContent
 import fr.aumombelli.gatcha.ui.theme.rarityBadgeStyle
 import fr.aumombelli.gatcha.ui.theme.skyQualityPalette
@@ -103,5 +104,16 @@ class CardDisplayModelsTest {
 
         assertEquals("M42", headline.title)
         assertEquals(null, headline.catalogLine)
+    }
+
+    @Test
+    fun `card art credit artist name falls back to inconnu when missing`() {
+        assertEquals("Inconnu", cardArtCreditArtistName(null))
+        assertEquals("Inconnu", cardArtCreditArtistName("   "))
+    }
+
+    @Test
+    fun `card art credit artist name keeps the provided artist`() {
+        assertEquals("Dylan O'Donnell", cardArtCreditArtistName("Dylan O'Donnell"))
     }
 }

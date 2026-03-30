@@ -3,6 +3,7 @@ package fr.aumombelli.gatcha
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -12,6 +13,9 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.gatcha.model.DisplayCardVariant
 import fr.aumombelli.gatcha.model.LibraryCardItem
+import fr.aumombelli.gatcha.model.toDisplayCard
+import fr.aumombelli.gatcha.ui.component.AstroCardPreviewSurface
+import fr.aumombelli.gatcha.ui.component.AstroCardSurfaceMode
 import fr.aumombelli.gatcha.ui.component.AstroCardThumbnail
 import kotlin.math.abs
 import org.junit.Assert.assertTrue
@@ -233,7 +237,71 @@ class AstroCardThumbnailTest {
         composeRule.onAllNodesWithTag(CARD_BACKGROUND_FALLBACK_ASSET_TAG, useUnmergedTree = true).assertCountEquals(1)
     }
 
+    @Test
+    fun thumbnail_background_art_leaves_visible_sky_quality_frame() {
+        val item = LibraryCardItem(
+            definition = testCardDefinition("M42", name = "Nebuleuse d'Orion"),
+            extensionName = "Astronomes en herbe",
+            ownedCount = 1,
+            availableVariants = listOf(
+                DisplayCardVariant("city", "Ville", "standard", "Standard", false, 1),
+            ),
+        )
+
+        composeRule.setContent {
+            AstroCardThumbnail(
+                item = item,
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {},
+            )
+        }
+
+        val surfaceBounds = composeRule
+            .onNodeWithTag("library-card-surface-M42", useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot
+        val artBounds = composeRule
+            .onNodeWithTag(CARD_BACKGROUND_ART_TAG, useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot
+
+        assertTrue("Expected thumbnail art width to leave a visible border", artBounds.width < surfaceBounds.width - 1f)
+        assertTrue("Expected thumbnail art height to leave a visible border", artBounds.height < surfaceBounds.height - 1f)
+    }
+
+    @Test
+    fun preview_background_art_leaves_visible_sky_quality_frame() {
+        val item = LibraryCardItem(
+            definition = testCardDefinition("M42", name = "Nebuleuse d'Orion"),
+            extensionName = "Astronomes en herbe",
+            ownedCount = 1,
+            availableVariants = listOf(
+                DisplayCardVariant("city", "Ville", "standard", "Standard", false, 1),
+            ),
+        )
+        val displayCard = item.toDisplayCard() ?: error("Expected display card")
+
+        composeRule.setContent {
+            AstroCardPreviewSurface(
+                displayCard = displayCard,
+                mode = AstroCardSurfaceMode.Preview,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("preview-card-surface"),
+            )
+        }
+
+        val surfaceBounds = composeRule
+            .onNodeWithTag("preview-card-surface", useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot
+        val artBounds = composeRule
+            .onNodeWithTag(CARD_BACKGROUND_ART_TAG, useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot
+
+        assertTrue("Expected preview art width to leave a visible border", artBounds.width < surfaceBounds.width - 1f)
+        assertTrue("Expected preview art height to leave a visible border", artBounds.height < surfaceBounds.height - 1f)
+    }
+
     private companion object {
+        const val CARD_BACKGROUND_ART_TAG = "astro-card-background-art"
         const val CARD_BACKGROUND_FALLBACK_ASSET_TAG = "astro-card-background-fallback-asset"
         const val CARD_CATALOG_NUMBER_TAG = "astro-card-catalog-number"
         const val CARD_EXTENSION_LOGO_TAG = "astro-card-extension-logo"

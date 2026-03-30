@@ -5,16 +5,22 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import fr.aumombelli.gatcha.model.CardDefinition
 import fr.aumombelli.gatcha.ui.theme.SkyQualityPalette
 
@@ -22,12 +28,18 @@ import fr.aumombelli.gatcha.ui.theme.SkyQualityPalette
 internal fun CardArtBackground(
     definition: CardDefinition,
     palette: SkyQualityPalette,
+    inset: Dp = 0.dp,
+    artShape: Shape = RectangleShape,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val cardArt = remember(context, definition.extensionId, definition.imageRef) {
         loadCardArt(definition = definition, contextAssets = context.assets)
     }
+    val artModifier = Modifier
+        .fillMaxSize()
+        .padding(inset)
+        .clip(artShape)
 
     Box(
         modifier = modifier
@@ -45,22 +57,22 @@ internal fun CardArtBackground(
             cardArt.primary != null -> {
                 CardArtImage(
                     bitmap = cardArt.primary,
-                    modifier = Modifier.testTag(CardBackgroundArtTag),
+                    modifier = artModifier.testTag(CardBackgroundArtTag),
                 )
             }
 
             cardArt.fallback != null -> {
-                Box(modifier = Modifier.testTag(CardBackgroundFallbackAssetTag)) {
+                Box(modifier = artModifier.testTag(CardBackgroundFallbackAssetTag)) {
                     CardArtImage(
                         bitmap = cardArt.fallback,
-                        modifier = Modifier,
+                        modifier = Modifier.fillMaxSize(),
                     )
                 }
             }
 
             else -> {
                 Box(
-                    modifier = Modifier.testTag(CardBackgroundFallbackAssetTag),
+                    modifier = artModifier.testTag(CardBackgroundFallbackAssetTag),
                 ) {
                     Box(
                         modifier = Modifier

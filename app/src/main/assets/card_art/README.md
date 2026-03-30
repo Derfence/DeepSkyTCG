@@ -2,6 +2,7 @@ Card art files are stored by extension, with one file per `imageRef`.
 
 Structure:
 - `card_art/<extensionId>/<imageRef>.webp`
+- `card_art/card_art_credits.json`
 - `card_art/_fallbacks/missing.webp`
 
 Rules:
@@ -16,3 +17,8 @@ Preparation:
 - In batch mode, the script mirrors the subfolder names from `raw/` as-is. If a raw subfolder name differs from the final asset folder name, pass the explicit output destination for that subfolder.
 - The script center-crops the image to the card ratio, keeps the shortest side fully preserved, resizes to `1024x1796`, and exports to `.webp`.
 - Any input format supported by Pillow can be used (`.jpg`, `.jpeg`, `.png`, `.webp`, and similar).
+
+Credits:
+- Store runtime image credits in `card_art/card_art_credits.json`, keyed by `extensionId` and then `imageRef`.
+- Export credits from a raw manifest with `python3 scripts/export_card_art_credits.py <sources_manifest.csv> <extensionId>`.
+- The enlarged card always shows `Credit image`, with `Inconnu` as a fallback when no artist is available.

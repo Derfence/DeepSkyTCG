@@ -255,6 +255,52 @@ class PackOpeningScreenTest {
         }
     }
 
+    @Test
+    fun pack_opening_background_art_leaves_visible_sky_quality_frame() {
+        val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
+        val packResult = DrawPackResponse(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            availableDrawCount = 9,
+            nextChargeAt = "2026-03-24T18:00:00Z",
+            cards = listOf(
+                testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
+            ),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackOpeningScreen(
+                state = PackOpeningUiState(
+                    packResult = packResult,
+                    displayCards = listOf(
+                        firstCard.toDisplayCard(
+                            extensionName = "Astronomes en herbe",
+                            activeVariant = packResult.cards[0].variant.toDisplayVariant(),
+                        ),
+                    ),
+                    highestBurstRarity = "Common",
+                    hasHolographicBurst = false,
+                ),
+                onDone = {},
+            )
+        }
+
+        composeRule.mainClock.advanceTimeBy(3_000)
+        composeRule.mainClock.autoAdvance = true
+        composeRule.waitForIdle()
+
+        val surfaceBounds = composeRule
+            .firstNodeWithTag("pack-opening-current-card-surface", useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot
+        val artBounds = composeRule
+            .firstNodeWithTag("astro-card-background-art", useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot
+
+        assertTrue("Expected pack reveal art width to leave a visible border", artBounds.width < surfaceBounds.width - 1f)
+        assertTrue("Expected pack reveal art height to leave a visible border", artBounds.height < surfaceBounds.height - 1f)
+    }
+
     private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertApproxCardRatio(
         tag: String,
         tolerance: Float = 0.03f,

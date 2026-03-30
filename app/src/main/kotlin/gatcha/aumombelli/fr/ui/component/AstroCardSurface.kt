@@ -6,11 +6,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.gatcha.model.DisplayCard
 import fr.aumombelli.gatcha.ui.theme.skyQualityPalette
@@ -32,7 +34,8 @@ fun AstroCardPreviewSurface(
 ) {
     val palette = skyQualityPalette(displayCard.activeVariant.skyQuality)
     val compact = mode == AstroCardSurfaceMode.Thumbnail
-    val shape = androidx.compose.foundation.shape.RoundedCornerShape(if (compact) 24.dp else 30.dp)
+    val shape = RoundedCornerShape(if (compact) 24.dp else 30.dp)
+    val artInset = cardArtInset(mode)
     val clickableModifier = if (onClick == null) {
         modifier
     } else {
@@ -59,6 +62,8 @@ fun AstroCardPreviewSurface(
             CardArtBackground(
                 definition = displayCard.definition,
                 palette = palette,
+                inset = artInset,
+                artShape = cardArtShape(mode),
                 modifier = Modifier.fillMaxSize(),
             )
             HeroAtmosphere(palette = palette)
@@ -75,6 +80,18 @@ fun AstroCardPreviewSurface(
             )
         }
     }
+}
+
+private fun cardArtInset(mode: AstroCardSurfaceMode) = when (mode) {
+    AstroCardSurfaceMode.Thumbnail -> 10.dp
+    AstroCardSurfaceMode.Preview -> 12.dp
+    AstroCardSurfaceMode.PackReveal -> 12.dp
+}
+
+private fun cardArtShape(mode: AstroCardSurfaceMode): Shape = when (mode) {
+    AstroCardSurfaceMode.Thumbnail -> RoundedCornerShape(18.dp)
+    AstroCardSurfaceMode.Preview -> RoundedCornerShape(24.dp)
+    AstroCardSurfaceMode.PackReveal -> RoundedCornerShape(24.dp)
 }
 
 @Composable
