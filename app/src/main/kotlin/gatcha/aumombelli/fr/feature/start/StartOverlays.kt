@@ -1,16 +1,12 @@
 package fr.aumombelli.gatcha.feature.start
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,10 +28,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,12 +47,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
 
 @Composable
 internal fun StartFooter(
@@ -64,6 +61,7 @@ internal fun StartFooter(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     var dragDistance by remember { mutableFloatStateOf(0f) }
+    var dragOpened by remember { mutableStateOf(false) }
 
     Box(
         modifier = modifier
@@ -94,34 +92,35 @@ internal fun StartFooter(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .width(136.dp)
-                .height(72.dp)
-                .pointerInput(onOpenAbout) {
-                    detectVerticalDragGestures(
-                        onDragStart = {
-                            dragDistance = 0f
-                        },
-                        onVerticalDrag = { change, dragAmount ->
-                            change.consume()
-                            dragDistance += dragAmount
-                        },
-                        onDragCancel = {
-                            dragDistance = 0f
-                        },
-                        onDragEnd = {
-                            if (dragDistance < -40f) {
-                                onOpenAbout()
-                            }
-                            dragDistance = 0f
-                        },
-                    )
-                }
+                .width(220.dp)
+                .height(96.dp)
+                .draggable(
+                    orientation = Orientation.Vertical,
+                    state = rememberDraggableState { delta ->
+                        if (dragOpened) {
+                            return@rememberDraggableState
+                        }
+                        dragDistance += delta
+                        if (dragDistance <= -24f) {
+                            dragOpened = true
+                            onOpenAbout()
+                        }
+                    },
+                    onDragStarted = {
+                        dragDistance = 0f
+                        dragOpened = false
+                    },
+                    onDragStopped = {
+                        dragDistance = 0f
+                        dragOpened = false
+                    },
+                )
                 .clickable(
                     interactionSource = interactionSource,
                     indication = null,
                     onClick = onOpenAbout,
                 )
-                .padding(horizontal = 18.dp, vertical = 10.dp)
+                .padding(horizontal = 18.dp, vertical = 12.dp)
                 .testTag("start-about-trigger"),
         ) {
             Text(
@@ -140,138 +139,104 @@ internal fun StartFooter(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun StartAboutSheet(
     visible: Boolean,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn(animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing)) +
-            slideInVertically(
-                animationSpec = tween(durationMillis = 320, easing = FastOutSlowInEasing),
-                initialOffsetY = { it },
-            ),
-        exit = fadeOut(animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing)) +
-            slideOutVertically(
-                animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
-                targetOffsetY = { it },
-            ),
-        modifier = modifier.fillMaxSize(),
+    if (!visible) return
+
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+    )
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        containerColor = Color.Transparent,
+        scrimColor = Color.Black.copy(alpha = 0.62f),
+        sheetMaxWidth = Dp.Unspecified,
+        modifier = modifier.testTag("start-about-sheet-container"),
+        dragHandle = null,
     ) {
-        val interactionSource = remember { MutableInteractionSource() }
-        var dragDistance by remember { mutableFloatStateOf(0f) }
-        var dismissEnabled by remember { mutableStateOf(false) }
-
-        LaunchedEffect(Unit) {
-            dismissEnabled = false
-            delay(180)
-            dismissEnabled = true
-        }
-
-        Box(
+        Column(
+            verticalArrangement = Arrangement.spacedBy(18.dp),
             modifier = Modifier
-                .fillMaxSize()
-                .testTag("start-about-sheet-container"),
+                .fillMaxWidth()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF17314E),
+                            Color(0xFF0C1828),
+                        ),
+                    ),
+                )
+                .testTag("start-about-sheet")
+                .padding(horizontal = 24.dp, vertical = 20.dp),
         ) {
-            Box(
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.62f))
-                    .clickable(
-                        interactionSource = interactionSource,
-                        indication = null,
-                        enabled = dismissEnabled,
-                        onClick = onDismiss,
-                    )
-                    .testTag("start-about-sheet-scrim"),
-            )
-
-            Surface(
-                shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-                color = Color(0xFF10233C),
-                tonalElevation = 8.dp,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .pointerInput(onDismiss) {
-                        detectVerticalDragGestures(
-                            onDragStart = {
-                                dragDistance = 0f
-                            },
-                            onVerticalDrag = { change, dragAmount ->
-                                change.consume()
-                                dragDistance += dragAmount
-                            },
-                            onDragCancel = {
-                                dragDistance = 0f
-                            },
-                            onDragEnd = {
-                                if (dragDistance > 100f) {
-                                    onDismiss()
-                                }
-                                dragDistance = 0f
-                            },
-                        )
-                    }
-                    .testTag("start-about-sheet"),
+                    .testTag("start-about-sheet-header"),
             ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                Box(
                     modifier = Modifier
+                        .width(44.dp)
+                        .height(4.dp)
                         .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    Color(0xFF17314E),
-                                    Color(0xFF0C1828),
-                                ),
-                            ),
+                            color = Color(0xFF7992AE),
+                            shape = RoundedCornerShape(999.dp),
                         )
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 24.dp, vertical = 20.dp),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .width(44.dp)
-                            .height(4.dp)
-                            .background(
-                                color = Color(0xFF7992AE),
-                                shape = RoundedCornerShape(999.dp),
-                            ),
-                    )
-                    Text(
-                        text = "Crédits",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                    )
-                    Text(
-                        text = StartFooterAppVersion,
-                        color = Color(0xFFF4D48A),
-                        style = MaterialTheme.typography.titleSmall,
-                        modifier = Modifier.testTag("start-about-sheet-version"),
-                    )
+                        .testTag("start-about-sheet-handle"),
+                )
+                Text(
+                    text = "Crédits",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                )
+                Text(
+                    text = StartFooterAppVersion,
+                    color = Color(0xFFF4D48A),
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.testTag("start-about-sheet-version"),
+                )
+                Text(
+                    text = "Fais glisser le panneau vers le bas ou touche le fond pour le fermer.",
+                    color = Color(0xFF9FB4CD),
+                    style = MaterialTheme.typography.bodySmall,
+                    textAlign = TextAlign.Center,
+                )
+            }
 
-                    StartAboutSections.forEach { section ->
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(6.dp),
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+            ) {
+                StartAboutSections.forEach { section ->
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = section.title,
+                            color = Color(0xFFB9D5F5),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        section.lines.forEach { line ->
                             Text(
-                                text = section.title,
-                                color = Color(0xFFB9D5F5),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
+                                text = line,
+                                color = Color(0xFFE6EEF9),
+                                style = MaterialTheme.typography.bodyMedium,
                             )
-                            section.lines.forEach { line ->
-                                Text(
-                                    text = line,
-                                    color = Color(0xFFE6EEF9),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                )
-                            }
                         }
                     }
                 }

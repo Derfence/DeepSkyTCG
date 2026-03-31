@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeUp
 import fr.aumombelli.gatcha.feature.start.StartScreen
 import fr.aumombelli.gatcha.feature.start.StartUiState
@@ -91,6 +92,23 @@ class StartScreenStateTest {
         composeRule.onNodeWithTag("start-about-trigger").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("start-about-sheet").assertIsDisplayed()
+    }
+
+    @Test
+    fun about_sheet_closes_with_swipe_down_on_header() {
+        setStartScreenContent(
+            StartUiState(
+                isLoading = false,
+            ),
+        )
+
+        composeRule.onNodeWithTag("start-about-trigger").performTouchInput { swipeUp() }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("start-about-sheet").assertIsDisplayed()
+
+        composeRule.onNodeWithTag("start-about-sheet-header").performTouchInput { swipeDown() }
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithTag("start-about-sheet").assertCountEquals(0)
     }
 
     @Test
