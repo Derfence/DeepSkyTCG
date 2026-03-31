@@ -17,8 +17,6 @@ data class StartUiState(
     val isLoading: Boolean = true,
     val isTransitioningToMenu: Boolean = false,
     val errorMessage: String? = null,
-    val warningMessage: String? = null,
-    val canResetProgress: Boolean = false,
     val isResettingProgress: Boolean = false,
 )
 
@@ -58,7 +56,7 @@ class StartViewModel(
 
     fun resetProgress() {
         val state = _uiState.value
-        if (!state.canResetProgress || state.isResettingProgress) {
+        if (state.isLoading || state.isResettingProgress) {
             return
         }
 
@@ -72,7 +70,6 @@ class StartViewModel(
                     _uiState.value = StartUiState(
                         isLoading = false,
                         errorMessage = exception.message ?: "Unable to reset local progress.",
-                        canResetProgress = true,
                     )
                 }
         }
@@ -85,15 +82,11 @@ class StartViewModel(
                 .onSuccess { result ->
                     _uiState.value = when (result) {
                         is ProgressLoadResult.Ok -> StartUiState(isLoading = false)
-                        is ProgressLoadResult.Recovered -> StartUiState(
-                            isLoading = false,
-                            warningMessage = result.noticeMessage,
-                        )
+                        is ProgressLoadResult.Recovered -> StartUiState(isLoading = false)
 
                         is ProgressLoadResult.Compromised -> StartUiState(
                             isLoading = false,
                             errorMessage = result.message,
-                            canResetProgress = true,
                         )
                     }
                 }
@@ -101,7 +94,6 @@ class StartViewModel(
                     _uiState.value = StartUiState(
                         isLoading = false,
                         errorMessage = exception.message ?: "Unable to load local progress.",
-                        canResetProgress = true,
                     )
                 }
         }

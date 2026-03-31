@@ -8,6 +8,8 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import fr.aumombelli.gatcha.testsupport.badgeCelebrationBackNavigationTestAppContainer
 import fr.aumombelli.gatcha.testsupport.backNavigationTestAppContainer
 import fr.aumombelli.gatcha.ui.theme.GatchaTheme
@@ -18,6 +20,36 @@ import org.junit.Test
 class GatchaAppBackNavigationTest {
     @get:Rule
     val composeRule = createAndroidComposeRule<ComponentActivity>()
+
+    @Test
+    fun android_back_from_start_reset_confirmation_closes_dialog_before_finishing_activity() {
+        setAppContent(backNavigationTestAppContainer())
+
+        composeRule.onNodeWithTag("start-reset-progress").performClick()
+        advanceBy(1)
+        composeRule.onNodeWithTag("start-reset-confirmation").assertIsDisplayed()
+
+        pressAndroidBack()
+        advanceBy(1)
+        composeRule.onAllNodesWithTag("start-reset-confirmation").assertCountEquals(0)
+        composeRule.onNodeWithTag("start-begin").assertIsDisplayed()
+        assertTrue(!composeRule.activity.isFinishing)
+    }
+
+    @Test
+    fun android_back_from_start_about_sheet_closes_sheet_before_finishing_activity() {
+        setAppContent(backNavigationTestAppContainer())
+
+        composeRule.onNodeWithTag("start-about-trigger").performTouchInput { swipeUp() }
+        advanceBy(400)
+        composeRule.onNodeWithTag("start-about-sheet").assertIsDisplayed()
+
+        pressAndroidBack()
+        advanceBy(400)
+        composeRule.onAllNodesWithTag("start-about-sheet").assertCountEquals(0)
+        composeRule.onNodeWithTag("start-begin").assertIsDisplayed()
+        assertTrue(!composeRule.activity.isFinishing)
+    }
 
     @Test
     fun android_back_from_library_returns_to_main_menu() {
@@ -136,7 +168,7 @@ class GatchaAppBackNavigationTest {
                 GatchaApp(appContainer = appContainer)
             }
         }
-        advanceBy(2_200)
+        advanceBy(3_000)
     }
 
     private fun startAndReachMainMenu() {

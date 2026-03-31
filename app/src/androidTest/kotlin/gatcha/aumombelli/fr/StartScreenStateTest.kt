@@ -2,11 +2,16 @@ package fr.aumombelli.gatcha
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import fr.aumombelli.gatcha.feature.start.StartScreen
 import fr.aumombelli.gatcha.feature.start.StartUiState
 import fr.aumombelli.gatcha.ui.theme.GatchaTheme
@@ -52,50 +57,126 @@ class StartScreenStateTest {
     }
 
     @Test
-    fun warning_state_is_displayed_without_disabling_begin() {
+    fun reset_action_is_always_visible() {
         setStartScreenContent(
             StartUiState(
                 isLoading = false,
-                warningMessage = "La progression locale a été sécurisée.",
             ),
         )
 
-        composeRule.onNodeWithTag("start-warning").assertIsDisplayed()
+        composeRule.onNodeWithTag("start-reset-progress").assertIsDisplayed().assertIsEnabled()
     }
 
     @Test
-    fun compromised_state_shows_reset_action() {
-        var resetCount = 0
-        composeRule.setContent {
-            GatchaTheme {
-                StartScreen(
-                    state = StartUiState(
-                        isLoading = false,
-                        errorMessage = "La progression locale semble corrompue.",
-                        canResetProgress = true,
-                    ),
-                    onBegin = {},
-                    onResetProgress = { resetCount += 1 },
-                    showBackground = false,
-                    contentVisible = true,
-                )
-            }
-        }
+    fun about_sheet_opens_with_swipe_up_on_about_trigger() {
+        setStartScreenContent(
+            StartUiState(
+                isLoading = false,
+            ),
+        )
 
-        composeRule.onNodeWithTag("start-reset-progress").assertIsDisplayed().performClick()
+        composeRule.onNodeWithTag("start-about-trigger").performTouchInput { swipeUp() }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("start-about-sheet").assertIsDisplayed()
+    }
+
+    @Test
+    fun about_sheet_opens_with_tap_on_about_trigger() {
+        setStartScreenContent(
+            StartUiState(
+                isLoading = false,
+            ),
+        )
+
+        composeRule.onNodeWithTag("start-about-trigger").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("start-about-sheet").assertIsDisplayed()
+    }
+
+    @Test
+    fun reset_confirmation_requires_delay_before_validation() {
+        composeRule.mainClock.autoAdvance = false
+        setStartScreenContent(
+            StartUiState(
+                isLoading = false,
+            ),
+        )
+
+        composeRule.onNodeWithTag("start-reset-progress").performClick()
+        composeRule.mainClock.advanceTimeBy(1)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("start-reset-confirmation").assertIsDisplayed()
+        composeRule.onNodeWithTag("start-reset-confirmation-confirm").assertIsNotEnabled()
+
+        composeRule.mainClock.advanceTimeBy(1_999)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("start-reset-confirmation-confirm").assertIsNotEnabled()
+
+        composeRule.mainClock.advanceTimeBy(1)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("start-reset-confirmation-confirm").assertIsEnabled()
+        composeRule.mainClock.autoAdvance = true
+    }
+
+    @Test
+    fun cancelling_reset_confirmation_keeps_callback_uninvoked() {
+        var resetCount = 0
+        setStartScreenContent(
+            initialState = StartUiState(
+                isLoading = false,
+            ),
+            onResetProgress = { resetCount += 1 },
+        )
+
+        composeRule.onNodeWithTag("start-reset-progress").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("start-reset-confirmation-cancel").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.onAllNodesWithTag("start-reset-confirmation").assertCountEquals(0)
+        composeRule.runOnIdle {
+            assertEquals(0, resetCount)
+        }
+    }
+
+    @Test
+    fun confirming_reset_calls_callback_once() {
+        var resetCount = 0
+        composeRule.mainClock.autoAdvance = false
+        setStartScreenContent(
+            initialState = StartUiState(
+                isLoading = false,
+            ),
+            onResetProgress = { resetCount += 1 },
+        )
+
+        composeRule.onNodeWithTag("start-reset-progress").performClick()
+        composeRule.mainClock.advanceTimeBy(1)
+        composeRule.waitForIdle()
+        composeRule.mainClock.advanceTimeBy(2_000)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("start-reset-confirmation-confirm").performClick()
+        composeRule.mainClock.advanceTimeBy(1)
+        composeRule.waitForIdle()
+        composeRule.mainClock.autoAdvance = true
+
+        composeRule.onAllNodesWithTag("start-reset-confirmation").assertCountEquals(0)
         composeRule.runOnIdle {
             assertEquals(1, resetCount)
         }
     }
 
-    private fun setStartScreenContent(initialState: StartUiState): MutableState<StartUiState> {
+    private fun setStartScreenContent(
+        initialState: StartUiState,
+        onResetProgress: () -> Unit = {},
+    ): MutableState<StartUiState> {
         val state = mutableStateOf(initialState)
         composeRule.setContent {
             GatchaTheme {
                 StartScreen(
                     state = state.value,
                     onBegin = {},
-                    onResetProgress = {},
+                    onResetProgress = onResetProgress,
                     showBackground = false,
                     contentVisible = true,
                 )

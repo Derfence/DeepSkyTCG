@@ -1,5 +1,6 @@
 package fr.aumombelli.gatcha.feature.start
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -7,7 +8,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -22,7 +27,9 @@ fun StartScreen(
     contentVisible: Boolean = true,
     onCardTopChanged: (Float) -> Unit = {},
 ) {
-    val cardAlpha by animateFloatAsState(
+    var resetConfirmationVisible by remember { mutableStateOf(false) }
+    var aboutSheetVisible by remember { mutableStateOf(false) }
+    val contentAlpha by animateFloatAsState(
         targetValue = if (contentVisible) 1f else 0f,
         animationSpec = tween(durationMillis = 520, easing = FastOutSlowInEasing),
         label = "start-card-alpha",
@@ -44,6 +51,21 @@ fun StartScreen(
         )
     }
 
+    LaunchedEffect(contentVisible) {
+        if (!contentVisible) {
+            resetConfirmationVisible = false
+            aboutSheetVisible = false
+        }
+    }
+
+    BackHandler(enabled = resetConfirmationVisible || aboutSheetVisible) {
+        if (resetConfirmationVisible) {
+            resetConfirmationVisible = false
+        } else {
+            aboutSheetVisible = false
+        }
+    }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -51,10 +73,38 @@ fun StartScreen(
     ) {
         StartCard(
             state = state,
-            cardAlpha = cardAlpha,
+            cardAlpha = contentAlpha,
             onBegin = onBegin,
-            onResetProgress = onResetProgress,
+            onResetProgress = {
+                aboutSheetVisible = false
+                resetConfirmationVisible = true
+            },
             onCardTopChanged = onCardTopChanged,
         )
+
+        StartFooter(
+            contentAlpha = contentAlpha,
+            onOpenAbout = {
+                if (contentVisible) {
+                    aboutSheetVisible = true
+                }
+            },
+            modifier = Modifier.fillMaxSize(),
+        )
+
+        StartAboutSheet(
+            visible = aboutSheetVisible && contentVisible,
+            onDismiss = { aboutSheetVisible = false },
+        )
+
+        if (resetConfirmationVisible && contentVisible) {
+            StartResetConfirmationDialog(
+                onConfirm = {
+                    resetConfirmationVisible = false
+                    onResetProgress()
+                },
+                onCancel = { resetConfirmationVisible = false },
+            )
+        }
     }
 }

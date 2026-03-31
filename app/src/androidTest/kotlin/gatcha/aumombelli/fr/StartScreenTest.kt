@@ -1,6 +1,7 @@
 package fr.aumombelli.gatcha
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -23,7 +24,20 @@ class StartScreenTest {
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun start_screen_is_shown_on_launch() {
+    fun start_screen_shows_footer_on_launch() {
+        waitForStartScreen()
+
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithTag("start-footer-version")
+                .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                .isNotEmpty()
+        }
+        composeRule.onNodeWithTag("start-footer").assertIsDisplayed()
+        composeRule.onNodeWithTag("start-footer-version").assertTextContains("v0.9.0")
+        composeRule.onNodeWithTag("start-about-trigger").assertIsDisplayed()
+    }
+
+    private fun waitForStartScreen() {
         composeRule.waitUntil(timeoutMillis = 10_000) {
             composeRule.onAllNodesWithTag("app-launch-logo")
                 .fetchSemanticsNodes(atLeastOneRootRequired = false)

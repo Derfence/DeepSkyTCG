@@ -42,7 +42,7 @@ internal fun BoxScope.StartCard(
             .graphicsLayer {
                 alpha = cardAlpha
             }
-            .gatchaContentInsetsPadding(includeBottom = true)
+            .gatchaContentInsetsPadding()
             .padding(24.dp),
     ) {
         Column(
@@ -72,15 +72,6 @@ internal fun BoxScope.StartCard(
                 )
             }
 
-            state.warningMessage?.let { warning ->
-                Text(
-                    text = warning,
-                    color = Color(0xFFFFD28A),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.testTag("start-warning"),
-                )
-            }
-
             Button(
                 onClick = onBegin,
                 enabled = !state.isLoading &&
@@ -102,16 +93,14 @@ internal fun BoxScope.StartCard(
                 }
             }
 
-            if (state.canResetProgress) {
-                Button(
-                    onClick = onResetProgress,
-                    enabled = !state.isLoading && !state.isResettingProgress,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("start-reset-progress"),
-                ) {
-                    Text("Réinitialiser la progression")
-                }
+            Button(
+                onClick = onResetProgress,
+                enabled = !state.isLoading && !state.isResettingProgress,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("start-reset-progress"),
+            ) {
+                Text("Réinitialiser la bibliothèque")
             }
         }
     }

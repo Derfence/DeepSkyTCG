@@ -30,7 +30,6 @@ class StartViewModelTest {
         assertEquals(false, viewModel.uiState.value.isLoading)
         assertEquals(false, viewModel.uiState.value.isTransitioningToMenu)
         assertNull(viewModel.uiState.value.errorMessage)
-        assertNull(viewModel.uiState.value.warningMessage)
     }
 
     @Test
@@ -60,7 +59,7 @@ class StartViewModelTest {
     }
 
     @Test
-    fun `init surfaces recovered progress as a non blocking warning`() = runTest {
+    fun `init surfaces recovered progress silently`() = runTest {
         val progressGateway = FakeProgressGateway().apply {
             recoveryNotice = "La progression locale a été sécurisée."
         }
@@ -69,12 +68,43 @@ class StartViewModelTest {
         advanceUntilIdle()
 
         assertEquals(false, viewModel.uiState.value.isLoading)
-        assertEquals("La progression locale a été sécurisée.", viewModel.uiState.value.warningMessage)
         assertNull(viewModel.uiState.value.errorMessage)
     }
 
     @Test
-    fun `compromised progress enables reset and reset reloads clean state`() = runTest {
+    fun `begin does not emit navigation while an error is present`() = runTest {
+        val progressGateway = FakeProgressGateway().apply {
+            loadFailure = IllegalStateException("Saved progression could not be read.")
+        }
+
+        val viewModel = StartViewModel(progressGateway)
+        advanceUntilIdle()
+
+        viewModel.begin()
+        advanceUntilIdle()
+
+        assertEquals(false, viewModel.uiState.value.isTransitioningToMenu)
+    }
+
+    @Test
+    fun `healthy progress can be reset and reloads clean state`() = runTest {
+        val progressGateway = FakeProgressGateway().apply {
+            progress = progress.copy(collection = ownedCollectionOf("ALP-001" to 3))
+        }
+
+        val viewModel = StartViewModel(progressGateway)
+        advanceUntilIdle()
+
+        viewModel.resetProgress()
+        advanceUntilIdle()
+
+        assertEquals(1, progressGateway.resetCallCount.get())
+        assertNull(viewModel.uiState.value.errorMessage)
+        assertEquals(false, viewModel.uiState.value.isLoading)
+    }
+
+    @Test
+    fun `compromised progress can be reset and reloads clean state`() = runTest {
         val progressGateway = FakeProgressGateway().apply {
             compromisedMessage = "La progression locale semble corrompue."
         }
@@ -82,12 +112,10 @@ class StartViewModelTest {
         val viewModel = StartViewModel(progressGateway)
         advanceUntilIdle()
 
-        assertEquals(true, viewModel.uiState.value.canResetProgress)
         viewModel.resetProgress()
         advanceUntilIdle()
 
         assertEquals(1, progressGateway.resetCallCount.get())
-        assertEquals(false, viewModel.uiState.value.canResetProgress)
         assertNull(viewModel.uiState.value.errorMessage)
     }
 }
