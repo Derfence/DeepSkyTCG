@@ -1,11 +1,5 @@
 {
   "astronomes-en-herbe": {
-    "46p_wirtanen": {
-      "artist": "Stephen Rahn",
-      "credit": "https://www.flickr.com/photos/srahn/45569044954/",
-      "license": "CC0",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:46P_Wirtanen_12-11-18.jpg"
-    },
     "albireo": {
       "artist": "Robert Gillette",
       "credit": "Albireo",
@@ -78,12 +72,6 @@
       "license": "CC BY",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Comet_NEOWISE_and_meteor.jpg"
     },
-    "cor_caroli": {
-      "artist": "Stellarium software",
-      "credit": "Capture d'écran",
-      "license": "CC BY",
-      "sourcePage": "https://stellarium-web.org/"
-    },
     "cygnus_constellation": {
       "artist": "Wolfgang Rafelt ",
       "credit": "Constellation Cygnus",
@@ -133,16 +121,16 @@
       "sourcePage": "https://stellarium-web.org/"
     },
     "m11_wild_duck_cluster": {
-      "artist": "Brainandforce",
-      "credit": "Own work",
+      "artist": "Brian Diaz",
+      "credit": "The Wild Duck Cluster M11",
       "license": "CC BY",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Wild_Duck_Cluster_(M11).png"
+      "sourcePage": "https://app.astrobin.com/i/7w83fb"
     },
     "m13_hercules": {
-      "artist": "Brainandforce",
-      "credit": "Own work",
-      "license": "CC BY",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Messier_13_(infrared,_red,_green).jpg"
+      "artist": "Eric Coles (coles44)",
+      "credit": "Hercules Globular Cluster - APOD March 19, 2020",
+      "license": "CC BY-NC-ND",
+      "sourcePage": "https://app.astrobin.com/i/cw4303"
     },
     "m16_eagle_nebula": {
       "artist": "Min Xie",
@@ -157,10 +145,10 @@
       "sourcePage": "https://app.astrobin.com/i/ac5bde"
     },
     "m22_globular_cluster": {
-      "artist": "Michel",
-      "credit": "Messier 22 Globular Cluster",
+      "artist": "Frédéric Ruciak",
+      "credit": "M22 (data set from TL)",
       "license": "CC BY-NC-ND",
-      "sourcePage": "https://app.astrobin.com/i/dbk0us"
+      "sourcePage": "https://app.astrobin.com/i/b9hkof"
     },
     "m24_star_cloud": {
       "artist": "Vanessa Harvey, REU program/NOIRLab/ NSF /AURA",
@@ -169,10 +157,10 @@
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Sagittarius_Star_Cloud_(noao-m24).jpg"
     },
     "m27_dumbbell": {
-      "artist": "Bill Schoening/NOIRLab/ NSF /AURA",
-      "credit": "M27, NGC 6853, Dumbbell Nebula",
-      "license": "CC BY",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:M27,_NGC_6853,_Dumbbell_Nebula_(noao-02674).jpg"
+      "artist": "Eric Coles (coles44)",
+      "credit": "M27 - The Dumbbell Nebula",
+      "license": "CC BY-NC-ND",
+      "sourcePage": "https://app.astrobin.com/i/7gfe4v"
     },
     "m31_andromeda": {
       "artist": "Deep Sky West (Lloyd)",
@@ -186,23 +174,11 @@
       "license": "Public domain",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:M33.jpg"
     },
-    "m35_open_cluster": {
-      "artist": "Chuck Ayoub",
-      "credit": "Own work",
-      "license": "CC0",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:M35_and_NGC_2158.png"
-    },
-    "m36_open_cluster": {
-      "artist": "StudentAstronomyGroupUoC",
-      "credit": "Own work",
-      "license": "CC BY",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:M36_AOFPK.jpg"
-    },
     "m37_open_cluster": {
-      "artist": "StudentAstronomyGroupUoC",
-      "credit": "Own work",
-      "license": "CC BY",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:M37_AOFPK.jpg"
+      "artist": "Seokhee Kim",
+      "credit": "M37",
+      "license": "CC BY-NC",
+      "sourcePage": "https://app.astrobin.com/i/ncajra"
     },
     "m38_open_cluster": {
       "artist": "Giuseppe Donatiello",
@@ -228,12 +204,6 @@
       "license": "CC BY-NC",
       "sourcePage": "https://app.astrobin.com/i/lqs9k8"
     },
-    "m44_praesepe": {
-      "artist": "Taavi Niittee",
-      "credit": "Own work",
-      "license": "CC0",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Beehive_cluster_(M44).jpg"
-    },
     "m45_pleiades": {
       "artist": "Taavi Niittee",
       "credit": "Own work",
@@ -246,39 +216,21 @@
       "license": "CC BY-NC",
       "sourcePage": "https://app.astrobin.com/i/r7fjbl"
     },
-    "m47_open_cluster": {
-      "artist": "Seokhee Kim",
-      "credit": "M47",
-      "license": "CC BY-NC",
-      "sourcePage": "https://app.astrobin.com/i/cqcbhg"
-    },
-    "m52_open_cluster": {
-      "artist": "Gary Imm",
-      "credit": "M52",
-      "license": "CC BY-NC",
-      "sourcePage": "https://app.astrobin.com/i/l7qd2w?r=B"
-    },
     "m57_ring": {
-      "artist": "Arthomnix",
-      "credit": "Own work",
-      "license": "CC0",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Ring_Nebula_(M57)_seen_by_JWST%27s_NIRCAM.png"
+      "artist": "Gary Imm",
+      "credit": "M57",
+      "license": "CC BY-NC",
+      "sourcePage": "https://app.astrobin.com/i/orfb6q?r=0"
     },
     "m6_butterfly_cluster": {
       "artist": "Stephen Rahn from Acworth, GA, USA",
       "credit": "Messier 6 - The Butterfly Cluster",
-      "license": "CC0",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Messier_6_-_The_Butterfly_Cluster_(52108702298).jpg"
-    },
-    "m7_ptolemy_cluster": {
-      "artist": "Stephen Rahn",
-      "credit": "https://www.flickr.com/photos/srahn/52109057649/",
-      "license": "CC0",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Messier_7_(52109057649).jpg"
+      "license": "CC By",
+      "sourcePage": "https://app.astrobin.com/i/h521pd"
     },
     "m81_bode": {
-      "artist": "Taavi Niittee",
-      "credit": "Own work",
+      "artist": "Viktor Antokhov ",
+      "credit": "The Butterfly Cluster",
       "license": "CC0",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Bode_and_Cigar_galaxies.jpg"
     },
@@ -306,23 +258,11 @@
       "license": "CC BY",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:2012-03-12_22-07-31-mizar-32f-19d-20o.jpg"
     },
-    "ngc457_owl_cluster": {
-      "artist": "Stephen Rahn from Macon, GA, USA",
-      "credit": "The Owl Cluster",
-      "license": "CC0",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:The_Owl_Cluster_(48817641138).jpg"
-    },
     "ngc7000_north_america": {
       "artist": "Carsten Frenzl from Deutschland",
       "credit": "NGC7000, IC5070 - North America and Pelican Nebula",
       "license": "CC BY",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:NGC7000,_IC5070_-_North_America_and_Pelican_Nebula_-_Flickr_-_castro.pic.jpg"
-    },
-    "ngc752_open_cluster": {
-      "artist": "C messier",
-      "credit": "Own work",
-      "license": "CC BY",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:NGC_752_60f_GraXpert.jpg"
     },
     "orion_constellation": {
       "artist": "Taavi Niittee",

@@ -12,14 +12,14 @@
       { "code": "holographic", "label": "Holographique", "isHolographic": true }
     ],
     "skyQualityWeights": [
-      { "code": "city", "weight": 40 },
-      { "code": "suburban", "weight": 30 },
-      { "code": "rural", "weight": 20 },
-      { "code": "mountain", "weight": 10 }
+      { "code": "city", "weight": 10 },
+      { "code": "suburban", "weight": 6 },
+      { "code": "rural", "weight": 3 },
+      { "code": "mountain", "weight": 1 }
     ],
     "finishWeights": [
-      { "code": "standard", "weight": 88 },
-      { "code": "holographic", "weight": 12 }
+      { "code": "standard", "weight": 18 },
+      { "code": "holographic", "weight": 2 }
     ]
   }
 ]

@@ -118,10 +118,28 @@ Les tests instrumentes `connectedDebugAndroidTest` doivent etre lances depuis Wi
 
 ## Catalogue
 
-Le catalogue source editable reste le fichier racine `catalogue_astronomie.csv`, applique via :
+Le catalogue source editable est maintenant le fichier racine `catalogue_astronomie.xlsx`.
+
+Le classeur contient :
+
+- `Catalogue` : les extensions, les cartes et le multiplicateur `cardRarityMultiplier` ;
+- `Probabilites` : les parametres d'entree pour les probabilites de carte, de qualite du ciel et d'holographique ;
+- `Resultats` : les probabilites et temps moyens recalcules ;
+- `_Calibration` : cache technique masque permettant de conserver un cycle `export -> apply` stable a poids egaux.
+
+Exporter ou recharger le classeur :
 
 ```bash
+python3 scripts/catalog_sync.py export
 python3 scripts/catalog_sync.py apply
+```
+
+Le script n'a pas besoin de dependance Python externe : le support XLSX est embarque dans `scripts/simple_xlsx.py`.
+
+Les tests du pipeline catalogue peuvent etre lances avec :
+
+```bash
+python3 -m unittest discover -s scripts -p 'test_*.py'
 ```
 
 Toute evolution du format de persistance securisee doit continuer a passer par `ProgressSnapshot.schemaVersion`.
