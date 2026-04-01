@@ -245,7 +245,7 @@ class ProgressRepository(
     private fun decodeCollection(collectionJson: String): OwnedCollection = try {
         json.decodeFromString(OwnedCollection.serializer(), collectionJson)
     } catch (exception: SerializationException) {
-        throw IllegalStateException("Saved progression could not be read.", exception)
+        throw IllegalStateException("La progression enregistree n'a pas pu etre lue.", exception)
     }
 
     private fun emptyCollection(): OwnedCollection = OwnedCollection()

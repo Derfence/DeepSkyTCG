@@ -27,7 +27,7 @@ internal fun buildBadgeBookSections(
                     .sortedBy { it.id }
                 val profilesByCardId = extensionCards.associate { card ->
                     card.id to checkNotNull(variantProfilesById[card.variantProfileId]) {
-                        "Unknown variant profile '${card.variantProfileId}' for '${card.id}'."
+                        "Profil de variante inconnu '${card.variantProfileId}' pour '${card.id}'."
                     }
                 }
                 val profiles = profilesByCardId.values.toList()
@@ -90,7 +90,7 @@ internal fun buildBadgeBookSections(
 
 private fun buildGeneralSection(progress: StandaloneProgress): BadgeSection = BadgeSection(
     extensionId = GeneralBadgeSectionId,
-    extensionName = "General",
+    extensionName = "Général",
     sectionType = BadgeSectionType.General,
     badges = listOf(buildFirstPackOpenedBadge(progress)),
 )
@@ -100,9 +100,9 @@ private fun buildFirstPackOpenedBadge(progress: StandaloneProgress): BadgeItem {
     return BadgeItem(
         id = "$GeneralBadgeSectionId::pack::first-opened",
         extensionId = GeneralBadgeSectionId,
-        extensionName = "General",
+        extensionName = "Général",
         title = "Premier pack ouvert",
-        description = "Ouvre ton premier pack pour lancer ta collection et debloquer ce badge general.",
+        description = "Ouvre ton premier pack pour lancer ta collection et debloquer ce badge général.",
         requirementType = BadgeRequirementType.FirstPackOpened,
         progress = BadgeProgress(
             matchedCards = openedPackProgress,

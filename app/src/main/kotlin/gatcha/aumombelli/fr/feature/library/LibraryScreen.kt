@@ -93,7 +93,7 @@ fun LibraryScreen(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(
-                        text = "Library",
+                        text = "Bibliothèque",
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
@@ -107,7 +107,7 @@ fun LibraryScreen(
                             onClick = onRefresh,
                             modifier = Modifier.testTag("library-refresh"),
                         ) {
-                            Text("Retry")
+                            Text("Réessayer")
                         }
                     }
                 }

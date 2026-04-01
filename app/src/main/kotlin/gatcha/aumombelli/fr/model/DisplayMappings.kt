@@ -2,12 +2,12 @@ package fr.aumombelli.gatcha.model
 
 fun VariantProfile.requireSkyQualityDefinition(code: String): SkyQualityDefinition =
     checkNotNull(skyQualities.firstOrNull { it.code == code }) {
-        "Unknown sky quality '$code' for variant profile '$id'."
+        "Qualite de ciel inconnue '$code' pour le profil de variante '$id'."
     }
 
 fun VariantProfile.requireFinishDefinition(code: String): CardFinishDefinition =
     checkNotNull(finishes.firstOrNull { it.code == code }) {
-        "Unknown finish '$code' for variant profile '$id'."
+        "Finition inconnue '$code' pour le profil de variante '$id'."
     }
 
 fun VariantProfile.toDisplayVariant(

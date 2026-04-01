@@ -194,7 +194,7 @@ class LocalPackEngineTest {
             error
         }
 
-        assertEquals("No cards were found for this extension.", exception.message)
+        assertEquals("Aucune carte n'a ete trouvee pour cette extension.", exception.message)
     }
     private fun localPackProfile(): VariantProfile = VariantProfile(
         id = "local-pack-profile",

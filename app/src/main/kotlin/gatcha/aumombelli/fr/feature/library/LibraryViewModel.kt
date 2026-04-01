@@ -50,7 +50,7 @@ class LibraryViewModel(
             }.onFailure { exception ->
                 _uiState.value = LibraryUiState(
                     isLoading = false,
-                    errorMessage = exception.message ?: "Unable to load the library.",
+                    errorMessage = exception.message ?: "Impossible de charger la bibliothèque.",
                 )
             }
         }

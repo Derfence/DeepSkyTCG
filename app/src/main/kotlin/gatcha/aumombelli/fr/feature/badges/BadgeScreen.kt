@@ -124,7 +124,7 @@ fun BadgeBookScreen(
                             onClick = onRefresh,
                             modifier = Modifier.testTag("badge-book-refresh"),
                         ) {
-                            Text("Retry")
+                            Text("Réessayer")
                         }
                     }
                 }

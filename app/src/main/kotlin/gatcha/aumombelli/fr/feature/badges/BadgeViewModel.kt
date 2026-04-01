@@ -44,7 +44,7 @@ class BadgeBookViewModel(
             }.onFailure { exception ->
                 _uiState.value = BadgeBookUiState(
                     isLoading = false,
-                    errorMessage = exception.message ?: "Unable to load badges.",
+                    errorMessage = exception.message ?: "Impossible de charger les badges.",
                 )
             }
         }

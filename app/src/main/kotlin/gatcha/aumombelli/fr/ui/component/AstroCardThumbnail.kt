@@ -48,7 +48,7 @@ fun AstroCardThumbnail(
             )
         }
         androidx.compose.material3.Text(
-            text = if (owned) "Owned: ${item.ownedCount}" else "Not owned yet",
+            text = if (owned) "En collection : ${item.ownedCount}" else "Pas encore obtenue",
             color = Color(0xFFD3E3F4),
             modifier = Modifier.testTag("library-owned-${item.definition.id}"),
         )

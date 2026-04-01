@@ -19,7 +19,7 @@ internal suspend fun buildPackOpeningUiState(
 
     val displayCards = packResult.cards.map { card ->
         val definition = checkNotNull(cardsById[card.cardId]) {
-            "Unknown card '${card.cardId}' for the current catalog."
+            "Carte inconnue '${card.cardId}' dans le catalogue courant."
         }
         definition.toDisplayCard(
             extensionName = extensionName,

@@ -194,14 +194,14 @@ fun PackOpeningScreen(
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     androidx.compose.material3.Text(
-                        text = "Pack Opening",
+                        text = "Ouverture du pack",
                         style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         modifier = Modifier.testTag("pack-opening-title"),
                     )
                     androidx.compose.material3.Text(
-                        text = "Extension: ${packOpeningExtensionLabel(displayCards, packResult)}",
+                        text = "Extension : ${packOpeningExtensionLabel(displayCards, packResult)}",
                         color = Color(0xFFD8E6F8),
                     )
 

@@ -40,7 +40,7 @@ class PackOpeningViewModel(
                         .getOrElse { exception ->
                             PackOpeningUiState(
                                 packResult = packResult,
-                                errorMessage = exception.message ?: "Unable to prepare the drawn cards.",
+                                errorMessage = exception.message ?: "Impossible de preparer les cartes obtenues.",
                             )
                         }
                 }

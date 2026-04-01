@@ -43,7 +43,7 @@ class BadgeBookViewModelTest {
         val state = viewModel.uiState.value
         assertEquals(false, state.isLoading)
         assertEquals(listOf("general", "core-alpha", "moon-dawn"), state.sections.map { it.extensionId })
-        assertEquals("General", state.sections.first().extensionName)
+        assertEquals("Général", state.sections.first().extensionName)
         assertEquals("1 / 1 pack ouvert", state.sections.first().badges.single().progress.label)
         assertEquals("Moon Dawn", state.sections[2].extensionName)
         assertEquals("1 / 1 cartes valides", state.sections[2].badges.first().progress.label)

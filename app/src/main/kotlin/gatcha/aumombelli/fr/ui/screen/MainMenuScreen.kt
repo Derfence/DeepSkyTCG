@@ -85,7 +85,7 @@ fun MainMenuScreen(
                     .padding(24.dp),
             ) {
                 Text(
-                    text = "Main Menu",
+                    text = "Menu principal",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.testTag("menu-panel"),
@@ -101,7 +101,7 @@ fun MainMenuScreen(
                         .fillMaxWidth()
                         .testTag("menu-open-pack"),
                 ) {
-                    Text("Open Pack")
+                    Text("Ouvrir un pack")
                 }
                 Button(
                     onClick = onOpenLibrary,
@@ -110,7 +110,7 @@ fun MainMenuScreen(
                         .fillMaxWidth()
                         .testTag("menu-library"),
                 ) {
-                    Text("Library")
+                    Text("Bibliothèque")
                 }
                 Button(
                     onClick = onOpenBadgeBook,

@@ -33,7 +33,7 @@ internal fun buildLibrarySections(
                     val availableVariants = collection.cards[card.id]
                         ?.toDisplayVariants(
                             checkNotNull(variantProfilesById[card.variantProfileId]) {
-                                "Unknown variant profile '${card.variantProfileId}' for '${card.id}'."
+                                "Profil de variante inconnu '${card.variantProfileId}' pour '${card.id}'."
                             },
                         )
                         .orEmpty()

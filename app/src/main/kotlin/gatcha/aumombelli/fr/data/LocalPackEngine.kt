@@ -13,7 +13,7 @@ import java.time.Instant
 
 class PackCooldownException(
     val retryAt: String,
-) : Exception("A new pack is not available yet.")
+) : Exception("Un nouveau pack n'est pas encore disponible.")
 
 data class StandaloneGameSettings(
     val cardsPerPack: Int = 5,
@@ -49,7 +49,7 @@ class LocalPackEngine(
         )
         if (normalizedChargeState.availableDrawCount == 0) {
             val retryAt = checkNotNull(normalizedChargeState.nextChargeAt) {
-                "A locked pack draw must expose a next charge time."
+                "Un tirage verrouille doit exposer une heure de recharge suivante."
             }
             throw PackCooldownException(retryAt.toString())
         }
@@ -62,14 +62,14 @@ class LocalPackEngine(
 
         val cards = catalogRepository.loadCards().filter { it.extensionId == extensionId }
         if (cards.isEmpty()) {
-            throw IllegalStateException("No cards were found for this extension.")
+            throw IllegalStateException("Aucune carte n'a ete trouvee pour cette extension.")
         }
         val variantProfilesById = catalogRepository.loadVariantProfiles().associateBy { it.id }
         val drawnAt = now.toString()
         val drawnCards = List(settings.cardsPerPack) {
             val definition = pickWeighted(cards)
             val variantProfile = checkNotNull(variantProfilesById[definition.variantProfileId]) {
-                "Unknown variant profile '${definition.variantProfileId}' for card '${definition.id}'."
+                "Profil de variante inconnu '${definition.variantProfileId}' pour la carte '${definition.id}'."
             }
             val skyQuality = variantProfile.requireSkyQualityDefinition(
                 pickWeightedCode(variantProfile.skyQualityWeights),
@@ -103,7 +103,7 @@ class LocalPackEngine(
 
     private fun <T> pickWeighted(entries: List<T>, weightOf: (T) -> Int): T {
         val totalWeight = entries.sumOf(weightOf)
-        require(totalWeight > 0) { "Weights must be strictly positive." }
+        require(totalWeight > 0) { "Les poids doivent etre strictement positifs." }
         var cursor = settings.entropySource.nextInt(totalWeight)
         for (entry in entries) {
             cursor -= weightOf(entry)

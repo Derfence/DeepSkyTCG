@@ -26,12 +26,12 @@ internal fun EmptyPackState(
             .gatchaContentInsetsPadding(includeBottom = true)
             .padding(24.dp),
     ) {
-        Text("No opened pack available.", color = Color.White)
+        Text("Aucun pack ouvert n'est disponible.", color = Color.White)
         Button(
             onClick = onDone,
             modifier = Modifier.testTag("pack-opening-done"),
         ) {
-            Text("Back to menu")
+            Text("Retour au menu")
         }
     }
 }
@@ -54,7 +54,7 @@ internal fun PackOpeningErrorState(
             onClick = onDone,
             modifier = Modifier.testTag("pack-opening-done"),
         ) {
-            Text("Back to menu")
+            Text("Retour au menu")
         }
     }
 }

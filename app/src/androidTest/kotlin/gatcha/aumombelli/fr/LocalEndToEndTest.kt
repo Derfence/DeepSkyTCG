@@ -89,7 +89,7 @@ class LocalEndToEndTest {
 
         composeRule.onNodeWithTag("library-grid").performScrollToNode(hasTestTag("library-card-$cardId"))
         composeRule.onNodeWithTag("library-card-$cardId").assertIsDisplayed()
-        composeRule.onNodeWithTag("library-owned-$cardId").assertTextContains("Owned:", substring = true)
+        composeRule.onNodeWithTag("library-owned-$cardId").assertTextContains("En collection :", substring = true)
         composeRule.onNodeWithTag("library-card-$cardId").performClick()
         composeRule.waitUntilTagExists("library-card-preview", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("library-card-preview-surface").performClick()

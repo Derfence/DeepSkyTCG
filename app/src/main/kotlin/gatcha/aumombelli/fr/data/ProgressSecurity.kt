@@ -72,7 +72,7 @@ class AndroidKeystoreProgressCipher(
         val cipher = AesGcmCipherSupport.newCipher()
         cipher.init(Cipher.ENCRYPT_MODE, getOrCreateSecretKey())
         val iv = checkNotNull(cipher.iv) {
-            "Android Keystore AES/GCM must generate an IV during encryption."
+            "Android Keystore AES/GCM doit generer un IV pendant le chiffrement."
         }
         return EncryptedPayload(
             iv = iv,
@@ -161,7 +161,7 @@ object EncryptedProgressEnvelopeSerializer : Serializer<EncryptedProgressEnvelop
         return try {
             json.decodeFromString(EncryptedProgressEnvelope.serializer(), text)
         } catch (exception: SerializationException) {
-            throw CorruptionException("Encrypted progression envelope could not be read.", exception)
+            throw CorruptionException("L'enveloppe de progression chiffree n'a pas pu etre lue.", exception)
         }
     }
 

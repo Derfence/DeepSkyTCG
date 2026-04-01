@@ -69,7 +69,7 @@ class StartViewModel(
                 .onFailure { exception ->
                     _uiState.value = StartUiState(
                         isLoading = false,
-                        errorMessage = exception.message ?: "Unable to reset local progress.",
+                        errorMessage = exception.message ?: "Impossible de reinitialiser la progression locale.",
                     )
                 }
         }
@@ -93,7 +93,7 @@ class StartViewModel(
                 .onFailure { exception ->
                     _uiState.value = StartUiState(
                         isLoading = false,
-                        errorMessage = exception.message ?: "Unable to load local progress.",
+                        errorMessage = exception.message ?: "Impossible de charger la progression locale.",
                     )
                 }
         }

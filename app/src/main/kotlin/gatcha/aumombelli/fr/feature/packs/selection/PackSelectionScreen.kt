@@ -211,7 +211,7 @@ fun PackSelectionScreen(
                 .padding(16.dp),
         ) {
             Text(
-                text = "Open Pack",
+                text = "Ouvrir un pack",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
@@ -250,7 +250,7 @@ fun PackSelectionScreen(
                             enabled = interactionsEnabled,
                             modifier = Modifier.testTag("pack-refresh"),
                         ) {
-                            Text("Retry")
+                            Text("Réessayer")
                         }
                     }
                 }

@@ -285,6 +285,6 @@ class PackViewModelTest {
         assertEquals("core-alpha", viewModel.uiState.value.selectedExtensionId)
         assertEquals(null, viewModel.uiState.value.selectedBoosterIndex)
         assertEquals(false, viewModel.uiState.value.isAwaitingPackResult)
-        assertEquals("Unable to open the pack.", viewModel.uiState.value.errorMessage)
+        assertEquals("Impossible d'ouvrir le pack.", viewModel.uiState.value.errorMessage)
     }
 }

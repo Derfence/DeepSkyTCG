@@ -163,7 +163,7 @@ class BadgeAssemblerTest {
         val firstPackBadge = generalSection.badges.single()
 
         assertEquals("general", generalSection.extensionId)
-        assertEquals("General", generalSection.extensionName)
+        assertEquals("Général", generalSection.extensionName)
         assertTrue(firstPackBadge.isUnlocked)
         assertEquals("1 / 1 pack ouvert", firstPackBadge.progress.label)
     }

@@ -93,7 +93,7 @@ class PackViewModel(
             }.onFailure { exception ->
                 _uiState.value = PackSelectionUiState(
                     isLoading = false,
-                    errorMessage = exception.message ?: "Unable to load pack data.",
+                    errorMessage = exception.message ?: "Impossible de charger les donnees des packs.",
                 )
             }
         }
@@ -171,7 +171,7 @@ class PackViewModel(
                             isLoading = false,
                             selectedBoosterIndex = null,
                             isAwaitingPackResult = false,
-                            errorMessage = exception.message ?: "Unable to open the pack.",
+                            errorMessage = exception.message ?: "Impossible d'ouvrir le pack.",
                         )
                     }
                 }

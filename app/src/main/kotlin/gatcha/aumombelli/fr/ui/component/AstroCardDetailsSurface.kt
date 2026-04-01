@@ -92,7 +92,7 @@ private fun ImageCreditLine(
         modifier = modifier,
     ) {
         Text(
-            text = "Credit image",
+            text = "Crédit image",
             color = Color(0xFFBDD4EA),
             style = MaterialTheme.typography.labelMedium,
         )
