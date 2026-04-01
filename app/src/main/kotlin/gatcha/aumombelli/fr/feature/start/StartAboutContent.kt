@@ -9,23 +9,10 @@ internal data class StartAboutSection(
 
 internal val StartAboutSections: List<StartAboutSection> = listOf(
     StartAboutSection(
-        title = "Application",
-        lines = listOf(
-            "Gatcha",
-            "Client Android standalone hors ligne.",
-        ),
-    ),
-    StartAboutSection(
-        title = "Expérience",
-        lines = listOf(
-            "Collection locale, ouverture de packs et consultation de la bibliothèque.",
-            "Animations d'introduction et navigation embarquées dans l'application.",
-        ),
-    ),
-    StartAboutSection(
         title = "Crédits",
         lines = listOf(
-            "Projet et interface : équipe Gatcha.",
+            "Idée originale, conception, architecture, direction artistique : Aurélien Mombelli",
+            "Production technique : Codex et GPT-5.4",
             "Crédits détaillés des illustrations : visibles sur chaque carte.",
         ),
     ),
