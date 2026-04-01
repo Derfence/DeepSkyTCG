@@ -16,6 +16,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -50,31 +51,35 @@ fun PackOpeningScreen(
     val displayCards = state.displayCards
     var cardsVisible by remember(packResult?.drawnAt) { mutableStateOf(false) }
     var fullscreenPage by remember(packResult?.drawnAt) { mutableStateOf<Int?>(null) }
+    var dismissStartOffset by remember(packResult?.drawnAt) { mutableFloatStateOf(0f) }
+    var hasReachedLastCardOnce by remember(packResult?.drawnAt) { mutableStateOf(false) }
+    var swipeHintUnlocked by remember(packResult?.drawnAt) { mutableStateOf(false) }
     var swipeOffset by remember(packResult?.drawnAt) { mutableFloatStateOf(0f) }
     var dismissRequested by remember(packResult?.drawnAt) { mutableStateOf(false) }
     var handledDismissSignal by remember(packResult?.drawnAt) { mutableIntStateOf(dismissSignal) }
     var verticalDragActive by remember(packResult?.drawnAt) { mutableStateOf(false) }
-    var lastCardNudgeActive by remember(packResult?.drawnAt) { mutableStateOf(false) }
     var rootHeightPx by remember(packResult?.drawnAt) { mutableFloatStateOf(0f) }
     val scale = remember(packResult?.drawnAt) { Animatable(1f) }
     val burstProgress = remember(packResult?.drawnAt) { Animatable(0f) }
     val cardsEntranceProgress = remember(packResult?.drawnAt) { Animatable(0f) }
     val dismissProgress = remember(packResult?.drawnAt) { Animatable(0f) }
-    val lastCardNudgeOffset = remember(packResult?.drawnAt) { Animatable(0f) }
+    val swipeHintOffset = remember(packResult?.drawnAt) { Animatable(0f) }
 
     LaunchedEffect(packResult?.drawnAt) {
         if (packResult == null) return@LaunchedEffect
         cardsVisible = false
         fullscreenPage = null
+        dismissStartOffset = 0f
+        hasReachedLastCardOnce = false
+        swipeHintUnlocked = false
         swipeOffset = 0f
         dismissRequested = false
         verticalDragActive = false
-        lastCardNudgeActive = false
         scale.snapTo(1f)
         burstProgress.snapTo(0f)
         cardsEntranceProgress.snapTo(0f)
         dismissProgress.snapTo(0f)
-        lastCardNudgeOffset.snapTo(0f)
+        swipeHintOffset.snapTo(0f)
         burstProgress.animateTo(1f, animationSpec = tween(durationMillis = 4800, easing = FastOutSlowInEasing))
         cardsVisible = true
         cardsEntranceProgress.animateTo(
@@ -85,6 +90,9 @@ fun PackOpeningScreen(
 
     LaunchedEffect(dismissRequested) {
         if (!dismissRequested) return@LaunchedEffect
+        verticalDragActive = false
+        swipeOffset = 0f
+        swipeHintOffset.snapTo(0f)
         dismissProgress.animateTo(
             targetValue = 1f,
             animationSpec = tween(durationMillis = 420, easing = FastOutSlowInEasing),
@@ -95,6 +103,7 @@ fun PackOpeningScreen(
     LaunchedEffect(dismissSignal) {
         if (dismissSignal == handledDismissSignal || dismissRequested) return@LaunchedEffect
         handledDismissSignal = dismissSignal
+        dismissStartOffset = swipeOffset
         dismissRequested = true
     }
 
@@ -118,7 +127,7 @@ fun PackOpeningScreen(
                 onDragEnd = {
                     verticalDragActive = false
                     if (swipeOffset < -220f) {
-                        swipeOffset = 0f
+                        dismissStartOffset = swipeOffset
                         dismissRequested = true
                     } else {
                         swipeOffset = 0f
@@ -138,6 +147,7 @@ fun PackOpeningScreen(
             end = 0.84f,
         )
     }
+    val dismissBaseOffset = if (dismissRequested) dismissStartOffset else swipeOffset
 
     androidx.compose.foundation.layout.Box(
         modifier = modifier
@@ -169,7 +179,7 @@ fun PackOpeningScreen(
                     .fillMaxSize()
                     .graphicsLayer {
                         alpha = 1f - dismissProgress.value
-                        translationY = swipeOffset + (-720f * dismissProgress.value)
+                        translationY = dismissBaseOffset + (-720f * dismissProgress.value)
                     },
             )
         } else {
@@ -179,7 +189,7 @@ fun PackOpeningScreen(
                     .gatchaContentInsetsPadding(includeBottom = true)
                     .graphicsLayer {
                         alpha = 1f - dismissProgress.value
-                        translationY = swipeOffset + (-720f * dismissProgress.value)
+                        translationY = dismissBaseOffset + (-720f * dismissProgress.value)
                     }
                     .padding(20.dp),
             ) {
@@ -206,89 +216,96 @@ fun PackOpeningScreen(
                     )
 
                     if (displayCards.isNotEmpty()) {
-                        val pagerState = rememberPagerState(pageCount = { displayCards.size })
-                        val currentPage = pagerState.currentPage
-                        val settledPage = pagerState.settledPage
-                        val currentCard = displayCards.getOrNull(currentPage)
-
-                        LaunchedEffect(
-                            packResult.drawnAt,
-                            cardsVisible,
-                            settledPage,
-                            fullscreenPage,
-                            dismissRequested,
-                            verticalDragActive,
-                        ) {
-                            lastCardNudgeActive = false
-                            lastCardNudgeOffset.snapTo(0f)
-                            val shouldAnimateLastCard =
+                        key(packResult.drawnAt) {
+                            val pagerState = rememberPagerState(pageCount = { displayCards.size })
+                            val currentPage = pagerState.currentPage
+                            val settledPage = pagerState.settledPage
+                            val currentCard = displayCards.getOrNull(currentPage)
+                            val shouldAnimateSwipeHint =
                                 cardsVisible &&
-                                    settledPage == displayCards.lastIndex &&
+                                    swipeHintUnlocked &&
+                                    currentPage == settledPage &&
                                     fullscreenPage == null &&
                                     !dismissRequested &&
                                     !verticalDragActive
-                            if (!shouldAnimateLastCard) return@LaunchedEffect
 
-                            delay(2_000)
-                            lastCardNudgeActive = true
-                            while (true) {
-                                lastCardNudgeOffset.animateTo(
-                                    targetValue = -26f,
-                                    animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
-                                )
-                                lastCardNudgeOffset.animateTo(
-                                    targetValue = 0f,
-                                    animationSpec = tween(durationMillis = 360, easing = FastOutSlowInEasing),
-                                )
-                                delay(1_150)
+                            LaunchedEffect(packResult.drawnAt, settledPage) {
+                                if (settledPage == displayCards.lastIndex && !hasReachedLastCardOnce) {
+                                    hasReachedLastCardOnce = true
+                                }
                             }
-                        }
 
-                        if (!progressBelowPager) {
-                            PackOpeningProgressIndicator(
-                                currentPage = currentPage,
-                                total = displayCards.size,
-                            )
-                        }
+                            LaunchedEffect(packResult.drawnAt, hasReachedLastCardOnce) {
+                                if (!hasReachedLastCardOnce || swipeHintUnlocked) return@LaunchedEffect
+                                delay(2_000)
+                                swipeHintUnlocked = true
+                            }
 
-                        if (currentCard != null) {
-                            androidx.compose.material3.Text(
-                                text = currentCard.definition.id,
+                            LaunchedEffect(
+                                packResult.drawnAt,
+                                shouldAnimateSwipeHint,
+                            ) {
+                                swipeHintOffset.snapTo(0f)
+                                if (!shouldAnimateSwipeHint) return@LaunchedEffect
+
+                                while (true) {
+                                    swipeHintOffset.animateTo(
+                                        targetValue = -26f,
+                                        animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
+                                    )
+                                    swipeHintOffset.animateTo(
+                                        targetValue = 0f,
+                                        animationSpec = tween(durationMillis = 360, easing = FastOutSlowInEasing),
+                                    )
+                                    delay(1_150)
+                                }
+                            }
+
+                            if (!progressBelowPager) {
+                                PackOpeningProgressIndicator(
+                                    currentPage = currentPage,
+                                    total = displayCards.size,
+                                )
+                            }
+
+                            if (currentCard != null) {
+                                androidx.compose.material3.Text(
+                                    text = currentCard.definition.id,
+                                    modifier = Modifier
+                                        .size(0.dp)
+                                        .testTag("pack-opening-current-card-id"),
+                                )
+                            }
+
+                            HorizontalPager(
+                                state = pagerState,
                                 modifier = Modifier
-                                    .size(0.dp)
-                                    .testTag("pack-opening-current-card-id"),
-                            )
-                        }
+                                    .weight(1f)
+                                    .graphicsLayer {
+                                        alpha = cardsEntranceProgress.value
+                                        translationY = (1f - cardsEntranceProgress.value) *
+                                            if (rootHeightPx > 0f) rootHeightPx else 960f
+                                    },
+                            ) { page ->
+                                RevealCard(
+                                    displayCard = displayCards[page],
+                                    isCurrentPage = page == currentPage,
+                                    showPreviousArrow = page == currentPage && page > 0,
+                                    showNextArrow = page == currentPage && page < displayCards.lastIndex,
+                                    cardTranslationY = if (page == currentPage) swipeHintOffset.value else 0f,
+                                    nudgeActive = page == settledPage && shouldAnimateSwipeHint,
+                                    onOpenFullscreen = {
+                                        fullscreenPage = page
+                                    },
+                                )
+                            }
 
-                        HorizontalPager(
-                            state = pagerState,
-                            modifier = Modifier
-                                .weight(1f)
-                                .graphicsLayer {
-                                    alpha = cardsEntranceProgress.value
-                                    translationY = (1f - cardsEntranceProgress.value) *
-                                        if (rootHeightPx > 0f) rootHeightPx else 960f
-                                },
-                        ) { page ->
-                            RevealCard(
-                                displayCard = displayCards[page],
-                                isCurrentPage = page == currentPage,
-                                showPreviousArrow = page == currentPage && page > 0,
-                                showNextArrow = page == currentPage && page < displayCards.lastIndex,
-                                cardTranslationY = if (page == currentPage) lastCardNudgeOffset.value else 0f,
-                                nudgeActive = page == settledPage && settledPage == displayCards.lastIndex && lastCardNudgeActive,
-                                onOpenFullscreen = {
-                                    lastCardNudgeActive = false
-                                    fullscreenPage = page
-                                },
-                            )
-                        }
-
-                        if (progressBelowPager) {
-                            PackOpeningProgressIndicator(
-                                currentPage = currentPage,
-                                total = displayCards.size,
-                            )
+                            if (progressBelowPager) {
+                                PackOpeningProgressIndicator(
+                                    currentPage = currentPage,
+                                    total = displayCards.size,
+                                )
+                            }
                         }
                     }
                 }
