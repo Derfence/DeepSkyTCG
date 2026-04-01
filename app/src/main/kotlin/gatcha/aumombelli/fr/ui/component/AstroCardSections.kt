@@ -38,6 +38,7 @@ import fr.aumombelli.gatcha.model.toDisplayCard
 
 internal const val CardBackgroundArtTag = "astro-card-background-art"
 internal const val CardBackgroundFallbackAssetTag = "astro-card-background-fallback-asset"
+internal const val CardBackgroundHiddenPlaceholderTag = "astro-card-background-hidden-placeholder"
 internal const val CardBackgroundPlaceholderTag = "astro-card-background-placeholder"
 internal const val CardFooterTag = "astro-card-footer"
 internal const val CardCatalogNumberTag = "astro-card-catalog-number"

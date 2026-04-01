@@ -6,6 +6,10 @@ Structure:
 - `card_art/card_art_credits.json`
 - `card_art/_fallbacks/missing.webp`
 
+Library behavior:
+- `card_art/_fallbacks/missing.webp` is reserved for missing runtime assets only.
+- The library hides art for unowned cards with a Compose placeholder, so this fallback must not be reused for product masking.
+
 Rules:
 - Keep the filename exactly equal to the card `imageRef`.
 - Keep the folder name exactly equal to the card `extensionId`.

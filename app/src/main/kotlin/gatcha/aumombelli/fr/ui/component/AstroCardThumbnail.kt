@@ -24,6 +24,7 @@ fun AstroCardThumbnail(
 ) {
     val owned = item.ownedCount > 0
     val displayCard = remember(item) { item.toDisplayCard() ?: fallbackDisplayCard(item) }
+    val artVisibility = if (owned) CardArtVisibility.Visible else CardArtVisibility.Hidden
 
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -35,6 +36,7 @@ fun AstroCardThumbnail(
             AstroCardPreviewSurface(
                 displayCard = displayCard,
                 mode = AstroCardSurfaceMode.Thumbnail,
+                artVisibility = artVisibility,
                 modifier = Modifier
                     .fillMaxWidth()
                     .testTag("library-card-surface-${item.definition.id}"),

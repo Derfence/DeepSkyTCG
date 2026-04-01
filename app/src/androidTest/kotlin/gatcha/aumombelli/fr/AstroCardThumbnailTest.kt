@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -77,6 +78,31 @@ class AstroCardThumbnailTest {
 
         composeRule.onAllNodesWithText("NGC 7000").assertCountEquals(1)
         composeRule.onAllNodesWithTag(CARD_CATALOG_NUMBER_TAG, useUnmergedTree = true).assertCountEquals(0)
+    }
+
+    @Test
+    fun thumbnail_hides_art_for_unowned_cards_without_removing_card_chrome() {
+        val item = LibraryCardItem(
+            definition = testCardDefinition("M31", name = "Galaxie d'Andromede"),
+            extensionName = "Astronomes en herbe",
+            ownedCount = 0,
+        )
+
+        composeRule.setContent {
+            AstroCardThumbnail(
+                item = item,
+                onClick = {},
+            )
+        }
+
+        composeRule.onNodeWithTag("library-card-M31").assertHasNoClickAction()
+        composeRule.onAllNodesWithTag(CARD_BACKGROUND_HIDDEN_PLACEHOLDER_TAG, useUnmergedTree = true).assertCountEquals(1)
+        composeRule.onAllNodesWithTag(CARD_BACKGROUND_ART_TAG, useUnmergedTree = true).assertCountEquals(0)
+        composeRule.onAllNodesWithTag(CARD_BACKGROUND_FALLBACK_ASSET_TAG, useUnmergedTree = true).assertCountEquals(0)
+        composeRule.onAllNodesWithText("Galaxie d'Andromede").assertCountEquals(1)
+        composeRule.onAllNodesWithText("M31").assertCountEquals(1)
+        composeRule.onAllNodesWithTag(CARD_EXTENSION_LOGO_TAG, useUnmergedTree = true).assertCountEquals(1)
+        composeRule.onAllNodesWithTag("astro-card-rarity-common", useUnmergedTree = true).assertCountEquals(1)
     }
 
     @Test
@@ -235,6 +261,7 @@ class AstroCardThumbnailTest {
         }
 
         composeRule.onAllNodesWithTag(CARD_BACKGROUND_FALLBACK_ASSET_TAG, useUnmergedTree = true).assertCountEquals(1)
+        composeRule.onAllNodesWithTag(CARD_BACKGROUND_HIDDEN_PLACEHOLDER_TAG, useUnmergedTree = true).assertCountEquals(0)
     }
 
     @Test
@@ -303,6 +330,7 @@ class AstroCardThumbnailTest {
     private companion object {
         const val CARD_BACKGROUND_ART_TAG = "astro-card-background-art"
         const val CARD_BACKGROUND_FALLBACK_ASSET_TAG = "astro-card-background-fallback-asset"
+        const val CARD_BACKGROUND_HIDDEN_PLACEHOLDER_TAG = "astro-card-background-hidden-placeholder"
         const val CARD_CATALOG_NUMBER_TAG = "astro-card-catalog-number"
         const val CARD_EXTENSION_LOGO_TAG = "astro-card-extension-logo"
         const val CARD_FOOTER_TAG = "astro-card-footer"

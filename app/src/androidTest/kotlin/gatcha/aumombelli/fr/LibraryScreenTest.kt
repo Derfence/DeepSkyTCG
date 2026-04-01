@@ -56,6 +56,7 @@ class LibraryScreenTest {
         }
 
         composeRule.onNodeWithTag("library-card-M31").assertHasNoClickAction()
+        composeRule.onAllNodesWithTag(CARD_BACKGROUND_HIDDEN_PLACEHOLDER_TAG, useUnmergedTree = true).assertCountEquals(1)
         composeRule.onNodeWithTag("library-card-M42").performClick()
         composeRule.onNodeWithTag("library-card-preview").assertIsDisplayed()
         composeRule.onNodeWithTag("astro-card-variant-city-standard").performClick()
@@ -107,5 +108,9 @@ class LibraryScreenTest {
             "Expected $tag width/height ratio near $TRADING_CARD_WIDTH_OVER_HEIGHT but was $actualRatio",
             abs(actualRatio - TRADING_CARD_WIDTH_OVER_HEIGHT) <= tolerance,
         )
+    }
+
+    private companion object {
+        const val CARD_BACKGROUND_HIDDEN_PLACEHOLDER_TAG = "astro-card-background-hidden-placeholder"
     }
 }

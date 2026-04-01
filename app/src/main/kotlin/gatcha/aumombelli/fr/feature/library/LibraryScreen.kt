@@ -99,7 +99,7 @@ fun LibraryScreen(
                         color = Color.White,
                     )
                     Text(
-                        text = "Les cartes obtenues peuvent etre ouvertes en apercu puis en plein ecran.",
+                        text = "Les cartes obtenues peuvent etre ouvertes en apercu puis en plein ecran. Les autres gardent un visuel masque jusqu'a leur premiere obtention.",
                         color = Color(0xFFD0E0F2),
                     )
                     if (state.errorMessage != null) {

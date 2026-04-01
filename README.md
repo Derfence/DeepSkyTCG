@@ -44,6 +44,7 @@ Au lancement, l'application :
 - `Commencer -> menu principal` : transition visuelle conservee.
 - `Menu -> packs` : ouverture d'un booster local sans appel reseau.
 - `Menu -> bibliotheque` : consultation de la collection persistante.
+- Dans la bibliotheque, les cartes non obtenues gardent leur cadre et leurs informations visibles, mais leur illustration reste masquee jusqu'a la premiere obtention.
 - Retour Android depuis le menu principal : fermeture de l'activite.
 
 Le standalone est mono-profil. Aucun ecran de login, de creation de compte, de compatibilite client/serveur ou de logout n'est present.
@@ -76,6 +77,7 @@ Le standalone conserve :
 - les transitions de scenes ;
 - les animations de selection d'extension et d'ouverture de pack ;
 - la bibliotheque, les apercus et le plein ecran des cartes ;
+- le masquage volontaire des illustrations des cartes non obtenues dans la grille de bibliotheque ;
 - le stock disponible et la recharge visible dans l'interface.
 
 La seule simplification fonctionnelle voulue au demarrage est le remplacement du login par le bouton `Commencer`.

@@ -26,11 +26,17 @@ enum class AstroCardSurfaceMode {
     PackReveal,
 }
 
+internal enum class CardArtVisibility {
+    Visible,
+    Hidden,
+}
+
 @Composable
-fun AstroCardPreviewSurface(
+internal fun AstroCardPreviewSurface(
     displayCard: DisplayCard,
     modifier: Modifier = Modifier,
     mode: AstroCardSurfaceMode = AstroCardSurfaceMode.Preview,
+    artVisibility: CardArtVisibility = CardArtVisibility.Visible,
     onClick: (() -> Unit)? = null,
 ) {
     val palette = skyQualityPalette(displayCard.activeVariant.skyQuality)
@@ -67,6 +73,7 @@ fun AstroCardPreviewSurface(
                 palette = palette,
                 inset = artInset,
                 artShape = cardArtShape(mode),
+                artVisibility = artVisibility,
                 modifier = Modifier.fillMaxSize(),
             )
             HeroAtmosphere(palette = palette)
