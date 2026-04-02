@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "fr.aumombelli.gatcha"
+    namespace = "fr.aumombelli.dstcg"
     buildToolsVersion = "36.1.0"
 
     compileSdk {
@@ -16,7 +16,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "fr.aumombelli.gatcha"
+        applicationId = "fr.aumombelli.dstcg"
         minSdk = 26
         targetSdk = 36
         versionCode = 1

@@ -19,7 +19,7 @@ from urllib.request import Request, urlopen
 
 
 COMMONS_API_URL = "https://commons.wikimedia.org/w/api.php"
-USER_AGENT = "GatchaCardArtDownloader/1.0 (https://github.com/openai)"
+USER_AGENT = "DstcgCardArtDownloader/1.0 (https://github.com/openai)"
 MIN_WIDTH = 1024
 MIN_HEIGHT = 1797
 DOWNLOAD_HEIGHT = 2200

@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "fr.aumombelli.gatcha.benchmark"
+    namespace = "fr.aumombelli.dstcg.benchmark"
     buildToolsVersion = "36.1.0"
 
     compileSdk {

@@ -36,7 +36,7 @@ Le panneau se ferme :
 
 La version affichee et le contenu du panneau sont centralises dans :
 
-- `app/src/main/kotlin/gatcha/aumombelli/fr/feature/start/StartAboutContent.kt`
+- `app/src/main/kotlin/dstcg/aumombelli/fr/feature/start/StartAboutContent.kt`
 
 Pour changer les credits :
 
@@ -45,4 +45,4 @@ Pour changer les credits :
 
 Les styles et comportements d'ouverture/fermeture vivent dans :
 
-- `app/src/main/kotlin/gatcha/aumombelli/fr/feature/start/StartOverlays.kt`
+- `app/src/main/kotlin/dstcg/aumombelli/fr/feature/start/StartOverlays.kt`

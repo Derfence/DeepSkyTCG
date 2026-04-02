@@ -14,6 +14,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "gatcha-android"
+rootProject.name = "dstcg-android"
 include(":app")
 include(":benchmark")

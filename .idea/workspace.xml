@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AndroidLayouts">
+    <shared>
+      <config />
+    </shared>
+  </component>
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="86ac7aa7-4f27-4c78-a1f8-4f2c34521f29" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/app/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/androidTest/kotlin/gatcha/aumombelli/fr/AndroidKeystoreProgressCipherTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/androidTest/kotlin/gatcha/aumombelli/fr/AndroidTestFixtures.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/androidTest/kotlin/gatcha/aumombelli/fr/AstroCardDetailsSurfaceTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/androidTest/kotlin/gatcha/aumombelli/fr/AstroCardThumbnailTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/androidTest/kotlin/gatcha/aumombelli/fr/BadgeBookScreenTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/androidTest/kotlin/gatcha/aumombelli/fr/GatchaAppBackNavigationTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/androidTest/kotlin/gatcha/aumombelli/fr/LibraryScreenTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/androidTest/kotlin/gatcha/aumombelli/fr/LocalE2eConfig.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/androidTest/kotlin/gatcha/aumombelli/fr/LocalEndToEndTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/androidTest/kotlin/gatcha/aumombelli/fr/PackOpeningScreenTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/androidTest/kotlin/gatcha/aumombelli/fr/PackSelectionScreenTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/androidTest/kotlin/gatcha/aumombelli/fr/StartScreenStateTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/androidTest/kotlin/gatcha/aumombelli/fr/StartScreenTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/androidTest/kotlin/gatcha/aumombelli/fr/testsupport/AppContainerBuilders.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/AppContainer.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/GatchaApp.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/MainActivity.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/app/AppLaunchConfig.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/app/AppSceneHost.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/app/AppSceneState.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/app/AppSceneTransitionController.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/app/GatchaAppRoot.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/data/CollectionRepository.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/data/GameCatalogRepository.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/data/LocalPackEngine.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/data/PackChargeState.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/data/PackRepository.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/data/ProgressModels.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/data/ProgressRepository.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/data/ProgressSecurity.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/data/RepositoryContracts.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/data/TrustedTimeSource.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/badges/BadgeAssembler.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/badges/BadgeCoin.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/badges/BadgeDetailOverlay.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/badges/BadgeModels.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/badges/BadgeScreen.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/badges/BadgeUnlockCelebrationOverlay.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/badges/BadgeUnlocks.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/badges/BadgeViewModel.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/library/LibraryDialogs.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/library/LibraryScreen.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/library/LibrarySectionAssembler.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/library/LibraryViewModel.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/packs/opening/PackOpeningBoosterCover.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/packs/opening/PackOpeningCardPager.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/packs/opening/PackOpeningScreen.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/packs/opening/PackOpeningStates.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/packs/opening/PackOpeningUiStateBuilder.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/packs/opening/PackOpeningViewModel.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/packs/selection/PackSelectionBadge.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/packs/selection/PackSelectionBoosterStage.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/packs/selection/PackSelectionDateFormatter.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/packs/selection/PackSelectionList.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/packs/selection/PackSelectionScreen.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/packs/selection/PackViewModel.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/start/StartAboutContent.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/start/StartCard.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/start/StartOverlays.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/start/StartScreen.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/feature/start/StartViewModel.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/model/AstronomyModels.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/model/CatalogModels.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/model/CollectionModels.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/model/CollectionOperations.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/model/DisplayMappings.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/model/DisplayModels.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/model/PackModels.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/performance/AppPerformanceProfile.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/component/AstroCardArt.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/component/AstroCardCredits.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/component/AstroCardDecorations.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/component/AstroCardDetailsSurface.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/component/AstroCardFullscreenChrome.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/component/AstroCardSections.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/component/AstroCardSurface.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/component/AstroCardThumbnail.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/component/CardArtBitmapLoader.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/component/DisplayCardVariantSelector.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/component/ExtensionLogoMark.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/motion/AnimatedExtensionPackCard.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/motion/AppMotion.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/motion/AppSkyBackdrop.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/motion/BookPortalOverlay.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/motion/ChestPortalOverlay.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/motion/ExtensionConstellationOverlay.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/motion/FadeScrim.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/motion/LaunchLogoMark.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/motion/MotionCard.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/motion/MotionMath.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/motion/RarityBurstOverlay.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/screen/BadgeBookScreen.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/screen/LibraryScreen.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/screen/MainMenuScreen.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/screen/PackOpeningScreen.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/screen/PackSelectionScreen.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/screen/ScreenInsets.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/theme/CardRarity.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/theme/Color.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/theme/Theme.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/theme/Type.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/viewmodel/BadgeBookViewModel.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/viewmodel/GatchaViewModelFactory.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/viewmodel/LibraryViewModel.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/viewmodel/PackOpeningViewModel.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/kotlin/gatcha/aumombelli/fr/ui/viewmodel/PackViewModel.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/values/strings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values/strings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/values/themes.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/res/values/themes.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/test/kotlin/gatcha/aumombelli/fr/AppMotionTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/test/kotlin/gatcha/aumombelli/fr/AppSceneStateTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/test/kotlin/gatcha/aumombelli/fr/BadgeAssemblerTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/test/kotlin/gatcha/aumombelli/fr/BadgeBookViewModelTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/test/kotlin/gatcha/aumombelli/fr/CardDisplayModelsTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/test/kotlin/gatcha/aumombelli/fr/CatalogSerializationTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/test/kotlin/gatcha/aumombelli/fr/CollectionRepositoryTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/test/kotlin/gatcha/aumombelli/fr/LibraryViewModelTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/test/kotlin/gatcha/aumombelli/fr/LocalPackEngineTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/test/kotlin/gatcha/aumombelli/fr/MainDispatcherRule.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/test/kotlin/gatcha/aumombelli/fr/PackOpeningViewModelTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/test/kotlin/gatcha/aumombelli/fr/PackRepositoryTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/test/kotlin/gatcha/aumombelli/fr/PackViewModelTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/test/kotlin/gatcha/aumombelli/fr/ProgressRepositoryTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/test/kotlin/gatcha/aumombelli/fr/StartViewModelTest.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/test/kotlin/gatcha/aumombelli/fr/TestFakes.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/test/kotlin/gatcha/aumombelli/fr/TestModelFixtures.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/test/kotlin/gatcha/aumombelli/fr/TestSecuritySupport.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/test/kotlin/gatcha/aumombelli/fr/testsupport/fakes/FakeGateways.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/test/kotlin/gatcha/aumombelli/fr/testsupport/fixtures/ModelFixtures.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmark/build.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/benchmark/build.gradle.kts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmark/src/main/kotlin/gatcha/aumombelli/fr/benchmark/GatchaBaselineProfile.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmark/src/main/kotlin/gatcha/aumombelli/fr/benchmark/GatchaBenchmarkScenarios.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/benchmark/src/main/kotlin/gatcha/aumombelli/fr/benchmark/GatchaMacrobenchmark.kt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/start-screen-home.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/start-screen-home.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/download_card_art_sources.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/download_card_art_sources.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings.gradle.kts" beforeDir="false" afterPath="$PROJECT_DIR$/settings.gradle.kts" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[LocalEmulator::path=C:\Users\Derfence\.android\avd\Pixel_8a.avd]" />
+  <component name="ExternalProjectsData">
+    <projectState path="$PROJECT_DIR$">
+      <ProjectState />
+    </projectState>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GradleScriptDefinitionsStorage" workingDir="$PROJECT_DIR$" gradleHome="C:\Users\Derfence\.gradle\wrapper\dists\gradle-8.13-bin\5xuhj0ry160q40clulazy9h7d\gradle-8.13" javaHome="C:\Program Files\Android\Android Studio\jbr" gradleVersion="8.13" />
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 8
+}</component>
+  <component name="ProjectId" id="3BMOKTOK2eZCWiggP9Qbqy6lyAl" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Android App.app.executor&quot;: &quot;Run&quot;,
+    &quot;GradleDaemonJvmCriteriaMigrationNotification.isNotificationDisabled&quot;: &quot;true&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Notification.DisplayName-DoNotAsk-Deploy&quot;: &quot;Deploy&quot;,
+    &quot;Notification.DoNotAsk-Deploy&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;dev&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Derfence/Documents/Gatcha/client-android-standalone&quot;,
+    &quot;recommended.upgrade.do.not.ask.for.project&quot;: &quot;true&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;AndroidSdkUpdater&quot;
+  }
+}</component>
+  <component name="RunManager">
+    <configuration name="app" type="AndroidRunConfigurationType" factoryName="Android App" activateToolWindowBeforeRun="false">
+      <module name="dstcg-android.app" />
+      <option name="ANDROID_RUN_CONFIGURATION_SCHEMA_VERSION" value="1" />
+      <option name="DEPLOY" value="true" />
+      <option name="DEPLOY_APK_FROM_BUNDLE" value="false" />
+      <option name="DEPLOY_AS_INSTANT" value="false" />
+      <option name="ARTIFACT_NAME" value="" />
+      <option name="PM_INSTALL_OPTIONS" value="" />
+      <option name="ALL_USERS" value="false" />
+      <option name="ALWAYS_INSTALL_WITH_PM" value="false" />
+      <option name="ALLOW_ASSUME_VERIFIED" value="false" />
+      <option name="CLEAR_APP_STORAGE" value="false" />
+      <option name="DYNAMIC_FEATURES_DISABLED_LIST" value="" />
+      <option name="ACTIVITY_EXTRA_FLAGS" value="" />
+      <option name="MODE" value="default_activity" />
+      <option name="RESTORE_ENABLED" value="false" />
+      <option name="RESTORE_FILE" value="" />
+      <option name="RESTORE_FRESH_INSTALL_ONLY" value="false" />
+      <option name="CLEAR_LOGCAT" value="false" />
+      <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
+      <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
+      <option name="DEBUGGER_TYPE" value="Auto" />
+      <Auto>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Auto>
+      <Hybrid>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Hybrid>
+      <Java>
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Java>
+      <Native>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+        <option name="ATTACH_ON_WAIT_FOR_DEBUGGER" value="false" />
+        <option name="DEBUG_SANDBOX_SDK" value="false" />
+      </Native>
+      <Profilers>
+        <option name="ADVANCED_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_CPU_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_CPU_PROFILING_CONFIGURATION_NAME" value="System Trace" />
+        <option name="STARTUP_NATIVE_MEMORY_PROFILING_ENABLED" value="false" />
+        <option name="NATIVE_MEMORY_SAMPLE_RATE_BYTES" value="2048" />
+      </Profilers>
+      <option name="DEEP_LINK" value="" />
+      <option name="ACTIVITY" value="" />
+      <option name="ACTIVITY_CLASS" value="" />
+      <option name="SEARCH_ACTIVITY_IN_GLOBAL_SCOPE" value="false" />
+      <option name="SKIP_ACTIVITY_VALIDATION" value="false" />
+      <method v="2">
+        <option name="Android.Gradle.BeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="86ac7aa7-4f27-4c78-a1f8-4f2c34521f29" name="Changes" comment="" />
+      <created>1774295409074</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1774295409074</updated>
+    </task>
+    <servers />
+  </component>
+</project>

@@ -1,6 +1,6 @@
-# Gatcha Client Android Standalone
+# Deep Sky Trading Card Game (Deep Sky TCG) Client Android Standalone
 
-Client Android natif autonome du projet Gatcha.
+Client Android natif autonome du projet Deep Sky TCG.
 
 ## Objectif
 
@@ -25,7 +25,7 @@ Au lancement, l'application :
 ## Architecture
 
 - `MainActivity` : point d'entree Android.
-- `GatchaApp` : facade stable qui instancie le shell Compose.
+- `DstcgApp` : facade stable qui instancie le shell Compose.
 - `app/` : orchestration des scenes, etat global et transitions visuelles.
 - `feature/start/` : ecran de demarrage et ViewModel du bouton `Commencer`.
 - `feature/library/` : lecture de la collection locale, bibliotheque et apercus.
