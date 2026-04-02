@@ -1,7 +1,9 @@
 package fr.aumombelli.dstcg.ui.screen
 
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.runtime.Composable
+import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
 import fr.aumombelli.dstcg.feature.packs.selection.PackSelectionScreen as PackSelectionFeatureScreen
 import fr.aumombelli.dstcg.ui.motion.PackRevealBounds
 import fr.aumombelli.dstcg.ui.viewmodel.PackSelectionUiState
@@ -15,6 +17,7 @@ fun PackSelectionScreen(
     onOpenPack: (String) -> Unit,
     onPackRevealReady: () -> Unit,
     onSelectedBoosterBoundsChanged: (PackRevealBounds?) -> Unit = {},
+    onCoachmarkTargetBoundsChanged: (NewPlayerOnboardingTarget, Rect?) -> Unit = { _, _ -> },
     packReadySignal: Int,
     modifier: Modifier = Modifier,
     showBackground: Boolean = true,
@@ -30,6 +33,7 @@ fun PackSelectionScreen(
         onOpenPack = onOpenPack,
         onPackRevealReady = onPackRevealReady,
         onSelectedBoosterBoundsChanged = onSelectedBoosterBoundsChanged,
+        onCoachmarkTargetBoundsChanged = onCoachmarkTargetBoundsChanged,
         packReadySignal = packReadySignal,
         modifier = modifier,
         showBackground = showBackground,

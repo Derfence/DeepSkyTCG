@@ -12,8 +12,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.boundsInRoot
@@ -41,6 +46,7 @@ internal fun ExtensionBoosterStage(
     isAwaitingPackResult: Boolean,
     onSelectBooster: (Int) -> Unit,
     onSelectedBoosterBoundsChanged: (PackRevealBounds?) -> Unit,
+    onFirstBoosterBoundsChanged: (Rect?) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
@@ -84,6 +90,7 @@ internal fun ExtensionBoosterStage(
                     isAwaitingPackResult = isAwaitingPackResult,
                     onSelectBooster = onSelectBooster,
                     onSelectedBoosterBoundsChanged = onSelectedBoosterBoundsChanged,
+                    onFirstBoosterBoundsChanged = onFirstBoosterBoundsChanged,
                     introProgress = boosterIntroProgress,
                     selectionProgress = boosterSelectionProgress,
                     modifier = Modifier
@@ -104,6 +111,7 @@ private fun BoosterField(
     isAwaitingPackResult: Boolean,
     onSelectBooster: (Int) -> Unit,
     onSelectedBoosterBoundsChanged: (PackRevealBounds?) -> Unit,
+    onFirstBoosterBoundsChanged: (Rect?) -> Unit,
     introProgress: Float = 1f,
     selectionProgress: Float = 0f,
     modifier: Modifier = Modifier,
@@ -115,6 +123,23 @@ private fun BoosterField(
     }
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val introSequenceComplete = introProgress >= 0.99f
+        var firstBoosterCoachmarkReady by remember(extension.id) { mutableStateOf(false) }
+
+        LaunchedEffect(introSequenceComplete, selectedBoosterIndex, drawLocked, isAwaitingPackResult) {
+            val canShowCoachmark = introSequenceComplete &&
+                selectedBoosterIndex == null &&
+                !drawLocked &&
+                !isAwaitingPackResult
+            if (!canShowCoachmark) {
+                firstBoosterCoachmarkReady = false
+                onFirstBoosterBoundsChanged(null)
+                return@LaunchedEffect
+            }
+
+            firstBoosterCoachmarkReady = true
+        }
+
         val horizontalGap = 18.dp
         val verticalGap = 20.dp
         val revealWidth = minOf(
@@ -190,6 +215,15 @@ private fun BoosterField(
                             translationY = (1f - introReveal) * 54f
                         }
                         .size(width = currentWidth, height = currentHeight)
+                        .then(
+                            if (index == 0 && firstBoosterCoachmarkReady) {
+                                Modifier.onGloballyPositioned { coordinates ->
+                                    onFirstBoosterBoundsChanged(coordinates.boundsInRoot())
+                                }
+                            } else {
+                                Modifier
+                            },
+                        )
                         .then(
                             if (isSelected) {
                                 Modifier.onGloballyPositioned { coordinates ->

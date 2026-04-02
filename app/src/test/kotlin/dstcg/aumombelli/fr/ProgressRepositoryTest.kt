@@ -12,6 +12,7 @@ import fr.aumombelli.dstcg.data.ProgressRepository
 import fr.aumombelli.dstcg.data.ProgressSnapshot
 import fr.aumombelli.dstcg.data.StandaloneGameSettings
 import fr.aumombelli.dstcg.data.requireUsableProgress
+import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.OwnedCardEntry
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.OwnedVariantCount
@@ -43,6 +44,7 @@ class ProgressRepositoryTest {
         assertEquals(emptyMap<String, Int>(), loaded.progress.collection.cards.mapValues { it.value.totalOwned })
         assertEquals(10, loaded.progress.availableDrawCount)
         assertEquals(0, loaded.progress.openedPackCount)
+        assertEquals(NewPlayerOnboardingStep.OpenFirstPackMenu, loaded.progress.newPlayerOnboardingStep)
         assertFalse(fixture.secureDataStore.data.first().isEmpty())
     }
 
@@ -60,6 +62,7 @@ class ProgressRepositoryTest {
         val reloaded = fixture.repository.loadProgress().requireUsableProgress()
 
         assertEquals(progress, reloaded.progress)
+        assertEquals(NewPlayerOnboardingStep.OpenFirstPackMenu, reloaded.progress.newPlayerOnboardingStep)
         val storedEnvelope = fixture.secureDataStore.data.first()
         assertFalse(storedEnvelope.isEmpty())
         assertFalse(storedEnvelope.ciphertextBase64.contains("ALP-001"))
@@ -81,6 +84,7 @@ class ProgressRepositoryTest {
         assertEquals(ownedCollectionOf("ALP-001" to 1), loaded.progress.collection)
         assertEquals(4, loaded.progress.availableDrawCount)
         assertEquals("2026-03-25T00:00:00Z", loaded.progress.nextChargeAt)
+        assertEquals(NewPlayerOnboardingStep.Completed, loaded.progress.newPlayerOnboardingStep)
         assertEquals(null, fixture.legacyDataStore.data.first()[CollectionJsonKey])
         assertFalse(fixture.secureDataStore.data.first().isEmpty())
     }
@@ -122,8 +126,55 @@ class ProgressRepositoryTest {
 
         val result = fixture.repository.loadProgress()
 
-        assertTrue(result is ProgressLoadResult.Ok)
+        assertTrue(result is ProgressLoadResult.Recovered)
         assertEquals(ownedCollectionOf("ALP-001" to 1), result.requireUsableProgress().progress.collection)
+        assertEquals(NewPlayerOnboardingStep.Completed, result.requireUsableProgress().progress.newPlayerOnboardingStep)
+    }
+
+    @Test
+    fun `reset progress restores onboarding to first step`() = runTest {
+        val fixture = newFixture()
+        fixture.repository.saveProgress(
+            StandaloneProgress(
+                collection = ownedCollectionOf("ALP-001" to 1),
+                availableDrawCount = 5,
+                nextChargeAt = "2026-03-25T00:00:00Z",
+                openedPackCount = 1,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.Completed,
+            ),
+        )
+
+        fixture.repository.resetProgress()
+
+        val reloaded = fixture.repository.loadProgress().requireUsableProgress().progress
+        assertEquals(NewPlayerOnboardingStep.OpenFirstPackMenu, reloaded.newPlayerOnboardingStep)
+        assertEquals(0, reloaded.openedPackCount)
+        assertEquals(OwnedCollection(), reloaded.collection)
+    }
+
+    @Test
+    fun `legacy secure snapshot with opened pack count migrates onboarding to completed`() = runTest {
+        val fixture = newFixture()
+        writeSecureSnapshot(
+            fixture = fixture,
+            snapshot = ProgressSnapshot(
+                installId = "install-1",
+                schemaVersion = 1,
+                collection = OwnedCollection(),
+                availableDrawCount = 9,
+                nextChargeAt = null,
+                openedPackCount = 2,
+                lastTrustedWallClockUtc = fixedNow.toString(),
+                lastTrustedElapsedRealtimeMs = 1_000L,
+                lastObservedBootMarker = "test-boot",
+                tamperFlag = false,
+            ),
+        )
+
+        val result = fixture.repository.loadProgress()
+
+        assertTrue(result is ProgressLoadResult.Recovered)
+        assertEquals(NewPlayerOnboardingStep.Completed, result.requireUsableProgress().progress.newPlayerOnboardingStep)
     }
 
     @Test

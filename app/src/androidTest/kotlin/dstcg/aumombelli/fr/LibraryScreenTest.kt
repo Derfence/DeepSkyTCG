@@ -98,6 +98,36 @@ class LibraryScreenTest {
         composeRule.assertApproxCardRatio("library-card-preview-surface")
     }
 
+    @Test
+    fun onboarding_hint_is_displayed_when_requested() {
+        val ownedItem = LibraryCardItem(
+            definition = testCardDefinition("M42", name = "Nebuleuse d'Orion"),
+            extensionName = "Astronomes en herbe",
+            ownedCount = 1,
+            availableVariants = listOf(
+                DisplayCardVariant("city", "Ville", "standard", "Standard", false, 1),
+            ),
+        )
+
+        composeRule.setContent {
+            LibraryScreen(
+                state = LibraryUiState(
+                    isLoading = false,
+                    sections = listOf(
+                        LibrarySection(
+                            extension = ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                            cards = listOf(ownedItem),
+                        ),
+                    ),
+                ),
+                onRefresh = {},
+                showOnboardingHint = true,
+            )
+        }
+
+        composeRule.onNodeWithTag("library-onboarding-hint").assertIsDisplayed()
+    }
+
     private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertApproxCardRatio(
         tag: String,
         tolerance: Float = 0.03f,

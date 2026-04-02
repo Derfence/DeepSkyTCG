@@ -28,6 +28,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
 
 @Composable
 fun MainMenuScreen(
@@ -38,7 +39,7 @@ fun MainMenuScreen(
     showBackground: Boolean = true,
     contentVisible: Boolean = true,
     interactionsEnabled: Boolean = true,
-    onBadgeButtonBoundsChanged: (Rect?) -> Unit = {},
+    onCoachmarkTargetBoundsChanged: (NewPlayerOnboardingTarget, Rect?) -> Unit = { _, _ -> },
 ) {
     val panelAlpha by animateFloatAsState(
         targetValue = if (contentVisible) 1f else 0f,
@@ -99,6 +100,14 @@ fun MainMenuScreen(
                     enabled = interactionsEnabled,
                     modifier = Modifier
                         .fillMaxWidth()
+                        .onGloballyPositioned { coordinates ->
+                            if (contentVisible) {
+                                onCoachmarkTargetBoundsChanged(
+                                    NewPlayerOnboardingTarget.MenuOpenPack,
+                                    coordinates.boundsInRoot(),
+                                )
+                            }
+                        }
                         .testTag("menu-open-pack"),
                 ) {
                     Text("Ouvrir un pack")
@@ -108,6 +117,14 @@ fun MainMenuScreen(
                     enabled = interactionsEnabled,
                     modifier = Modifier
                         .fillMaxWidth()
+                        .onGloballyPositioned { coordinates ->
+                            if (contentVisible) {
+                                onCoachmarkTargetBoundsChanged(
+                                    NewPlayerOnboardingTarget.MenuLibrary,
+                                    coordinates.boundsInRoot(),
+                                )
+                            }
+                        }
                         .testTag("menu-library"),
                 ) {
                     Text("Bibliothèque")
@@ -119,7 +136,10 @@ fun MainMenuScreen(
                         .fillMaxWidth()
                         .onGloballyPositioned { coordinates ->
                             if (contentVisible) {
-                                onBadgeButtonBoundsChanged(coordinates.boundsInRoot())
+                                onCoachmarkTargetBoundsChanged(
+                                    NewPlayerOnboardingTarget.MenuBadges,
+                                    coordinates.boundsInRoot(),
+                                )
                             }
                         }
                         .testTag("menu-badges"),

@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
 import fr.aumombelli.dstcg.data.DEFAULT_DRAW_COOLDOWN
 import fr.aumombelli.dstcg.data.buildPackChargeUiStatus
 import fr.aumombelli.dstcg.performance.LocalAppPerformanceProfile
@@ -55,6 +56,7 @@ fun PackSelectionScreen(
     onOpenPack: (String) -> Unit,
     onPackRevealReady: () -> Unit,
     onSelectedBoosterBoundsChanged: (PackRevealBounds?) -> Unit = {},
+    onCoachmarkTargetBoundsChanged: (NewPlayerOnboardingTarget, androidx.compose.ui.geometry.Rect?) -> Unit = { _, _ -> },
     packReadySignal: Int,
     modifier: Modifier = Modifier,
     showBackground: Boolean = true,
@@ -123,6 +125,24 @@ fun PackSelectionScreen(
     val boosterIntroProgress = remember { Animatable(0f) }
     val boosterSelectionProgress = remember { Animatable(0f) }
     var handledPackSignal by remember(displayedExtension?.id) { mutableIntStateOf(packReadySignal) }
+
+    LaunchedEffect(state.extensions, drawLocked) {
+        if (state.extensions.isEmpty() || drawLocked) {
+            onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.PackSelectionExtension, null)
+        }
+    }
+
+    LaunchedEffect(displayedExtensionId) {
+        if (displayedExtensionId != null) {
+            onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.PackSelectionExtension, null)
+        }
+    }
+
+    LaunchedEffect(displayedExtension?.id) {
+        if (displayedExtension == null) {
+            onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.PackSelectionBooster, null)
+        }
+    }
 
     LaunchedEffect(selectedExtension?.id) {
         if (selectedExtension != null) {
@@ -280,13 +300,19 @@ fun PackSelectionScreen(
                     ExtensionList(
                         extensions = state.extensions,
                         drawLocked = drawLocked,
-                        onSelectExtension = onSelectExtension,
+                        onSelectExtension = { extensionId ->
+                            onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.PackSelectionExtension, null)
+                            onSelectExtension(extensionId)
+                        },
                         interactionsEnabled = interactionsEnabled && displayedExtension == null,
                         highlightedExtensionId = displayedExtensionId,
                         highlightProgress = heroProgress.value,
                         badgeAnimationsEnabled = !performanceProfile.isLowRamDevice &&
                             extensionListVisible &&
                             displayedExtension == null,
+                        onFirstEnabledExtensionBoundsChanged = { bounds ->
+                            onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.PackSelectionExtension, bounds)
+                        },
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(top = EXTENSION_LIST_TOP_PADDING)
@@ -306,10 +332,14 @@ fun PackSelectionScreen(
                             selectedBoosterIndex = state.selectedBoosterIndex,
                             isAwaitingPackResult = state.isAwaitingPackResult,
                             onSelectBooster = { boosterIndex ->
+                                onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.PackSelectionBooster, null)
                                 onSelectBooster(boosterIndex)
                                 onOpenPack(extension.id)
                             },
                             onSelectedBoosterBoundsChanged = onSelectedBoosterBoundsChanged,
+                            onFirstBoosterBoundsChanged = { bounds ->
+                                onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.PackSelectionBooster, bounds)
+                            },
                             modifier = Modifier.fillMaxSize(),
                         )
                     }

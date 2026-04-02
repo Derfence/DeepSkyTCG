@@ -128,7 +128,7 @@ class DstcgAppBackNavigationTest {
     }
 
     @Test
-    fun android_back_from_pack_opening_with_new_badge_shows_menu_celebration() {
+    fun android_back_from_pack_opening_with_new_badge_defers_celebration_until_library_is_seen() {
         setAppContent(badgeCelebrationBackNavigationTestAppContainer())
         startAndReachMainMenu()
 
@@ -142,6 +142,14 @@ class DstcgAppBackNavigationTest {
 
         pressAndroidBack()
         advanceBy(1_000)
+        composeRule.onNodeWithTag("new-player-coachmark-MenuLibrary").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("badge-unlock-celebration").assertCountEquals(0)
+
+        composeRule.onNodeWithTag("menu-library").performClick()
+        advanceBy(3_200)
+        composeRule.onNodeWithTag("library-grid").assertIsDisplayed()
+        pressAndroidBack()
+        advanceBy(2_400)
         composeRule.onNodeWithTag("badge-unlock-celebration").assertIsDisplayed()
         composeRule.onNodeWithTag("badge-unlock-celebration-coin-astronomes-en-herbe::sky::city").assertIsDisplayed()
 

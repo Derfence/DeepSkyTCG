@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -13,6 +14,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.screen.PackSelectionScreen
@@ -102,6 +104,96 @@ class PackSelectionScreenTest {
         composeRule.waitForIdle()
 
         assertTrue(revealReady)
+    }
+
+    @Test
+    fun booster_coachmark_target_waits_for_intro_completion_and_clears_on_click() {
+        var latestBoosterCoachmarkBounds: Rect? = null
+        val state = mutableStateOf(
+            PackSelectionUiState(
+                isLoading = false,
+                extensions = listOf(
+                    ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                ),
+                selectedExtensionId = "astronomes-en-herbe",
+            ),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackSelectionScreen(
+                state = state.value,
+                onRefresh = {},
+                onSelectExtension = {},
+                onSelectBooster = { boosterIndex ->
+                    state.value = state.value.copy(
+                        selectedBoosterIndex = boosterIndex,
+                        isAwaitingPackResult = true,
+                    )
+                },
+                onOpenPack = {},
+                onPackRevealReady = {},
+                onCoachmarkTargetBoundsChanged = { target, bounds ->
+                    if (target == NewPlayerOnboardingTarget.PackSelectionBooster) {
+                        latestBoosterCoachmarkBounds = bounds
+                    }
+                },
+                packReadySignal = 0,
+                showBackground = false,
+            )
+        }
+
+        composeRule.mainClock.advanceTimeBy(1_200)
+        composeRule.waitForIdle()
+        assertEquals(null, latestBoosterCoachmarkBounds)
+
+        composeRule.mainClock.advanceTimeBy(800)
+        composeRule.waitForIdle()
+        assertTrue(latestBoosterCoachmarkBounds != null)
+
+        composeRule.onNodeWithTag("pack-booster-0").performClick()
+        composeRule.waitForIdle()
+        assertEquals(null, latestBoosterCoachmarkBounds)
+    }
+
+    @Test
+    fun extension_coachmark_target_clears_on_click() {
+        var latestExtensionCoachmarkBounds: Rect? = null
+        val state = mutableStateOf(
+            PackSelectionUiState(
+                isLoading = false,
+                extensions = listOf(
+                    ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                ),
+            ),
+        )
+
+        composeRule.setContent {
+            PackSelectionScreen(
+                state = state.value,
+                onRefresh = {},
+                onSelectExtension = { extensionId ->
+                    state.value = state.value.copy(selectedExtensionId = extensionId)
+                },
+                onSelectBooster = {},
+                onOpenPack = {},
+                onPackRevealReady = {},
+                onCoachmarkTargetBoundsChanged = { target, bounds ->
+                    if (target == NewPlayerOnboardingTarget.PackSelectionExtension) {
+                        latestExtensionCoachmarkBounds = bounds
+                    }
+                },
+                packReadySignal = 0,
+                showBackground = false,
+            )
+        }
+
+        composeRule.waitForIdle()
+        assertTrue(latestExtensionCoachmarkBounds != null)
+
+        composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").performClick()
+        composeRule.waitForIdle()
+        assertEquals(null, latestExtensionCoachmarkBounds)
     }
 
     @Test

@@ -12,9 +12,11 @@ import fr.aumombelli.dstcg.model.CardDefinition
 import fr.aumombelli.dstcg.model.OwnedCardEntry
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.OwnedVariantCount
+import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.model.VariantProfile
 import fr.aumombelli.dstcg.model.normalized
+import fr.aumombelli.dstcg.model.normalizedForProgress
 import java.time.Duration
 import java.time.Instant
 import java.util.UUID
@@ -55,6 +57,7 @@ class ProgressRepository(
         val normalizedProgress = progress.copy(
             collection = normalizedCollection,
             openedPackCount = progress.openedPackCount.coerceAtLeast(0),
+            newPlayerOnboardingStep = progress.newPlayerOnboardingStep,
         ).withNormalizedPackCharge(
             now = effectiveNow,
             drawCooldown = settings.drawCooldown,
@@ -68,6 +71,7 @@ class ProgressRepository(
             availableDrawCount = normalizedProgress.availableDrawCount,
             nextChargeAt = normalizedProgress.nextChargeAt,
             openedPackCount = normalizedProgress.openedPackCount.coerceAtLeast(0),
+            newPlayerOnboardingStep = normalizedProgress.newPlayerOnboardingStep,
             lastTrustedWallClockUtc = effectiveNow.toString(),
             lastTrustedElapsedRealtimeMs = timeEvidence.elapsedRealtimeMs,
             lastObservedBootMarker = timeEvidence.bootSessionId,
@@ -86,6 +90,7 @@ class ProgressRepository(
             availableDrawCount = settings.maxStoredDraws,
             nextChargeAt = null,
             openedPackCount = 0,
+            newPlayerOnboardingStep = NewPlayerOnboardingStep.OpenFirstPackMenu,
             lastTrustedWallClockUtc = timeEvidence.wallClockUtc.toString(),
             lastTrustedElapsedRealtimeMs = timeEvidence.elapsedRealtimeMs,
             lastObservedBootMarker = timeEvidence.bootSessionId,
@@ -128,6 +133,7 @@ class ProgressRepository(
                     availableDrawCount = settings.maxStoredDraws,
                     nextChargeAt = null,
                     openedPackCount = 0,
+                    newPlayerOnboardingStep = NewPlayerOnboardingStep.OpenFirstPackMenu,
                     lastTrustedWallClockUtc = timeEvidence.wallClockUtc.toString(),
                     lastTrustedElapsedRealtimeMs = timeEvidence.elapsedRealtimeMs,
                     lastObservedBootMarker = timeEvidence.bootSessionId,
@@ -146,11 +152,17 @@ class ProgressRepository(
     ): ProgressRecord {
         val trustedTime = resolveTrustedTime(snapshot)
         val sanitizedCollection = sanitizeCollection(snapshot.collection)
+        val normalizedOnboardingStep = snapshot.newPlayerOnboardingStep.normalizedForProgress(
+            openedPackCount = snapshot.openedPackCount.coerceAtLeast(0),
+            collection = sanitizedCollection,
+            isLegacySnapshot = snapshot.schemaVersion < ProgressSnapshot.CURRENT_SCHEMA_VERSION,
+        )
         val normalizedProgress = StandaloneProgress(
             collection = sanitizedCollection,
             availableDrawCount = snapshot.availableDrawCount,
             nextChargeAt = snapshot.nextChargeAt,
             openedPackCount = snapshot.openedPackCount.coerceAtLeast(0),
+            newPlayerOnboardingStep = normalizedOnboardingStep,
         ).withNormalizedPackCharge(
             now = trustedTime.trustedNow,
             drawCooldown = settings.drawCooldown,
@@ -163,6 +175,7 @@ class ProgressRepository(
             availableDrawCount = normalizedProgress.availableDrawCount,
             nextChargeAt = normalizedProgress.nextChargeAt,
             openedPackCount = normalizedProgress.openedPackCount.coerceAtLeast(0),
+            newPlayerOnboardingStep = normalizedProgress.newPlayerOnboardingStep,
             lastTrustedWallClockUtc = trustedTime.trustedNow.toString(),
             lastTrustedElapsedRealtimeMs = trustedTime.timeEvidence.elapsedRealtimeMs,
             lastObservedBootMarker = trustedTime.timeEvidence.bootSessionId,
@@ -175,6 +188,7 @@ class ProgressRepository(
             snapshot.availableDrawCount != normalizedSnapshot.availableDrawCount ||
             snapshot.nextChargeAt != normalizedSnapshot.nextChargeAt ||
             snapshot.openedPackCount != normalizedSnapshot.openedPackCount ||
+            snapshot.newPlayerOnboardingStep != normalizedSnapshot.newPlayerOnboardingStep ||
             snapshot.tamperFlag ||
             trustedTime.tamperDetected
 
@@ -235,6 +249,11 @@ class ProgressRepository(
             availableDrawCount = availableDrawCount,
             nextChargeAt = nextChargeAt,
             openedPackCount = openedPackCount,
+            newPlayerOnboardingStep = if (openedPackCount > 0 || collection.cards.isNotEmpty()) {
+                NewPlayerOnboardingStep.Completed
+            } else {
+                NewPlayerOnboardingStep.OpenFirstPackMenu
+            },
             lastTrustedWallClockUtc = timeEvidence.wallClockUtc.toString(),
             lastTrustedElapsedRealtimeMs = timeEvidence.elapsedRealtimeMs,
             lastObservedBootMarker = timeEvidence.bootSessionId,

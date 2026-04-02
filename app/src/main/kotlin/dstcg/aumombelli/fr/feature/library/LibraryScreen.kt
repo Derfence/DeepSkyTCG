@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -34,12 +35,15 @@ import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.ui.component.AstroCardThumbnail
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
+import kotlinx.coroutines.delay
 
 @Composable
 fun LibraryScreen(
     state: LibraryUiState,
     onRefresh: () -> Unit,
     contentVisible: Boolean = true,
+    showOnboardingHint: Boolean = false,
+    onOnboardingHintConsumed: () -> Unit = {},
 ) {
     val contentAlpha by animateFloatAsState(
         targetValue = if (contentVisible) 1f else 0f,
@@ -63,6 +67,12 @@ fun LibraryScreen(
         previewCardId = null
         fullscreenCardId = null
         selectedVariantKey = null
+    }
+
+    LaunchedEffect(showOnboardingHint) {
+        if (!showOnboardingHint) return@LaunchedEffect
+        delay(2_800)
+        onOnboardingHintConsumed()
     }
 
     Box(
@@ -102,6 +112,14 @@ fun LibraryScreen(
                         text = "Les cartes obtenues peuvent etre ouvertes en apercu puis en plein ecran. Les autres gardent un visuel masque jusqu'a leur premiere obtention.",
                         color = Color(0xFFD0E0F2),
                     )
+                    if (showOnboardingHint) {
+                        Text(
+                            text = "Touche une carte obtenue pour l'ouvrir.",
+                            color = Color(0xFFF8D98D),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.testTag("library-onboarding-hint"),
+                        )
+                    }
                     if (state.errorMessage != null) {
                         Button(
                             onClick = onRefresh,

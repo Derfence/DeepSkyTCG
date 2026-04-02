@@ -11,6 +11,7 @@ Au lancement, l'application :
 - affiche le decor et les animations d'introduction existants ;
 - ouvre l'ecran de demarrage avec un unique bouton `Commencer` ;
 - enchaine vers le menu principal ;
+- guide les nouveaux joueurs vers leur premier pack, leur bibliotheque puis leurs badges ;
 - permet d'ouvrir des packs localement ;
 - persiste la collection et le prochain tirage autorise ;
 - gere un stock local de 10 ouvertures, recharge a raison d'une ouverture toutes les 6 heures.
@@ -31,6 +32,7 @@ Au lancement, l'application :
 - `feature/library/` : lecture de la collection locale, bibliotheque et apercus.
 - `feature/packs/selection/` : choix d'extension, stock d'ouvertures, barre de recharge et lancement d'ouverture.
 - `feature/packs/opening/` : reveal du pack, navigation locale et plein ecran.
+- `app/NewPlayerOnboardingCoordinator.kt` : orchestration du guidage contextuel du premier parcours joueur.
 - `data/ProgressRepository.kt` : persistance DataStore de `collection_json`, `available_draw_count` et `next_charge_at`.
 - `data/CollectionRepository.kt` : chargement, sauvegarde et fusion locale de la collection.
 - `data/LocalPackEngine.kt` : tirage local pondere, consommation des ouvertures et recharge par palier.
@@ -43,6 +45,7 @@ Au lancement, l'application :
 - Demarrage : animation d'introduction puis carte `Commencer`.
 - `Commencer -> menu principal` : transition visuelle conservee.
 - `Menu -> packs` : ouverture d'un booster local sans appel reseau.
+- `Menu -> packs -> bibliotheque -> badges` : premier parcours guide par coachmarks persistants, affiches apres stabilisation des transitions.
 - `Menu -> bibliotheque` : consultation de la collection persistante.
 - Dans la bibliotheque, les cartes non obtenues gardent leur cadre et leurs informations visibles, mais leur illustration reste masquee jusqu'a la premiere obtention.
 - Retour Android depuis le menu principal : fermeture de l'activite.
@@ -55,7 +58,8 @@ La progression locale contient uniquement :
 
 - `collection_json` : la collection possedee ;
 - `available_draw_count` : le nombre d'ouvertures actuellement disponibles ;
-- `next_charge_at` : la prochaine date ISO rechargeant une ouverture quand le stock est inferieur a 10.
+- `next_charge_at` : la prochaine date ISO rechargeant une ouverture quand le stock est inferieur a 10 ;
+- `newPlayerOnboardingStep` : l'etape persistante du premier parcours joueur.
 
 La collection locale ne porte plus de version de catalogue. Au premier lancement, l'application cree automatiquement une collection vide. Les anciennes sauvegardes contenant encore `collection.version` restent lisibles grace a la deserialisation tolerante, puis sont reecrites au prochain reset ou a la prochaine sauvegarde.
 
@@ -97,12 +101,18 @@ La couverture actuelle verifie notamment :
 
 - `StartViewModel`
 - `ProgressRepository`
+- `NewPlayerOnboardingCoordinator`
 - `LocalPackEngine`
 - `CollectionRepository`
 - `PackRepository`
 - `PackViewModel`
+- le flux guide `menu -> packs -> bibliotheque -> badges`
 - les ecrans Compose du flux `Commencer`
 - le scenario offline `Commencer -> menu -> pack -> recharge -> bibliotheque`
+
+La documentation du guidage des nouveaux joueurs est detaillee dans :
+
+- `docs/new-player-onboarding.md`
 
 ## Pre-requis locaux
 

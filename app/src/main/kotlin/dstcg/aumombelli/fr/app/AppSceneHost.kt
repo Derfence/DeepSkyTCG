@@ -94,6 +94,9 @@ internal fun AppSceneHost(
             awaitNextFrame = { withFrameNanos { } },
         )
     }
+    val onboardingCoordinator = remember(appContainer) {
+        NewPlayerOnboardingCoordinator(appContainer.progressRepository)
+    }
 
     val launchLogoAlpha by animateFloatAsState(
         targetValue = if (sceneState.launchLogoVisible) 1f else 0f,
@@ -113,14 +116,21 @@ internal fun AppSceneHost(
     }
 
     LaunchedEffect(launchConfig) {
-        if (launchConfig.scene == AppLaunchScene.Start) {
-            transitions.runLaunchSequence()
-        } else if (launchConfig.resetProgressOnLaunch) {
+        if (launchConfig.resetProgressOnLaunch) {
             runCatching {
                 appContainer.progressRepository.resetProgress()
                 appContainer.packRepository.clearCurrentPackResult()
             }
-            sceneStateHolder.value = sceneStateHolder.value.showMenuContent()
+            onboardingCoordinator.syncFromProgress()
+            if (launchConfig.scene == AppLaunchScene.MainMenu) {
+                sceneStateHolder.value = sceneStateHolder.value.showMenuContent()
+            }
+        } else {
+            onboardingCoordinator.syncFromProgress()
+        }
+
+        if (launchConfig.scene == AppLaunchScene.Start) {
+            transitions.runLaunchSequence()
         }
     }
 
@@ -158,6 +168,7 @@ internal fun AppSceneHost(
                         when (event) {
                             StartEvent.ReadyToEnterMenu -> {
                                 scope.launch {
+                                    onboardingCoordinator.syncFromProgress()
                                     sceneStateHolder.value = sceneStateHolder.value.hideStartCard()
                                     kotlinx.coroutines.delay(560)
                                     transitions.animateStartToMenu()
@@ -187,20 +198,32 @@ internal fun AppSceneHost(
                 MainMenuScreen(
                     onOpenPack = {
                         if (!sceneState.transitionLocked) {
-                            scope.launch { transitions.animateMenuToPackSelection() }
+                            scope.launch {
+                                onboardingCoordinator.onMenuOpenPackSelected()
+                                transitions.animateMenuToPackSelection()
+                            }
                         }
                     },
                     onOpenLibrary = {
-                        scope.launch { transitions.animateMenuToLibrary() }
+                        scope.launch {
+                            val shouldResumeBadgeCelebration = onboardingCoordinator.onLibraryOpened()
+                            if (shouldResumeBadgeCelebration) {
+                                sceneStateHolder.value = sceneStateHolder.value.resumePendingBadgeCelebration()
+                            }
+                            transitions.animateMenuToLibrary()
+                        }
                     },
                     onOpenBadgeBook = {
-                        scope.launch { transitions.animateMenuToBadgeBook() }
+                        scope.launch {
+                            onboardingCoordinator.onBadgeBookOpened()
+                            transitions.animateMenuToBadgeBook()
+                        }
                     },
                     showBackground = false,
                     contentVisible = sceneState.menuContentVisible,
                     interactionsEnabled = !sceneState.transitionLocked,
-                    onBadgeButtonBoundsChanged = { bounds ->
-                        sceneStateHolder.value = sceneStateHolder.value.withMenuBadgeButtonBounds(bounds)
+                    onCoachmarkTargetBoundsChanged = { target, bounds ->
+                        sceneStateHolder.value = sceneStateHolder.value.withCoachmarkTargetBounds(target, bounds)
                     },
                 )
             }
@@ -231,6 +254,9 @@ internal fun AppSceneHost(
                     state = uiState,
                     onRefresh = libraryViewModel::refresh,
                     contentVisible = sceneState.libraryContentVisible,
+                    showOnboardingHint = onboardingCoordinator.uiState.libraryCardHintVisible &&
+                        sceneState.onboardingHintsVisible,
+                    onOnboardingHintConsumed = onboardingCoordinator::onLibraryCardHintConsumed,
                 )
             }
 
@@ -294,8 +320,10 @@ internal fun AppSceneHost(
                     packViewModel.events.collect { event ->
                         when (event) {
                             is PackEvent.PackReadyForReveal -> {
+                                val shouldDeferBadgeCelebration = onboardingCoordinator.onFirstPackOpened()
                                 sceneStateHolder.value = sceneStateHolder.value.registerPackReady(
                                     event.newlyUnlockedBadges,
+                                    deferBadgeCelebration = shouldDeferBadgeCelebration,
                                 )
                             }
                         }
@@ -321,7 +349,10 @@ internal fun AppSceneHost(
                 PackSelectionScreen(
                     state = uiState,
                     onRefresh = packViewModel::refresh,
-                    onSelectExtension = packViewModel::selectExtension,
+                    onSelectExtension = { extensionId ->
+                        packViewModel.selectExtension(extensionId)
+                        scope.launch { onboardingCoordinator.onExtensionSelected() }
+                    },
                     onSelectBooster = packViewModel::selectBooster,
                     onOpenPack = packViewModel::openPack,
                     onPackRevealReady = {
@@ -329,6 +360,9 @@ internal fun AppSceneHost(
                     },
                     onSelectedBoosterBoundsChanged = { bounds ->
                         sceneStateHolder.value = sceneStateHolder.value.withPackRevealBounds(bounds)
+                    },
+                    onCoachmarkTargetBoundsChanged = { target, bounds ->
+                        sceneStateHolder.value = sceneStateHolder.value.withCoachmarkTargetBounds(target, bounds)
                     },
                     packReadySignal = sceneState.packReadySignal,
                     showBackground = false,
@@ -385,10 +419,29 @@ internal fun AppSceneHost(
             overlayAlpha = chestOverlayAlpha.value,
         )
 
+        val badgeCelebrationVisible = sceneState.currentScene == AppScene.MainMenu &&
+            sceneState.menuContentVisible &&
+            sceneState.pendingBadgeCelebration.isNotEmpty() &&
+            !sceneState.badgeCelebrationDeferred
+
+        onboardingCoordinator.activeCoachmark(
+            currentScene = sceneState.currentScene,
+            sceneState = sceneState,
+            badgeCelebrationVisible = badgeCelebrationVisible,
+        )?.let { spec ->
+            sceneState.coachmarkTargetBounds[spec.target]?.let { targetBounds ->
+                NewPlayerCoachmarkOverlay(
+                    spec = spec,
+                    targetBounds = targetBounds,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
+
         BadgeUnlockCelebrationOverlay(
             badges = sceneState.pendingBadgeCelebration,
-            targetBounds = sceneState.menuBadgeButtonBounds,
-            visible = sceneState.currentScene == AppScene.MainMenu && sceneState.menuContentVisible,
+            targetBounds = sceneState.coachmarkTargetBounds[NewPlayerOnboardingTarget.MenuBadges],
+            visible = badgeCelebrationVisible,
             onFinished = transitions::completeBadgeCelebration,
             modifier = Modifier.fillMaxSize(),
         )

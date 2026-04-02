@@ -40,7 +40,7 @@ class LocalEndToEndTest {
         val firstDrawnCardId = openPackAndCaptureVisibleCardId()
 
         verifyLibraryContainsDrawnCard(firstDrawnCardId)
-        verifyRechargeStatusIsVisible()
+        verifyBadgesCoachmarkAppearsAfterLibrary()
     }
 
     @After
@@ -53,14 +53,17 @@ class LocalEndToEndTest {
         composeRule.onNodeWithTag("start-begin").performClick()
         composeRule.waitUntilTagEnabled("menu-open-pack", timeoutMillis = 20_000)
         composeRule.onNodeWithTag("menu-open-pack").assertIsDisplayed()
+        composeRule.waitUntilTagDisplayed("new-player-coachmark-MenuOpenPack", timeoutMillis = 10_000)
     }
 
     private fun openPackAndCaptureVisibleCardId(): String {
         composeRule.waitUntilTagEnabled("menu-open-pack", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("menu-open-pack").performClick()
         composeRule.waitUntilTagEnabled("pack-extension-enter-${LocalE2eConfig.extensionId}", timeoutMillis = 15_000)
+        composeRule.waitUntilTagDisplayed("new-player-coachmark-PackSelectionExtension", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("pack-extension-enter-${LocalE2eConfig.extensionId}").performClick()
         composeRule.waitUntilTagEnabled("pack-booster-0", timeoutMillis = 10_000)
+        composeRule.waitUntilTagDisplayed("new-player-coachmark-PackSelectionBooster", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("pack-booster-0").performClick()
 
         composeRule.waitUntilTagExists("pack-opening-title", timeoutMillis = 20_000)
@@ -79,6 +82,7 @@ class LocalEndToEndTest {
 
         composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeUp() }
         composeRule.waitForPackReturnToMenu()
+        composeRule.waitUntilTagDisplayed("new-player-coachmark-MenuLibrary", timeoutMillis = 10_000)
         return firstDrawnCardId
     }
 
@@ -86,6 +90,7 @@ class LocalEndToEndTest {
         composeRule.waitUntilTagEnabled("menu-library", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("menu-library").performClick()
         composeRule.waitUntilTagExists("library-section-${LocalE2eConfig.extensionId}", timeoutMillis = 10_000)
+        composeRule.waitUntilTagDisplayed("library-onboarding-hint", timeoutMillis = 10_000)
 
         composeRule.onNodeWithTag("library-grid").performScrollToNode(hasTestTag("library-card-$cardId"))
         composeRule.onNodeWithTag("library-card-$cardId").assertIsDisplayed()
@@ -98,17 +103,29 @@ class LocalEndToEndTest {
 
         composeRule.waitUntilTagGone("astro-card-fullscreen-close", timeoutMillis = 10_000)
         composeRule.pressAndroidBack()
+        composeRule.waitUntilTagDisplayed("badge-unlock-celebration", timeoutMillis = 10_000)
+        composeRule.waitUntilTagGone("badge-unlock-celebration", timeoutMillis = 10_000)
+        composeRule.waitUntilTagDisplayed("new-player-coachmark-MenuBadges", timeoutMillis = 10_000)
         composeRule.waitUntilTagEnabled("menu-open-pack", timeoutMillis = 10_000)
+    }
+
+    private fun verifyBadgesCoachmarkAppearsAfterLibrary() {
+        composeRule.onNodeWithTag("new-player-coachmark-MenuBadges").assertIsDisplayed()
     }
 
     private fun verifyRechargeStatusIsVisible() {
         composeRule.waitUntilTagEnabled("menu-open-pack", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("menu-open-pack").performClick()
-        composeRule.waitUntilTagExists("pack-extension-enter-${LocalE2eConfig.extensionId}", timeoutMillis = 15_000)
+        composeRule.waitUntilTagExists("pack-status-count", timeoutMillis = 15_000)
         composeRule.onNodeWithTag("pack-status-count").assertTextContains("9/10")
         composeRule.onNodeWithTag("pack-status-remaining").assertTextContains("Prochaine charge dans", substring = true)
-        composeRule.onNodeWithTag("pack-extension-enter-${LocalE2eConfig.extensionId}").assertIsEnabled()
         composeRule.pressAndroidBack()
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.isTagEnabled("menu-library") || composeRule.isTagPresent("pack-status-count")
+        }
+        if (!composeRule.isTagEnabled("menu-library")) {
+            composeRule.pressAndroidBack()
+        }
         composeRule.waitUntilTagEnabled("menu-library", timeoutMillis = 10_000)
     }
 

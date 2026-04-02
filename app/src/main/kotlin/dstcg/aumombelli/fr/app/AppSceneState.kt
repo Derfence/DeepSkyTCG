@@ -25,7 +25,9 @@ internal data class AppSceneUiState(
     val selectedPackRevealBounds: PackRevealBounds? = null,
     val packOpeningExitSignal: Int = 0,
     val pendingBadgeCelebration: List<BadgeItem> = emptyList(),
-    val menuBadgeButtonBounds: Rect? = null,
+    val badgeCelebrationDeferred: Boolean = false,
+    val onboardingHintsVisible: Boolean = true,
+    val coachmarkTargetBounds: Map<NewPlayerOnboardingTarget, Rect> = emptyMap(),
 )
 
 internal fun AppSceneUiState.withRootHeight(heightPx: Float): AppSceneUiState = copy(rootHeightPx = heightPx)
@@ -71,9 +73,16 @@ internal fun AppSceneUiState.showPackExtensionList(): AppSceneUiState = copy(pac
 
 internal fun AppSceneUiState.hidePackExtensionList(): AppSceneUiState = copy(packExtensionListVisible = false)
 
-internal fun AppSceneUiState.lockTransitions(): AppSceneUiState = copy(transitionLocked = true)
+internal fun AppSceneUiState.lockTransitions(): AppSceneUiState = copy(
+    transitionLocked = true,
+    onboardingHintsVisible = false,
+)
 
 internal fun AppSceneUiState.unlockTransitions(): AppSceneUiState = copy(transitionLocked = false)
+
+internal fun AppSceneUiState.showOnboardingHints(): AppSceneUiState = copy(onboardingHintsVisible = true)
+
+internal fun AppSceneUiState.hideOnboardingHints(): AppSceneUiState = copy(onboardingHintsVisible = false)
 
 internal fun AppSceneUiState.enterMainMenu(): AppSceneUiState = copy(currentScene = AppScene.MainMenu)
 
@@ -102,14 +111,12 @@ internal fun AppSceneUiState.preparePackSelection(nextPackRefreshSignal: Int): A
     packReadySignal = 0,
     selectedPackRevealBounds = null,
     packOpeningExitSignal = 0,
-    pendingBadgeCelebration = emptyList(),
 )
 
 internal fun AppSceneUiState.switchPackSelectionToMenu(): AppSceneUiState = copy(
     currentScene = AppScene.MainMenu,
     selectedPackRevealBounds = null,
     packOpeningExitSignal = 0,
-    pendingBadgeCelebration = emptyList(),
 )
 
 internal fun AppSceneUiState.enterPackOpening(): AppSceneUiState = copy(
@@ -135,9 +142,13 @@ internal fun AppSceneUiState.finishPackOpeningToMenu(): AppSceneUiState = prepar
 internal fun AppSceneUiState.withPackRevealBounds(bounds: PackRevealBounds?): AppSceneUiState =
     copy(selectedPackRevealBounds = bounds)
 
-internal fun AppSceneUiState.registerPackReady(newlyUnlockedBadges: List<BadgeItem>): AppSceneUiState = copy(
+internal fun AppSceneUiState.registerPackReady(
+    newlyUnlockedBadges: List<BadgeItem>,
+    deferBadgeCelebration: Boolean,
+): AppSceneUiState = copy(
     packReadySignal = packReadySignal + 1,
     pendingBadgeCelebration = newlyUnlockedBadges,
+    badgeCelebrationDeferred = newlyUnlockedBadges.isNotEmpty() && deferBadgeCelebration,
 )
 
 internal fun AppSceneUiState.requestPackOpeningExit(): AppSceneUiState = copy(
@@ -146,8 +157,22 @@ internal fun AppSceneUiState.requestPackOpeningExit(): AppSceneUiState = copy(
 
 internal fun AppSceneUiState.clearPendingBadgeCelebration(): AppSceneUiState = copy(
     pendingBadgeCelebration = emptyList(),
+    badgeCelebrationDeferred = false,
 )
 
-internal fun AppSceneUiState.withMenuBadgeButtonBounds(bounds: Rect?): AppSceneUiState = copy(
-    menuBadgeButtonBounds = bounds,
+internal fun AppSceneUiState.resumePendingBadgeCelebration(): AppSceneUiState = copy(
+    badgeCelebrationDeferred = false,
+)
+
+internal fun AppSceneUiState.withCoachmarkTargetBounds(
+    target: NewPlayerOnboardingTarget,
+    bounds: Rect?,
+): AppSceneUiState = copy(
+    coachmarkTargetBounds = coachmarkTargetBounds.toMutableMap().apply {
+        if (bounds == null) {
+            remove(target)
+        } else {
+            put(target, bounds)
+        }
+    },
 )

@@ -25,4 +25,5 @@ data class StandaloneProgress(
     val availableDrawCount: Int = 10,
     val nextChargeAt: String? = null,
     val openedPackCount: Int = 0,
+    val newPlayerOnboardingStep: NewPlayerOnboardingStep = NewPlayerOnboardingStep.OpenFirstPackMenu,
 )

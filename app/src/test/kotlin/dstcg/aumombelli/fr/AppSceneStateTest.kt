@@ -5,13 +5,16 @@ import fr.aumombelli.dstcg.app.clearPendingBadgeCelebration
 import fr.aumombelli.dstcg.app.enterBadgeBook
 import fr.aumombelli.dstcg.app.enterPackOpening
 import fr.aumombelli.dstcg.app.finishPackOpeningToMenu
+import fr.aumombelli.dstcg.app.lockTransitions
 import fr.aumombelli.dstcg.app.prepareBadgeBookEntry
 import fr.aumombelli.dstcg.app.preparePackOpeningReturnToMenu
 import fr.aumombelli.dstcg.app.preparePackSelection
 import fr.aumombelli.dstcg.app.registerPackReady
 import fr.aumombelli.dstcg.app.resetLaunchSequence
 import fr.aumombelli.dstcg.app.requestPackOpeningExit
+import fr.aumombelli.dstcg.app.showOnboardingHints
 import fr.aumombelli.dstcg.app.showStartCard
+import fr.aumombelli.dstcg.app.unlockTransitions
 import fr.aumombelli.dstcg.feature.badges.BadgeItem
 import fr.aumombelli.dstcg.feature.badges.BadgeProgress
 import fr.aumombelli.dstcg.feature.badges.BadgeRequirementType
@@ -48,7 +51,7 @@ class AppSceneStateTest {
         assertEquals(3, nextState.packRefreshSignal)
         assertEquals(0, nextState.packReadySignal)
         assertEquals(0, nextState.packOpeningExitSignal)
-        assertEquals(emptyList<BadgeItem>(), nextState.pendingBadgeCelebration)
+        assertEquals(listOf(sampleBadge()), nextState.pendingBadgeCelebration)
         assertNull(nextState.selectedPackRevealBounds)
     }
 
@@ -59,7 +62,10 @@ class AppSceneStateTest {
             packSceneVisible = true,
             packExtensionListVisible = true,
             selectedPackRevealBounds = PackRevealBounds(1f, 2f, 3f, 4f),
-        ).enterPackOpening().registerPackReady(listOf(sampleBadge()))
+        ).enterPackOpening().registerPackReady(
+            newlyUnlockedBadges = listOf(sampleBadge()),
+            deferBadgeCelebration = false,
+        )
 
         val nextState = openedState.finishPackOpeningToMenu()
 
@@ -163,6 +169,22 @@ class AppSceneStateTest {
         val nextState = state.clearPendingBadgeCelebration()
 
         assertEquals(emptyList<BadgeItem>(), nextState.pendingBadgeCelebration)
+    }
+
+    @Test
+    fun `locking transitions hides onboarding hints until they are restored`() {
+        val state = AppSceneUiState(
+            currentScene = AppScene.MainMenu,
+            onboardingHintsVisible = true,
+        )
+
+        val lockedState = state.lockTransitions()
+        val restoredState = lockedState.unlockTransitions().showOnboardingHints()
+
+        assertEquals(true, lockedState.transitionLocked)
+        assertEquals(false, lockedState.onboardingHintsVisible)
+        assertEquals(false, restoredState.transitionLocked)
+        assertEquals(true, restoredState.onboardingHintsVisible)
     }
 
     private fun sampleBadge(): BadgeItem = BadgeItem(

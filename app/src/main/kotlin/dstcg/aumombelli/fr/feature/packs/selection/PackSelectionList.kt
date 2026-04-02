@@ -14,8 +14,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -36,8 +39,15 @@ internal fun ExtensionList(
     highlightedExtensionId: String?,
     highlightProgress: Float,
     badgeAnimationsEnabled: Boolean,
+    onFirstEnabledExtensionBoundsChanged: (Rect?) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    val firstEnabledExtensionId = if (!drawLocked) {
+        extensions.firstOrNull()?.id
+    } else {
+        null
+    }
+
     Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = modifier,
@@ -91,6 +101,15 @@ internal fun ExtensionList(
                         enabled = !drawLocked && interactionsEnabled,
                         modifier = Modifier
                             .fillMaxWidth()
+                            .then(
+                                if (extension.id == firstEnabledExtensionId && highlightedExtensionId == null) {
+                                    Modifier.onGloballyPositioned { coordinates ->
+                                        onFirstEnabledExtensionBoundsChanged(coordinates.boundsInRoot())
+                                    }
+                                } else {
+                                    Modifier
+                                },
+                            )
                             .testTag("pack-extension-enter-${extension.id}"),
                     ) {
                         Text(if (drawLocked) "Verrouillé" else "Observer")

@@ -268,6 +268,15 @@ fun PackOpeningScreen(
                                 )
                             }
 
+                            if (shouldAnimateSwipeHint) {
+                                androidx.compose.material3.Text(
+                                    text = "Glisse vers le haut pour revenir au menu.",
+                                    color = Color(0xFFF8D98D),
+                                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.testTag("pack-opening-swipe-hint-label"),
+                                )
+                            }
+
                             if (currentCard != null) {
                                 androidx.compose.material3.Text(
                                     text = currentCard.definition.id,

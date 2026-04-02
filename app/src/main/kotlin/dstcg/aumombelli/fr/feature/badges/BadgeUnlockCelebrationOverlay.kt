@@ -5,8 +5,10 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -52,6 +54,7 @@ internal fun BadgeUnlockCelebrationOverlay(
     val density = LocalDensity.current
     val glowSizePx = with(density) { 220.dp.toPx() }
     val coinSizePx = with(density) { 92.dp.toPx() }
+    val titleTopInsetPx = WindowInsets.statusBars.getTop(density).toFloat() + with(density) { 12.dp.toPx() }
     val latestTargetBounds by rememberUpdatedState(targetBounds)
     var rootSize by remember(sortedBadges) { mutableStateOf(IntSize.Zero) }
     var resolvedTargetBounds by remember(sortedBadges) { mutableStateOf<Rect?>(null) }
@@ -160,7 +163,7 @@ internal fun BadgeUnlockCelebrationOverlay(
                 .align(Alignment.TopCenter)
                 .graphicsLayer {
                     this.alpha = overlayVisibility
-                    translationY = 72f - 28f * travel
+                    translationY = titleTopInsetPx + 72f - 28f * travel
                 }
                 .testTag("badge-unlock-celebration-title"),
         )

@@ -78,7 +78,7 @@ class AstroCardDetailsSurfaceTest {
         }
 
         composeRule.onNodeWithTag("astro-card-image-credit").assertTextContains(
-            "Dylan O'Donnell",
+            "Min Xie",
             substring = true,
         )
     }

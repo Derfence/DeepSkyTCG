@@ -98,14 +98,18 @@ class PackOpeningScreenTest {
         composeRule.onAllNodesWithTag("pack-opening-arrow-right").assertCountEquals(1)
         composeRule.onAllNodesWithTag("pack-opening-card-name").assertCountEquals(0)
         composeRule.assertApproxCardRatio("pack-opening-current-card-surface")
+        composeRule.mainClock.autoAdvance = true
         composeRule.firstNodeWithTag("pack-opening-current-card-surface").performClick()
-        composeRule.runOnIdle { }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("astro-card-fullscreen-close")
+                .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                .isNotEmpty()
+        }
         composeRule.onNodeWithTag("astro-card-fullscreen-close").assertIsDisplayed()
         composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
         composeRule.runOnIdle { }
         assertEquals("ALP-001", composeRule.readCurrentPackOpeningCardId())
 
-        composeRule.mainClock.autoAdvance = true
         composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeLeft() }
         composeRule.waitUntil(timeoutMillis = 5_000) {
             runCatching {
@@ -238,6 +242,7 @@ class PackOpeningScreenTest {
         composeRule.mainClock.advanceTimeBy(2_400)
         composeRule.runOnIdle { }
         composeRule.onAllNodesWithTag("pack-opening-last-card-nudge").assertCountEquals(1)
+        composeRule.onNodeWithTag("pack-opening-swipe-hint-label").assertIsDisplayed()
     }
 
     @Test
@@ -299,6 +304,7 @@ class PackOpeningScreenTest {
                 .fetchSemanticsNodes(atLeastOneRootRequired = false)
                 .size == 1
         }
+        composeRule.onNodeWithTag("pack-opening-swipe-hint-label").assertIsDisplayed()
     }
 
     @Test
