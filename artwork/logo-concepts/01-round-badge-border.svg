@@ -1,0 +1,54 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="bg" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(512 420) rotate(90) scale(500)">
+      <stop offset="0" stop-color="#173254"/>
+      <stop offset="0.58" stop-color="#0C1424"/>
+      <stop offset="1" stop-color="#06080D"/>
+    </radialGradient>
+    <linearGradient id="ring" x1="232" y1="232" x2="792" y2="792" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F9D892"/>
+      <stop offset="0.45" stop-color="#F6B73C"/>
+      <stop offset="1" stop-color="#A86A14"/>
+    </linearGradient>
+    <linearGradient id="orbit" x1="310" y1="314" x2="738" y2="708" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#68E1D2" stop-opacity="0.1"/>
+      <stop offset="0.3" stop-color="#68E1D2" stop-opacity="0.95"/>
+      <stop offset="0.72" stop-color="#EAF3FF" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#68E1D2" stop-opacity="0.25"/>
+    </linearGradient>
+    <radialGradient id="coreGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(512 512) rotate(90) scale(230)">
+      <stop offset="0" stop-color="#FFF0BE" stop-opacity="0.85"/>
+      <stop offset="0.45" stop-color="#F6B73C" stop-opacity="0.26"/>
+      <stop offset="1" stop-color="#F6B73C" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="softGlow" x="250" y="250" width="524" height="524" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" rx="228" fill="#04070D"/>
+  <circle cx="512" cy="512" r="424" fill="url(#bg)"/>
+  <circle cx="512" cy="512" r="404" stroke="url(#ring)" stroke-width="36"/>
+  <circle cx="512" cy="512" r="368" stroke="#EAF3FF" stroke-opacity="0.16" stroke-width="2"/>
+
+  <circle cx="310" cy="290" r="3" fill="#EAF3FF" fill-opacity="0.85"/>
+  <circle cx="702" cy="246" r="5" fill="#F6B73C" fill-opacity="0.78"/>
+  <circle cx="772" cy="372" r="4" fill="#EAF3FF" fill-opacity="0.65"/>
+  <circle cx="256" cy="628" r="4" fill="#68E1D2" fill-opacity="0.72"/>
+  <circle cx="732" cy="698" r="3" fill="#EAF3FF" fill-opacity="0.72"/>
+  <circle cx="364" cy="748" r="5" fill="#F6B73C" fill-opacity="0.52"/>
+
+  <ellipse cx="512" cy="512" rx="256" ry="146" transform="rotate(-22 512 512)" stroke="url(#orbit)" stroke-width="24"/>
+  <ellipse cx="512" cy="512" rx="224" ry="120" transform="rotate(28 512 512)" stroke="#68E1D2" stroke-opacity="0.24" stroke-width="10"/>
+  <circle cx="678" cy="394" r="18" fill="#F6B73C"/>
+  <circle cx="678" cy="394" r="34" fill="#F6B73C" fill-opacity="0.18"/>
+
+  <g filter="url(#softGlow)">
+    <circle cx="512" cy="512" r="148" fill="#68E1D2" fill-opacity="0.16"/>
+  </g>
+  <circle cx="512" cy="512" r="214" fill="url(#coreGlow)"/>
+
+  <polygon points="512.0,362.0 543.0,458.3 641.9,437.0 574.0,512.0 641.9,587.0 543.0,565.7 512.0,662.0 481.0,565.7 382.1,587.0 450.0,512.0 382.1,437.0 481.0,458.3" fill="#F6B73C"/>
+  <polygon points="512.0,438.0 531.8,492.2 586.0,512.0 531.8,531.8 512.0,586.0 492.2,531.8 438.0,512.0 492.2,492.2" fill="#EAF3FF"/>
+  <circle cx="512" cy="512" r="14" fill="#FFFFFF"/>
+</svg>

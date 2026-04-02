@@ -1,0 +1,64 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="cardFrame" x1="276" y1="160" x2="748" y2="864" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F9D892"/>
+      <stop offset="0.35" stop-color="#F6B73C"/>
+      <stop offset="1" stop-color="#8A5310"/>
+    </linearGradient>
+    <radialGradient id="cardBg" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(508 322) rotate(90) scale(620 520)">
+      <stop offset="0" stop-color="#183356"/>
+      <stop offset="0.56" stop-color="#0C1424"/>
+      <stop offset="1" stop-color="#06080D"/>
+    </radialGradient>
+    <linearGradient id="halo" x1="384" y1="358" x2="652" y2="622" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#68E1D2"/>
+      <stop offset="1" stop-color="#EAF3FF"/>
+    </linearGradient>
+    <filter id="shadow" x="186" y="100" width="652" height="824" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feOffset dy="22"/>
+      <feGaussianBlur stdDeviation="26"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.015 0 0 0 0 0.028 0 0 0 0 0.055 0 0 0 0.45 0"/>
+    </filter>
+    <clipPath id="cardClip">
+      <rect x="260" y="144" width="504" height="736" rx="60"/>
+    </clipPath>
+  </defs>
+
+  <rect width="1024" height="1024" fill="#04070D" fill-opacity="0"/>
+
+  <g filter="url(#shadow)">
+    <rect x="260" y="144" width="504" height="736" rx="60" fill="#070A10"/>
+  </g>
+
+  <rect x="260" y="144" width="504" height="736" rx="60" fill="url(#cardBg)"/>
+  <rect x="260" y="144" width="504" height="736" rx="60" stroke="url(#cardFrame)" stroke-width="20"/>
+  <rect x="286" y="170" width="452" height="684" rx="40" stroke="#EAF3FF" stroke-opacity="0.2" stroke-width="2"/>
+
+  <g clip-path="url(#cardClip)">
+    <circle cx="516" cy="336" r="210" fill="#68E1D2" fill-opacity="0.08"/>
+    <circle cx="516" cy="336" r="142" fill="#F6B73C" fill-opacity="0.08"/>
+    <path d="M308 282C392 232 466 214 536 228C618 244 680 302 726 394" stroke="#68E1D2" stroke-opacity="0.36" stroke-width="8" stroke-linecap="round"/>
+    <path d="M320 676C404 618 500 598 586 618C644 632 694 666 720 710" stroke="#EAF3FF" stroke-opacity="0.16" stroke-width="6" stroke-linecap="round"/>
+
+    <circle cx="346" cy="230" r="4" fill="#EAF3FF" fill-opacity="0.86"/>
+    <circle cx="690" cy="248" r="5" fill="#F6B73C" fill-opacity="0.76"/>
+    <circle cx="666" cy="404" r="4" fill="#EAF3FF" fill-opacity="0.9"/>
+    <circle cx="396" cy="426" r="6" fill="#68E1D2" fill-opacity="0.84"/>
+    <circle cx="626" cy="724" r="4" fill="#EAF3FF" fill-opacity="0.8"/>
+    <circle cx="362" cy="762" r="5" fill="#F6B73C" fill-opacity="0.62"/>
+
+    <polyline points="354,274 430,330 510,282 602,340 670,302" stroke="#BDD4EA" stroke-opacity="0.5" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="406,566 472,512 548,552 630,494" stroke="#68E1D2" stroke-opacity="0.42" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <circle cx="512" cy="460" r="120" fill="#09111D"/>
+  <circle cx="512" cy="460" r="144" stroke="url(#halo)" stroke-opacity="0.78" stroke-width="12"/>
+  <circle cx="512" cy="460" r="184" stroke="#68E1D2" stroke-opacity="0.18" stroke-width="8"/>
+  <polygon points="512.0,344.0 536.0,418.8 612.9,402.2 560.2,460.0 612.9,517.8 536.0,501.2 512.0,576.0 488.0,501.2 411.1,517.8 463.8,460.0 411.1,402.2 488.0,418.8" fill="#F6B73C"/>
+  <polygon points="512.0,400.0 528.4,444.9 573.3,461.3 528.4,477.7 512.0,522.6 495.6,477.7 450.7,461.3 495.6,444.9" fill="#EAF3FF"/>
+  <circle cx="512" cy="461" r="9" fill="#FFFFFF"/>
+
+  <rect x="332" y="204" width="120" height="20" rx="10" fill="#EAF3FF" fill-opacity="0.12"/>
+  <rect x="332" y="796" width="228" height="18" rx="9" fill="#EAF3FF" fill-opacity="0.12"/>
+  <rect x="578" y="796" width="116" height="18" rx="9" fill="#F6B73C" fill-opacity="0.28"/>
+</svg>

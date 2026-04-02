@@ -1,0 +1,16 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Eight Point Star Flat Colors</title>
+  <polygon points="512,12 548,512 512,622 476,512" fill="#F6B73C"/>
+  <polygon points="512,1012 476,512 512,402 548,512" fill="#F6B73C"/>
+
+  <polygon points="292,512 512,488 560,512 512,536" fill="#68E1D2"/>
+  <polygon points="732,512 512,536 464,512 512,488" fill="#68E1D2"/>
+
+  <polygon points="579.9,444.1 521.9,521.9 496.4,527.6 502.1,502.1" fill="#EAF3FF"/>
+  <polygon points="579.9,579.9 502.1,521.9 496.4,496.4 521.9,502.1" fill="#EAF3FF"/>
+  <polygon points="444.1,579.9 502.1,502.1 527.6,496.4 521.9,521.9" fill="#EAF3FF"/>
+  <polygon points="444.1,444.1 521.9,502.1 527.6,527.6 502.1,521.9" fill="#EAF3FF"/>
+
+  <circle cx="512" cy="512" r="44" fill="#FFFFFF"/>
+  <path d="M512 458L542 512L512 566L482 512L512 458Z" fill="#FFF7E5"/>
+</svg>
