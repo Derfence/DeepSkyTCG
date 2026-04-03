@@ -39,6 +39,8 @@ Au lancement, l'application :
 - `data/PackRepository.kt` : orchestration du tirage local puis persistance de la progression.
 - `model/` : modeles de catalogue, collection, packs et progression locale.
 - `assets/catalog/` : catalogue embarque (`extensions.json`, `cards.json`, `variant_profiles.json`).
+- `ui/motion/LaunchLogoMark.kt` : composant de logo reutilisant les exports finaux de marque.
+- `res/drawable-nodpi/` et `res/mipmap-anydpi-*/` : exports PNG et ressources launcher Android derives des logos valides.
 
 ## Flux utilisateur
 
@@ -79,12 +81,20 @@ Le standalone conserve :
 
 - le decor celeste partage ;
 - les transitions de scenes ;
+- le badge de marque `17` pour l'icone Android ;
+- le lockup `19` pour les contextes sombres de l'interface de lancement ;
 - les animations de selection d'extension et d'ouverture de pack ;
 - la bibliotheque, les apercus et le plein ecran des cartes ;
 - le masquage volontaire des illustrations des cartes non obtenues dans la grille de bibliotheque ;
 - le stock disponible et la recharge visible dans l'interface.
 
 La seule simplification fonctionnelle voulue au demarrage est le remplacement du login par le bouton `Commencer`.
+
+Les sources creatives de reference restent dans `artwork/logo-concepts/` :
+
+- `17-badge-logo.svg` : badge seul, utilise pour l'icone applicative ;
+- `18-badge-plus-texte.svg` : lockup clair de reference ;
+- `19-badge-plus-texte-deep-sky-blanc.svg` : lockup sombre branche dans l'application.
 
 ## Tests
 
@@ -95,6 +105,18 @@ Les tests du standalone se lancent depuis `client-android-standalone/`.
 .\gradlew.bat :app:compileDebugAndroidTestKotlin
 .\gradlew.bat :app:assembleDebug
 .\gradlew.bat :app:connectedDebugAndroidTest
+```
+
+Depuis Bash/WSL, preferer le wrapper Windows pour reutiliser le `sdk.dir` local :
+
+```bash
+cmd.exe /c gradlew.bat :app:testDebugUnitTest :app:compileDebugAndroidTestKotlin :app:assembleDebug
+```
+
+Commande de verification utilisee pour l'integration logo :
+
+```powershell
+.\gradlew.bat :app:testDebugUnitTest :app:compileDebugAndroidTestKotlin :app:assembleDebug
 ```
 
 La couverture actuelle verifie notamment :

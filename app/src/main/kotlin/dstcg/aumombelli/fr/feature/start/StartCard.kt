@@ -19,10 +19,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
 import fr.aumombelli.dstcg.ui.theme.AuroraTeal
+import fr.aumombelli.dstcg.ui.motion.LaunchLogoMark
 
 @Composable
 internal fun BoxScope.StartCard(
@@ -52,12 +52,17 @@ internal fun BoxScope.StartCard(
                 .padding(24.dp)
                 .testTag("app-launch-start-card"),
         ) {
-            Text(
-                text = "Deep Sky TCG",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.testTag("start-title"),
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("start-title"),
+            ) {
+                LaunchLogoMark(
+                    showWordmark = true,
+                    emblemSize = 88.dp,
+                )
+            }
             Text(
                 text = "Commence une partie locale et fais grandir ta collection hors ligne.",
                 style = MaterialTheme.typography.bodyMedium,

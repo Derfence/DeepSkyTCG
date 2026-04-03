@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.aumombelli.dstcg.AppContainer
 import fr.aumombelli.dstcg.feature.badges.BadgeBookScreen
@@ -398,6 +399,8 @@ internal fun AppSceneHost(
 
         if (launchLogoAlpha > 0.01f && sceneState.currentScene == AppScene.Start) {
             LaunchLogoMark(
+                showWordmark = false,
+                emblemSize = 128.dp,
                 modifier = Modifier
                     .align(Alignment.Center)
                     .graphicsLayer {

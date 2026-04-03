@@ -6,6 +6,7 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.setContent
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import fr.aumombelli.dstcg.app.AppLaunchSceneExtraKey
 import fr.aumombelli.dstcg.app.AppResetProgressExtraKey
 import fr.aumombelli.dstcg.app.parseAppLaunchConfig
@@ -17,6 +18,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
