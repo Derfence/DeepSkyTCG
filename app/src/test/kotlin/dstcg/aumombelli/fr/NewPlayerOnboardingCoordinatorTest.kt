@@ -22,8 +22,7 @@ class NewPlayerOnboardingCoordinatorTest {
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
                 collection = OwnedCollection(),
-                availableDrawCount = 10,
-                nextChargeAt = null,
+                rechargeState = testRechargeState(),
                 openedPackCount = 0,
                 newPlayerOnboardingStep = NewPlayerOnboardingStep.OpenFirstPackMenu,
             )
@@ -49,8 +48,7 @@ class NewPlayerOnboardingCoordinatorTest {
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
                 collection = ownedCollectionOf("ALP-001" to 1),
-                availableDrawCount = 9,
-                nextChargeAt = null,
+                rechargeState = testRechargeState(availableDrawCount = 9),
                 openedPackCount = 1,
                 newPlayerOnboardingStep = NewPlayerOnboardingStep.ViewLibrary,
             )
@@ -74,8 +72,7 @@ class NewPlayerOnboardingCoordinatorTest {
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
                 collection = ownedCollectionOf("ALP-001" to 1),
-                availableDrawCount = 9,
-                nextChargeAt = null,
+                rechargeState = testRechargeState(availableDrawCount = 9),
                 openedPackCount = 1,
                 newPlayerOnboardingStep = NewPlayerOnboardingStep.ViewBadges,
             )
@@ -118,8 +115,7 @@ class NewPlayerOnboardingCoordinatorTest {
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
                 collection = OwnedCollection(),
-                availableDrawCount = 10,
-                nextChargeAt = null,
+                rechargeState = testRechargeState(),
                 openedPackCount = 0,
                 newPlayerOnboardingStep = NewPlayerOnboardingStep.OpenFirstPackMenu,
             )

@@ -4,6 +4,7 @@ import android.content.Context
 import fr.aumombelli.dstcg.model.CardVariant
 import fr.aumombelli.dstcg.model.DrawPackResponse
 import fr.aumombelli.dstcg.model.PackCard
+import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.WeightedCode
 import fr.aumombelli.dstcg.model.requireFinishDefinition
 import fr.aumombelli.dstcg.model.requireSkyQualityDefinition
@@ -15,10 +16,17 @@ class PackCooldownException(
     val retryAt: String,
 ) : Exception("Un nouveau pack n'est pas encore disponible.")
 
+/**
+ * Central gameplay settings for the fully offline standalone client.
+ *
+ * Weather and recharge both depend on the trusted time source so the behavior
+ * stays deterministic across devices for the same trusted UTC date.
+ */
 data class StandaloneGameSettings(
     val cardsPerPack: Int = 5,
     val drawCooldown: Duration = DEFAULT_DRAW_COOLDOWN,
     val maxStoredDraws: Int = DEFAULT_MAX_STORED_DRAWS,
+    val weatherPolicy: WeatherPolicy = DeterministicWeatherCalendar,
     val timeSource: TrustedTimeSource = ClockTrustedTimeSource(Clock.systemUTC()),
     val entropySource: EntropySource = RandomEntropySource(kotlin.random.Random.Default),
 ) {
@@ -36,19 +44,25 @@ class LocalPackEngine(
 ) {
     suspend fun drawPack(
         extensionId: String,
-        availableDrawCount: Int,
-        nextChargeAt: String?,
+        rechargeState: PackRechargeState,
         now: Instant,
     ): DrawPackResponse {
-        val normalizedChargeState = normalizePackChargeState(
-            availableDrawCount = availableDrawCount,
-            nextChargeAt = nextChargeAt,
+        val normalizedChargeState = normalizePackRechargeState(
+            rechargeState = rechargeState,
             now = now,
             drawCooldown = settings.drawCooldown,
             maxStoredDraws = settings.maxStoredDraws,
+            weatherPolicy = settings.weatherPolicy,
         )
         if (normalizedChargeState.availableDrawCount == 0) {
-            val retryAt = checkNotNull(normalizedChargeState.nextChargeAt) {
+            val retryAt = checkNotNull(
+                normalizedChargeState.derivedNextChargeAt(
+                    now = now,
+                    drawCooldown = settings.drawCooldown,
+                    maxStoredDraws = settings.maxStoredDraws,
+                    weatherPolicy = settings.weatherPolicy,
+                ),
+            ) {
                 "Un tirage verrouille doit exposer une heure de recharge suivante."
             }
             throw PackCooldownException(retryAt.toString())
@@ -95,8 +109,7 @@ class LocalPackEngine(
         return DrawPackResponse(
             extensionId = extensionId,
             drawnAt = drawnAt,
-            availableDrawCount = updatedChargeState.availableDrawCount,
-            nextChargeAt = updatedChargeState.nextChargeAt?.toString(),
+            rechargeState = updatedChargeState,
             cards = drawnCards,
         )
     }

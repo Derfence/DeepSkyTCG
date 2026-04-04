@@ -2,6 +2,8 @@ package fr.aumombelli.dstcg
 
 import fr.aumombelli.dstcg.data.LocalPackEngine
 import fr.aumombelli.dstcg.data.PackCooldownException
+import fr.aumombelli.dstcg.data.DeterministicWeatherCalendar
+import fr.aumombelli.dstcg.data.buildPackChargeUiStatus
 import fr.aumombelli.dstcg.model.CardFinishDefinition
 import fr.aumombelli.dstcg.model.SkyQualityDefinition
 import fr.aumombelli.dstcg.model.VariantProfile
@@ -39,14 +41,20 @@ class LocalPackEngineTest {
 
         val response = engine.drawPack(
             extensionId = "astronomes-en-herbe",
-            availableDrawCount = 10,
-            nextChargeAt = null,
+            rechargeState = testRechargeState(),
             now = fixedNow,
+        )
+        val chargeStatus = buildPackChargeUiStatus(
+            rechargeState = response.rechargeState,
+            now = fixedNow,
+            drawCooldown = Duration.ofHours(6),
+            maxStoredDraws = 10,
+            weatherPolicy = DeterministicWeatherCalendar,
         )
 
         assertEquals("2026-03-24T12:00:00Z", response.drawnAt)
-        assertEquals(9, response.availableDrawCount)
-        assertEquals("2026-03-24T18:00:00Z", response.nextChargeAt)
+        assertEquals(9, response.rechargeState.availableDrawCount)
+        assertEquals("2026-03-24T18:00:00Z", chargeStatus.nextChargeAt)
         assertEquals(listOf("ALP-001", "ALP-001"), response.cards.map { it.cardId })
         assertEquals(listOf("Montagne", "Montagne"), response.cards.map { it.variant.skyQualityLabel })
         assertEquals(listOf("Holographique", "Holographique"), response.cards.map { it.variant.finishLabel })
@@ -75,8 +83,7 @@ class LocalPackEngineTest {
         repeat(200) {
             val cardId = engine.drawPack(
                 extensionId = "astronomes-en-herbe",
-                availableDrawCount = 10,
-                nextChargeAt = null,
+                rechargeState = testRechargeState(),
                 now = fixedNow,
             ).cards.single().cardId
             counts[cardId] = counts.getValue(cardId) + 1
@@ -95,8 +102,10 @@ class LocalPackEngineTest {
         val exception = try {
             engine.drawPack(
                 extensionId = "astronomes-en-herbe",
-                availableDrawCount = 0,
-                nextChargeAt = "2026-03-24T18:00:00Z",
+                rechargeState = testRechargeStateWithNextChargeAt(
+                    availableDrawCount = 0,
+                    nextChargeAt = "2026-03-24T18:00:00Z",
+                ),
                 now = fixedNow,
             )
             error("Expected PackCooldownException")
@@ -130,13 +139,22 @@ class LocalPackEngineTest {
 
         val response = engine.drawPack(
             extensionId = "astronomes-en-herbe",
-            availableDrawCount = 5,
-            nextChargeAt = "2026-03-24T14:00:00Z",
+            rechargeState = testRechargeStateWithNextChargeAt(
+                availableDrawCount = 5,
+                nextChargeAt = "2026-03-24T14:00:00Z",
+            ),
             now = fixedNow,
         )
+        val chargeStatus = buildPackChargeUiStatus(
+            rechargeState = response.rechargeState,
+            now = fixedNow,
+            drawCooldown = Duration.ofHours(6),
+            maxStoredDraws = 10,
+            weatherPolicy = DeterministicWeatherCalendar,
+        )
 
-        assertEquals(4, response.availableDrawCount)
-        assertEquals("2026-03-24T14:00:00Z", response.nextChargeAt)
+        assertEquals(4, response.rechargeState.availableDrawCount)
+        assertEquals("2026-03-24T14:00:00Z", chargeStatus.nextChargeAt)
     }
 
     @Test
@@ -162,13 +180,22 @@ class LocalPackEngineTest {
 
         val response = engine.drawPack(
             extensionId = "astronomes-en-herbe",
-            availableDrawCount = 7,
-            nextChargeAt = "2026-03-24T00:00:00Z",
+            rechargeState = testRechargeStateWithNextChargeAt(
+                availableDrawCount = 7,
+                nextChargeAt = "2026-03-24T00:00:00Z",
+            ),
             now = fixedNow,
         )
+        val chargeStatus = buildPackChargeUiStatus(
+            rechargeState = response.rechargeState,
+            now = fixedNow,
+            drawCooldown = Duration.ofHours(6),
+            maxStoredDraws = 10,
+            weatherPolicy = DeterministicWeatherCalendar,
+        )
 
-        assertEquals(9, response.availableDrawCount)
-        assertEquals("2026-03-24T18:00:00Z", response.nextChargeAt)
+        assertEquals(9, response.rechargeState.availableDrawCount)
+        assertEquals("2026-03-24T18:00:00Z", chargeStatus.nextChargeAt)
     }
 
     @Test
@@ -185,8 +212,7 @@ class LocalPackEngineTest {
         val exception = try {
             engine.drawPack(
                 extensionId = "astronomes-en-herbe",
-                availableDrawCount = 10,
-                nextChargeAt = null,
+                rechargeState = testRechargeState(),
                 now = fixedNow,
             )
             error("Expected IllegalStateException")

@@ -26,16 +26,14 @@ class PackRepository(
         val progress = loadedProgress.progress
         val packResponse = localPackEngine.drawPack(
             extensionId = extensionId,
-            availableDrawCount = progress.availableDrawCount,
-            nextChargeAt = progress.nextChargeAt,
+            rechargeState = progress.rechargeState,
             now = loadedProgress.trustedNow,
         )
         val mergedCollection = collectionRepository.mergeCards(progress.collection, packResponse.cards)
         progressRepository.saveProgress(
             progress.copy(
                 collection = mergedCollection,
-                availableDrawCount = packResponse.availableDrawCount,
-                nextChargeAt = packResponse.nextChargeAt,
+                rechargeState = packResponse.rechargeState,
                 openedPackCount = progress.openedPackCount + 1,
             ),
         )

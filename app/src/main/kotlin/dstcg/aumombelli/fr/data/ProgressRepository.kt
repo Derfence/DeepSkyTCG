@@ -3,16 +3,12 @@ package fr.aumombelli.dstcg.data
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import fr.aumombelli.dstcg.model.CardDefinition
+import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.OwnedCardEntry
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.OwnedVariantCount
-import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
+import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.model.VariantProfile
 import fr.aumombelli.dstcg.model.normalized
@@ -21,10 +17,8 @@ import java.time.Duration
 import java.time.Instant
 import java.util.UUID
 import kotlinx.coroutines.flow.first
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
-internal val Context.legacyStandaloneProgressDataStore by preferencesDataStore(name = "dstcg_standalone_progress")
 internal val Context.secureStandaloneProgressDataStore: DataStore<EncryptedProgressEnvelope> by dataStore(
     fileName = "dstcg_standalone_secure_progress.json",
     serializer = EncryptedProgressEnvelopeSerializer,
@@ -32,7 +26,6 @@ internal val Context.secureStandaloneProgressDataStore: DataStore<EncryptedProgr
 
 class ProgressRepository(
     private val secureDataStore: DataStore<EncryptedProgressEnvelope>,
-    private val legacyDataStore: DataStore<Preferences>,
     private val catalogRepository: CatalogGateway,
     private val settings: StandaloneGameSettings = StandaloneGameSettings(),
     private val progressCipher: ProgressCipher,
@@ -62,14 +55,14 @@ class ProgressRepository(
             now = effectiveNow,
             drawCooldown = settings.drawCooldown,
             maxStoredDraws = settings.maxStoredDraws,
+            weatherPolicy = settings.weatherPolicy,
         )
 
         val snapshot = ProgressSnapshot(
             installId = baseSnapshot?.installId ?: installIdFactory(),
             schemaVersion = ProgressSnapshot.CURRENT_SCHEMA_VERSION,
             collection = normalizedProgress.collection,
-            availableDrawCount = normalizedProgress.availableDrawCount,
-            nextChargeAt = normalizedProgress.nextChargeAt,
+            rechargeState = normalizedProgress.rechargeState,
             openedPackCount = normalizedProgress.openedPackCount.coerceAtLeast(0),
             newPlayerOnboardingStep = normalizedProgress.newPlayerOnboardingStep,
             lastTrustedWallClockUtc = effectiveNow.toString(),
@@ -79,7 +72,6 @@ class ProgressRepository(
         )
 
         writeSnapshot(snapshot)
-        clearLegacyProgress()
     }
 
     override suspend fun resetProgress() {
@@ -87,8 +79,7 @@ class ProgressRepository(
         val snapshot = ProgressSnapshot(
             installId = installIdFactory(),
             collection = emptyCollection(),
-            availableDrawCount = settings.maxStoredDraws,
-            nextChargeAt = null,
+            rechargeState = PackRechargeState(availableDrawCount = settings.maxStoredDraws),
             openedPackCount = 0,
             newPlayerOnboardingStep = NewPlayerOnboardingStep.OpenFirstPackMenu,
             lastTrustedWallClockUtc = timeEvidence.wallClockUtc.toString(),
@@ -97,7 +88,6 @@ class ProgressRepository(
             tamperFlag = false,
         )
         writeSnapshot(snapshot)
-        clearLegacyProgress()
     }
 
     private suspend fun loadProgressRecord(): ProgressRecord {
@@ -109,45 +99,29 @@ class ProgressRepository(
                 ?: return ProgressRecord(result = compromisedResult(), snapshot = null, trustedNow = null)
             return normalizeSnapshot(
                 snapshot = snapshot,
-                fromLegacy = false,
                 forcePersist = false,
             )
         }
 
-        val legacyPreferences = legacyDataStore.data.first()
-        val legacySnapshot = runCatching { migrateLegacyPreferences(legacyPreferences) }
-            .getOrElse { return ProgressRecord(result = compromisedResult(), snapshot = null, trustedNow = null) }
-
-        return if (legacySnapshot != null) {
-            normalizeSnapshot(
-                snapshot = legacySnapshot,
-                fromLegacy = true,
-                forcePersist = true,
-            )
-        } else {
-            val timeEvidence = settings.timeSource.now()
-            normalizeSnapshot(
-                snapshot = ProgressSnapshot(
-                    installId = installIdFactory(),
-                    collection = emptyCollection(),
-                    availableDrawCount = settings.maxStoredDraws,
-                    nextChargeAt = null,
-                    openedPackCount = 0,
-                    newPlayerOnboardingStep = NewPlayerOnboardingStep.OpenFirstPackMenu,
-                    lastTrustedWallClockUtc = timeEvidence.wallClockUtc.toString(),
-                    lastTrustedElapsedRealtimeMs = timeEvidence.elapsedRealtimeMs,
-                    lastObservedBootMarker = timeEvidence.bootSessionId,
-                    tamperFlag = false,
-                ),
-                fromLegacy = false,
-                forcePersist = true,
-            )
-        }
+        val timeEvidence = settings.timeSource.now()
+        return normalizeSnapshot(
+            snapshot = ProgressSnapshot(
+                installId = installIdFactory(),
+                collection = emptyCollection(),
+                rechargeState = PackRechargeState(availableDrawCount = settings.maxStoredDraws),
+                openedPackCount = 0,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.OpenFirstPackMenu,
+                lastTrustedWallClockUtc = timeEvidence.wallClockUtc.toString(),
+                lastTrustedElapsedRealtimeMs = timeEvidence.elapsedRealtimeMs,
+                lastObservedBootMarker = timeEvidence.bootSessionId,
+                tamperFlag = false,
+            ),
+            forcePersist = true,
+        )
     }
 
     private suspend fun normalizeSnapshot(
         snapshot: ProgressSnapshot,
-        fromLegacy: Boolean,
         forcePersist: Boolean,
     ): ProgressRecord {
         val trustedTime = resolveTrustedTime(snapshot)
@@ -159,21 +133,20 @@ class ProgressRepository(
         )
         val normalizedProgress = StandaloneProgress(
             collection = sanitizedCollection,
-            availableDrawCount = snapshot.availableDrawCount,
-            nextChargeAt = snapshot.nextChargeAt,
+            rechargeState = snapshot.rechargeState,
             openedPackCount = snapshot.openedPackCount.coerceAtLeast(0),
             newPlayerOnboardingStep = normalizedOnboardingStep,
         ).withNormalizedPackCharge(
             now = trustedTime.trustedNow,
             drawCooldown = settings.drawCooldown,
             maxStoredDraws = settings.maxStoredDraws,
+            weatherPolicy = settings.weatherPolicy,
         )
 
         val normalizedSnapshot = snapshot.copy(
             schemaVersion = ProgressSnapshot.CURRENT_SCHEMA_VERSION,
             collection = normalizedProgress.collection,
-            availableDrawCount = normalizedProgress.availableDrawCount,
-            nextChargeAt = normalizedProgress.nextChargeAt,
+            rechargeState = normalizedProgress.rechargeState,
             openedPackCount = normalizedProgress.openedPackCount.coerceAtLeast(0),
             newPlayerOnboardingStep = normalizedProgress.newPlayerOnboardingStep,
             lastTrustedWallClockUtc = trustedTime.trustedNow.toString(),
@@ -182,21 +155,16 @@ class ProgressRepository(
             tamperFlag = trustedTime.tamperDetected,
         )
 
-        val wasRecovered = fromLegacy ||
-            snapshot.schemaVersion != normalizedSnapshot.schemaVersion ||
+        val wasRecovered = snapshot.schemaVersion != normalizedSnapshot.schemaVersion ||
             snapshot.collection != normalizedSnapshot.collection ||
-            snapshot.availableDrawCount != normalizedSnapshot.availableDrawCount ||
-            snapshot.nextChargeAt != normalizedSnapshot.nextChargeAt ||
+            snapshot.rechargeState != normalizedSnapshot.rechargeState ||
             snapshot.openedPackCount != normalizedSnapshot.openedPackCount ||
             snapshot.newPlayerOnboardingStep != normalizedSnapshot.newPlayerOnboardingStep ||
             snapshot.tamperFlag ||
             trustedTime.tamperDetected
 
-        val needsRewrite = forcePersist ||
-            snapshot != normalizedSnapshot
-        if (needsRewrite) {
+        if (forcePersist || snapshot != normalizedSnapshot) {
             writeSnapshot(normalizedSnapshot)
-            clearLegacyProgress()
         }
 
         val result: ProgressLoadResult = if (wasRecovered) {
@@ -226,47 +194,6 @@ class ProgressRepository(
         null
     }
 
-    private suspend fun migrateLegacyPreferences(preferences: Preferences): ProgressSnapshot? {
-        val storedCollectionJson = preferences[LegacyKeys.collectionJson]
-        val availableDrawCount = preferences[LegacyKeys.availableDrawCount] ?: settings.maxStoredDraws
-        val nextChargeAt = preferences[LegacyKeys.nextChargeAt] ?: preferences[LegacyKeys.legacyNextDrawAt]
-        val openedPackCount = preferences[LegacyKeys.openedPackCount] ?: 0
-        if (
-            storedCollectionJson == null &&
-            preferences[LegacyKeys.availableDrawCount] == null &&
-            nextChargeAt == null &&
-            preferences[LegacyKeys.openedPackCount] == null
-        ) {
-            return null
-        }
-
-        val collection = storedCollectionJson?.let(::decodeCollection)
-            ?: emptyCollection()
-        val timeEvidence = settings.timeSource.now()
-        return ProgressSnapshot(
-            installId = installIdFactory(),
-            collection = collection,
-            availableDrawCount = availableDrawCount,
-            nextChargeAt = nextChargeAt,
-            openedPackCount = openedPackCount,
-            newPlayerOnboardingStep = if (openedPackCount > 0 || collection.cards.isNotEmpty()) {
-                NewPlayerOnboardingStep.Completed
-            } else {
-                NewPlayerOnboardingStep.OpenFirstPackMenu
-            },
-            lastTrustedWallClockUtc = timeEvidence.wallClockUtc.toString(),
-            lastTrustedElapsedRealtimeMs = timeEvidence.elapsedRealtimeMs,
-            lastObservedBootMarker = timeEvidence.bootSessionId,
-            tamperFlag = false,
-        )
-    }
-
-    private fun decodeCollection(collectionJson: String): OwnedCollection = try {
-        json.decodeFromString(OwnedCollection.serializer(), collectionJson)
-    } catch (exception: SerializationException) {
-        throw IllegalStateException("La progression enregistree n'a pas pu etre lue.", exception)
-    }
-
     private fun emptyCollection(): OwnedCollection = OwnedCollection()
 
     private suspend fun writeSnapshot(snapshot: ProgressSnapshot) {
@@ -275,16 +202,6 @@ class ProgressRepository(
         )
         secureDataStore.updateData {
             EncryptedProgressEnvelope.fromPayload(payload)
-        }
-    }
-
-    private suspend fun clearLegacyProgress() {
-        legacyDataStore.edit { preferences ->
-            preferences.remove(LegacyKeys.collectionJson)
-            preferences.remove(LegacyKeys.availableDrawCount)
-            preferences.remove(LegacyKeys.nextChargeAt)
-            preferences.remove(LegacyKeys.openedPackCount)
-            preferences.remove(LegacyKeys.legacyNextDrawAt)
         }
     }
 
@@ -389,20 +306,12 @@ class ProgressRepository(
         val tamperDetected: Boolean,
     )
 
-    private object LegacyKeys {
-        val collectionJson = stringPreferencesKey("collection_json")
-        val availableDrawCount = intPreferencesKey("available_draw_count")
-        val nextChargeAt = stringPreferencesKey("next_charge_at")
-        val openedPackCount = intPreferencesKey("opened_pack_count")
-        val legacyNextDrawAt = stringPreferencesKey("next_draw_at")
-    }
-
     companion object {
         private val CLOCK_TOLERANCE: Duration = Duration.ofMinutes(2)
         private const val COMPROMISED_PROGRESS_MESSAGE =
-            "La progression locale semble corrompue. Réinitialise-la pour continuer."
+            "La progression locale semble corrompue. Reinitialise-la pour continuer."
         private const val RECOVERED_PROGRESS_MESSAGE =
-            "La progression locale a été sécurisée et certaines données ont été normalisées."
+            "La progression locale a ete securisee et certaines donnees ont ete normalisees."
 
         fun fromContext(
             context: Context,
@@ -411,7 +320,6 @@ class ProgressRepository(
             progressCipher: ProgressCipher,
         ): ProgressRepository = ProgressRepository(
             secureDataStore = context.secureStandaloneProgressDataStore,
-            legacyDataStore = context.legacyStandaloneProgressDataStore,
             catalogRepository = catalogRepository,
             settings = settings,
             progressCipher = progressCipher,

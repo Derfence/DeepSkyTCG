@@ -4,16 +4,21 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import fr.aumombelli.dstcg.data.CatalogGateway
 import fr.aumombelli.dstcg.data.DEFAULT_MAX_STORED_DRAWS
+import fr.aumombelli.dstcg.data.DEFAULT_DRAW_COOLDOWN
+import fr.aumombelli.dstcg.data.DeterministicWeatherCalendar
 import fr.aumombelli.dstcg.data.LoadedProgress
 import fr.aumombelli.dstcg.data.PackGateway
 import fr.aumombelli.dstcg.data.ProgressGateway
 import fr.aumombelli.dstcg.data.StandaloneGameSettings
+import fr.aumombelli.dstcg.data.WeatherPolicy
+import fr.aumombelli.dstcg.data.WeatherState
 import fr.aumombelli.dstcg.data.buildPackChargeUiStatus
 import fr.aumombelli.dstcg.data.requireUsableProgress
 import fr.aumombelli.dstcg.feature.badges.BadgeItem
 import fr.aumombelli.dstcg.feature.badges.buildNewlyUnlockedBadges
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.OwnedCollection
+import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.StandaloneProgress
 import java.time.Duration
 import java.time.Instant
@@ -30,8 +35,12 @@ data class PackSelectionUiState(
     val isLoading: Boolean = true,
     val extensions: List<ExtensionDefinition> = emptyList(),
     val currentCollection: OwnedCollection = OwnedCollection(),
+    val rechargeState: PackRechargeState = PackRechargeState(),
     val availableDrawCount: Int = DEFAULT_MAX_STORED_DRAWS,
     val maxStoredDraws: Int = DEFAULT_MAX_STORED_DRAWS,
+    val drawCooldown: Duration = DEFAULT_DRAW_COOLDOWN,
+    val weatherPolicy: WeatherPolicy = DeterministicWeatherCalendar,
+    val currentWeather: WeatherState = WeatherState.Clear,
     val nextChargeAt: String? = null,
     val remainingDuration: Duration? = null,
     val rechargeProgress: Float = 1f,
@@ -199,15 +208,19 @@ class PackViewModel(
     ): PackSelectionUiState {
         val referenceEvidence = gameSettings.timeSource.now()
         val chargeStatus = buildPackChargeUiStatus(
-            availableDrawCount = loadedProgress.progress.availableDrawCount,
-            nextChargeAt = loadedProgress.progress.nextChargeAt,
+            rechargeState = loadedProgress.progress.rechargeState,
             now = loadedProgress.trustedNow,
             drawCooldown = gameSettings.drawCooldown,
             maxStoredDraws = gameSettings.maxStoredDraws,
+            weatherPolicy = gameSettings.weatherPolicy,
         )
         return copy(
+            rechargeState = chargeStatus.rechargeState,
             availableDrawCount = chargeStatus.availableDrawCount,
             maxStoredDraws = chargeStatus.maxStoredDraws,
+            drawCooldown = gameSettings.drawCooldown,
+            weatherPolicy = gameSettings.weatherPolicy,
+            currentWeather = chargeStatus.currentWeather,
             nextChargeAt = chargeStatus.nextChargeAt,
             remainingDuration = chargeStatus.remainingDuration,
             rechargeProgress = chargeStatus.rechargeProgress,

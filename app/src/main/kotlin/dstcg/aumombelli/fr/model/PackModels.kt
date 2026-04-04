@@ -6,8 +6,7 @@ import kotlinx.serialization.Serializable
 data class DrawPackResponse(
     val extensionId: String,
     val drawnAt: String,
-    val availableDrawCount: Int,
-    val nextChargeAt: String?,
+    val rechargeState: PackRechargeState,
     val cards: List<PackCard>,
 )
 

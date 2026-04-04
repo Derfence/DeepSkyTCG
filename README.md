@@ -12,15 +12,15 @@ Au lancement, l'application :
 - affiche un accueil unique avec une grande carte `Ouvrir un pack`, la bibliotheque, les badges et un menu parametres ;
 - guide les nouveaux joueurs vers leur premier pack, leur bibliotheque puis leurs badges ;
 - permet d'ouvrir des packs localement ;
-- persiste la collection et le prochain tirage autorise ;
-- gere un stock local de 10 ouvertures, recharge a raison d'une ouverture toutes les 6 heures.
+- persiste la collection et l'etat de recharge des boosters ;
+- gere un stock local de 10 ouvertures, recharge a raison d'une ouverture toutes les 6 heures modulee par une meteo deterministe UTC.
 
 ## Stack technique
 
 - Kotlin
 - Jetpack Compose
 - MVVM
-- DataStore Preferences
+- Jetpack DataStore avec snapshot chiffre de progression
 
 ## Architecture
 
@@ -32,9 +32,11 @@ Au lancement, l'application :
 - `feature/packs/selection/` : choix d'extension, stock d'ouvertures, barre de recharge et lancement d'ouverture.
 - `feature/packs/opening/` : reveal du pack, navigation locale et plein ecran.
 - `app/NewPlayerOnboardingCoordinator.kt` : orchestration du guidage contextuel du premier parcours joueur.
-- `data/ProgressRepository.kt` : persistance DataStore de `collection_json`, `available_draw_count` et `next_charge_at`.
+- `data/ProgressRepository.kt` : persistance chiffree du snapshot de progression et normalisation du temps de confiance.
 - `data/CollectionRepository.kt` : chargement, sauvegarde et fusion locale de la collection.
-- `data/LocalPackEngine.kt` : tirage local pondere, consommation des ouvertures et recharge par palier.
+- `data/LocalPackEngine.kt` : tirage local pondere, consommation des ouvertures et regles offline partagees.
+- `data/PackChargeState.kt` : moteur central de recharge, normalisation, calcul de progression et prochain palier.
+- `data/WeatherPolicy.kt` : calendrier meteo deterministe UTC et politique de recharge associee.
 - `data/PackRepository.kt` : orchestration du tirage local puis persistance de la progression.
 - `model/` : modeles de catalogue, collection, packs et progression locale.
 - `assets/catalog/` : catalogue embarque (`extensions.json`, `cards.json`, `variant_profiles.json`).
@@ -56,22 +58,26 @@ Le standalone est mono-profil. Aucun ecran de login, de creation de compte, de c
 
 La progression locale contient uniquement :
 
-- `collection_json` : la collection possedee ;
-- `available_draw_count` : le nombre d'ouvertures actuellement disponibles ;
-- `next_charge_at` : la prochaine date ISO rechargeant une ouverture quand le stock est inferieur a 10 ;
+- `collection` : la collection possedee ;
+- `rechargeState.availableDrawCount` : le nombre d'ouvertures actuellement disponibles ;
+- `rechargeState.accumulatedChargeUnits` : la progression exacte en unites entieres de recharge ;
+- `rechargeState.lastChargeEvaluationAt` : le dernier instant UTC de confiance utilise pour avancer la recharge ;
 - `newPlayerOnboardingStep` : l'etape persistante du premier parcours joueur.
 
-La collection locale ne porte plus de version de catalogue. Au premier lancement, l'application cree automatiquement une collection vide. Les anciennes sauvegardes contenant encore `collection.version` restent lisibles grace a la deserialisation tolerante, puis sont reecrites au prochain reset ou a la prochaine sauvegarde.
+La collection locale ne porte plus de version de catalogue. Au premier lancement, l'application cree automatiquement une collection vide. Le snapshot securise reste versionne via `ProgressSnapshot.schemaVersion`.
 
 ## Regles de jeu offline
 
 - `cardsPerPack = 5`
 - `drawCooldown = 6h`
 - `maxStoredDraws = 10`
+- meteo offline 100% deterministe basee sur la date UTC de confiance
+- etats meteo : `Pluie x0`, `Nuageux x0.8`, `Clair x1`, `Pur x2`
+- moyenne garantie sur un cycle complet de 20 jours : `1.11`
 - tirage pondere des cartes par extension
 - tirage pondere de `skyQuality` et `finish`
 
-Le moteur local reutilise les profils de variantes embarques pour produire un resultat equivalent a un tirage serveur, mais entierement local.
+Le moteur local reutilise les profils de variantes embarques pour produire un resultat equivalent a un tirage serveur, mais entierement local. La recharge des boosters depend uniquement du temps de confiance et de la date UTC courante, jamais du fuseau ou d'une API meteo externe.
 
 ## Animations et interface
 
@@ -84,7 +90,8 @@ Le standalone conserve :
 - les animations de selection d'extension et d'ouverture de pack ;
 - la bibliotheque, les apercus et le plein ecran des cartes ;
 - le masquage volontaire des illustrations des cartes non obtenues dans la grille de bibliotheque ;
-- le stock disponible et la recharge visible dans l'interface.
+- le stock disponible et la recharge visible dans l'interface ;
+- un module de prevision meteo UTC sur 7 jours dans l'ecran des packs, avec icones et multiplicateurs.
 
 La simplification fonctionnelle voulue au demarrage reste l'absence complete de login, avec un accueil entierement offline centre sur l'ouverture de packs.
 
@@ -123,16 +130,20 @@ La couverture actuelle verifie notamment :
 - `ProgressRepository`
 - `NewPlayerOnboardingCoordinator`
 - `LocalPackEngine`
+- `DeterministicWeatherCalendar`
+- `PackChargeState`
 - `CollectionRepository`
 - `PackRepository`
 - `PackViewModel`
 - le flux guide `accueil -> packs -> bibliotheque -> badges`
 - les ecrans Compose du nouvel accueil
 - le scenario offline `accueil -> pack -> recharge -> bibliotheque`
+- l'affichage de la prevision meteo UTC sur 7 jours et la recharge dynamique sur l'ecran des packs
 
 La documentation du guidage des nouveaux joueurs est detaillee dans :
 
 - `docs/new-player-onboarding.md`
+- `docs/weather-system.md`
 
 ## Pre-requis locaux
 

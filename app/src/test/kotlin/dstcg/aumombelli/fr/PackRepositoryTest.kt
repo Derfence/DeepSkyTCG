@@ -21,8 +21,7 @@ class PackRepositoryTest {
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
                 collection = ownedCollectionOf("ALP-001" to 1),
-                availableDrawCount = 10,
-                nextChargeAt = null,
+                rechargeState = testRechargeState(),
             )
         }
         val catalogGateway = FakeCatalogGateway().apply {
@@ -50,8 +49,7 @@ class PackRepositoryTest {
         val response = repository.openPack("astronomes-en-herbe")
 
         assertEquals(response, repository.currentPackResult().value)
-        assertEquals(response.availableDrawCount, progressGateway.progress.availableDrawCount)
-        assertEquals(response.nextChargeAt, progressGateway.progress.nextChargeAt)
+        assertEquals(response.rechargeState, progressGateway.progress.rechargeState)
         assertEquals(1, progressGateway.progress.openedPackCount)
         assertEquals(3, progressGateway.progress.collection.cards.values.sumOf { it.totalOwned })
     }

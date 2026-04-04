@@ -2,6 +2,7 @@ package fr.aumombelli.dstcg.data
 
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
+import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.StandaloneProgress
 import java.time.Instant
 import kotlinx.serialization.Serializable
@@ -11,8 +12,7 @@ data class ProgressSnapshot(
     val installId: String,
     val schemaVersion: Int = CURRENT_SCHEMA_VERSION,
     val collection: OwnedCollection,
-    val availableDrawCount: Int = DEFAULT_MAX_STORED_DRAWS,
-    val nextChargeAt: String? = null,
+    val rechargeState: PackRechargeState = PackRechargeState(),
     val openedPackCount: Int = 0,
     val newPlayerOnboardingStep: NewPlayerOnboardingStep = NewPlayerOnboardingStep.OpenFirstPackMenu,
     val lastTrustedWallClockUtc: String,
@@ -22,14 +22,13 @@ data class ProgressSnapshot(
 ) {
     fun toProgress(): StandaloneProgress = StandaloneProgress(
         collection = collection,
-        availableDrawCount = availableDrawCount,
-        nextChargeAt = nextChargeAt,
+        rechargeState = rechargeState,
         openedPackCount = openedPackCount,
         newPlayerOnboardingStep = newPlayerOnboardingStep,
     )
 
     companion object {
-        const val CURRENT_SCHEMA_VERSION: Int = 2
+        const val CURRENT_SCHEMA_VERSION: Int = 3
     }
 }
 

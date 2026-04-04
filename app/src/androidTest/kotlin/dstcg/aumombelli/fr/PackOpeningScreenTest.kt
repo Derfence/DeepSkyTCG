@@ -23,6 +23,7 @@ import fr.aumombelli.dstcg.model.DrawPackResponse
 import fr.aumombelli.dstcg.model.PackCard
 import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.model.toDisplayVariant
+import fr.aumombelli.dstcg.testsupport.androidTestRechargeStateWithNextChargeAt
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.screen.PackOpeningScreen
 import fr.aumombelli.dstcg.ui.viewmodel.PackOpeningUiState
@@ -43,8 +44,10 @@ class PackOpeningScreenTest {
         val packResult = DrawPackResponse(
             extensionId = "astronomes-en-herbe",
             drawnAt = "2026-03-23T12:00:00Z",
-            availableDrawCount = 9,
-            nextChargeAt = "2026-03-24T18:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
             cards = listOf(
                 testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
                 testPackCard(
@@ -134,8 +137,10 @@ class PackOpeningScreenTest {
         val packResult = DrawPackResponse(
             extensionId = "astronomes-en-herbe",
             drawnAt = "2026-03-23T12:00:00Z",
-            availableDrawCount = 9,
-            nextChargeAt = "2026-03-24T18:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
             cards = listOf(
                 testPackCard(
                     "ALP-777",
@@ -181,8 +186,10 @@ class PackOpeningScreenTest {
         val packResult = DrawPackResponse(
             extensionId = "astronomes-en-herbe",
             drawnAt = "2026-03-23T12:00:00Z",
-            availableDrawCount = 7,
-            nextChargeAt = "2026-03-24T18:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 7,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
             cards = listOf(
                 testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
                 testPackCard("ALP-002", "Galaxie d'Andromede", "Rare", "steam_golem"),
@@ -252,8 +259,10 @@ class PackOpeningScreenTest {
         val packResult = DrawPackResponse(
             extensionId = "astronomes-en-herbe",
             drawnAt = "2026-03-23T12:00:00Z",
-            availableDrawCount = 7,
-            nextChargeAt = "2026-03-24T18:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 7,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
             cards = listOf(
                 testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
                 testPackCard("ALP-002", "Galaxie d'Andromede", "Rare", "steam_golem"),
@@ -369,8 +378,10 @@ class PackOpeningScreenTest {
         val packResult = DrawPackResponse(
             extensionId = "astronomes-en-herbe",
             drawnAt = "2026-03-23T12:00:00Z",
-            availableDrawCount = 9,
-            nextChargeAt = "2026-03-24T18:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
             cards = listOf(
                 testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
                 testPackCard("ALP-002", "Galaxie d'Andromede", "Rare", "steam_golem"),
@@ -424,8 +435,10 @@ class PackOpeningScreenTest {
         val packResult = DrawPackResponse(
             extensionId = "astronomes-en-herbe",
             drawnAt = "2026-03-23T12:00:00Z",
-            availableDrawCount = 9,
-            nextChargeAt = "2026-03-24T18:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
             cards = listOf(
                 testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
             ),
@@ -466,8 +479,10 @@ class PackOpeningScreenTest {
         val packResult = DrawPackResponse(
             extensionId = "astronomes-en-herbe",
             drawnAt = "2026-03-23T12:00:00Z",
-            availableDrawCount = 9,
-            nextChargeAt = "2026-03-24T18:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
             cards = listOf(
                 testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
             ),
@@ -566,8 +581,10 @@ class PackOpeningScreenTest {
         val packResult = DrawPackResponse(
             extensionId = "astronomes-en-herbe",
             drawnAt = drawnAt,
-            availableDrawCount = 9,
-            nextChargeAt = "2026-03-24T18:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
             cards = cards,
         )
 

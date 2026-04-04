@@ -10,6 +10,7 @@ import fr.aumombelli.dstcg.model.DrawPackResponse
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.PackCard
+import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.model.VariantProfile
 import fr.aumombelli.dstcg.model.mergePackCards
@@ -22,8 +23,7 @@ import kotlinx.coroutines.flow.StateFlow
 class FakeProgressGateway : ProgressGateway {
     var progress = StandaloneProgress(
         collection = OwnedCollection(),
-        availableDrawCount = 10,
-        nextChargeAt = null,
+        rechargeState = PackRechargeState(),
     )
     var loadFailure: Throwable? = null
     var compromisedMessage: String? = null
@@ -61,8 +61,7 @@ class FakeProgressGateway : ProgressGateway {
         recoveryNotice = null
         progress = StandaloneProgress(
             collection = OwnedCollection(),
-            availableDrawCount = 10,
-            nextChargeAt = null,
+            rechargeState = PackRechargeState(),
         )
     }
 }

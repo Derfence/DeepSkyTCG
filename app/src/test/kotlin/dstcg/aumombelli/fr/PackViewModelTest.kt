@@ -51,8 +51,10 @@ class PackViewModelTest {
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
                 collection = ownedCollectionOf("ALP-001" to 1),
-                availableDrawCount = 4,
-                nextChargeAt = "2026-03-24T18:00:00Z",
+                rechargeState = testRechargeStateWithNextChargeAt(
+                    availableDrawCount = 4,
+                    nextChargeAt = "2026-03-24T18:00:00Z",
+                ),
             )
         }
 
@@ -101,8 +103,10 @@ class PackViewModelTest {
         val response = DrawPackResponse(
             extensionId = "core-alpha",
             drawnAt = "2026-03-23T12:00:00Z",
-            availableDrawCount = 9,
-            nextChargeAt = "2026-03-24T18:00:00Z",
+            rechargeState = testRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
             cards = listOf(
                 testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
                 testPackCard(
@@ -118,8 +122,7 @@ class PackViewModelTest {
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
                 collection = ownedCollectionOf("ALP-001" to 1),
-                availableDrawCount = 10,
-                nextChargeAt = null,
+                rechargeState = testRechargeState(),
             )
         }
         val packGateway = FakePackGateway().apply {
@@ -127,8 +130,7 @@ class PackViewModelTest {
             onOpenPack = {
                 progressGateway.progress = StandaloneProgress(
                     collection = ownedCollectionOf("ALP-001" to 2, "ALP-002" to 1),
-                    availableDrawCount = response.availableDrawCount,
-                    nextChargeAt = response.nextChargeAt,
+                    rechargeState = response.rechargeState,
                 )
             }
         }
@@ -167,8 +169,7 @@ class PackViewModelTest {
         val response = DrawPackResponse(
             extensionId = "core-alpha",
             drawnAt = "2026-03-23T12:00:00Z",
-            availableDrawCount = 9,
-            nextChargeAt = null,
+            rechargeState = testRechargeState(availableDrawCount = 9),
             cards = listOf(
                 testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
             ),
@@ -176,8 +177,7 @@ class PackViewModelTest {
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
                 collection = ownedCollectionOf(),
-                availableDrawCount = 10,
-                nextChargeAt = null,
+                rechargeState = testRechargeState(),
             )
         }
         val packGateway = FakePackGateway().apply {
@@ -185,8 +185,7 @@ class PackViewModelTest {
             onOpenPack = {
                 progressGateway.progress = StandaloneProgress(
                     collection = ownedCollectionOf("ALP-001" to 1),
-                    availableDrawCount = response.availableDrawCount,
-                    nextChargeAt = response.nextChargeAt,
+                    rechargeState = response.rechargeState,
                 )
             }
         }
@@ -218,15 +217,13 @@ class PackViewModelTest {
         val response = DrawPackResponse(
             extensionId = "core-alpha",
             drawnAt = "2026-03-23T12:00:00Z",
-            availableDrawCount = 9,
-            nextChargeAt = null,
+            rechargeState = testRechargeState(availableDrawCount = 9),
             cards = emptyList(),
         )
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
                 collection = ownedCollectionOf(),
-                availableDrawCount = 10,
-                nextChargeAt = null,
+                rechargeState = testRechargeState(),
                 openedPackCount = 0,
             )
         }
@@ -235,8 +232,7 @@ class PackViewModelTest {
             onOpenPack = {
                 progressGateway.progress = StandaloneProgress(
                     collection = ownedCollectionOf(),
-                    availableDrawCount = response.availableDrawCount,
-                    nextChargeAt = response.nextChargeAt,
+                    rechargeState = response.rechargeState,
                     openedPackCount = 1,
                 )
             }

@@ -2,7 +2,6 @@ package fr.aumombelli.dstcg.testsupport
 
 import android.content.Context
 import androidx.datastore.core.DataStoreFactory
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import fr.aumombelli.dstcg.AppContainer
 import fr.aumombelli.dstcg.data.AesGcmProgressCipher
 import fr.aumombelli.dstcg.data.AndroidTrustedTimeSource
@@ -25,6 +24,7 @@ import fr.aumombelli.dstcg.model.DrawPackResponse
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.OwnedVariantCount
+import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.PackCard
 import fr.aumombelli.dstcg.model.SkyQualityDefinition
 import fr.aumombelli.dstcg.model.StandaloneProgress
@@ -51,18 +51,12 @@ internal fun offlineMainActivityTestAppContainer(
 ): AppContainer {
     val appContext = context.applicationContext
     val secureFile = File(appContext.cacheDir, dataStoreFileName.replace(".preferences_pb", ".secure.json"))
-    val legacyFile = File(appContext.cacheDir, dataStoreFileName)
     secureFile.delete()
-    legacyFile.delete()
     val catalogRepository = GameCatalogRepository(appContext)
     val secureDataStore = DataStoreFactory.create(
         serializer = EncryptedProgressEnvelopeSerializer,
         scope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
         produceFile = { secureFile },
-    )
-    val legacyDataStore = PreferenceDataStoreFactory.create(
-        scope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
-        produceFile = { legacyFile },
     )
     val gameSettings = StandaloneGameSettings(
         timeSource = AndroidTrustedTimeSource(appContext),
@@ -70,7 +64,6 @@ internal fun offlineMainActivityTestAppContainer(
     )
     val progressRepository = ProgressRepository(
         secureDataStore = secureDataStore,
-        legacyDataStore = legacyDataStore,
         catalogRepository = catalogRepository,
         settings = gameSettings,
         progressCipher = AesGcmProgressCipher(keyProvider = ::newTestSecretKey),
@@ -131,16 +124,17 @@ private fun navigationTestAppContainer(
     val progressRepository = MutableProgressGateway(
         initialProgress = StandaloneProgress(
             collection = initialCollection,
-            availableDrawCount = 10,
-            nextChargeAt = null,
+            rechargeState = PackRechargeState(),
         ),
     )
     val collectionRepository = NavigationCollectionGateway(progressRepository)
     val packResponse = DrawPackResponse(
         extensionId = extension.id,
         drawnAt = "2026-03-23T12:00:00Z",
-        availableDrawCount = 9,
-        nextChargeAt = "2026-03-24T18:00:00Z",
+        rechargeState = androidTestRechargeStateWithNextChargeAt(
+            availableDrawCount = 9,
+            nextChargeAt = "2026-03-24T18:00:00Z",
+        ),
         cards = listOf(
             testPackCard(
                 cardId = "ALP-001",
@@ -184,8 +178,7 @@ private class MutableProgressGateway(
     override suspend fun resetProgress() {
         progress = StandaloneProgress(
             collection = OwnedCollection(),
-            availableDrawCount = 10,
-            nextChargeAt = null,
+            rechargeState = PackRechargeState(),
         )
     }
 }
@@ -245,8 +238,7 @@ private class NavigationPackGateway(
         progressRepository.saveProgress(
             progress.copy(
                 collection = mergedCollection,
-                availableDrawCount = openPackResponse.availableDrawCount,
-                nextChargeAt = openPackResponse.nextChargeAt,
+                rechargeState = openPackResponse.rechargeState,
                 openedPackCount = progress.openedPackCount + 1,
             ),
         )

@@ -1,16 +1,14 @@
 package fr.aumombelli.dstcg
 
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.intPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
+import fr.aumombelli.dstcg.data.DeterministicWeatherCalendar
 import fr.aumombelli.dstcg.data.EncryptedProgressEnvelope
 import fr.aumombelli.dstcg.data.EncryptedProgressEnvelopeSerializer
 import fr.aumombelli.dstcg.data.ProgressLoadResult
 import fr.aumombelli.dstcg.data.ProgressRepository
 import fr.aumombelli.dstcg.data.ProgressSnapshot
 import fr.aumombelli.dstcg.data.StandaloneGameSettings
+import fr.aumombelli.dstcg.data.buildPackChargeUiStatus
 import fr.aumombelli.dstcg.data.requireUsableProgress
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.OwnedCardEntry
@@ -42,7 +40,7 @@ class ProgressRepositoryTest {
         val loaded = result.requireUsableProgress()
         assertEquals(OwnedCollection(), loaded.progress.collection)
         assertEquals(emptyMap<String, Int>(), loaded.progress.collection.cards.mapValues { it.value.totalOwned })
-        assertEquals(10, loaded.progress.availableDrawCount)
+        assertEquals(10, loaded.progress.rechargeState.availableDrawCount)
         assertEquals(0, loaded.progress.openedPackCount)
         assertEquals(NewPlayerOnboardingStep.OpenFirstPackMenu, loaded.progress.newPlayerOnboardingStep)
         assertFalse(fixture.secureDataStore.data.first().isEmpty())
@@ -53,8 +51,10 @@ class ProgressRepositoryTest {
         val fixture = newFixture()
         val progress = StandaloneProgress(
             collection = ownedCollectionOf("ALP-001" to 2),
-            availableDrawCount = 4,
-            nextChargeAt = "2026-03-25T00:00:00Z",
+            rechargeState = testRechargeStateWithNextChargeAt(
+                availableDrawCount = 4,
+                nextChargeAt = "2026-03-25T00:00:00Z",
+            ),
             openedPackCount = 3,
         )
 
@@ -69,76 +69,15 @@ class ProgressRepositoryTest {
     }
 
     @Test
-    fun `load progress accepts a legacy collection json with deprecated version field`() = runTest {
-        val fixture = newFixture()
-        fixture.legacyDataStore.edit { preferences ->
-            preferences[CollectionJsonKey] = legacyVersionedCollectionJson(cardId = "ALP-001", totalOwned = 1)
-            preferences[AvailableDrawCountKey] = 4
-            preferences[NextChargeAtKey] = "2026-03-25T00:00:00Z"
-        }
-
-        val result = fixture.repository.loadProgress()
-
-        assertTrue(result is ProgressLoadResult.Recovered)
-        val loaded = result.requireUsableProgress()
-        assertEquals(ownedCollectionOf("ALP-001" to 1), loaded.progress.collection)
-        assertEquals(4, loaded.progress.availableDrawCount)
-        assertEquals("2026-03-25T00:00:00Z", loaded.progress.nextChargeAt)
-        assertEquals(NewPlayerOnboardingStep.Completed, loaded.progress.newPlayerOnboardingStep)
-        assertEquals(null, fixture.legacyDataStore.data.first()[CollectionJsonKey])
-        assertFalse(fixture.secureDataStore.data.first().isEmpty())
-    }
-
-    @Test
-    fun `load progress accepts a secure snapshot whose collection still has a version field`() = runTest {
-        val fixture = newFixture()
-        writeRawSecureSnapshot(
-            fixture = fixture,
-            snapshotJson = """
-                {
-                  "installId": "install-1",
-                  "schemaVersion": 1,
-                  "collection": {
-                    "version": 5,
-                    "cards": {
-                      "ALP-001": {
-                        "totalOwned": 1,
-                        "variants": [
-                          {
-                            "skyQuality": "city",
-                            "finish": "standard",
-                            "count": 1
-                          }
-                        ]
-                      }
-                    }
-                  },
-                  "availableDrawCount": 10,
-                  "nextChargeAt": null,
-                  "openedPackCount": 0,
-                  "lastTrustedWallClockUtc": "${fixedNow}",
-                  "lastTrustedElapsedRealtimeMs": 1000,
-                  "lastObservedBootMarker": "test-boot",
-                  "tamperFlag": false
-                }
-            """.trimIndent(),
-        )
-
-        val result = fixture.repository.loadProgress()
-
-        assertTrue(result is ProgressLoadResult.Recovered)
-        assertEquals(ownedCollectionOf("ALP-001" to 1), result.requireUsableProgress().progress.collection)
-        assertEquals(NewPlayerOnboardingStep.Completed, result.requireUsableProgress().progress.newPlayerOnboardingStep)
-    }
-
-    @Test
     fun `reset progress restores onboarding to first step`() = runTest {
         val fixture = newFixture()
         fixture.repository.saveProgress(
             StandaloneProgress(
                 collection = ownedCollectionOf("ALP-001" to 1),
-                availableDrawCount = 5,
-                nextChargeAt = "2026-03-25T00:00:00Z",
+                rechargeState = testRechargeStateWithNextChargeAt(
+                    availableDrawCount = 5,
+                    nextChargeAt = "2026-03-25T00:00:00Z",
+                ),
                 openedPackCount = 1,
                 newPlayerOnboardingStep = NewPlayerOnboardingStep.Completed,
             ),
@@ -150,31 +89,7 @@ class ProgressRepositoryTest {
         assertEquals(NewPlayerOnboardingStep.OpenFirstPackMenu, reloaded.newPlayerOnboardingStep)
         assertEquals(0, reloaded.openedPackCount)
         assertEquals(OwnedCollection(), reloaded.collection)
-    }
-
-    @Test
-    fun `legacy secure snapshot with opened pack count migrates onboarding to completed`() = runTest {
-        val fixture = newFixture()
-        writeSecureSnapshot(
-            fixture = fixture,
-            snapshot = ProgressSnapshot(
-                installId = "install-1",
-                schemaVersion = 1,
-                collection = OwnedCollection(),
-                availableDrawCount = 9,
-                nextChargeAt = null,
-                openedPackCount = 2,
-                lastTrustedWallClockUtc = fixedNow.toString(),
-                lastTrustedElapsedRealtimeMs = 1_000L,
-                lastObservedBootMarker = "test-boot",
-                tamperFlag = false,
-            ),
-        )
-
-        val result = fixture.repository.loadProgress()
-
-        assertTrue(result is ProgressLoadResult.Recovered)
-        assertEquals(NewPlayerOnboardingStep.Completed, result.requireUsableProgress().progress.newPlayerOnboardingStep)
+        assertEquals(10, reloaded.rechargeState.availableDrawCount)
     }
 
     @Test
@@ -201,8 +116,7 @@ class ProgressRepositoryTest {
                         ),
                     ),
                 ),
-                availableDrawCount = 10,
-                nextChargeAt = null,
+                rechargeState = testRechargeState(),
                 openedPackCount = 1,
                 lastTrustedWallClockUtc = fixedNow.toString(),
                 lastTrustedElapsedRealtimeMs = 1_000L,
@@ -229,8 +143,7 @@ class ProgressRepositoryTest {
         fixture.repository.saveProgress(
             StandaloneProgress(
                 collection = ownedCollectionOf("ALP-001" to 1),
-                availableDrawCount = 10,
-                nextChargeAt = null,
+                rechargeState = testRechargeState(),
             ),
         )
         fixture.secureDataStore.updateData { envelope ->
@@ -255,8 +168,11 @@ class ProgressRepositoryTest {
             snapshot = ProgressSnapshot(
                 installId = "install-1",
                 collection = ownedCollectionOf("ALP-001" to 1),
-                availableDrawCount = 4,
-                nextChargeAt = "2026-03-24T18:00:00Z",
+                rechargeState = testRechargeStateWithNextChargeAt(
+                    availableDrawCount = 4,
+                    nextChargeAt = "2026-03-24T18:00:00Z",
+                    now = fixedNow,
+                ),
                 openedPackCount = 0,
                 lastTrustedWallClockUtc = fixedNow.toString(),
                 lastTrustedElapsedRealtimeMs = 1_000L,
@@ -272,9 +188,16 @@ class ProgressRepositoryTest {
         val result = fixture.repository.loadProgress()
 
         assertTrue(result is ProgressLoadResult.Recovered)
-        val loaded = result.requireUsableProgress().progress
-        assertEquals(4, loaded.availableDrawCount)
-        assertEquals("2026-03-24T18:00:00Z", loaded.nextChargeAt)
+        val loaded = result.requireUsableProgress()
+        val chargeStatus = buildPackChargeUiStatus(
+            rechargeState = loaded.progress.rechargeState,
+            now = loaded.trustedNow,
+            drawCooldown = fixture.settings.drawCooldown,
+            maxStoredDraws = fixture.settings.maxStoredDraws,
+            weatherPolicy = DeterministicWeatherCalendar,
+        )
+        assertEquals(4, loaded.progress.rechargeState.availableDrawCount)
+        assertEquals("2026-03-24T18:00:00Z", chargeStatus.nextChargeAt)
     }
 
     @Test
@@ -290,8 +213,11 @@ class ProgressRepositoryTest {
             snapshot = ProgressSnapshot(
                 installId = "install-1",
                 collection = ownedCollectionOf("ALP-001" to 1),
-                availableDrawCount = 0,
-                nextChargeAt = "2026-03-24T18:00:00Z",
+                rechargeState = testRechargeStateWithNextChargeAt(
+                    availableDrawCount = 0,
+                    nextChargeAt = "2026-03-24T18:00:00Z",
+                    now = fixedNow,
+                ),
                 openedPackCount = 0,
                 lastTrustedWallClockUtc = fixedNow.toString(),
                 lastTrustedElapsedRealtimeMs = 1_000L,
@@ -309,8 +235,16 @@ class ProgressRepositoryTest {
 
         assertTrue(result is ProgressLoadResult.Recovered)
         val loaded = result.requireUsableProgress()
+        val chargeStatus = buildPackChargeUiStatus(
+            rechargeState = loaded.progress.rechargeState,
+            now = loaded.trustedNow,
+            drawCooldown = fixture.settings.drawCooldown,
+            maxStoredDraws = fixture.settings.maxStoredDraws,
+            weatherPolicy = DeterministicWeatherCalendar,
+        )
         assertEquals(fixedNow, loaded.trustedNow)
-        assertEquals(0, loaded.progress.availableDrawCount)
+        assertEquals(0, loaded.progress.rechargeState.availableDrawCount)
+        assertEquals("2026-03-24T18:00:00Z", chargeStatus.nextChargeAt)
     }
 
     private fun newFixture(
@@ -321,21 +255,20 @@ class ProgressRepositoryTest {
         ),
     ): RepositoryFixture {
         val secureDataStore = inMemoryDataStore(EncryptedProgressEnvelopeSerializer.defaultValue)
-        val legacyDataStore = inMemoryPreferencesDataStore()
         val cipher = newTestProgressCipher()
+        val settings = StandaloneGameSettings(
+            timeSource = timeSource,
+        )
         return RepositoryFixture(
             secureDataStore = secureDataStore,
-            legacyDataStore = legacyDataStore,
             cipher = cipher,
+            settings = settings,
             repository = ProgressRepository(
                 secureDataStore = secureDataStore,
-                legacyDataStore = legacyDataStore,
                 catalogRepository = FakeCatalogGateway().apply {
                     cards = listOf(testCardDefinition("ALP-001", variantProfileId = "observation-default"))
                 },
-                settings = StandaloneGameSettings(
-                    timeSource = timeSource,
-                ),
+                settings = settings,
                 progressCipher = cipher,
                 installIdFactory = { "install-under-test" },
             ),
@@ -354,47 +287,10 @@ class ProgressRepositoryTest {
         }
     }
 
-    private suspend fun writeRawSecureSnapshot(
-        fixture: RepositoryFixture,
-        snapshotJson: String,
-    ) {
-        val payload = fixture.cipher.encrypt(snapshotJson.encodeToByteArray())
-        fixture.secureDataStore.updateData {
-            EncryptedProgressEnvelope.fromPayload(payload)
-        }
-    }
-
-    private fun legacyVersionedCollectionJson(
-        cardId: String,
-        totalOwned: Int,
-    ): String = """
-        {
-          "version": 1,
-          "cards": {
-            "$cardId": {
-              "totalOwned": $totalOwned,
-              "variants": [
-                {
-                  "skyQuality": "city",
-                  "finish": "standard",
-                  "count": $totalOwned
-                }
-              ]
-            }
-          }
-        }
-    """.trimIndent()
-
     private data class RepositoryFixture(
         val secureDataStore: DataStore<EncryptedProgressEnvelope>,
-        val legacyDataStore: DataStore<Preferences>,
         val cipher: fr.aumombelli.dstcg.data.ProgressCipher,
+        val settings: StandaloneGameSettings,
         val repository: ProgressRepository,
     )
-
-    private companion object {
-        val CollectionJsonKey = stringPreferencesKey("collection_json")
-        val AvailableDrawCountKey = intPreferencesKey("available_draw_count")
-        val NextChargeAtKey = stringPreferencesKey("next_charge_at")
-    }
 }

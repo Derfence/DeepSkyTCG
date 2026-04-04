@@ -1,6 +1,11 @@
 package fr.aumombelli.dstcg
 
+import fr.aumombelli.dstcg.data.DEFAULT_DRAW_COOLDOWN
 import fr.aumombelli.dstcg.model.OwnedVariantCount
+import fr.aumombelli.dstcg.model.PackRechargeState
+import java.time.Duration
+import java.time.Instant
+import java.time.temporal.ChronoUnit
 import fr.aumombelli.dstcg.testsupport.fixtures.ownedCollectionOf as fixtureOwnedCollectionOf
 import fr.aumombelli.dstcg.testsupport.fixtures.ownedCollectionWithVariants as fixtureOwnedCollectionWithVariants
 import fr.aumombelli.dstcg.testsupport.fixtures.testCardDefinition as fixtureTestCardDefinition
@@ -70,3 +75,54 @@ fun ownedCollectionWithVariants(
     cardId: String,
     vararg variants: OwnedVariantCount,
 ) = fixtureOwnedCollectionWithVariants(cardId, *variants)
+
+private val defaultRechargeReferenceNow: Instant = Instant.parse("2026-03-24T12:00:00Z")
+
+fun testRechargeState(
+    availableDrawCount: Int = 10,
+    accumulatedChargeUnits: Long = 0L,
+    lastChargeEvaluationAt: String? = null,
+) = PackRechargeState(
+    availableDrawCount = availableDrawCount,
+    accumulatedChargeUnits = accumulatedChargeUnits,
+    lastChargeEvaluationAt = lastChargeEvaluationAt,
+)
+
+fun testRechargeStateWithNextChargeAt(
+    availableDrawCount: Int,
+    nextChargeAt: String?,
+    now: Instant = defaultRechargeReferenceNow,
+    drawCooldown: Duration = DEFAULT_DRAW_COOLDOWN,
+) : PackRechargeState {
+    if (availableDrawCount >= 10 || nextChargeAt == null) {
+        return PackRechargeState(availableDrawCount = availableDrawCount)
+    }
+
+    val normalizedNow = now.truncatedTo(ChronoUnit.SECONDS)
+    val parsedNextChargeAt = Instant.parse(nextChargeAt).truncatedTo(ChronoUnit.SECONDS)
+    val drawCooldownMillis = drawCooldown.toMillis()
+    val effectiveAvailableDrawCount: Int
+    val normalizedNextChargeAt: Instant
+    if (normalizedNow.isBefore(parsedNextChargeAt)) {
+        effectiveAvailableDrawCount = availableDrawCount
+        normalizedNextChargeAt = parsedNextChargeAt
+    } else {
+        val elapsedMillis = Duration.between(parsedNextChargeAt, normalizedNow).toMillis()
+        val recoveredDrawCount = 1 + (elapsedMillis / drawCooldownMillis)
+        effectiveAvailableDrawCount = (availableDrawCount + recoveredDrawCount.toInt()).coerceAtMost(10)
+        if (effectiveAvailableDrawCount >= 10) {
+            return PackRechargeState(availableDrawCount = 10)
+        }
+        normalizedNextChargeAt = parsedNextChargeAt.plusMillis(recoveredDrawCount * drawCooldownMillis)
+    }
+    val remainingSeconds = Duration.between(
+        normalizedNow,
+        normalizedNextChargeAt,
+    ).seconds.coerceAtLeast(0L)
+    val cooldownUnits = drawCooldown.seconds * 5L
+    return PackRechargeState(
+        availableDrawCount = effectiveAvailableDrawCount,
+        accumulatedChargeUnits = (cooldownUnits - (remainingSeconds * 5L)).coerceIn(0L, cooldownUnits - 1L),
+        lastChargeEvaluationAt = normalizedNow.toString(),
+    )
+}
