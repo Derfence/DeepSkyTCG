@@ -17,12 +17,12 @@ class DstcgBaselineProfile {
             packageName = TargetPackageName,
             includeInStartupProfile = true,
         ) {
-            startAndReachMainMenu(resetProgressOnLaunch = true)
+            startAndReachHome(resetProgressOnLaunch = true)
             openLibrary()
             scrollLibraryGrid()
             device.pressBack()
-            waitForText("Open Pack")
-            openPackFlowAndReturnToMenu()
+            waitForText("Ouvrir un pack")
+            openPackFlowAndReturnToHome()
         }
     }
 }

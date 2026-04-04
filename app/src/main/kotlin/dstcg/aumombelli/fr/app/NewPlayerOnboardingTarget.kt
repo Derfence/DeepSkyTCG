@@ -1,9 +1,9 @@
 package fr.aumombelli.dstcg.app
 
 enum class NewPlayerOnboardingTarget {
-    MenuOpenPack,
-    MenuLibrary,
-    MenuBadges,
+    HomeOpenPack,
+    HomeLibrary,
+    HomeBadges,
     PackSelectionExtension,
     PackSelectionBooster,
 }

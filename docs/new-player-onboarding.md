@@ -20,7 +20,7 @@ Les hints d'onboarding n'apparaissent qu'une fois les animations de transition t
 
 ### 1. Premier pack
 
-- Au menu principal, un coachmark cible `Ouvrir un pack`.
+- A l'accueil, un coachmark cible la grande carte `Ouvrir un pack`.
 - Dans la selection de packs, un coachmark cible le premier bouton `Observer` disponible.
 - Ce coachmark disparait des le clic sur l'extension pour ne pas accompagner l'animation d'ouverture.
 - Une fois l'extension ouverte, un coachmark cible le premier booster seulement apres la fin de l'introduction visuelle des quatre boosters.
@@ -31,16 +31,16 @@ Les hints d'onboarding n'apparaissent qu'une fois les animations de transition t
 
 - Le hint vertical existant dans `PackOpeningScreen` reste en place.
 - Quand le swipe est debloque, un libelle explicite s'affiche :
-  `Glisse vers le haut pour revenir au menu.`
-- Au retour menu, la priorite va a `Bibliotheque`.
+  `Glisse vers le haut pour revenir a l'accueil.`
+- Au retour accueil, la priorite va a `Bibliotheque`.
 - Si un badge vient d'etre debloque, sa celebration reste memoiree mais differee tant que l'etape `ViewLibrary` n'est pas terminee.
 
 ### 3. Bibliotheque puis badges
 
-- Au premier retour menu apres ouverture d'un pack, le coachmark cible `Bibliotheque`.
+- Au premier retour accueil apres ouverture d'un pack, le coachmark cible `Bibliotheque`.
 - Lors de la premiere visite bibliotheque, un micro-hint local s'affiche :
   `Touche une carte obtenue pour l'ouvrir.`
-- Quand le joueur revient au menu, la celebration de badge differee est rejouee si elle est encore en memoire.
+- Quand le joueur revient a l'accueil, la celebration de badge differee est rejouee si elle est encore en memoire.
 - Apres cette celebration, un coachmark cible `Badges` tant que le carnet n'a pas ete ouvert.
 
 ## Persistance et reprise
@@ -56,19 +56,19 @@ Les hints d'onboarding n'apparaissent qu'une fois les animations de transition t
 
 ### Coachmarks globaux
 
-- `new-player-coachmark-MenuOpenPack`
+- `new-player-coachmark-HomeOpenPack`
 - `new-player-coachmark-PackSelectionExtension`
 - `new-player-coachmark-PackSelectionBooster`
-- `new-player-coachmark-MenuLibrary`
-- `new-player-coachmark-MenuBadges`
+- `new-player-coachmark-HomeLibrary`
+- `new-player-coachmark-HomeBadges`
 
 ### Cibles mises en evidence
 
-- `new-player-coachmark-target-MenuOpenPack`
+- `new-player-coachmark-target-HomeOpenPack`
 - `new-player-coachmark-target-PackSelectionExtension`
 - `new-player-coachmark-target-PackSelectionBooster`
-- `new-player-coachmark-target-MenuLibrary`
-- `new-player-coachmark-target-MenuBadges`
+- `new-player-coachmark-target-HomeLibrary`
+- `new-player-coachmark-target-HomeBadges`
 
 ### Hints locaux
 

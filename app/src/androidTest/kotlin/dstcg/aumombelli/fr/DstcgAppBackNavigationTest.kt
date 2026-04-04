@@ -8,8 +8,6 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.test.swipeUp
 import fr.aumombelli.dstcg.testsupport.badgeCelebrationBackNavigationTestAppContainer
 import fr.aumombelli.dstcg.testsupport.backNavigationTestAppContainer
 import fr.aumombelli.dstcg.ui.theme.DstcgTheme
@@ -22,55 +20,59 @@ class DstcgAppBackNavigationTest {
     val composeRule = createAndroidComposeRule<ComponentActivity>()
 
     @Test
-    fun android_back_from_start_reset_confirmation_closes_dialog_before_finishing_activity() {
+    fun android_back_from_home_reset_confirmation_closes_dialog_before_finishing_activity() {
         setAppContent(backNavigationTestAppContainer())
+        startAndReachHome()
 
-        composeRule.onNodeWithTag("start-reset-progress").performClick()
+        composeRule.onNodeWithTag("home-settings").performClick()
+        composeRule.onNodeWithTag("home-settings-reset").performClick()
         advanceBy(1)
-        composeRule.onNodeWithTag("start-reset-confirmation").assertIsDisplayed()
+        composeRule.onNodeWithTag("home-reset-confirmation").assertIsDisplayed()
 
         pressAndroidBack()
         advanceBy(1)
-        composeRule.onAllNodesWithTag("start-reset-confirmation").assertCountEquals(0)
-        composeRule.onNodeWithTag("start-begin").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("home-reset-confirmation").assertCountEquals(0)
+        composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
         assertTrue(!composeRule.activity.isFinishing)
     }
 
     @Test
-    fun android_back_from_start_about_sheet_closes_sheet_before_finishing_activity() {
+    fun android_back_from_home_about_sheet_closes_sheet_before_finishing_activity() {
         setAppContent(backNavigationTestAppContainer())
+        startAndReachHome()
 
-        composeRule.onNodeWithTag("start-about-trigger").performTouchInput { swipeUp() }
+        composeRule.onNodeWithTag("home-settings").performClick()
+        composeRule.onNodeWithTag("home-settings-about").performClick()
         advanceBy(400)
-        composeRule.onNodeWithTag("start-about-sheet").assertIsDisplayed()
+        composeRule.onNodeWithTag("home-about-sheet").assertIsDisplayed()
 
         pressAndroidBack()
         advanceBy(400)
-        composeRule.onAllNodesWithTag("start-about-sheet").assertCountEquals(0)
-        composeRule.onNodeWithTag("start-begin").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("home-about-sheet").assertCountEquals(0)
+        composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
         assertTrue(!composeRule.activity.isFinishing)
     }
 
     @Test
-    fun android_back_from_library_returns_to_main_menu() {
+    fun android_back_from_library_returns_to_home() {
         setAppContent(backNavigationTestAppContainer())
-        startAndReachMainMenu()
+        startAndReachHome()
 
-        composeRule.onNodeWithTag("menu-library").performClick()
+        composeRule.onNodeWithTag("home-library").performClick()
         advanceBy(2_700)
         composeRule.onNodeWithTag("library-grid").assertIsDisplayed()
 
         pressAndroidBack()
         advanceBy(2_100)
-        composeRule.onNodeWithTag("menu-open-pack").assertIsDisplayed()
+        composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
     }
 
     @Test
-    fun android_back_from_badge_book_closes_detail_then_returns_to_main_menu() {
+    fun android_back_from_badge_book_closes_detail_then_returns_to_home() {
         setAppContent(backNavigationTestAppContainer())
-        startAndReachMainMenu()
+        startAndReachHome()
 
-        composeRule.onNodeWithTag("menu-badges").performClick()
+        composeRule.onNodeWithTag("home-badges").performClick()
         advanceBy(800)
         composeRule.onNodeWithTag("app-transition-chest").assertIsDisplayed()
         advanceBy(2_000)
@@ -86,15 +88,15 @@ class DstcgAppBackNavigationTest {
 
         pressAndroidBack()
         advanceBy(2_100)
-        composeRule.onNodeWithTag("menu-open-pack").assertIsDisplayed()
+        composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
     }
 
     @Test
-    fun android_back_from_pack_selection_returns_to_extension_list_then_menu() {
+    fun android_back_from_pack_selection_returns_to_extension_list_then_home() {
         setAppContent(backNavigationTestAppContainer())
-        startAndReachMainMenu()
+        startAndReachHome()
 
-        composeRule.onNodeWithTag("menu-open-pack").performClick()
+        composeRule.onNodeWithTag("home-open-pack").performClick()
         advanceBy(1_900)
         composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").performClick()
         advanceBy(1_900)
@@ -106,15 +108,15 @@ class DstcgAppBackNavigationTest {
 
         pressAndroidBack()
         advanceBy(1_900)
-        composeRule.onNodeWithTag("menu-open-pack").assertIsDisplayed()
+        composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
     }
 
     @Test
-    fun android_back_from_pack_opening_returns_to_main_menu() {
+    fun android_back_from_pack_opening_returns_to_home() {
         setAppContent(backNavigationTestAppContainer())
-        startAndReachMainMenu()
+        startAndReachHome()
 
-        composeRule.onNodeWithTag("menu-open-pack").performClick()
+        composeRule.onNodeWithTag("home-open-pack").performClick()
         advanceBy(1_900)
         composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").performClick()
         advanceBy(1_900)
@@ -124,15 +126,15 @@ class DstcgAppBackNavigationTest {
 
         pressAndroidBack()
         advanceBy(700)
-        composeRule.onNodeWithTag("menu-open-pack").assertIsDisplayed()
+        composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
     }
 
     @Test
     fun android_back_from_pack_opening_with_new_badge_defers_celebration_until_library_is_seen() {
         setAppContent(badgeCelebrationBackNavigationTestAppContainer())
-        startAndReachMainMenu()
+        startAndReachHome()
 
-        composeRule.onNodeWithTag("menu-open-pack").performClick()
+        composeRule.onNodeWithTag("home-open-pack").performClick()
         advanceBy(1_900)
         composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").performClick()
         advanceBy(1_900)
@@ -142,10 +144,10 @@ class DstcgAppBackNavigationTest {
 
         pressAndroidBack()
         advanceBy(1_000)
-        composeRule.onNodeWithTag("new-player-coachmark-MenuLibrary").assertIsDisplayed()
+        composeRule.onNodeWithTag("new-player-coachmark-HomeLibrary").assertIsDisplayed()
         composeRule.onAllNodesWithTag("badge-unlock-celebration").assertCountEquals(0)
 
-        composeRule.onNodeWithTag("menu-library").performClick()
+        composeRule.onNodeWithTag("home-library").performClick()
         advanceBy(3_200)
         composeRule.onNodeWithTag("library-grid").assertIsDisplayed()
         pressAndroidBack()
@@ -155,14 +157,14 @@ class DstcgAppBackNavigationTest {
 
         advanceBy(1_800)
         composeRule.onAllNodesWithTag("badge-unlock-celebration").assertCountEquals(0)
-        composeRule.onNodeWithTag("menu-open-pack").assertIsEnabled()
-        composeRule.onNodeWithTag("menu-open-pack").assertIsDisplayed()
+        composeRule.onNodeWithTag("home-open-pack").assertIsEnabled()
+        composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
     }
 
     @Test
-    fun android_back_from_main_menu_finishes_activity() {
+    fun android_back_from_home_finishes_activity() {
         setAppContent(backNavigationTestAppContainer())
-        startAndReachMainMenu()
+        startAndReachHome()
 
         pressAndroidBack()
         composeRule.waitUntil(timeoutMillis = 5_000) { composeRule.activity.isFinishing }
@@ -179,10 +181,8 @@ class DstcgAppBackNavigationTest {
         advanceBy(3_000)
     }
 
-    private fun startAndReachMainMenu() {
-        composeRule.onNodeWithTag("start-begin").performClick()
-        advanceBy(1_600)
-        composeRule.onNodeWithTag("menu-open-pack").assertIsDisplayed()
+    private fun startAndReachHome() {
+        composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
     }
 
     private fun advanceBy(durationMillis: Long) {

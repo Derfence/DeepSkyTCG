@@ -4,16 +4,16 @@ import fr.aumombelli.dstcg.app.AppSceneUiState
 import fr.aumombelli.dstcg.app.clearPendingBadgeCelebration
 import fr.aumombelli.dstcg.app.enterBadgeBook
 import fr.aumombelli.dstcg.app.enterPackOpening
-import fr.aumombelli.dstcg.app.finishPackOpeningToMenu
+import fr.aumombelli.dstcg.app.finishPackOpeningToHome
 import fr.aumombelli.dstcg.app.lockTransitions
 import fr.aumombelli.dstcg.app.prepareBadgeBookEntry
-import fr.aumombelli.dstcg.app.preparePackOpeningReturnToMenu
+import fr.aumombelli.dstcg.app.preparePackOpeningReturnToHome
 import fr.aumombelli.dstcg.app.preparePackSelection
 import fr.aumombelli.dstcg.app.registerPackReady
 import fr.aumombelli.dstcg.app.resetLaunchSequence
 import fr.aumombelli.dstcg.app.requestPackOpeningExit
+import fr.aumombelli.dstcg.app.showHomeContent
 import fr.aumombelli.dstcg.app.showOnboardingHints
-import fr.aumombelli.dstcg.app.showStartCard
 import fr.aumombelli.dstcg.app.unlockTransitions
 import fr.aumombelli.dstcg.feature.badges.BadgeItem
 import fr.aumombelli.dstcg.feature.badges.BadgeProgress
@@ -28,8 +28,8 @@ class AppSceneStateTest {
     @Test
     fun `prepare pack selection resets transient flow state`() {
         val initialState = AppSceneUiState(
-            currentScene = AppScene.MainMenu,
-            menuContentVisible = true,
+            currentScene = AppScene.Home,
+            homeContentVisible = true,
             packRefreshSignal = 2,
             packReadySignal = 4,
             selectedPackRevealBounds = PackRevealBounds(
@@ -45,7 +45,7 @@ class AppSceneStateTest {
         val nextState = initialState.preparePackSelection(nextPackRefreshSignal = 3)
 
         assertEquals(AppScene.PackSelection, nextState.currentScene)
-        assertEquals(false, nextState.menuContentVisible)
+        assertEquals(false, nextState.homeContentVisible)
         assertEquals(false, nextState.packSceneVisible)
         assertEquals(false, nextState.packExtensionListVisible)
         assertEquals(3, nextState.packRefreshSignal)
@@ -56,7 +56,7 @@ class AppSceneStateTest {
     }
 
     @Test
-    fun `finish pack opening returns to menu and keeps pending celebration until cleared`() {
+    fun `finish pack opening returns to home and keeps pending celebration until cleared`() {
         val openedState = AppSceneUiState(
             currentScene = AppScene.PackSelection,
             packSceneVisible = true,
@@ -67,10 +67,10 @@ class AppSceneStateTest {
             deferBadgeCelebration = false,
         )
 
-        val nextState = openedState.finishPackOpeningToMenu()
+        val nextState = openedState.finishPackOpeningToHome()
 
-        assertEquals(AppScene.MainMenu, nextState.currentScene)
-        assertEquals(true, nextState.menuContentVisible)
+        assertEquals(AppScene.Home, nextState.currentScene)
+        assertEquals(true, nextState.homeContentVisible)
         assertEquals(false, nextState.packSceneVisible)
         assertEquals(false, nextState.packExtensionListVisible)
         assertEquals(listOf(sampleBadge()), nextState.pendingBadgeCelebration)
@@ -78,57 +78,57 @@ class AppSceneStateTest {
     }
 
     @Test
-    fun `reset launch sequence hides start card and logo lift`() {
+    fun `reset launch sequence hides home content and logo lift`() {
         val initialState = AppSceneUiState(
-            currentScene = AppScene.Start,
+            currentScene = AppScene.Home,
             launchLogoVisible = true,
             launchLogoRaised = true,
-            startCardVisible = true,
+            homeContentVisible = true,
         )
 
         val nextState = initialState.resetLaunchSequence()
 
-        assertEquals(AppScene.Start, nextState.currentScene)
+        assertEquals(AppScene.Home, nextState.currentScene)
         assertEquals(false, nextState.launchLogoVisible)
         assertEquals(false, nextState.launchLogoRaised)
-        assertEquals(false, nextState.startCardVisible)
+        assertEquals(false, nextState.homeContentVisible)
     }
 
     @Test
-    fun `show start card only reveals the start overlay`() {
-        val state = AppSceneUiState(startCardVisible = false)
+    fun `show home content only reveals the home overlay`() {
+        val state = AppSceneUiState(homeContentVisible = false)
 
-        val nextState = state.showStartCard()
+        val nextState = state.showHomeContent()
 
-        assertEquals(true, nextState.startCardVisible)
+        assertEquals(true, nextState.homeContentVisible)
         assertEquals(state.currentScene, nextState.currentScene)
     }
 
     @Test
     fun `prepare badge book entry resets badge content and bumps refresh signal`() {
         val initialState = AppSceneUiState(
-            currentScene = AppScene.MainMenu,
-            menuContentVisible = true,
+            currentScene = AppScene.Home,
+            homeContentVisible = true,
             badgeBookContentVisible = true,
             badgeBookRefreshSignal = 2,
         )
 
         val nextState = initialState.prepareBadgeBookEntry(nextBadgeBookRefreshSignal = 3)
 
-        assertEquals(AppScene.MainMenu, nextState.currentScene)
-        assertEquals(false, nextState.menuContentVisible)
+        assertEquals(AppScene.Home, nextState.currentScene)
+        assertEquals(false, nextState.homeContentVisible)
         assertEquals(false, nextState.badgeBookContentVisible)
         assertEquals(3, nextState.badgeBookRefreshSignal)
     }
 
     @Test
     fun `enter badge book switches current scene only`() {
-        val state = AppSceneUiState(currentScene = AppScene.MainMenu)
+        val state = AppSceneUiState(currentScene = AppScene.Home)
 
         val nextState = state.enterBadgeBook()
 
         assertEquals(AppScene.BadgeBook, nextState.currentScene)
-        assertEquals(state.menuContentVisible, nextState.menuContentVisible)
+        assertEquals(state.homeContentVisible, nextState.homeContentVisible)
     }
 
     @Test
@@ -144,18 +144,18 @@ class AppSceneStateTest {
     }
 
     @Test
-    fun `prepare return to menu hides menu until the controller reveals it`() {
+    fun `prepare return to home hides home until the controller reveals it`() {
         val state = AppSceneUiState(
             currentScene = AppScene.PackOpening,
-            menuContentVisible = true,
+            homeContentVisible = true,
             selectedPackRevealBounds = PackRevealBounds(1f, 2f, 3f, 4f),
             packOpeningExitSignal = 1,
         )
 
-        val nextState = state.preparePackOpeningReturnToMenu()
+        val nextState = state.preparePackOpeningReturnToHome()
 
-        assertEquals(AppScene.MainMenu, nextState.currentScene)
-        assertEquals(false, nextState.menuContentVisible)
+        assertEquals(AppScene.Home, nextState.currentScene)
+        assertEquals(false, nextState.homeContentVisible)
         assertEquals(0, nextState.packOpeningExitSignal)
         assertNull(nextState.selectedPackRevealBounds)
     }
@@ -174,7 +174,7 @@ class AppSceneStateTest {
     @Test
     fun `locking transitions hides onboarding hints until they are restored`() {
         val state = AppSceneUiState(
-            currentScene = AppScene.MainMenu,
+            currentScene = AppScene.Home,
             onboardingHintsVisible = true,
         )
 

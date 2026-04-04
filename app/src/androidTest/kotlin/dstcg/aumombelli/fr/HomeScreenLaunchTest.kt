@@ -1,7 +1,7 @@
 package fr.aumombelli.dstcg
 
 import androidx.compose.ui.test.assertIsDisplayed
-import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -10,7 +10,7 @@ import org.junit.After
 import org.junit.Rule
 import org.junit.Test
 
-class StartScreenTest {
+class HomeScreenLaunchTest {
     init {
         MainActivity.appContainerFactory = { context ->
             offlineMainActivityTestAppContainer(
@@ -24,20 +24,17 @@ class StartScreenTest {
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun start_screen_shows_footer_on_launch() {
-        waitForStartScreen()
+    fun home_screen_shows_logo_and_primary_actions_on_launch() {
+        waitForHomeScreen()
 
-        composeRule.waitUntil(timeoutMillis = 10_000) {
-            composeRule.onAllNodesWithTag("start-footer-version")
-                .fetchSemanticsNodes(atLeastOneRootRequired = false)
-                .isNotEmpty()
-        }
-        composeRule.onNodeWithTag("start-footer").assertIsDisplayed()
-        composeRule.onNodeWithTag("start-footer-version").assertTextContains("v1.0")
-        composeRule.onNodeWithTag("start-about-trigger").assertIsDisplayed()
+        composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
+        composeRule.onNodeWithTag("home-library").assertIsDisplayed()
+        composeRule.onNodeWithTag("home-badges").assertIsDisplayed()
+        composeRule.onNodeWithTag("home-settings").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("start-footer-version").assertCountEquals(0)
     }
 
-    private fun waitForStartScreen() {
+    private fun waitForHomeScreen() {
         composeRule.waitUntil(timeoutMillis = 10_000) {
             composeRule.onAllNodesWithTag("app-launch-logo")
                 .fetchSemanticsNodes(atLeastOneRootRequired = false)
@@ -45,13 +42,11 @@ class StartScreenTest {
         }
         composeRule.onNodeWithTag("app-launch-logo").assertIsDisplayed()
         composeRule.waitUntil(timeoutMillis = 10_000) {
-            composeRule.onAllNodesWithTag("app-launch-start-card")
+            composeRule.onAllNodesWithTag("home-open-pack")
                 .fetchSemanticsNodes(atLeastOneRootRequired = false)
                 .isNotEmpty()
         }
-        composeRule.onNodeWithTag("app-launch-start-card").assertIsDisplayed()
-        composeRule.onNodeWithTag("start-begin").assertIsDisplayed()
-        composeRule.onNodeWithTag("start-title").assertIsDisplayed()
+        composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
     }
 
     @After

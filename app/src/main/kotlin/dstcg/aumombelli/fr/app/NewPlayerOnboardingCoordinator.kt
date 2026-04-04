@@ -30,7 +30,7 @@ internal class NewPlayerOnboardingCoordinator(
         uiState = uiState.copy(currentStep = progress.newPlayerOnboardingStep)
     }
 
-    suspend fun onMenuOpenPackSelected() {
+    suspend fun onHomeOpenPackSelected() {
         advanceTo(NewPlayerOnboardingStep.SelectFirstExtension) {
             it == NewPlayerOnboardingStep.OpenFirstPackMenu
         }
@@ -83,14 +83,14 @@ internal class NewPlayerOnboardingCoordinator(
         return when (step) {
             NewPlayerOnboardingStep.OpenFirstPackMenu -> {
                 if (
-                    currentScene == AppScene.MainMenu &&
-                    sceneState.menuContentVisible &&
+                    currentScene == AppScene.Home &&
+                    sceneState.homeContentVisible &&
                     sceneState.onboardingHintsVisible &&
                     !sceneState.transitionLocked &&
-                    sceneState.coachmarkTargetBounds.containsKey(NewPlayerOnboardingTarget.MenuOpenPack)
+                    sceneState.coachmarkTargetBounds.containsKey(NewPlayerOnboardingTarget.HomeOpenPack)
                 ) {
                     NewPlayerCoachmarkSpec(
-                        target = NewPlayerOnboardingTarget.MenuOpenPack,
+                        target = NewPlayerOnboardingTarget.HomeOpenPack,
                         title = "Premières cartes",
                         message = "Commençons ta collection de cartes d'objets célestes !",
                     )
@@ -136,14 +136,14 @@ internal class NewPlayerOnboardingCoordinator(
 
             NewPlayerOnboardingStep.ViewLibrary -> {
                 if (
-                    currentScene == AppScene.MainMenu &&
-                    sceneState.menuContentVisible &&
+                    currentScene == AppScene.Home &&
+                    sceneState.homeContentVisible &&
                     sceneState.onboardingHintsVisible &&
                     !sceneState.transitionLocked &&
-                    sceneState.coachmarkTargetBounds.containsKey(NewPlayerOnboardingTarget.MenuLibrary)
+                    sceneState.coachmarkTargetBounds.containsKey(NewPlayerOnboardingTarget.HomeLibrary)
                 ) {
                     NewPlayerCoachmarkSpec(
-                        target = NewPlayerOnboardingTarget.MenuLibrary,
+                        target = NewPlayerOnboardingTarget.HomeLibrary,
                         title = "Retrouve tes cartes",
                         message = "Ouvre la bibliotheque pour revoir les cartes que tu as obtenues.",
                     )
@@ -154,15 +154,15 @@ internal class NewPlayerOnboardingCoordinator(
 
             NewPlayerOnboardingStep.ViewBadges -> {
                 if (
-                    currentScene == AppScene.MainMenu &&
-                    sceneState.menuContentVisible &&
+                    currentScene == AppScene.Home &&
+                    sceneState.homeContentVisible &&
                     sceneState.onboardingHintsVisible &&
                     !sceneState.transitionLocked &&
                     !badgeCelebrationVisible &&
-                    sceneState.coachmarkTargetBounds.containsKey(NewPlayerOnboardingTarget.MenuBadges)
+                    sceneState.coachmarkTargetBounds.containsKey(NewPlayerOnboardingTarget.HomeBadges)
                 ) {
                     NewPlayerCoachmarkSpec(
-                        target = NewPlayerOnboardingTarget.MenuBadges,
+                        target = NewPlayerOnboardingTarget.HomeBadges,
                         title = "Badges d'astronome",
                         message = "Ton premier badge t'attend ici !",
                     )

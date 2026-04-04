@@ -1,14 +1,14 @@
-package fr.aumombelli.dstcg.feature.start
+package fr.aumombelli.dstcg.feature.home
 
-internal const val StartFooterAppVersion: String = "v1.0"
+internal const val HomeAboutAppVersion: String = "v1.0"
 
-internal data class StartAboutSection(
+internal data class HomeAboutSection(
     val title: String,
     val lines: List<String>,
 )
 
-internal val StartAboutSections: List<StartAboutSection> = listOf(
-    StartAboutSection(
+internal val HomeAboutSections: List<HomeAboutSection> = listOf(
+    HomeAboutSection(
         title = "Crédits",
         lines = listOf(
             "Idée originale, conception, architecture, direction artistique : Aurélien Mombelli",

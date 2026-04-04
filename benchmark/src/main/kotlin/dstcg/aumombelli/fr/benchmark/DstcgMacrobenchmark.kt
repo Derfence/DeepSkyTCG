@@ -27,7 +27,7 @@ class DstcgMacrobenchmark {
                 pressHome()
             },
         ) {
-            startAndReachMainMenu()
+            startAndReachHome()
         }
     }
 
@@ -40,7 +40,7 @@ class DstcgMacrobenchmark {
             iterations = 3,
             startupMode = StartupMode.WARM,
             setupBlock = {
-                startAndReachMainMenu(resetProgressOnLaunch = true)
+                startAndReachHome(resetProgressOnLaunch = true)
                 openLibrary()
             },
         ) {
@@ -57,10 +57,10 @@ class DstcgMacrobenchmark {
             iterations = 3,
             startupMode = StartupMode.WARM,
             setupBlock = {
-                startAndReachMainMenu(resetProgressOnLaunch = true)
+                startAndReachHome(resetProgressOnLaunch = true)
             },
         ) {
-            openPackFlowAndReturnToMenu()
+            openPackFlowAndReturnToHome()
         }
     }
 }

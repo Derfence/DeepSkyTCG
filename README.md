@@ -9,8 +9,7 @@ Cette application fonctionne entierement hors ligne. Elle embarque le catalogue,
 Au lancement, l'application :
 
 - affiche le decor et les animations d'introduction existants ;
-- ouvre l'ecran de demarrage avec un unique bouton `Commencer` ;
-- enchaine vers le menu principal ;
+- affiche un accueil unique avec une grande carte `Ouvrir un pack`, la bibliotheque, les badges et un menu parametres ;
 - guide les nouveaux joueurs vers leur premier pack, leur bibliotheque puis leurs badges ;
 - permet d'ouvrir des packs localement ;
 - persiste la collection et le prochain tirage autorise ;
@@ -28,7 +27,7 @@ Au lancement, l'application :
 - `MainActivity` : point d'entree Android.
 - `DstcgApp` : facade stable qui instancie le shell Compose.
 - `app/` : orchestration des scenes, etat global et transitions visuelles.
-- `feature/start/` : ecran de demarrage et ViewModel du bouton `Commencer`.
+- `feature/home/` : accueil fusionne, carte pack, menu parametres et overlays associes.
 - `feature/library/` : lecture de la collection locale, bibliotheque et apercus.
 - `feature/packs/selection/` : choix d'extension, stock d'ouvertures, barre de recharge et lancement d'ouverture.
 - `feature/packs/opening/` : reveal du pack, navigation locale et plein ecran.
@@ -44,13 +43,12 @@ Au lancement, l'application :
 
 ## Flux utilisateur
 
-- Demarrage : animation d'introduction puis carte `Commencer`.
-- `Commencer -> menu principal` : transition visuelle conservee.
-- `Menu -> packs` : ouverture d'un booster local sans appel reseau.
-- `Menu -> packs -> bibliotheque -> badges` : premier parcours guide par coachmarks persistants, affiches apres stabilisation des transitions.
-- `Menu -> bibliotheque` : consultation de la collection persistante.
+- Demarrage : animation d'introduction, logo qui monte puis affichage de l'accueil.
+- `Accueil -> packs` : reutilisation de l'ancienne transition `Start -> Main menu`, puis ouverture d'un booster local sans appel reseau.
+- `Accueil -> packs -> bibliotheque -> badges` : premier parcours guide par coachmarks persistants, affiches apres stabilisation des transitions.
+- `Accueil -> bibliotheque` : consultation de la collection persistante.
 - Dans la bibliotheque, les cartes non obtenues gardent leur cadre et leurs informations visibles, mais leur illustration reste masquee jusqu'a la premiere obtention.
-- Retour Android depuis le menu principal : fermeture de l'activite.
+- Retour Android depuis l'accueil : fermeture de l'activite.
 
 Le standalone est mono-profil. Aucun ecran de login, de creation de compte, de compatibilite client/serveur ou de logout n'est present.
 
@@ -88,7 +86,7 @@ Le standalone conserve :
 - le masquage volontaire des illustrations des cartes non obtenues dans la grille de bibliotheque ;
 - le stock disponible et la recharge visible dans l'interface.
 
-La seule simplification fonctionnelle voulue au demarrage est le remplacement du login par le bouton `Commencer`.
+La simplification fonctionnelle voulue au demarrage reste l'absence complete de login, avec un accueil entierement offline centre sur l'ouverture de packs.
 
 Les sources creatives de reference restent dans `artwork/logo-concepts/` :
 
@@ -121,16 +119,16 @@ Commande de verification utilisee pour l'integration logo :
 
 La couverture actuelle verifie notamment :
 
-- `StartViewModel`
+- `HomeViewModel`
 - `ProgressRepository`
 - `NewPlayerOnboardingCoordinator`
 - `LocalPackEngine`
 - `CollectionRepository`
 - `PackRepository`
 - `PackViewModel`
-- le flux guide `menu -> packs -> bibliotheque -> badges`
-- les ecrans Compose du flux `Commencer`
-- le scenario offline `Commencer -> menu -> pack -> recharge -> bibliotheque`
+- le flux guide `accueil -> packs -> bibliotheque -> badges`
+- les ecrans Compose du nouvel accueil
+- le scenario offline `accueil -> pack -> recharge -> bibliotheque`
 
 La documentation du guidage des nouveaux joueurs est detaillee dans :
 

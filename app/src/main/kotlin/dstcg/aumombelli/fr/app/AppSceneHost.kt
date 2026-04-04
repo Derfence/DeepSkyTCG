@@ -35,6 +35,8 @@ import fr.aumombelli.dstcg.AppContainer
 import fr.aumombelli.dstcg.feature.badges.BadgeBookScreen
 import fr.aumombelli.dstcg.feature.badges.BadgeBookViewModel
 import fr.aumombelli.dstcg.feature.badges.BadgeUnlockCelebrationOverlay
+import fr.aumombelli.dstcg.feature.home.HomeScreen
+import fr.aumombelli.dstcg.feature.home.HomeViewModel
 import fr.aumombelli.dstcg.feature.library.LibraryScreen
 import fr.aumombelli.dstcg.feature.library.LibraryViewModel
 import fr.aumombelli.dstcg.feature.packs.opening.PackOpeningScreen
@@ -42,16 +44,12 @@ import fr.aumombelli.dstcg.feature.packs.opening.PackOpeningViewModel
 import fr.aumombelli.dstcg.feature.packs.selection.PackEvent
 import fr.aumombelli.dstcg.feature.packs.selection.PackSelectionScreen
 import fr.aumombelli.dstcg.feature.packs.selection.PackViewModel
-import fr.aumombelli.dstcg.feature.start.StartEvent
-import fr.aumombelli.dstcg.feature.start.StartScreen
-import fr.aumombelli.dstcg.feature.start.StartViewModel
 import fr.aumombelli.dstcg.ui.motion.AppScene
 import fr.aumombelli.dstcg.ui.motion.AppSkyBackdrop
 import fr.aumombelli.dstcg.ui.motion.BookPortalOverlay
 import fr.aumombelli.dstcg.ui.motion.ChestPortalOverlay
 import fr.aumombelli.dstcg.ui.motion.LaunchLogoMark
 import fr.aumombelli.dstcg.ui.motion.randomSkyBackdropVariant
-import fr.aumombelli.dstcg.ui.screen.MainMenuScreen
 import fr.aumombelli.dstcg.ui.viewmodel.DstcgViewModelFactory
 import kotlinx.coroutines.launch
 
@@ -65,15 +63,16 @@ internal fun AppSceneHost(
     val activity = LocalContext.current.findActivity()
     val skyVariant = remember { randomSkyBackdropVariant() }
     val density = LocalDensity.current
-    val startsAtMainMenu = launchConfig.scene == AppLaunchScene.MainMenu
     val sceneStateHolder = remember(launchConfig) {
         mutableStateOf(initialAppSceneUiState(launchConfig))
     }
     val sceneState = sceneStateHolder.value
 
-    val cameraTilt = remember(launchConfig) { Animatable(if (startsAtMainMenu) 1f else 0f) }
-    val mountainSkyBlend = remember(launchConfig) { Animatable(if (startsAtMainMenu) 1f else 0f) }
-    val horizonLights = remember(launchConfig) { Animatable(if (startsAtMainMenu) 0f else 1f) }
+    val cameraTilt = remember(launchConfig) { Animatable(0f) }
+    val mountainSkyBlend = remember(launchConfig) { Animatable(0f) }
+    val horizonLights = remember(launchConfig, skyVariant) {
+        Animatable(if (skyVariant.hasHorizonLights) 1f else 0f)
+    }
     val bookProgress = remember { Animatable(0f) }
     val bookOverlayAlpha = remember { Animatable(1f) }
     val chestProgress = remember { Animatable(0f) }
@@ -110,8 +109,8 @@ internal fun AppSceneHost(
         label = "app-launch-logo-lift",
     )
     val statusBarInsetPx = WindowInsets.statusBars.getTop(density).toFloat()
-    val launchLogoTargetTranslationY = if (sceneState.rootHeightPx > 0f && sceneState.startCardTopPx > 0f) {
-        (sceneState.startCardTopPx / 2f) - (sceneState.rootHeightPx / 2f) + (statusBarInsetPx * 0.18f)
+    val launchLogoTargetTranslationY = if (sceneState.rootHeightPx > 0f && sceneState.homeHeroCardTopPx > 0f) {
+        (sceneState.homeHeroCardTopPx / 2f) - (sceneState.rootHeightPx / 2f) + (statusBarInsetPx * 0.18f)
     } else {
         -(220f - statusBarInsetPx * 0.18f)
     }
@@ -123,8 +122,8 @@ internal fun AppSceneHost(
                 appContainer.packRepository.clearCurrentPackResult()
             }
             onboardingCoordinator.syncFromProgress()
-            if (launchConfig.scene == AppLaunchScene.MainMenu) {
-                sceneStateHolder.value = sceneStateHolder.value.showMenuContent()
+            if (launchConfig.scene == AppLaunchScene.Home) {
+                sceneStateHolder.value = sceneStateHolder.value.showHomeContent()
             }
         } else {
             onboardingCoordinator.syncFromProgress()
@@ -153,76 +152,57 @@ internal fun AppSceneHost(
         )
 
         when (sceneState.currentScene) {
-            AppScene.Start -> {
-                val startViewModel: StartViewModel = viewModel(
-                    key = "start",
+            AppScene.Home -> {
+                val homeViewModel: HomeViewModel = viewModel(
+                    key = "home",
                     factory = DstcgViewModelFactory {
-                        StartViewModel(
+                        HomeViewModel(
                             progressRepository = appContainer.progressRepository,
                         )
                     },
                 )
-                val uiState by startViewModel.uiState.collectAsState()
+                val uiState by homeViewModel.uiState.collectAsState()
 
-                LaunchedEffect(startViewModel) {
-                    startViewModel.events.collect { event ->
-                        when (event) {
-                            StartEvent.ReadyToEnterMenu -> {
-                                scope.launch {
-                                    onboardingCoordinator.syncFromProgress()
-                                    sceneStateHolder.value = sceneStateHolder.value.hideStartCard()
-                                    kotlinx.coroutines.delay(560)
-                                    transitions.animateStartToMenu()
-                                }
-                            }
-                        }
-                    }
-                }
-
-                StartScreen(
-                    state = uiState,
-                    onBegin = startViewModel::begin,
-                    onResetProgress = startViewModel::resetProgress,
-                    onCardTopChanged = { topPx ->
-                        sceneStateHolder.value = sceneStateHolder.value.withStartCardTop(topPx)
-                    },
-                    showBackground = false,
-                    contentVisible = sceneState.startCardVisible,
-                )
-            }
-
-            AppScene.MainMenu -> {
                 BackHandler(enabled = !sceneState.transitionLocked) {
                     activity?.finish()
                 }
 
-                MainMenuScreen(
+                HomeScreen(
+                    state = uiState,
                     onOpenPack = {
                         if (!sceneState.transitionLocked) {
                             scope.launch {
-                                onboardingCoordinator.onMenuOpenPackSelected()
-                                transitions.animateMenuToPackSelection()
+                                onboardingCoordinator.onHomeOpenPackSelected()
+                                transitions.animateHomeToPackSelection()
                             }
                         }
                     },
                     onOpenLibrary = {
-                        scope.launch {
-                            val shouldResumeBadgeCelebration = onboardingCoordinator.onLibraryOpened()
-                            if (shouldResumeBadgeCelebration) {
-                                sceneStateHolder.value = sceneStateHolder.value.resumePendingBadgeCelebration()
+                        if (!sceneState.transitionLocked) {
+                            scope.launch {
+                                val shouldResumeBadgeCelebration = onboardingCoordinator.onLibraryOpened()
+                                if (shouldResumeBadgeCelebration) {
+                                    sceneStateHolder.value = sceneStateHolder.value.resumePendingBadgeCelebration()
+                                }
+                                transitions.animateHomeToLibrary()
                             }
-                            transitions.animateMenuToLibrary()
                         }
                     },
                     onOpenBadgeBook = {
-                        scope.launch {
-                            onboardingCoordinator.onBadgeBookOpened()
-                            transitions.animateMenuToBadgeBook()
+                        if (!sceneState.transitionLocked) {
+                            scope.launch {
+                                onboardingCoordinator.onBadgeBookOpened()
+                                transitions.animateHomeToBadgeBook()
+                            }
                         }
                     },
+                    onResetProgress = homeViewModel::resetProgress,
                     showBackground = false,
-                    contentVisible = sceneState.menuContentVisible,
+                    contentVisible = sceneState.homeContentVisible,
                     interactionsEnabled = !sceneState.transitionLocked,
+                    onHeroCardTopChanged = { topPx ->
+                        sceneStateHolder.value = sceneStateHolder.value.withHomeHeroCardTop(topPx)
+                    },
                     onCoachmarkTargetBoundsChanged = { target, bounds ->
                         sceneStateHolder.value = sceneStateHolder.value.withCoachmarkTargetBounds(target, bounds)
                     },
@@ -248,7 +228,7 @@ internal fun AppSceneHost(
                 }
 
                 BackHandler(enabled = !sceneState.transitionLocked) {
-                    scope.launch { transitions.animateLibraryToMenu() }
+                    scope.launch { transitions.animateLibraryToHome() }
                 }
 
                 LibraryScreen(
@@ -280,7 +260,7 @@ internal fun AppSceneHost(
                 }
 
                 BackHandler(enabled = !sceneState.transitionLocked) {
-                    scope.launch { transitions.animateBadgeBookToMenu() }
+                    scope.launch { transitions.animateBadgeBookToHome() }
                 }
 
                 BadgeBookScreen(
@@ -338,7 +318,7 @@ internal fun AppSceneHost(
                         if (uiState.selectedExtensionId != null) {
                             packViewModel.clearExtensionSelection()
                         } else {
-                            scope.launch { transitions.animatePackSelectionToMenu() }
+                            scope.launch { transitions.animatePackSelectionToHome() }
                         }
                     }
                 } else {
@@ -383,21 +363,21 @@ internal fun AppSceneHost(
                             )
                         },
                     )
-                    val uiState by openingViewModel.uiState.collectAsState()
+                    val openingUiState by openingViewModel.uiState.collectAsState()
 
                     PackOpeningScreen(
-                        state = uiState,
+                        state = openingUiState,
                         initialBoosterBounds = sceneState.selectedPackRevealBounds,
                         dismissSignal = sceneState.packOpeningExitSignal,
                         onDone = {
-                            scope.launch { transitions.finishPackOpeningToMenu() }
+                            scope.launch { transitions.finishPackOpeningToHome() }
                         },
                     )
                 }
             }
         }
 
-        if (launchLogoAlpha > 0.01f && sceneState.currentScene == AppScene.Start) {
+        if (launchLogoAlpha > 0.01f) {
             LaunchLogoMark(
                 showWordmark = false,
                 emblemSize = 128.dp,
@@ -422,8 +402,8 @@ internal fun AppSceneHost(
             overlayAlpha = chestOverlayAlpha.value,
         )
 
-        val badgeCelebrationVisible = sceneState.currentScene == AppScene.MainMenu &&
-            sceneState.menuContentVisible &&
+        val badgeCelebrationVisible = sceneState.currentScene == AppScene.Home &&
+            sceneState.homeContentVisible &&
             sceneState.pendingBadgeCelebration.isNotEmpty() &&
             !sceneState.badgeCelebrationDeferred
 
@@ -443,7 +423,7 @@ internal fun AppSceneHost(
 
         BadgeUnlockCelebrationOverlay(
             badges = sceneState.pendingBadgeCelebration,
-            targetBounds = sceneState.coachmarkTargetBounds[NewPlayerOnboardingTarget.MenuBadges],
+            targetBounds = sceneState.coachmarkTargetBounds[NewPlayerOnboardingTarget.HomeBadges],
             visible = badgeCelebrationVisible,
             onFinished = transitions::completeBadgeCelebration,
             modifier = Modifier.fillMaxSize(),

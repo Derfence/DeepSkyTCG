@@ -31,7 +31,7 @@ class NewPlayerOnboardingCoordinatorTest {
         val coordinator = NewPlayerOnboardingCoordinator(progressGateway)
 
         coordinator.syncFromProgress()
-        coordinator.onMenuOpenPackSelected()
+        coordinator.onHomeOpenPackSelected()
         coordinator.onExtensionSelected()
         val shouldDeferBadgeCelebration = coordinator.onFirstPackOpened()
         val shouldResumeBadgeCelebration = coordinator.onLibraryOpened()
@@ -82,22 +82,22 @@ class NewPlayerOnboardingCoordinatorTest {
         }
         val coordinator = NewPlayerOnboardingCoordinator(progressGateway)
         val sceneState = AppSceneUiState(
-            currentScene = AppScene.MainMenu,
-            menuContentVisible = true,
+            currentScene = AppScene.Home,
+            homeContentVisible = true,
             coachmarkTargetBounds = mapOf(
-                NewPlayerOnboardingTarget.MenuBadges to Rect(10f, 20f, 120f, 72f),
+                NewPlayerOnboardingTarget.HomeBadges to Rect(10f, 20f, 120f, 72f),
             ),
         )
 
         coordinator.syncFromProgress()
 
         val hiddenCoachmark = coordinator.activeCoachmark(
-            currentScene = AppScene.MainMenu,
+            currentScene = AppScene.Home,
             sceneState = sceneState,
             badgeCelebrationVisible = true,
         )
         val visibleCoachmark = coordinator.activeCoachmark(
-            currentScene = AppScene.MainMenu,
+            currentScene = AppScene.Home,
             sceneState = sceneState,
             badgeCelebrationVisible = false,
         )
@@ -105,7 +105,7 @@ class NewPlayerOnboardingCoordinatorTest {
         assertNull(hiddenCoachmark)
         assertEquals(
             NewPlayerCoachmarkSpec(
-                target = NewPlayerOnboardingTarget.MenuBadges,
+                target = NewPlayerOnboardingTarget.HomeBadges,
                 title = "Badges d'astronome",
                 message = "Ton premier badge t'attend ici !",
             ),
@@ -126,11 +126,11 @@ class NewPlayerOnboardingCoordinatorTest {
         }
         val coordinator = NewPlayerOnboardingCoordinator(progressGateway)
         val hiddenSceneState = AppSceneUiState(
-            currentScene = AppScene.MainMenu,
-            menuContentVisible = true,
+            currentScene = AppScene.Home,
+            homeContentVisible = true,
             onboardingHintsVisible = false,
             coachmarkTargetBounds = mapOf(
-                NewPlayerOnboardingTarget.MenuOpenPack to Rect(10f, 20f, 120f, 72f),
+                NewPlayerOnboardingTarget.HomeOpenPack to Rect(10f, 20f, 120f, 72f),
             ),
         )
         val visibleSceneState = hiddenSceneState.copy(onboardingHintsVisible = true)
@@ -138,12 +138,12 @@ class NewPlayerOnboardingCoordinatorTest {
         coordinator.syncFromProgress()
 
         val hiddenCoachmark = coordinator.activeCoachmark(
-            currentScene = AppScene.MainMenu,
+            currentScene = AppScene.Home,
             sceneState = hiddenSceneState,
             badgeCelebrationVisible = false,
         )
         val visibleCoachmark = coordinator.activeCoachmark(
-            currentScene = AppScene.MainMenu,
+            currentScene = AppScene.Home,
             sceneState = visibleSceneState,
             badgeCelebrationVisible = false,
         )
@@ -151,7 +151,7 @@ class NewPlayerOnboardingCoordinatorTest {
         assertNull(hiddenCoachmark)
         assertEquals(
             NewPlayerCoachmarkSpec(
-                target = NewPlayerOnboardingTarget.MenuOpenPack,
+                target = NewPlayerOnboardingTarget.HomeOpenPack,
                 title = "Premières cartes",
                 message = "Commençons ta collection de cartes d'objets célestes !",
             ),

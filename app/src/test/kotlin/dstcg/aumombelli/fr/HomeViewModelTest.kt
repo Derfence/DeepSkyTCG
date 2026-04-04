@@ -1,10 +1,7 @@
 package fr.aumombelli.dstcg
 
-import fr.aumombelli.dstcg.feature.start.StartEvent
-import fr.aumombelli.dstcg.feature.start.StartViewModel
+import fr.aumombelli.dstcg.feature.home.HomeViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -13,7 +10,7 @@ import org.junit.Rule
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class StartViewModelTest {
+class HomeViewModelTest {
     @get:Rule
     val mainDispatcherRule = MainDispatcherRule()
 
@@ -23,26 +20,24 @@ class StartViewModelTest {
             progress = progress.copy(collection = ownedCollectionOf("ALP-001" to 1))
         }
 
-        val viewModel = StartViewModel(progressGateway)
+        val viewModel = HomeViewModel(progressGateway)
         advanceUntilIdle()
 
         assertEquals(1, progressGateway.loadCallCount.get())
         assertEquals(false, viewModel.uiState.value.isLoading)
-        assertEquals(false, viewModel.uiState.value.isTransitioningToMenu)
         assertNull(viewModel.uiState.value.errorMessage)
     }
 
     @Test
-    fun `begin emits navigation once local progress is ready`() = runTest {
-        val viewModel = StartViewModel(FakeProgressGateway())
+    fun `reset is ignored while loading`() = runTest {
+        val progressGateway = FakeProgressGateway()
+        val viewModel = HomeViewModel(progressGateway)
+
+        viewModel.resetProgress()
         advanceUntilIdle()
 
-        val event = async { viewModel.events.first() }
-        viewModel.begin()
-        advanceUntilIdle()
-
-        assertEquals(StartEvent.ReadyToEnterMenu, event.await())
-        assertEquals(true, viewModel.uiState.value.isTransitioningToMenu)
+        assertEquals(0, progressGateway.resetCallCount.get())
+        assertEquals(false, viewModel.uiState.value.isLoading)
     }
 
     @Test
@@ -51,7 +46,7 @@ class StartViewModelTest {
             loadFailure = IllegalStateException("Saved progression could not be read.")
         }
 
-        val viewModel = StartViewModel(progressGateway)
+        val viewModel = HomeViewModel(progressGateway)
         advanceUntilIdle()
 
         assertEquals(false, viewModel.uiState.value.isLoading)
@@ -64,7 +59,7 @@ class StartViewModelTest {
             recoveryNotice = "La progression locale a été sécurisée."
         }
 
-        val viewModel = StartViewModel(progressGateway)
+        val viewModel = HomeViewModel(progressGateway)
         advanceUntilIdle()
 
         assertEquals(false, viewModel.uiState.value.isLoading)
@@ -72,18 +67,19 @@ class StartViewModelTest {
     }
 
     @Test
-    fun `begin does not emit navigation while an error is present`() = runTest {
+    fun `reset is allowed even when an error is present`() = runTest {
         val progressGateway = FakeProgressGateway().apply {
             loadFailure = IllegalStateException("Saved progression could not be read.")
         }
 
-        val viewModel = StartViewModel(progressGateway)
+        val viewModel = HomeViewModel(progressGateway)
         advanceUntilIdle()
 
-        viewModel.begin()
+        viewModel.resetProgress()
         advanceUntilIdle()
 
-        assertEquals(false, viewModel.uiState.value.isTransitioningToMenu)
+        assertEquals(1, progressGateway.resetCallCount.get())
+        assertEquals("Saved progression could not be read.", viewModel.uiState.value.errorMessage)
     }
 
     @Test
@@ -92,7 +88,7 @@ class StartViewModelTest {
             progress = progress.copy(collection = ownedCollectionOf("ALP-001" to 3))
         }
 
-        val viewModel = StartViewModel(progressGateway)
+        val viewModel = HomeViewModel(progressGateway)
         advanceUntilIdle()
 
         viewModel.resetProgress()
@@ -109,7 +105,7 @@ class StartViewModelTest {
             compromisedMessage = "La progression locale semble corrompue."
         }
 
-        val viewModel = StartViewModel(progressGateway)
+        val viewModel = HomeViewModel(progressGateway)
         advanceUntilIdle()
 
         viewModel.resetProgress()

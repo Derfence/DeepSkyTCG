@@ -6,18 +6,17 @@ import fr.aumombelli.dstcg.ui.motion.AppScene
 import fr.aumombelli.dstcg.ui.motion.PackRevealBounds
 
 internal data class AppSceneUiState(
-    val currentScene: AppScene = AppScene.Start,
+    val currentScene: AppScene = AppScene.Home,
     val launchLogoVisible: Boolean = false,
     val launchLogoRaised: Boolean = false,
-    val startCardVisible: Boolean = false,
-    val menuContentVisible: Boolean = false,
+    val homeContentVisible: Boolean = false,
     val libraryContentVisible: Boolean = false,
     val badgeBookContentVisible: Boolean = false,
     val packSceneVisible: Boolean = false,
     val packExtensionListVisible: Boolean = false,
     val transitionLocked: Boolean = false,
     val rootHeightPx: Float = 0f,
-    val startCardTopPx: Float = 0f,
+    val homeHeroCardTopPx: Float = 0f,
     val libraryRefreshSignal: Int = 0,
     val badgeBookRefreshSignal: Int = 0,
     val packRefreshSignal: Int = 0,
@@ -32,27 +31,23 @@ internal data class AppSceneUiState(
 
 internal fun AppSceneUiState.withRootHeight(heightPx: Float): AppSceneUiState = copy(rootHeightPx = heightPx)
 
-internal fun AppSceneUiState.withStartCardTop(topPx: Float): AppSceneUiState = copy(startCardTopPx = topPx)
+internal fun AppSceneUiState.withHomeHeroCardTop(topPx: Float): AppSceneUiState = copy(homeHeroCardTopPx = topPx)
 
 internal fun AppSceneUiState.resetLaunchSequence(): AppSceneUiState = copy(
     launchLogoVisible = false,
     launchLogoRaised = false,
-    startCardVisible = false,
+    homeContentVisible = false,
 )
 
 internal fun AppSceneUiState.showLaunchLogo(): AppSceneUiState = copy(launchLogoVisible = true)
 
 internal fun AppSceneUiState.raiseLaunchLogo(): AppSceneUiState = copy(launchLogoRaised = true)
 
-internal fun AppSceneUiState.showStartCard(): AppSceneUiState = copy(startCardVisible = true)
-
-internal fun AppSceneUiState.hideStartCard(): AppSceneUiState = copy(startCardVisible = false)
-
 internal fun AppSceneUiState.hideLaunchLogo(): AppSceneUiState = copy(launchLogoVisible = false)
 
-internal fun AppSceneUiState.hideMenuContent(): AppSceneUiState = copy(menuContentVisible = false)
+internal fun AppSceneUiState.hideHomeContent(): AppSceneUiState = copy(homeContentVisible = false)
 
-internal fun AppSceneUiState.showMenuContent(): AppSceneUiState = copy(menuContentVisible = true)
+internal fun AppSceneUiState.showHomeContent(): AppSceneUiState = copy(homeContentVisible = true)
 
 internal fun AppSceneUiState.hideLibraryContent(): AppSceneUiState = copy(libraryContentVisible = false)
 
@@ -84,10 +79,10 @@ internal fun AppSceneUiState.showOnboardingHints(): AppSceneUiState = copy(onboa
 
 internal fun AppSceneUiState.hideOnboardingHints(): AppSceneUiState = copy(onboardingHintsVisible = false)
 
-internal fun AppSceneUiState.enterMainMenu(): AppSceneUiState = copy(currentScene = AppScene.MainMenu)
+internal fun AppSceneUiState.enterHome(): AppSceneUiState = copy(currentScene = AppScene.Home)
 
 internal fun AppSceneUiState.prepareLibraryEntry(nextLibraryRefreshSignal: Int): AppSceneUiState = copy(
-    menuContentVisible = false,
+    homeContentVisible = false,
     libraryContentVisible = false,
     libraryRefreshSignal = nextLibraryRefreshSignal,
 )
@@ -95,7 +90,7 @@ internal fun AppSceneUiState.prepareLibraryEntry(nextLibraryRefreshSignal: Int):
 internal fun AppSceneUiState.enterLibrary(): AppSceneUiState = copy(currentScene = AppScene.Library)
 
 internal fun AppSceneUiState.prepareBadgeBookEntry(nextBadgeBookRefreshSignal: Int): AppSceneUiState = copy(
-    menuContentVisible = false,
+    homeContentVisible = false,
     badgeBookContentVisible = false,
     badgeBookRefreshSignal = nextBadgeBookRefreshSignal,
 )
@@ -104,7 +99,7 @@ internal fun AppSceneUiState.enterBadgeBook(): AppSceneUiState = copy(currentSce
 
 internal fun AppSceneUiState.preparePackSelection(nextPackRefreshSignal: Int): AppSceneUiState = copy(
     currentScene = AppScene.PackSelection,
-    menuContentVisible = false,
+    homeContentVisible = false,
     packSceneVisible = false,
     packExtensionListVisible = false,
     packRefreshSignal = nextPackRefreshSignal,
@@ -113,8 +108,10 @@ internal fun AppSceneUiState.preparePackSelection(nextPackRefreshSignal: Int): A
     packOpeningExitSignal = 0,
 )
 
-internal fun AppSceneUiState.switchPackSelectionToMenu(): AppSceneUiState = copy(
-    currentScene = AppScene.MainMenu,
+internal fun AppSceneUiState.switchPackSelectionToHome(): AppSceneUiState = copy(
+    currentScene = AppScene.Home,
+    launchLogoVisible = true,
+    launchLogoRaised = true,
     selectedPackRevealBounds = null,
     packOpeningExitSignal = 0,
 )
@@ -126,17 +123,19 @@ internal fun AppSceneUiState.enterPackOpening(): AppSceneUiState = copy(
     packOpeningExitSignal = 0,
 )
 
-internal fun AppSceneUiState.preparePackOpeningReturnToMenu(): AppSceneUiState = copy(
-    currentScene = AppScene.MainMenu,
-    menuContentVisible = false,
+internal fun AppSceneUiState.preparePackOpeningReturnToHome(): AppSceneUiState = copy(
+    currentScene = AppScene.Home,
+    launchLogoVisible = true,
+    launchLogoRaised = true,
+    homeContentVisible = false,
     packSceneVisible = false,
     packExtensionListVisible = false,
     selectedPackRevealBounds = null,
     packOpeningExitSignal = 0,
 )
 
-internal fun AppSceneUiState.finishPackOpeningToMenu(): AppSceneUiState = preparePackOpeningReturnToMenu().copy(
-    menuContentVisible = true,
+internal fun AppSceneUiState.finishPackOpeningToHome(): AppSceneUiState = preparePackOpeningReturnToHome().copy(
+    homeContentVisible = true,
 )
 
 internal fun AppSceneUiState.withPackRevealBounds(bounds: PackRevealBounds?): AppSceneUiState =
