@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1578" width="900" height="1578">
+  <g id="observatory-v2">
+    <g id="platform">
+      <polygon points="420,1106 666,1106 716,1132 376,1132" fill="#060a12"/>
+    </g>
+
+    <g id="service-annex">
+      <polygon points="392,1056 460,1032 518,1050 518,1100 392,1100" fill="#0b1019" opacity="0.95"/>
+      <path d="M460 1032 L518 1050" stroke="#4a596e" stroke-opacity="0.42" stroke-width="3"/>
+    </g>
+
+    <g id="main-building">
+      <polygon points="498,980 614,980 662,1006 662,1100 498,1100" fill="#131d2b"/>
+      <polygon points="614,980 688,1006 688,1100 662,1100 662,1006" fill="#0d1521"/>
+      <ellipse cx="556" cy="976" rx="58" ry="22" fill="#182436"/>
+      <ellipse cx="651" cy="984" rx="37" ry="18" fill="#111a27"/>
+    </g>
+
+    <g id="dome">
+      <path d="M474 907 A80 77 0 0 1 634 907 L474 907 Z" fill="#1e2c3f"/>
+      <polygon points="582,856 668,896 646,934 572,900" fill="#101824"/>
+      <path d="M482 907 A72 69 0 0 1 626 907" fill="none" stroke="#e3bf70" stroke-opacity="0.78" stroke-width="4"/>
+    </g>
+
+    <g id="telescope">
+      <polygon points="612,922 730,876 754,894 632,938" fill="#283b56"/>
+      <polygon points="740,870 798,848 810,864 752,890" fill="#1e2e45"/>
+    </g>
+
+    <g id="windows">
+      <rect x="542" y="1016" width="12" height="52" fill="#eebe68" fill-opacity="0.76"/>
+      <rect x="572" y="1016" width="12" height="52" fill="#eebe68" fill-opacity="0.76"/>
+    </g>
+  </g>
+</svg>

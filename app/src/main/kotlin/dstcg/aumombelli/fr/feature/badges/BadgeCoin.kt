@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.width
 import fr.aumombelli.dstcg.performance.LocalAppPerformanceProfile
 import fr.aumombelli.dstcg.ui.component.ExtensionLogoMark
+import fr.aumombelli.dstcg.ui.motion.BrandLogoVariant
 import fr.aumombelli.dstcg.ui.motion.LaunchLogoMark
 import fr.aumombelli.dstcg.ui.component.TwinklingStarsOverlay
 import fr.aumombelli.dstcg.ui.theme.SkyQualityPalette
@@ -259,7 +260,7 @@ private fun BadgeCenterMark(
 ) {
     if (badge.requirementType == BadgeRequirementType.FirstPackOpened) {
         LaunchLogoMark(
-            showWordmark = false,
+            variant = BrandLogoVariant.Badge17,
             emblemSize = logoSize,
             modifier = modifier,
         )

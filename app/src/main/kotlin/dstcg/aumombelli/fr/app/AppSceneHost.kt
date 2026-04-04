@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -46,9 +47,12 @@ import fr.aumombelli.dstcg.feature.packs.selection.PackSelectionScreen
 import fr.aumombelli.dstcg.feature.packs.selection.PackViewModel
 import fr.aumombelli.dstcg.ui.motion.AppScene
 import fr.aumombelli.dstcg.ui.motion.AppSkyBackdrop
+import fr.aumombelli.dstcg.ui.motion.BrandLogoVariant
 import fr.aumombelli.dstcg.ui.motion.BookPortalOverlay
 import fr.aumombelli.dstcg.ui.motion.ChestPortalOverlay
 import fr.aumombelli.dstcg.ui.motion.LaunchLogoMark
+import fr.aumombelli.dstcg.ui.motion.brandLogoLayoutSpec
+import fr.aumombelli.dstcg.ui.motion.homeLogoVariantFor
 import fr.aumombelli.dstcg.ui.motion.randomSkyBackdropVariant
 import fr.aumombelli.dstcg.ui.viewmodel.DstcgViewModelFactory
 import kotlinx.coroutines.launch
@@ -108,11 +112,28 @@ internal fun AppSceneHost(
         animationSpec = tween(durationMillis = 980, easing = FastOutSlowInEasing),
         label = "app-launch-logo-lift",
     )
+    val homeLockupAlpha by animateFloatAsState(
+        targetValue = if (sceneState.currentScene == AppScene.Home && sceneState.homeContentVisible) 1f else 0f,
+        animationSpec = tween(durationMillis = 420, easing = FastOutSlowInEasing),
+        label = "home-lockup-alpha",
+    )
+    val homeLockupRevealProgress by animateFloatAsState(
+        targetValue = if (sceneState.currentScene == AppScene.Home && sceneState.homeContentVisible) 1f else 0f,
+        animationSpec = tween(durationMillis = 520, easing = FastOutSlowInEasing),
+        label = "home-lockup-reveal",
+    )
     val statusBarInsetPx = WindowInsets.statusBars.getTop(density).toFloat()
+    val launchBadgeBaseSize = 128.dp
+    val launchBadgeLandingSize = launchBadgeBaseSize * 0.88f
     val launchLogoTargetTranslationY = if (sceneState.rootHeightPx > 0f && sceneState.homeHeroCardTopPx > 0f) {
         (sceneState.homeHeroCardTopPx / 2f) - (sceneState.rootHeightPx / 2f) + (statusBarInsetPx * 0.18f)
     } else {
         -(220f - statusBarInsetPx * 0.18f)
+    }
+    val homeLogoVariant = remember(skyVariant) { homeLogoVariantFor(skyVariant) }
+    val homeLogoLayoutSpec = remember(homeLogoVariant) { brandLogoLayoutSpec(homeLogoVariant) }
+    val homeLockupBadgeCenterOffsetPx = with(density) {
+        (launchBadgeLandingSize * homeLogoLayoutSpec.badgeCenterYOffsetMultiplierFromBadgeSize).toPx()
     }
 
     LaunchedEffect(launchConfig) {
@@ -377,10 +398,29 @@ internal fun AppSceneHost(
             }
         }
 
+        if (homeLockupAlpha > 0.01f) {
+            LaunchLogoMark(
+                variant = homeLogoVariant,
+                emblemSize = launchBadgeLandingSize,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .graphicsLayer {
+                        alpha = homeLockupAlpha
+                        translationY = launchLogoTargetTranslationY + homeLockupBadgeCenterOffsetPx
+                        transformOrigin = TransformOrigin(
+                            pivotFractionX = homeLogoLayoutSpec.badgeCenterFractionX,
+                            pivotFractionY = homeLogoLayoutSpec.badgeCenterFractionY,
+                        )
+                        scaleX = 0.99f + homeLockupRevealProgress * 0.01f
+                    },
+                testTag = "home-logo-lockup",
+            )
+        }
+
         if (launchLogoAlpha > 0.01f) {
             LaunchLogoMark(
-                showWordmark = false,
-                emblemSize = 128.dp,
+                variant = BrandLogoVariant.Badge17,
+                emblemSize = launchBadgeBaseSize,
                 modifier = Modifier
                     .align(Alignment.Center)
                     .graphicsLayer {
@@ -389,6 +429,7 @@ internal fun AppSceneHost(
                         scaleX = 1f - 0.12f * launchLogoLiftProgress
                         scaleY = 1f - 0.12f * launchLogoLiftProgress
                     },
+                testTag = "app-launch-logo",
             )
         }
 

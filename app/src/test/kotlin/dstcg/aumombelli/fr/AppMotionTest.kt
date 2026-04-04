@@ -1,13 +1,15 @@
 package fr.aumombelli.dstcg
 
+import fr.aumombelli.dstcg.ui.motion.BurstParticleMotion
+import fr.aumombelli.dstcg.ui.motion.BrandLogoVariant
 import fr.aumombelli.dstcg.ui.motion.ExtensionAnimationStyle
 import fr.aumombelli.dstcg.ui.motion.SkyBackdropVariant
-import fr.aumombelli.dstcg.ui.motion.BurstParticleMotion
 import fr.aumombelli.dstcg.ui.motion.buildBurstParticleSpecs
 import fr.aumombelli.dstcg.ui.motion.burstRarityLabelsUpTo
 import fr.aumombelli.dstcg.ui.motion.calculateBookPose
 import fr.aumombelli.dstcg.ui.motion.extensionAnimationSpec
 import fr.aumombelli.dstcg.ui.motion.extensionPointReveal
+import fr.aumombelli.dstcg.ui.motion.homeLogoVariantFor
 import fr.aumombelli.dstcg.ui.motion.pickSkyBackdropVariant
 import fr.aumombelli.dstcg.ui.motion.projectExtensionPattern
 import fr.aumombelli.dstcg.ui.motion.summarizePackOpening
@@ -57,6 +59,14 @@ class AppMotionTest {
         assertEquals(SkyBackdropVariant.City, pickSkyBackdropVariant(0))
         assertEquals(SkyBackdropVariant.City, pickSkyBackdropVariant(4))
         assertEquals(SkyBackdropVariant.Mountain, pickSkyBackdropVariant(3))
+    }
+
+    @Test
+    fun `home lockup variant always resolves to lockup 19`() {
+        assertEquals(BrandLogoVariant.Lockup19, homeLogoVariantFor(SkyBackdropVariant.City))
+        assertEquals(BrandLogoVariant.Lockup19, homeLogoVariantFor(SkyBackdropVariant.Suburban))
+        assertEquals(BrandLogoVariant.Lockup19, homeLogoVariantFor(SkyBackdropVariant.Rural))
+        assertEquals(BrandLogoVariant.Lockup19, homeLogoVariantFor(SkyBackdropVariant.Mountain))
     }
 
     @Test

@@ -39,8 +39,6 @@ internal fun initialAppSceneUiState(launchConfig: AppLaunchConfig): AppSceneUiSt
     AppLaunchScene.Start -> AppSceneUiState()
     AppLaunchScene.Home -> AppSceneUiState(
         currentScene = AppScene.Home,
-        launchLogoVisible = true,
-        launchLogoRaised = true,
         homeContentVisible = !launchConfig.resetProgressOnLaunch,
     )
 }

@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1578" width="900" height="1578">
+  <g id="observatory-v3">
+    <g id="terrace">
+      <polygon points="380,1093 688,1093 728,1119 346,1119" fill="#070a11"/>
+      <polygon points="390,1063 666,1063 688,1093 380,1093" fill="#0a1019"/>
+      <g stroke="#566477" stroke-opacity="0.42" stroke-width="2">
+        <line x1="408" y1="1059" x2="408" y2="1087"/>
+        <line x1="430" y1="1059" x2="430" y2="1087"/>
+        <line x1="452" y1="1059" x2="452" y2="1087"/>
+        <line x1="474" y1="1059" x2="474" y2="1087"/>
+        <line x1="496" y1="1059" x2="496" y2="1087"/>
+        <line x1="518" y1="1059" x2="518" y2="1087"/>
+        <line x1="540" y1="1059" x2="540" y2="1087"/>
+        <line x1="562" y1="1059" x2="562" y2="1087"/>
+        <line x1="584" y1="1059" x2="584" y2="1087"/>
+        <line x1="606" y1="1059" x2="606" y2="1087"/>
+        <line x1="628" y1="1059" x2="628" y2="1087"/>
+      </g>
+      <path d="M408 1059 H648" stroke="#566477" stroke-opacity="0.48" stroke-width="3"/>
+      <polygon points="346,1119 420,1119 498,1163 424,1163" fill="#090d14"/>
+    </g>
+
+    <g id="building">
+      <rect x="524" y="961" width="128" height="102" fill="#151f2f"/>
+      <polygon points="652,961 698,983 698,1067 652,1063" fill="#0e1622"/>
+      <ellipse cx="588" cy="956" rx="64" ry="21" fill="#192538"/>
+      <ellipse cx="675" cy="964" rx="23" ry="16" fill="#121b29"/>
+    </g>
+
+    <g id="dome">
+      <path d="M490 900 A92 89 0 0 1 674 900 L490 900 Z" fill="#1f2d40"/>
+      <polygon points="606,833 698,877 674,915 594,877" fill="#0e1622"/>
+      <path d="M498 900 A84 81 0 0 1 666 900" fill="none" stroke="#e5c170" stroke-opacity="0.8" stroke-width="4"/>
+    </g>
+
+    <g id="lights">
+      <rect x="588" y="975" width="14" height="76" fill="#eebe68" fill-opacity="0.8"/>
+      <rect x="622" y="1009" width="12" height="46" fill="#d2a558" fill-opacity="0.7"/>
+    </g>
+  </g>
+</svg>

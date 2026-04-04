@@ -110,8 +110,6 @@ internal fun AppSceneUiState.preparePackSelection(nextPackRefreshSignal: Int): A
 
 internal fun AppSceneUiState.switchPackSelectionToHome(): AppSceneUiState = copy(
     currentScene = AppScene.Home,
-    launchLogoVisible = true,
-    launchLogoRaised = true,
     selectedPackRevealBounds = null,
     packOpeningExitSignal = 0,
 )
@@ -125,8 +123,6 @@ internal fun AppSceneUiState.enterPackOpening(): AppSceneUiState = copy(
 
 internal fun AppSceneUiState.preparePackOpeningReturnToHome(): AppSceneUiState = copy(
     currentScene = AppScene.Home,
-    launchLogoVisible = true,
-    launchLogoRaised = true,
     homeContentVisible = false,
     packSceneVisible = false,
     packExtensionListVisible = false,

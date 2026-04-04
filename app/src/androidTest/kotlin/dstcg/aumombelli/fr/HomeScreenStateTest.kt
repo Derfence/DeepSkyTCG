@@ -6,6 +6,7 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -68,6 +69,7 @@ class HomeScreenStateTest {
         composeRule.onNodeWithTag("home-settings-about").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("home-about-sheet").assertIsDisplayed()
+        composeRule.onNodeWithTag("home-about-sheet-version").assertTextContains("v1.1.0")
     }
 
     @Test

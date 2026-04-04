@@ -27,6 +27,7 @@ class HomeScreenLaunchTest {
     fun home_screen_shows_logo_and_primary_actions_on_launch() {
         waitForHomeScreen()
 
+        composeRule.onNodeWithTag("home-logo-lockup").assertIsDisplayed()
         composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
         composeRule.onNodeWithTag("home-library").assertIsDisplayed()
         composeRule.onNodeWithTag("home-badges").assertIsDisplayed()
@@ -47,6 +48,16 @@ class HomeScreenLaunchTest {
                 .isNotEmpty()
         }
         composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithTag("home-logo-lockup")
+                .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                .isNotEmpty()
+        }
+        composeRule.waitUntil(timeoutMillis = 10_000) {
+            composeRule.onAllNodesWithTag("app-launch-logo")
+                .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                .isEmpty()
+        }
     }
 
     @After

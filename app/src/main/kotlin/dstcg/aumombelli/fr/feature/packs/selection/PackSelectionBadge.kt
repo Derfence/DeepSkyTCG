@@ -15,6 +15,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import fr.aumombelli.dstcg.ui.motion.BrandLogoVariant
 import fr.aumombelli.dstcg.ui.motion.ExtensionAnimationStyle
 import fr.aumombelli.dstcg.ui.motion.LaunchLogoMark
 import fr.aumombelli.dstcg.ui.motion.extensionAnimationSpec
@@ -122,7 +123,7 @@ internal fun ExtensionAnimatedBadge(
             }
         } else {
             LaunchLogoMark(
-                showWordmark = false,
+                variant = BrandLogoVariant.Badge17,
                 emblemSize = 42.dp,
                 modifier = Modifier.graphicsLayer {
                     alpha = emblemAlpha.value

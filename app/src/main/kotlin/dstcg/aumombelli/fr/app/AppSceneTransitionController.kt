@@ -62,6 +62,8 @@ internal class AppSceneTransitionController(
         writeState(readState().raiseLaunchLogo())
         delay(720)
         writeState(readState().showHomeContent())
+        delay(260)
+        writeState(readState().hideLaunchLogo())
         revealOnboardingHintsAfterTransition()
     }
 
@@ -167,7 +169,7 @@ internal class AppSceneTransitionController(
         bookProgress.snapTo(1f)
         bookOverlayAlpha.snapTo(0f)
         bookOverlayAlpha.animateTo(1f, animationSpec = tween(durationMillis = 960, easing = FastOutSlowInEasing))
-        writeState(readState().enterHome().showLaunchLogo().raiseLaunchLogo())
+        writeState(readState().enterHome())
         bookProgress.animateTo(0f, animationSpec = tween(durationMillis = 980, easing = FastOutSlowInEasing))
         val nextState = readState().showHomeContent()
         writeState(
@@ -193,7 +195,7 @@ internal class AppSceneTransitionController(
         chestProgress.snapTo(1f)
         chestOverlayAlpha.snapTo(0f)
         chestOverlayAlpha.animateTo(1f, animationSpec = tween(durationMillis = 960, easing = FastOutSlowInEasing))
-        writeState(readState().enterHome().showLaunchLogo().raiseLaunchLogo())
+        writeState(readState().enterHome())
         chestProgress.animateTo(0f, animationSpec = tween(durationMillis = 980, easing = FastOutSlowInEasing))
         val nextState = readState().showHomeContent()
         writeState(
