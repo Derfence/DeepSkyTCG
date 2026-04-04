@@ -33,7 +33,7 @@ class StartScreenTest {
                 .isNotEmpty()
         }
         composeRule.onNodeWithTag("start-footer").assertIsDisplayed()
-        composeRule.onNodeWithTag("start-footer-version").assertTextContains("v0.9.0")
+        composeRule.onNodeWithTag("start-footer-version").assertTextContains("v1.0")
         composeRule.onNodeWithTag("start-about-trigger").assertIsDisplayed()
     }
 

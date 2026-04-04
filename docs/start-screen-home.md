@@ -5,7 +5,7 @@ La scene `Start` affiche maintenant :
 - aucun message de progression locale quand le chargement est sain ou seulement recupere ;
 - un bouton `Réinitialiser la bibliothèque` toujours visible ;
 - une confirmation avant reset avec validation activee apres 2 secondes ;
-- un footer avec la version `v0.9.0` a gauche ;
+- un footer avec la version `v1.0` a gauche ;
 - une zone `à propos` au centre ouvrant un panneau de credits.
 
 ## Reset
