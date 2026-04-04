@@ -5,3 +5,6 @@ build/
 app/build/
 local.properties
 *.hprof
+__pycache__/
+*.pyc
+.codex

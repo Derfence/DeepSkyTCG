@@ -1,0 +1,122 @@
+package fr.aumombelli.dstcg.data
+
+import android.content.Context
+import fr.aumombelli.dstcg.model.CardVariant
+import fr.aumombelli.dstcg.model.DrawPackResponse
+import fr.aumombelli.dstcg.model.PackCard
+import fr.aumombelli.dstcg.model.WeightedCode
+import fr.aumombelli.dstcg.model.requireFinishDefinition
+import fr.aumombelli.dstcg.model.requireSkyQualityDefinition
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+
+class PackCooldownException(
+    val retryAt: String,
+) : Exception("Un nouveau pack n'est pas encore disponible.")
+
+data class StandaloneGameSettings(
+    val cardsPerPack: Int = 5,
+    val drawCooldown: Duration = DEFAULT_DRAW_COOLDOWN,
+    val maxStoredDraws: Int = DEFAULT_MAX_STORED_DRAWS,
+    val timeSource: TrustedTimeSource = ClockTrustedTimeSource(Clock.systemUTC()),
+    val entropySource: EntropySource = RandomEntropySource(kotlin.random.Random.Default),
+) {
+    companion object {
+        fun offlineDefault(context: Context): StandaloneGameSettings = StandaloneGameSettings(
+            timeSource = AndroidTrustedTimeSource(context),
+            entropySource = SecureEntropySource(),
+        )
+    }
+}
+
+class LocalPackEngine(
+    private val catalogRepository: CatalogGateway,
+    private val settings: StandaloneGameSettings,
+) {
+    suspend fun drawPack(
+        extensionId: String,
+        availableDrawCount: Int,
+        nextChargeAt: String?,
+        now: Instant,
+    ): DrawPackResponse {
+        val normalizedChargeState = normalizePackChargeState(
+            availableDrawCount = availableDrawCount,
+            nextChargeAt = nextChargeAt,
+            now = now,
+            drawCooldown = settings.drawCooldown,
+            maxStoredDraws = settings.maxStoredDraws,
+        )
+        if (normalizedChargeState.availableDrawCount == 0) {
+            val retryAt = checkNotNull(normalizedChargeState.nextChargeAt) {
+                "Un tirage verrouille doit exposer une heure de recharge suivante."
+            }
+            throw PackCooldownException(retryAt.toString())
+        }
+        val updatedChargeState = consumePackCharge(
+            normalizedState = normalizedChargeState,
+            now = now,
+            drawCooldown = settings.drawCooldown,
+            maxStoredDraws = settings.maxStoredDraws,
+        )
+
+        val cards = catalogRepository.loadCards().filter { it.extensionId == extensionId }
+        if (cards.isEmpty()) {
+            throw IllegalStateException("Aucune carte n'a ete trouvee pour cette extension.")
+        }
+        val variantProfilesById = catalogRepository.loadVariantProfiles().associateBy { it.id }
+        val drawnAt = now.toString()
+        val drawnCards = List(settings.cardsPerPack) {
+            val definition = pickWeighted(cards)
+            val variantProfile = checkNotNull(variantProfilesById[definition.variantProfileId]) {
+                "Profil de variante inconnu '${definition.variantProfileId}' pour la carte '${definition.id}'."
+            }
+            val skyQuality = variantProfile.requireSkyQualityDefinition(
+                pickWeightedCode(variantProfile.skyQualityWeights),
+            )
+            val finish = variantProfile.requireFinishDefinition(
+                pickWeightedCode(variantProfile.finishWeights),
+            )
+            PackCard(
+                cardId = definition.id,
+                name = definition.name,
+                rarityLabel = definition.rarityLabel,
+                imageRef = definition.imageRef,
+                variant = CardVariant(
+                    skyQuality = skyQuality.code,
+                    skyQualityLabel = skyQuality.label,
+                    finish = finish.code,
+                    finishLabel = finish.label,
+                    isHolographic = finish.isHolographic,
+                ),
+            )
+        }
+
+        return DrawPackResponse(
+            extensionId = extensionId,
+            drawnAt = drawnAt,
+            availableDrawCount = updatedChargeState.availableDrawCount,
+            nextChargeAt = updatedChargeState.nextChargeAt?.toString(),
+            cards = drawnCards,
+        )
+    }
+
+    private fun <T> pickWeighted(entries: List<T>, weightOf: (T) -> Int): T {
+        val totalWeight = entries.sumOf(weightOf)
+        require(totalWeight > 0) { "Les poids doivent etre strictement positifs." }
+        var cursor = settings.entropySource.nextInt(totalWeight)
+        for (entry in entries) {
+            cursor -= weightOf(entry)
+            if (cursor < 0) {
+                return entry
+            }
+        }
+        return entries.last()
+    }
+
+    private fun pickWeighted(cards: List<fr.aumombelli.dstcg.model.CardDefinition>) =
+        pickWeighted(cards) { it.drawWeight }
+
+    private fun pickWeightedCode(options: List<WeightedCode>): String =
+        pickWeighted(options) { it.weight }.code
+}

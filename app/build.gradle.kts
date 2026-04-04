@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "fr.aumombelli.gatcha"
+    namespace = "fr.aumombelli.dstcg"
     buildToolsVersion = "36.1.0"
 
     compileSdk {
@@ -16,7 +16,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "fr.aumombelli.gatcha"
+        applicationId = "fr.aumombelli.dstcg"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
@@ -27,11 +27,18 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
             )
+        }
+        create("benchmark") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            isDebuggable = false
         }
     }
 
@@ -65,10 +72,12 @@ dependencies {
     androidTestImplementation(composeBom)
 
     implementation("androidx.core:core-ktx:1.15.0")
+    implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.activity:activity-compose:1.9.3")
+    implementation("androidx.profileinstaller:profileinstaller:1.4.1")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.foundation:foundation")
@@ -81,12 +90,15 @@ dependencies {
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.14")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0")
     testImplementation("androidx.arch.core:core-testing:2.2.0")
 
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+    androidTestImplementation("androidx.test:core:1.7.0")
+    androidTestImplementation("androidx.test:runner:1.7.0")
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
 }

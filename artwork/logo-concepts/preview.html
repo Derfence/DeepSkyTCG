@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deep Sky TCG • Propositions de logo</title>
+  <style>
+    :root {
+      --midnight: #0c1424;
+      --void: #06080d;
+      --aurora: #68e1d2;
+      --ember: #f6b73c;
+      --frost: #eaf3ff;
+      --mist: #9cb3c9;
+      --panel: rgba(10, 17, 29, 0.84);
+      --line: rgba(234, 243, 255, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--frost);
+      font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(104, 225, 210, 0.18), transparent 28%),
+        radial-gradient(circle at top right, rgba(246, 183, 60, 0.15), transparent 24%),
+        linear-gradient(180deg, #132540 0%, var(--midnight) 44%, var(--void) 100%);
+    }
+
+    .shell {
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 56px 28px 64px;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      margin-bottom: 18px;
+      padding: 8px 14px;
+      border: 1px solid rgba(104, 225, 210, 0.26);
+      border-radius: 999px;
+      color: var(--aurora);
+      letter-spacing: 0.18em;
+      font-size: 12px;
+      text-transform: uppercase;
+      background: rgba(8, 14, 24, 0.45);
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      font-family: "Optima", "Avenir Next", sans-serif;
+      font-size: clamp(38px, 5vw, 72px);
+      line-height: 0.98;
+      letter-spacing: 0.03em;
+    }
+
+    .intro {
+      max-width: 760px;
+      margin: 0 0 34px;
+      color: var(--mist);
+      font-size: 18px;
+      line-height: 1.6;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 22px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01)),
+        var(--panel);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 24px 60px rgba(3, 7, 16, 0.38);
+    }
+
+    .media {
+      display: grid;
+      place-items: center;
+      aspect-ratio: 1 / 1;
+      padding: 26px;
+      background:
+        radial-gradient(circle at 50% 18%, rgba(104, 225, 210, 0.16), transparent 32%),
+        radial-gradient(circle at 82% 20%, rgba(246, 183, 60, 0.18), transparent 18%),
+        linear-gradient(180deg, rgba(14, 23, 39, 0.95), rgba(6, 8, 13, 0.98));
+    }
+
+    .media img {
+      width: 100%;
+      max-width: 360px;
+      height: auto;
+      display: block;
+    }
+
+    .content {
+      padding: 22px 22px 24px;
+    }
+
+    .kicker {
+      margin: 0 0 10px;
+      color: var(--aurora);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 24px;
+      line-height: 1.1;
+    }
+
+    p {
+      margin: 0;
+      color: var(--mist);
+      line-height: 1.55;
+    }
+
+    .recommendation {
+      margin-top: 28px;
+      padding: 20px 22px;
+      border-radius: 24px;
+      border: 1px solid rgba(246, 183, 60, 0.18);
+      background: linear-gradient(135deg, rgba(246, 183, 60, 0.12), rgba(104, 225, 210, 0.06));
+      color: var(--frost);
+    }
+
+    .recommendation strong {
+      color: #ffe4aa;
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="eyebrow">Deep Sky Trading Card Game</div>
+    <h1>Propositions de logo</h1>
+    <p class="intro">
+      Quatre pistes construites a partir de la palette et du motif deja presents dans l'application :
+      ciel profond, lueur aurora, accent or, etoile centrale et lecture plus ou moins “TCG”.
+    </p>
+
+    <section class="grid">
+      <article class="card">
+        <div class="media">
+          <img src="./01-round-badge-border.svg" alt="Logo rond avec bordure">
+        </div>
+        <div class="content">
+          <div class="kicker">Rond • Bordure • Sans nom</div>
+          <h2>Badge Celeste</h2>
+          <p>La version la plus robuste pour une icone Android. Le contour dore donne une bonne tenue en petit et le coeur reste lisible a faible taille.</p>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="media">
+          <img src="./02-round-orbit-no-border.svg" alt="Logo rond sans bordure">
+        </div>
+        <div class="content">
+          <div class="kicker">Rond • Sans bordure • Sans nom</div>
+          <h2>Orbite Pure</h2>
+          <p>Plus atmospherique et premium. La silhouette repose davantage sur la lumiere et les anneaux, donc elle fonctionne mieux en contexte sombre.</p>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="media">
+          <img src="./03-card-frame-emblem.svg" alt="Logo non rond inspire d'une carte">
+        </div>
+        <div class="content">
+          <div class="kicker">Non rond • Bordure • Sans nom</div>
+          <h2>Carte Stellaire</h2>
+          <p>La piste la plus typiquement Trading Card Game. Elle ouvre une direction tres riche pour des badges, boosters, cadres rares ou ecrans de collection.</p>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="media">
+          <img src="./04-wordmark-lockup.svg" alt="Logo avec nom de l'application">
+        </div>
+        <div class="content">
+          <div class="kicker">Non rond • Sans bordure • Avec nom</div>
+          <h2>Wordmark Launch</h2>
+          <p>Le meilleur choix quand le nom doit etre lu en un coup d'oeil : ecran de lancement, Play Store, README, banniere ou communication.</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="recommendation">
+      <strong>Direction recommandee :</strong>
+      partir sur <code>Badge Celeste</code> comme icone principale, puis garder <code>Wordmark Launch</code> comme variante institutionnelle.
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="orb" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(470 428) rotate(56) scale(520)">
+      <stop offset="0" stop-color="#21446F"/>
+      <stop offset="0.52" stop-color="#0C1424"/>
+      <stop offset="1" stop-color="#06080D"/>
+    </radialGradient>
+    <linearGradient id="tealOrbit" x1="256" y1="220" x2="798" y2="700" gradientUnits="userSpaceOnUse">
+      <stop offset="0.12" stop-color="#68E1D2" stop-opacity="0"/>
+      <stop offset="0.38" stop-color="#68E1D2"/>
+      <stop offset="0.76" stop-color="#EAF3FF"/>
+      <stop offset="1" stop-color="#68E1D2" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="goldOrbit" x1="742" y1="280" x2="280" y2="770" gradientUnits="userSpaceOnUse">
+      <stop offset="0.08" stop-color="#F6B73C" stop-opacity="0"/>
+      <stop offset="0.36" stop-color="#F8C85A"/>
+      <stop offset="0.74" stop-color="#F6B73C" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#F6B73C" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="blur24" x="120" y="120" width="784" height="784" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="24"/>
+    </filter>
+  </defs>
+
+  <rect width="1024" height="1024" fill="#04070D" fill-opacity="0"/>
+  <circle cx="512" cy="512" r="356" fill="url(#orb)"/>
+
+  <g filter="url(#blur24)">
+    <ellipse cx="512" cy="520" rx="270" ry="150" transform="rotate(-18 512 520)" stroke="#68E1D2" stroke-opacity="0.46" stroke-width="34"/>
+    <ellipse cx="512" cy="520" rx="230" ry="130" transform="rotate(34 512 520)" stroke="#F6B73C" stroke-opacity="0.34" stroke-width="28"/>
+  </g>
+
+  <ellipse cx="512" cy="520" rx="270" ry="150" transform="rotate(-18 512 520)" stroke="url(#tealOrbit)" stroke-width="22"/>
+  <ellipse cx="512" cy="520" rx="230" ry="130" transform="rotate(34 512 520)" stroke="url(#goldOrbit)" stroke-width="16"/>
+
+  <circle cx="708" cy="422" r="16" fill="#68E1D2"/>
+  <circle cx="334" cy="632" r="12" fill="#F6B73C"/>
+  <circle cx="308" cy="330" r="3" fill="#EAF3FF" fill-opacity="0.82"/>
+  <circle cx="738" cy="306" r="4" fill="#EAF3FF" fill-opacity="0.92"/>
+  <circle cx="760" cy="598" r="3" fill="#EAF3FF" fill-opacity="0.7"/>
+  <circle cx="410" cy="760" r="5" fill="#68E1D2" fill-opacity="0.7"/>
+
+  <circle cx="512" cy="512" r="172" fill="#09101B"/>
+  <circle cx="512" cy="512" r="174" stroke="#EAF3FF" stroke-opacity="0.1" stroke-width="2"/>
+  <circle cx="512" cy="512" r="116" fill="#F6B73C" fill-opacity="0.1"/>
+
+  <polygon points="512.0,380.0 539.3,465.0 626.6,446.2 566.7,512.0 626.6,577.8 539.3,559.0 512.0,644.0 484.7,559.0 397.4,577.8 457.3,512.0 397.4,446.2 484.7,465.0" fill="#F6B73C"/>
+  <polygon points="512.0,444.0 530.7,495.3 582.0,514.0 530.7,532.7 512.0,584.0 493.3,532.7 442.0,514.0 493.3,495.3" fill="#EAF3FF"/>
+  <circle cx="512" cy="514" r="10" fill="#FFFFFF"/>
+</svg>

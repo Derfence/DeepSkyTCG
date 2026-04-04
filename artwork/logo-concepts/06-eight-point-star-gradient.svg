@@ -1,0 +1,40 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>Eight Point Star Gradient</title>
+  <defs>
+    <linearGradient id="verticalRay" x1="512" y1="12" x2="512" y2="1012" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFF7E5"/>
+      <stop offset="0.36" stop-color="#F9D272"/>
+      <stop offset="0.68" stop-color="#F6B73C"/>
+      <stop offset="1" stop-color="#D98A15"/>
+    </linearGradient>
+    <linearGradient id="horizontalRay" x1="292" y1="512" x2="732" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8FF1E4"/>
+      <stop offset="0.5" stop-color="#68E1D2"/>
+      <stop offset="1" stop-color="#2FB8C6"/>
+    </linearGradient>
+    <linearGradient id="diagonalRay" x1="444" y1="444" x2="580" y2="580" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.45" stop-color="#EAF3FF"/>
+      <stop offset="1" stop-color="#BDEBE7"/>
+    </linearGradient>
+    <radialGradient id="coreGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(512 512) rotate(90) scale(82)">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.55" stop-color="#FFF0BE"/>
+      <stop offset="1" stop-color="#F6B73C"/>
+    </radialGradient>
+  </defs>
+
+  <polygon points="512,12 548,512 512,622 476,512" fill="url(#verticalRay)"/>
+  <polygon points="512,1012 476,512 512,402 548,512" fill="url(#verticalRay)"/>
+
+  <polygon points="292,512 512,488 560,512 512,536" fill="url(#horizontalRay)"/>
+  <polygon points="732,512 512,536 464,512 512,488" fill="url(#horizontalRay)"/>
+
+  <polygon points="579.9,444.1 521.9,521.9 496.4,527.6 502.1,502.1" fill="url(#diagonalRay)"/>
+  <polygon points="579.9,579.9 502.1,521.9 496.4,496.4 521.9,502.1" fill="url(#diagonalRay)"/>
+  <polygon points="444.1,579.9 502.1,502.1 527.6,496.4 521.9,521.9" fill="url(#diagonalRay)"/>
+  <polygon points="444.1,444.1 521.9,502.1 527.6,527.6 502.1,521.9" fill="url(#diagonalRay)"/>
+
+  <circle cx="512" cy="512" r="44" fill="url(#coreGlow)"/>
+  <path d="M512 458L542 512L512 566L482 512L512 458Z" fill="#FFFFFF"/>
+</svg>

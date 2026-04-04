@@ -1,7 +1,3 @@
 [
-  {
-    "id": "astronomes-en-herbe",
-    "name": "Astronomes en herbe",
-    "coverImageRef": "cover_astronomes_en_herbe"
-  }
+  { "id": "astronomes-en-herbe", "name": "Astronomes en herbe", "coverImageRef": "cover_astronomes_en_herbe" }
 ]
