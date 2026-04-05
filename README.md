@@ -13,7 +13,7 @@ Au lancement, l'application :
 - guide les nouveaux joueurs vers leur premier pack, leur bibliotheque puis leurs badges ;
 - permet d'ouvrir des packs localement ;
 - persiste la collection et l'etat de recharge des boosters ;
-- gere un stock local de 10 ouvertures, recharge a raison d'une ouverture toutes les 6 heures modulee par une meteo deterministe UTC.
+- gere un stock local de 10 ouvertures, avec un nombre de cartes par pack, un cooldown de recharge et des probabilites derives du catalogue embarque, puis modules par une meteo deterministe UTC.
 
 ## Stack technique
 
@@ -34,12 +34,13 @@ Au lancement, l'application :
 - `app/NewPlayerOnboardingCoordinator.kt` : orchestration du guidage contextuel du premier parcours joueur.
 - `data/ProgressRepository.kt` : persistance chiffree du snapshot de progression et normalisation du temps de confiance.
 - `data/CollectionRepository.kt` : chargement, sauvegarde et fusion locale de la collection.
-- `data/LocalPackEngine.kt` : tirage local pondere, consommation des ouvertures et regles offline partagees.
+- `data/LocalPackEngine.kt` : tirage local a deux phases par extension, consommation des ouvertures et regles offline partagees.
 - `data/PackChargeState.kt` : moteur central de recharge, normalisation, calcul de progression et prochain palier.
 - `data/WeatherPolicy.kt` : calendrier meteo deterministe UTC et politique de recharge associee.
 - `data/PackRepository.kt` : orchestration du tirage local puis persistance de la progression.
+- `data/CatalogBalanceRuntime.kt` : calcul runtime des reglages de pack, des probabilites de rarete et des poids de variantes.
 - `model/` : modeles de catalogue, collection, packs et progression locale.
-- `assets/catalog/` : catalogue embarque (`extensions.json`, `cards.json`, `variant_profiles.json`).
+- `assets/catalog/` : catalogue embarque (`extensions.json`, `cards.json`, `variant_profiles.json`, `game_balance.json`).
 - `ui/motion/LaunchLogoMark.kt` : composant de logo reutilisant les exports finaux de marque.
 - `res/drawable-nodpi/` et `res/mipmap-anydpi-*/` : exports PNG et ressources launcher Android derives des logos valides.
 
@@ -68,16 +69,15 @@ La collection locale ne porte plus de version de catalogue. Au premier lancement
 
 ## Regles de jeu offline
 
-- `cardsPerPack = 5`
-- `drawCooldown = 6h`
 - `maxStoredDraws = 10`
 - meteo offline 100% deterministe basee sur la date UTC de confiance
 - etats meteo : `Pluie x0`, `Nuageux x0.8`, `Clair x1`, `Pur x2`
 - moyenne garantie sur un cycle complet de 20 jours : `1.11`
-- tirage pondere des cartes par extension
-- tirage pondere de `skyQuality` et `finish`
+- `cardsPerDraw` et `drawCooldownHours` charges depuis `app/src/main/assets/catalog/game_balance.json`
+- tirage des cartes a deux phases par extension : rarete, puis carte dans la rarete
+- tirage de `skyQuality` et `finish` derive au runtime a partir de `Donnees`
 
-Le moteur local reutilise les profils de variantes embarques pour produire un resultat equivalent a un tirage serveur, mais entierement local. La recharge des boosters depend uniquement du temps de confiance et de la date UTC courante, jamais du fuseau ou d'une API meteo externe.
+Le moteur local reutilise les donnees brutes du catalogue embarque pour recalculer les probabilites en memoire. La recharge des boosters depend uniquement du temps de confiance, de la date UTC courante et du cooldown derive du catalogue, jamais du fuseau ou d'une API meteo externe.
 
 ## Animations et interface
 
@@ -130,6 +130,7 @@ La couverture actuelle verifie notamment :
 - `ProgressRepository`
 - `NewPlayerOnboardingCoordinator`
 - `LocalPackEngine`
+- `CatalogBalanceRuntime`
 - `DeterministicWeatherCalendar`
 - `PackChargeState`
 - `CollectionRepository`
@@ -166,9 +167,8 @@ Le catalogue source editable est maintenant le fichier racine `catalogue_astrono
 Le classeur contient :
 
 - `Catalogue` : les extensions, les cartes et le multiplicateur `cardRarityMultiplier` ;
-- `Probabilites` : les parametres d'entree pour les probabilites de carte, de qualite du ciel et d'holographique ;
-- `Resultats` : les probabilites et temps moyens recalcules ;
-- `_Calibration` : cache technique masque permettant de conserver un cycle `export -> apply` stable a poids egaux.
+- `Donnees` : les donnees brutes de balance synchronisees vers l'application ;
+- `Resultats` : une feuille diagnostique regeneree a chaque `export` ou `apply`.
 
 Exporter ou recharger le classeur :
 
@@ -178,6 +178,8 @@ python3 scripts/catalog_sync.py apply
 ```
 
 Le script n'a pas besoin de dependance Python externe : le support XLSX est embarque dans `scripts/simple_xlsx.py`.
+
+`python3 scripts/catalog_sync.py apply` lit uniquement `Catalogue` et `Donnees`, ecrit `extensions.json`, `cards.json`, `variant_profiles.json` et `game_balance.json`, puis regenere `Resultats`. Les probabilites de cartes ne sont plus transferees depuis le classeur : elles sont recalculees dans l'application a partir des donnees brutes et des multiplicateurs de rarete.
 
 Les tests du pipeline catalogue peuvent etre lances avec :
 

@@ -23,7 +23,7 @@ class CatalogSerializationTest {
               "extensionId": "astronomes-en-herbe",
               "name": "Perseides",
               "rarityLabel": "Epic",
-              "drawWeight": 1,
+              "cardRarityMultiplier": 1.0,
               "imageRef": "perseides",
               "variantProfileId": "observation-default",
               "astronomy": {
@@ -93,7 +93,7 @@ class CatalogSerializationTest {
               "extensionId": "astronomes-en-herbe",
               "name": "Comete de Halley",
               "rarityLabel": "Epic",
-              "drawWeight": 1,
+              "cardRarityMultiplier": 1.0,
               "imageRef": "halley",
               "variantProfileId": "observation-default",
               "astronomy": {

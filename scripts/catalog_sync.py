@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import argparse
 import csv
-import hashlib
 import json
 import sys
 from dataclasses import dataclass
@@ -25,9 +24,11 @@ getcontext().prec = 50
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SHEET = ROOT / "catalogue_astronomie.xlsx"
 CATALOG_DIR = ROOT / "app" / "src" / "main" / "assets" / "catalog"
+BALANCE_PATH = CATALOG_DIR / "game_balance.json"
 
 CATALOGUE_SHEET_NAME = "Catalogue"
-PROBABILITIES_SHEET_NAME = "Probabilites"
+DATA_SHEET_NAME = "Donnees"
+PROBABILITIES_SHEET_NAME = DATA_SHEET_NAME
 RESULTS_SHEET_NAME = "Resultats"
 CALIBRATION_SHEET_NAME = "_Calibration"
 RESULTS_VARIANT_SECTION = "VariantProfiles"
@@ -121,6 +122,71 @@ class GlobalSettings:
         return Fraction(self.cards_per_draw * 24, 1) / Fraction(self.draw_cooldown_hours)
 
 
+@dataclass(frozen=True)
+class GameBalanceData:
+    cards_per_draw: int
+    draw_cooldown_hours: Decimal
+    percent_uncommon_per_day: Decimal
+    percent_rare_per_day: Decimal
+    percent_epic_per_day: Decimal
+    suburban_mean_per_day: Decimal
+    rural_mean_per_day: Decimal
+    mountain_mean_per_day: Decimal
+    percent_holo_mean_per_day: Decimal
+
+    @property
+    def settings(self) -> GlobalSettings:
+        return GlobalSettings(
+            cards_per_draw=self.cards_per_draw,
+            draw_cooldown_hours=self.draw_cooldown_hours,
+        )
+
+    @property
+    def cards_per_day(self) -> Fraction:
+        return self.settings.slots_per_day
+
+    @property
+    def rarity_probabilities(self) -> dict[str, Fraction]:
+        uncommon = percent_to_probability(self.percent_uncommon_per_day)
+        rare = percent_to_probability(self.percent_rare_per_day)
+        epic = percent_to_probability(self.percent_epic_per_day)
+        common = Fraction(1, 1) - uncommon - rare - epic
+        if common <= 0:
+            raise CatalogSheetError("Donnees: derived common probability must stay strictly positive.")
+        return {
+            "Common": common,
+            "Uncommon": uncommon,
+            "Rare": rare,
+            "Epic": epic,
+        }
+
+    @property
+    def sky_probabilities(self) -> dict[str, Fraction]:
+        suburban = Fraction(self.suburban_mean_per_day) / self.cards_per_day
+        rural = Fraction(self.rural_mean_per_day) / self.cards_per_day
+        mountain = Fraction(self.mountain_mean_per_day) / self.cards_per_day
+        city = Fraction(1, 1) - suburban - rural - mountain
+        if city <= 0:
+            raise CatalogSheetError("Donnees: derived city probability must stay strictly positive.")
+        return {
+            "city": city,
+            "suburban": suburban,
+            "rural": rural,
+            "mountain": mountain,
+        }
+
+    @property
+    def finish_probabilities(self) -> dict[str, Fraction]:
+        holographic = percent_to_probability(self.percent_holo_mean_per_day)
+        standard = Fraction(1, 1) - holographic
+        if standard <= 0:
+            raise CatalogSheetError("Donnees: derived standard probability must stay strictly positive.")
+        return {
+            "standard": standard,
+            "holographic": holographic,
+        }
+
+
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
@@ -170,12 +236,13 @@ def handle_export(args: argparse.Namespace) -> None:
     extensions = load_json(CATALOG_DIR / "extensions.json")
     cards = load_json(CATALOG_DIR / "cards.json")
     variant_profiles = load_json(CATALOG_DIR / "variant_profiles.json")
+    balance_data = load_balance_data(BALANCE_PATH)
     export_workbook(
         sheet_path=sheet_path,
         extensions=extensions,
         cards=cards,
         variant_profiles=variant_profiles,
-        settings=default_global_settings(),
+        balance_data=balance_data,
     )
     print(f"Workbook exported to {sheet_path}")
 
@@ -185,7 +252,7 @@ def handle_apply(args: argparse.Namespace) -> None:
     if not sheet_path.exists():
         raise CatalogSheetError(f"Workbook not found: {sheet_path}")
 
-    extensions, cards, variant_profiles = apply_workbook(
+    extensions, cards, variant_profiles, _ = apply_workbook(
         sheet_path=sheet_path,
         catalog_dir=CATALOG_DIR,
     )
@@ -201,45 +268,24 @@ def export_workbook(
     extensions: list[dict[str, Any]],
     cards: list[dict[str, Any]],
     variant_profiles: list[dict[str, Any]],
-    settings: GlobalSettings,
+    balance_data: GameBalanceData,
 ) -> None:
     export_cards = build_export_input_cards(cards)
-    extension_variant_profiles = require_single_variant_profile_per_extension(cards)
-    variant_inputs = build_export_variant_inputs(variant_profiles, settings)
-    extension_inputs = build_export_extension_inputs(
-        cards=cards,
-        extension_variant_profiles=extension_variant_profiles,
-        variant_profiles_by_id={profile["id"]: profile for profile in variant_profiles},
-        settings=settings,
-    )
-    catalogue_rows = build_catalogue_sheet_rows_from_json(extensions, cards)
-    probability_rows = build_probability_sheet_rows(settings, variant_inputs, extension_inputs)
-    fingerprint = build_visible_fingerprint(
+    export_variant_profiles = normalize_variant_profiles(variant_profiles)
+    catalogue_rows = build_catalogue_sheet_rows_from_input(extensions, export_cards)
+    data_rows = build_data_sheet_rows(balance_data)
+    result_rows = build_results_sheet_rows(
         extensions=extensions,
         cards=export_cards,
-        settings=settings,
-        variant_inputs=variant_inputs,
-        extension_inputs=extension_inputs,
-    )
-    result_rows = build_results_sheet_rows(
-        settings=settings,
-        extensions=extensions,
-        cards=cards,
-        variant_profiles=variant_profiles,
-        extension_inputs=extension_inputs,
-    )
-    calibration_rows = build_calibration_sheet_rows(
-        fingerprint=fingerprint,
-        cards=cards,
-        variant_profiles=variant_profiles,
+        variant_profiles=export_variant_profiles,
+        balance_data=balance_data,
     )
     write_workbook(
         sheet_path,
         [
             Sheet(CATALOGUE_SHEET_NAME, catalogue_rows),
-            Sheet(PROBABILITIES_SHEET_NAME, probability_rows),
+            Sheet(DATA_SHEET_NAME, data_rows),
             Sheet(RESULTS_SHEET_NAME, result_rows),
-            Sheet(CALIBRATION_SHEET_NAME, calibration_rows, hidden=True),
         ],
     )
 
@@ -247,83 +293,176 @@ def export_workbook(
 def apply_workbook(
     sheet_path: Path,
     catalog_dir: Path,
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]], GameBalanceData]:
     sheets = {sheet.name: sheet for sheet in read_workbook(sheet_path)}
-    workbook_sheet = require_sheet(sheets, CATALOGUE_SHEET_NAME)
+    catalogue_sheet = require_sheet(sheets, CATALOGUE_SHEET_NAME)
+    data_sheet = require_sheet(sheets, DATA_SHEET_NAME)
 
-    variant_profile_templates = load_json(catalog_dir / "variant_profiles.json")
+    variant_profile_templates = normalize_variant_profiles(load_json(catalog_dir / "variant_profiles.json"))
     variant_profile_ids = {profile["id"] for profile in variant_profile_templates}
 
-    extensions, input_cards = parse_catalogue_sheet(workbook_sheet.rows, variant_profile_ids)
-    probabilities_sheet = sheets.get(PROBABILITIES_SHEET_NAME)
-    if probabilities_sheet is None:
-        results_sheet = require_sheet(sheets, RESULTS_SHEET_NAME)
-        variant_profiles = parse_result_variant_profiles(results_sheet.rows, variant_profile_templates)
-        cards = parse_result_cards(results_sheet.rows, input_cards)
-        write_json(catalog_dir / "extensions.json", extensions)
-        write_json(catalog_dir / "cards.json", cards)
-        write_json(catalog_dir / "variant_profiles.json", variant_profiles)
-        return extensions, cards, variant_profiles
-
-    settings, variant_inputs, extension_inputs = parse_probabilities_sheet(probabilities_sheet.rows)
-
-    extension_variant_profiles = require_single_variant_profile_per_extension(input_cards)
-    fingerprint = build_visible_fingerprint(
-        extensions=extensions,
-        cards=input_cards,
-        settings=settings,
-        variant_inputs=variant_inputs,
-        extension_inputs=extension_inputs,
-    )
-
-    calibration = parse_calibration_sheet(sheets.get(CALIBRATION_SHEET_NAME))
-    if calibration is not None and calibration.get("fingerprint") == fingerprint:
-        cards = apply_cached_card_weights(input_cards, calibration)
-        variant_profiles = apply_cached_variant_weights(variant_profile_templates, calibration)
-    else:
-        variant_profiles, profile_metrics = compute_variant_profiles(
-            templates=variant_profile_templates,
-            settings=settings,
-            variant_inputs=variant_inputs,
-        )
-        cards = compute_cards(
-            extensions=extensions,
-            input_cards=input_cards,
-            settings=settings,
-            extension_inputs=extension_inputs,
-            profile_metrics=profile_metrics,
-            extension_variant_profiles=extension_variant_profiles,
-        )
+    extensions, cards = parse_catalogue_sheet(catalogue_sheet.rows, variant_profile_ids)
+    balance_data = parse_data_sheet(data_sheet.rows)
 
     write_json(catalog_dir / "extensions.json", extensions)
     write_json(catalog_dir / "cards.json", cards)
-    write_json(catalog_dir / "variant_profiles.json", variant_profiles)
+    write_json(catalog_dir / "variant_profiles.json", variant_profile_templates)
+    write_json(catalog_dir / "game_balance.json", balance_data_to_json(balance_data))
 
-    refreshed_catalogue_rows = build_catalogue_sheet_rows_from_input(extensions, input_cards)
-    refreshed_probability_rows = build_probability_sheet_rows(settings, variant_inputs, extension_inputs)
+    refreshed_catalogue_rows = build_catalogue_sheet_rows_from_input(extensions, cards)
+    refreshed_data_rows = build_data_sheet_rows(balance_data)
     refreshed_result_rows = build_results_sheet_rows(
-        settings=settings,
         extensions=extensions,
         cards=cards,
-        variant_profiles=variant_profiles,
-        extension_inputs=extension_inputs,
-    )
-    refreshed_calibration_rows = build_calibration_sheet_rows(
-        fingerprint=fingerprint,
-        cards=cards,
-        variant_profiles=variant_profiles,
+        variant_profiles=variant_profile_templates,
+        balance_data=balance_data,
     )
     write_workbook(
         sheet_path,
         [
             Sheet(CATALOGUE_SHEET_NAME, refreshed_catalogue_rows),
-            Sheet(PROBABILITIES_SHEET_NAME, refreshed_probability_rows),
+            Sheet(DATA_SHEET_NAME, refreshed_data_rows),
             Sheet(RESULTS_SHEET_NAME, refreshed_result_rows),
-            Sheet(CALIBRATION_SHEET_NAME, refreshed_calibration_rows, hidden=True),
         ],
     )
 
-    return extensions, cards, variant_profiles
+    return extensions, cards, variant_profile_templates, balance_data
+
+
+def load_balance_data(path: Path) -> GameBalanceData:
+    if not path.exists():
+        return default_game_balance_data()
+    payload = load_json(path)
+    return game_balance_data_from_json(payload)
+
+
+def game_balance_data_from_json(payload: dict[str, Any]) -> GameBalanceData:
+    try:
+        cards_per_draw = int(payload["cardsPerDraw"])
+    except Exception as error:
+        raise CatalogSheetError("game_balance.json: 'cardsPerDraw' must be an integer.") from error
+
+    balance_data = GameBalanceData(
+        cards_per_draw=cards_per_draw,
+        draw_cooldown_hours=Decimal(str(payload["drawCooldownHours"])),
+        percent_uncommon_per_day=Decimal(str(payload["percentUncommonPerDay"])),
+        percent_rare_per_day=Decimal(str(payload["percentRarePerDay"])),
+        percent_epic_per_day=Decimal(str(payload["percentEpicPerDay"])),
+        suburban_mean_per_day=Decimal(str(payload["suburbanMeanPerDay"])),
+        rural_mean_per_day=Decimal(str(payload["ruralMeanPerDay"])),
+        mountain_mean_per_day=Decimal(str(payload["mountainMeanPerDay"])),
+        percent_holo_mean_per_day=Decimal(str(payload["percentHoloMeanPerDay"])),
+    )
+    validate_balance_data(balance_data, context="game_balance.json")
+    return balance_data
+
+
+def balance_data_to_json(balance_data: GameBalanceData) -> dict[str, Any]:
+    return {
+        "cardsPerDraw": balance_data.cards_per_draw,
+        "drawCooldownHours": float(balance_data.draw_cooldown_hours),
+        "percentUncommonPerDay": float(balance_data.percent_uncommon_per_day),
+        "percentRarePerDay": float(balance_data.percent_rare_per_day),
+        "percentEpicPerDay": float(balance_data.percent_epic_per_day),
+        "suburbanMeanPerDay": float(balance_data.suburban_mean_per_day),
+        "ruralMeanPerDay": float(balance_data.rural_mean_per_day),
+        "mountainMeanPerDay": float(balance_data.mountain_mean_per_day),
+        "percentHoloMeanPerDay": float(balance_data.percent_holo_mean_per_day),
+    }
+
+
+def parse_data_sheet(rows: list[list[str]]) -> GameBalanceData:
+    balance_data = GameBalanceData(
+        cards_per_draw=parse_int_value(sheet_cell(rows, 3, 2), "B3", DATA_SHEET_NAME),
+        draw_cooldown_hours=parse_decimal_value(sheet_cell(rows, 4, 2), "B4", DATA_SHEET_NAME),
+        percent_uncommon_per_day=parse_decimal_value(sheet_cell(rows, 15, 5), "E15", DATA_SHEET_NAME),
+        percent_rare_per_day=parse_decimal_value(sheet_cell(rows, 16, 5), "E16", DATA_SHEET_NAME),
+        percent_epic_per_day=parse_decimal_value(sheet_cell(rows, 17, 5), "E17", DATA_SHEET_NAME),
+        suburban_mean_per_day=parse_decimal_value(sheet_cell(rows, 7, 2), "B7", DATA_SHEET_NAME),
+        rural_mean_per_day=parse_decimal_value(sheet_cell(rows, 8, 2), "B8", DATA_SHEET_NAME),
+        mountain_mean_per_day=parse_decimal_value(sheet_cell(rows, 9, 2), "B9", DATA_SHEET_NAME),
+        percent_holo_mean_per_day=parse_decimal_value(sheet_cell(rows, 11, 4), "D11", DATA_SHEET_NAME),
+    )
+    validate_balance_data(balance_data, context=DATA_SHEET_NAME)
+    return balance_data
+
+
+def validate_balance_data(balance_data: GameBalanceData, context: str) -> None:
+    if balance_data.cards_per_draw <= 0:
+        raise CatalogSheetError(f"{context}: 'cardsPerDraw' must be strictly positive.")
+    if balance_data.draw_cooldown_hours <= 0:
+        raise CatalogSheetError(f"{context}: 'drawCooldownHours' must be strictly positive.")
+    for field_name, value in [
+        ("percentUncommonPerDay", balance_data.percent_uncommon_per_day),
+        ("percentRarePerDay", balance_data.percent_rare_per_day),
+        ("percentEpicPerDay", balance_data.percent_epic_per_day),
+        ("suburbanMeanPerDay", balance_data.suburban_mean_per_day),
+        ("ruralMeanPerDay", balance_data.rural_mean_per_day),
+        ("mountainMeanPerDay", balance_data.mountain_mean_per_day),
+        ("percentHoloMeanPerDay", balance_data.percent_holo_mean_per_day),
+    ]:
+        if value <= 0:
+            raise CatalogSheetError(f"{context}: '{field_name}' must be strictly positive.")
+    _ = balance_data.rarity_probabilities
+    _ = balance_data.sky_probabilities
+    _ = balance_data.finish_probabilities
+
+
+def sheet_cell(rows: list[list[str]], row_number: int, column_number: int) -> str | None:
+    row_index = row_number - 1
+    column_index = column_number - 1
+    if row_index < 0 or row_index >= len(rows):
+        return None
+    row = rows[row_index]
+    if column_index < 0 or column_index >= len(row):
+        return None
+    return str(row[column_index]).strip()
+
+
+def build_data_sheet_rows(balance_data: GameBalanceData) -> list[list[object | None]]:
+    return [
+        ["GlobalSettings"],
+        [],
+        ["cardsPerDraw", balance_data.cards_per_draw, "", "cardsPerDay", decimal_cell(balance_data.cards_per_day, 15)],
+        ["drawCooldownHours", balance_data.draw_cooldown_hours],
+        [],
+        ["villeMeanPerDay", decimal_cell(balance_data.sky_probabilities["city"] * balance_data.cards_per_day, 15)],
+        ["suburbanMeanPerDay", balance_data.suburban_mean_per_day],
+        ["ruralMeanPerDay", balance_data.rural_mean_per_day],
+        ["mountainMeanPerDay", balance_data.mountain_mean_per_day],
+        ["", "", "", "percentHoloMeanPerDay"],
+        [
+            "unholoMeanPerDay",
+            decimal_cell(balance_data.finish_probabilities["standard"] * balance_data.cards_per_day, 15),
+            "",
+            balance_data.percent_holo_mean_per_day,
+        ],
+        ["holographicMeanPerDay", decimal_cell(balance_data.finish_probabilities["holographic"] * balance_data.cards_per_day, 15)],
+        [],
+        [
+            "commonPerDay",
+            decimal_cell(balance_data.rarity_probabilities["Common"] * balance_data.cards_per_day, 15),
+            "",
+            "percentCommonPerDay",
+            decimal_cell(balance_data.rarity_probabilities["Common"] * 100, 15),
+        ],
+        ["uncommonPerDay", decimal_cell(balance_data.rarity_probabilities["Uncommon"] * balance_data.cards_per_day, 15), "", "percentUncommonPerDay", balance_data.percent_uncommon_per_day],
+        ["rarePerDay", decimal_cell(balance_data.rarity_probabilities["Rare"] * balance_data.cards_per_day, 15), "", "percentRarePerDay", balance_data.percent_rare_per_day],
+        ["epicPerDay", decimal_cell(balance_data.rarity_probabilities["Epic"] * balance_data.cards_per_day, 15), "", "percentEpicPerDay", balance_data.percent_epic_per_day],
+    ]
+
+
+def normalize_variant_profiles(variant_profiles: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    normalized_profiles: list[dict[str, Any]] = []
+    for profile in variant_profiles:
+        normalized_profiles.append(
+            {
+                "id": profile["id"],
+                "skyQualities": profile["skyQualities"],
+                "finishes": profile["finishes"],
+            },
+        )
+    return normalized_profiles
 
 
 def require_sheet(sheets: dict[str, Sheet], name: str) -> Sheet:
@@ -1230,6 +1369,22 @@ def probability_from_mean_days(settings: GlobalSettings, mean_days: Decimal) -> 
     return Fraction(1, 1) / (settings.slots_per_day * Fraction(mean_days))
 
 
+def percent_to_probability(percent_value: Decimal) -> Fraction:
+    return Fraction(percent_value) / Fraction(100, 1)
+
+
+def fraction_value(value: Any) -> Fraction:
+    if isinstance(value, Fraction):
+        return value
+    if isinstance(value, Decimal):
+        return Fraction(value)
+    if isinstance(value, int):
+        return Fraction(value, 1)
+    if isinstance(value, float):
+        return Fraction(Decimal(str(value)))
+    return Fraction(Decimal(str(value)))
+
+
 def weights_from_probability_order(
     probabilities: dict[str, Fraction],
     ordered_codes: list[str],
@@ -1331,31 +1486,131 @@ def result_ref(column_index: int, row_index: int) -> str:
     return f"{column_label(column_index)}{row_index}"
 
 
-def build_results_sheet_rows(
-    settings: GlobalSettings,
+def build_result_variant_profiles(
+    variant_profiles: list[dict[str, Any]],
+    balance_data: GameBalanceData,
+) -> list[dict[str, Any]]:
+    profiles: list[dict[str, Any]] = []
+    for profile in normalize_variant_profiles(variant_profiles):
+        sky_codes = [definition["code"] for definition in profile["skyQualities"]]
+        finish_codes = [definition["code"] for definition in profile["finishes"]]
+        if sorted(sky_codes) != sorted(SUPPORTED_SKY_CODES):
+            raise CatalogSheetError(
+                f"Variant profile '{profile['id']}' must expose exactly the sky qualities "
+                f"{', '.join(SUPPORTED_SKY_CODES)}.",
+            )
+        if sorted(finish_codes) != sorted(SUPPORTED_FINISH_CODES):
+            raise CatalogSheetError(
+                f"Variant profile '{profile['id']}' must expose exactly the finishes "
+                f"{', '.join(SUPPORTED_FINISH_CODES)}.",
+            )
+        sky_weights = weights_from_probability_order(
+            balance_data.sky_probabilities,
+            sky_codes,
+        )
+        finish_weights = weights_from_probability_order(
+            balance_data.finish_probabilities,
+            finish_codes,
+        )
+        profiles.append(
+            {
+                **profile,
+                "skyQualityWeights": [
+                    {"code": definition["code"], "weight": weight}
+                    for definition, weight in zip(profile["skyQualities"], sky_weights, strict=True)
+                ],
+                "finishWeights": [
+                    {"code": definition["code"], "weight": weight}
+                    for definition, weight in zip(profile["finishes"], finish_weights, strict=True)
+                ],
+            },
+        )
+    return profiles
+
+
+def build_result_extension_rows(
     extensions: list[dict[str, Any]],
     cards: list[dict[str, Any]],
-    variant_profiles: list[dict[str, Any]],
-    extension_inputs: list[dict[str, Any]],
-) -> list[list[object | None]]:
-    profile_by_id = {profile["id"]: profile for profile in variant_profiles}
-    extension_variant_profiles = require_single_variant_profile_per_extension(cards)
+    balance_data: GameBalanceData,
+) -> dict[str, dict[str, Any]]:
     cards_by_extension: dict[str, list[dict[str, Any]]] = {}
     for card in cards:
         cards_by_extension.setdefault(card["extensionId"], []).append(card)
 
-    rows: list[list[object | None]] = []
-    slots_per_day_formula = "((Probabilites!$B$3*24)/Probabilites!$B$4)"
-    calibration_last_row = 2 + len(cards) + sum(
-        len(profile["skyQualityWeights"]) + len(profile["finishWeights"])
-        for profile in variant_profiles
-    )
-    calibration_entry_type = f"_Calibration!$A$2:$A${calibration_last_row}"
-    calibration_entity_id = f"_Calibration!$B$2:$B${calibration_last_row}"
-    calibration_scope1 = f"_Calibration!$C$2:$C${calibration_last_row}"
-    calibration_scope2 = f"_Calibration!$D$2:$D${calibration_last_row}"
-    calibration_weight = f"_Calibration!$F$2:$F${calibration_last_row}"
+    extension_rows: dict[str, dict[str, Any]] = {}
+    for extension in extensions:
+        extension_cards = cards_by_extension.get(extension["id"], [])
+        if not extension_cards:
+            continue
 
+        cards_by_rarity: dict[str, list[dict[str, Any]]] = {}
+        for card in extension_cards:
+            rarity = card["rarityLabel"]
+            if rarity not in RARITY_ORDER:
+                raise CatalogSheetError(
+                    f"Extension '{extension['id']}': unsupported rarity '{rarity}'.",
+                )
+            multiplier = fraction_value(card["cardRarityMultiplier"])
+            if multiplier <= 0:
+                raise CatalogSheetError(
+                    f"Extension '{extension['id']}': card '{card['id']}' must keep a strictly positive cardRarityMultiplier.",
+                )
+            cards_by_rarity.setdefault(rarity, []).append(card)
+
+        present_rarities = sorted(cards_by_rarity, key=rarity_sort_priority)
+        base_probabilities = {
+            rarity: balance_data.rarity_probabilities[rarity]
+            for rarity in present_rarities
+        }
+        total_present_probability = sum(base_probabilities.values(), start=Fraction(0, 1))
+        normalized_rarity_probabilities = {
+            rarity: probability / total_present_probability
+            for rarity, probability in base_probabilities.items()
+        }
+
+        weighted_cards: list[dict[str, Any]] = []
+        for rarity in present_rarities:
+            rarity_cards = cards_by_rarity[rarity]
+            multiplier_sum = sum(
+                fraction_value(card["cardRarityMultiplier"])
+                for card in rarity_cards
+            )
+            conditional_probabilities = {
+                card["id"]: fraction_value(card["cardRarityMultiplier"]) / multiplier_sum
+                for card in rarity_cards
+            }
+            for card in rarity_cards:
+                final_probability = normalized_rarity_probabilities[rarity] * conditional_probabilities[card["id"]]
+                weighted_cards.append(
+                    {
+                        **card,
+                        "rarityProbability": normalized_rarity_probabilities[rarity],
+                        "conditionalProbability": conditional_probabilities[card["id"]],
+                        "finalProbability": final_probability,
+                    },
+                )
+
+        extension_rows[extension["id"]] = {
+            "presentRarities": present_rarities,
+            "cardsByRarity": cards_by_rarity,
+            "rarityProbabilities": normalized_rarity_probabilities,
+            "cards": weighted_cards,
+        }
+
+    return extension_rows
+
+
+def build_results_sheet_rows(
+    extensions: list[dict[str, Any]],
+    cards: list[dict[str, Any]],
+    variant_profiles: list[dict[str, Any]],
+    balance_data: GameBalanceData,
+) -> list[list[object | None]]:
+    settings = balance_data.settings
+    profile_rows = build_result_variant_profiles(variant_profiles, balance_data)
+    extension_rows = build_result_extension_rows(extensions, cards, balance_data)
+
+    rows: list[list[object | None]] = []
     rows.append(["VariantProfiles"])
     rows.append(
         [
@@ -1365,49 +1620,32 @@ def build_results_sheet_rows(
             "label",
             "weight",
             "probability",
-            "meanSlots",
             "meanPacks",
             "meanDays",
         ],
     )
-    for profile in variant_profiles:
-        for category, definitions_key in [
-            ("skyQuality", "skyQualities"),
-            ("finish", "finishes"),
+    for profile in profile_rows:
+        for category, definitions_key, weight_key in [
+            ("skyQuality", "skyQualities", "skyQualityWeights"),
+            ("finish", "finishes", "finishWeights"),
         ]:
+            probabilities = probability_map_from_weighted_codes(profile[weight_key])
+            weights_by_code = {entry["code"]: entry["weight"] for entry in profile[weight_key]}
             for definition in profile[definitions_key]:
-                row_number = len(rows) + 1
-                weight_cell = result_ref(5, row_number)
-                probability_cell = result_ref(6, row_number)
-                mean_slots_cell = result_ref(7, row_number)
+                probability = probabilities[definition["code"]]
                 rows.append(
                     [
                         profile["id"],
                         category,
                         definition["code"],
                         definition["label"],
-                        FormulaCell(
-                            (
-                                f'SUMPRODUCT(({calibration_entry_type}="variant")'
-                                f"*({calibration_entity_id}={result_ref(1, row_number)})"
-                                f"*({calibration_scope1}={result_ref(2, row_number)})"
-                                f"*({calibration_scope2}={result_ref(3, row_number)})"
-                                f"*{calibration_weight})"
-                            ),
-                        ),
-                        FormulaCell(
-                            (
-                                f'{weight_cell}/SUMPRODUCT(({calibration_entry_type}="variant")'
-                                f"*({calibration_entity_id}={result_ref(1, row_number)})"
-                                f"*({calibration_scope1}={result_ref(2, row_number)})"
-                                f"*{calibration_weight})"
-                            ),
-                        ),
-                        FormulaCell(f"1/{probability_cell}"),
-                        FormulaCell(f"{mean_slots_cell}/Probabilites!$B$3"),
-                        FormulaCell(f"{mean_slots_cell}/{slots_per_day_formula}"),
+                        weights_by_code[definition["code"]],
+                        decimal_cell(probability, 15),
+                        decimal_cell(mean_packs(probability, settings), 15),
+                        decimal_cell(mean_days(probability, settings), 15),
                     ],
                 )
+
     rows.append([])
     rows.append(["RaritySummary"])
     rows.append(
@@ -1415,57 +1653,27 @@ def build_results_sheet_rows(
             "extensionId",
             "rarityLabel",
             "cardCount",
-            "totalWeight",
-            "rarityProbability",
-            "baseCardWeight",
-            "baseCardMeanDays",
+            "configuredProbability",
+            "extensionProbability",
+            "meanDays",
         ],
     )
     for extension in extensions:
-        extension_cards = cards_by_extension.get(extension["id"], [])
-        cards_by_rarity: dict[str, list[dict[str, Any]]] = {}
-        for card in extension_cards:
-            cards_by_rarity.setdefault(card["rarityLabel"], []).append(card)
-        for rarity in sorted(cards_by_rarity, key=rarity_sort_priority):
-            row_number = len(rows) + 1
-            extension_total_weight = (
-                f'SUMPRODUCT(({calibration_entry_type}="card")'
-                f"*({calibration_scope1}={result_ref(1, row_number)})"
-                f"*{calibration_weight})"
-            )
+        extension_result = extension_rows.get(extension["id"])
+        if extension_result is None:
+            continue
+        for rarity in extension_result["presentRarities"]:
             rows.append(
                 [
                     extension["id"],
                     rarity,
-                    FormulaCell(
-                        (
-                            f'SUMPRODUCT(--({calibration_entry_type}="card"),'
-                            f"--({calibration_scope1}={result_ref(1, row_number)}),"
-                            f"--({calibration_scope2}={result_ref(2, row_number)}))"
-                        ),
-                    ),
-                    FormulaCell(
-                        (
-                            f'SUMPRODUCT(({calibration_entry_type}="card")'
-                            f"*({calibration_scope1}={result_ref(1, row_number)})"
-                            f"*({calibration_scope2}={result_ref(2, row_number)})"
-                            f"*{calibration_weight})"
-                        ),
-                    ),
-                    FormulaCell(f"{result_ref(4, row_number)}/{extension_total_weight}"),
-                    FormulaCell(
-                        (
-                            f"AGGREGATE(14,6,"
-                            f"{calibration_weight}/(({calibration_entry_type}=\"card\")"
-                            f"*({calibration_scope1}={result_ref(1, row_number)})"
-                            f"*({calibration_scope2}={result_ref(2, row_number)})),1)"
-                        ),
-                    ),
-                    FormulaCell(
-                        f"1/(({result_ref(6, row_number)}/{extension_total_weight})*{slots_per_day_formula})",
-                    ),
+                    len(extension_result["cardsByRarity"][rarity]),
+                    decimal_cell(balance_data.rarity_probabilities[rarity], 15),
+                    decimal_cell(extension_result["rarityProbabilities"][rarity], 15),
+                    decimal_cell(mean_days(extension_result["rarityProbabilities"][rarity], settings), 15),
                 ],
             )
+
     rows.append([])
     rows.append(["Cards"])
     rows.append(
@@ -1474,130 +1682,67 @@ def build_results_sheet_rows(
             "cardId",
             "name",
             "rarityLabel",
-            "drawWeight",
-            "probability",
-            "meanSlots",
-            "meanPacks",
+            "cardRarityMultiplier",
+            "rarityProbability",
+            "conditionalCardProbability",
+            "finalProbability",
             "meanDays",
         ],
     )
     for extension in extensions:
-        extension_cards = cards_by_extension.get(extension["id"], [])
-        for card in extension_cards:
-            row_number = len(rows) + 1
-            extension_total_weight = (
-                f'SUMPRODUCT(({calibration_entry_type}="card")'
-                f"*({calibration_scope1}={result_ref(1, row_number)})"
-                f"*{calibration_weight})"
-            )
-            weight_cell = result_ref(5, row_number)
-            probability_cell = result_ref(6, row_number)
-            mean_slots_cell = result_ref(7, row_number)
+        extension_result = extension_rows.get(extension["id"])
+        if extension_result is None:
+            continue
+        for card in extension_result["cards"]:
             rows.append(
                 [
                     card["extensionId"],
                     card["id"],
                     card["name"],
                     card["rarityLabel"],
-                    FormulaCell(
-                        (
-                            f'SUMPRODUCT(({calibration_entry_type}="card")'
-                            f"*({calibration_scope1}={result_ref(1, row_number)})"
-                            f"*({calibration_entity_id}={result_ref(2, row_number)})"
-                            f"*{calibration_weight})"
-                        ),
-                    ),
-                    FormulaCell(f"{weight_cell}/{extension_total_weight}"),
-                    FormulaCell(f"1/{probability_cell}"),
-                    FormulaCell(f"{mean_slots_cell}/Probabilites!$B$3"),
-                    FormulaCell(f"{mean_slots_cell}/{slots_per_day_formula}"),
+                    card["cardRarityMultiplier"],
+                    decimal_cell(card["rarityProbability"], 15),
+                    decimal_cell(card["conditionalProbability"], 15),
+                    decimal_cell(card["finalProbability"], 15),
+                    decimal_cell(mean_days(card["finalProbability"], settings), 15),
                 ],
             )
+
     rows.append([])
     rows.append(["RarestComboChecks"])
     rows.append(
         [
             "extensionId",
-            "variantProfileId",
-            "highestRarity",
             "rarestCardId",
             "rarestSkyCode",
-            "holographicWeight",
             "comboProbability",
-            "actualMeanDays",
-            "targetMeanDays",
+            "meanDays",
         ],
     )
+    profile_rows_by_id = {profile["id"]: profile for profile in profile_rows}
     for extension in extensions:
-        extension_cards = cards_by_extension.get(extension["id"], [])
-        cards_by_rarity: dict[str, list[dict[str, Any]]] = {}
-        for card in extension_cards:
-            cards_by_rarity.setdefault(card["rarityLabel"], []).append(card)
-        highest_rarity = sorted(cards_by_rarity, key=rarity_sort_priority)[-1]
+        extension_result = extension_rows.get(extension["id"])
+        if extension_result is None or not extension_result["cards"]:
+            continue
         rarest_card = min(
-            cards_by_rarity[highest_rarity],
-            key=lambda card: (card["drawWeight"], card["id"]),
+            extension_result["cards"],
+            key=lambda card: (card["finalProbability"], card["id"]),
         )
-        variant_profile = profile_by_id[extension_variant_profiles[extension["id"]]]
-        rarest_sky = rarest_weighted_code(variant_profile["skyQualityWeights"])
-        row_number = len(rows) + 1
-        extension_total_weight = (
-            f'SUMPRODUCT(({calibration_entry_type}="card")'
-            f"*({calibration_scope1}={result_ref(1, row_number)})"
-            f"*{calibration_weight})"
-        )
-        rarest_card_weight = (
-            f'SUMPRODUCT(({calibration_entry_type}="card")'
-            f"*({calibration_scope1}={result_ref(1, row_number)})"
-            f"*({calibration_entity_id}={result_ref(4, row_number)})"
-            f"*{calibration_weight})"
-        )
-        sky_total_weight = (
-            f'SUMPRODUCT(({calibration_entry_type}="variant")'
-            f"*({calibration_entity_id}={result_ref(2, row_number)})"
-            f'*({calibration_scope1}="skyQuality")'
-            f"*{calibration_weight})"
-        )
-        rarest_sky_weight = (
-            f'SUMPRODUCT(({calibration_entry_type}="variant")'
-            f"*({calibration_entity_id}={result_ref(2, row_number)})"
-            f'*({calibration_scope1}="skyQuality")'
-            f"*({calibration_scope2}={result_ref(5, row_number)})"
-            f"*{calibration_weight})"
-        )
-        finish_total_weight = (
-            f'SUMPRODUCT(({calibration_entry_type}="variant")'
-            f"*({calibration_entity_id}={result_ref(2, row_number)})"
-            f'*({calibration_scope1}="finish")'
-            f"*{calibration_weight})"
+        profile = profile_rows_by_id[rarest_card["variantProfileId"]]
+        rarest_sky = rarest_weighted_code(profile["skyQualityWeights"])
+        holographic = weighted_code_lookup(profile["finishWeights"], "holographic")
+        combo_probability = (
+            rarest_card["finalProbability"]
+            * Fraction(rarest_sky["weight"], total_weight_of_codes(profile["skyQualityWeights"]))
+            * Fraction(holographic["weight"], total_weight_of_codes(profile["finishWeights"]))
         )
         rows.append(
             [
                 extension["id"],
-                variant_profile["id"],
-                highest_rarity,
                 rarest_card["id"],
                 rarest_sky["code"],
-                FormulaCell(
-                    (
-                        f'SUMPRODUCT(({calibration_entry_type}="variant")'
-                        f"*({calibration_entity_id}={result_ref(2, row_number)})"
-                        f'*({calibration_scope1}="finish")'
-                        f'*({calibration_scope2}="holographic")'
-                        f"*{calibration_weight})"
-                    ),
-                ),
-                FormulaCell(
-                    (
-                        f"({rarest_card_weight}/{extension_total_weight})"
-                        f"*({rarest_sky_weight}/{sky_total_weight})"
-                        f"*({result_ref(6, row_number)}/{finish_total_weight})"
-                    ),
-                ),
-                FormulaCell(f"1/({result_ref(7, row_number)}*{slots_per_day_formula})"),
-                FormulaCell(
-                    f"INDEX(Probabilites!$B:$B,MATCH({result_ref(1, row_number)},Probabilites!$A:$A,0))",
-                ),
+                decimal_cell(combo_probability, 15),
+                decimal_cell(mean_days(combo_probability, settings), 15),
             ],
         )
     return rows
@@ -1855,10 +2000,19 @@ def build_multipliers_from_cards(cards: list[dict[str, Any]]) -> dict[str, Decim
 
 
 def build_export_input_cards(cards: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    if cards and all("cardRarityMultiplier" in card for card in cards):
+        return [
+            {
+                **card,
+                "cardRarityMultiplier": Decimal(str(card["cardRarityMultiplier"])),
+            }
+            for card in cards
+        ]
+
     multipliers_by_card_id = build_multipliers_from_cards(cards)
     return [
         {
-            **card,
+            **{key: value for key, value in card.items() if key != "drawWeight"},
             "cardRarityMultiplier": multipliers_by_card_id[card["id"]],
         }
         for card in cards
@@ -1996,6 +2150,20 @@ def default_global_settings() -> GlobalSettings:
     return GlobalSettings(
         cards_per_draw=5,
         draw_cooldown_hours=Decimal("6"),
+    )
+
+
+def default_game_balance_data() -> GameBalanceData:
+    return GameBalanceData(
+        cards_per_draw=5,
+        draw_cooldown_hours=Decimal("6"),
+        percent_uncommon_per_day=Decimal("30"),
+        percent_rare_per_day=Decimal("15"),
+        percent_epic_per_day=Decimal("5"),
+        suburban_mean_per_day=Decimal("6"),
+        rural_mean_per_day=Decimal("3"),
+        mountain_mean_per_day=Decimal("1"),
+        percent_holo_mean_per_day=Decimal("10"),
     )
 
 
@@ -2469,6 +2637,8 @@ def render_json(value: Any, indent: int = 0) -> str:
         return "null"
     if isinstance(value, int):
         return str(value)
+    if isinstance(value, Decimal):
+        return format(value, "f")
     if isinstance(value, float):
         return format_json_float(value)
 
@@ -2480,7 +2650,7 @@ def format_json_float(value: float) -> str:
 
 
 def is_json_inline_scalar(value: Any) -> bool:
-    return isinstance(value, (str, bool, int, float)) or value is None
+    return isinstance(value, (str, bool, int, float, Decimal)) or value is None
 
 
 def format_right_ascension_label(hours: int, minutes: int, seconds: float) -> str:

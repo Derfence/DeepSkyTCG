@@ -7,7 +7,6 @@ import fr.aumombelli.dstcg.data.buildPackChargeUiStatus
 import fr.aumombelli.dstcg.model.CardFinishDefinition
 import fr.aumombelli.dstcg.model.SkyQualityDefinition
 import fr.aumombelli.dstcg.model.VariantProfile
-import fr.aumombelli.dstcg.model.WeightedCode
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.test.runTest
@@ -29,11 +28,11 @@ class LocalPackEngineTest {
                 ),
             )
             variantProfiles = listOf(localPackProfile())
+            gameBalance = localPackBalance(cardsPerDraw = 2)
         }
         val engine = LocalPackEngine(
             catalogRepository = catalogGateway,
             settings = testGameSettings(
-                cardsPerPack = 2,
                 now = fixedNow,
                 randomSeed = 0,
             ),
@@ -64,17 +63,16 @@ class LocalPackEngineTest {
     fun `draw pack favors higher weighted cards across repeated draws`() = runTest {
         val catalogGateway = FakeCatalogGateway().apply {
             cards = listOf(
-                testCardDefinition(id = "HEAVY", drawWeight = 100, variantProfileId = "local-pack-profile"),
-                testCardDefinition(id = "LIGHT", drawWeight = 1, variantProfileId = "local-pack-profile"),
+                testCardDefinition(id = "HEAVY", cardRarityMultiplier = 100.0, variantProfileId = "local-pack-profile"),
+                testCardDefinition(id = "LIGHT", cardRarityMultiplier = 1.0, variantProfileId = "local-pack-profile"),
             )
             variantProfiles = listOf(localPackProfile())
+            gameBalance = localPackBalance(cardsPerDraw = 1)
         }
         val engine = LocalPackEngine(
             catalogRepository = catalogGateway,
             settings = testGameSettings(
-                cardsPerPack = 1,
                 now = fixedNow,
-                drawCooldown = Duration.ZERO,
                 randomSeed = 1234,
             ),
         )
@@ -127,11 +125,11 @@ class LocalPackEngineTest {
                 ),
             )
             variantProfiles = listOf(localPackProfile())
+            gameBalance = localPackBalance(cardsPerDraw = 1)
         }
         val engine = LocalPackEngine(
             catalogRepository = catalogGateway,
             settings = testGameSettings(
-                cardsPerPack = 1,
                 now = fixedNow,
                 randomSeed = 0,
             ),
@@ -168,11 +166,11 @@ class LocalPackEngineTest {
                 ),
             )
             variantProfiles = listOf(localPackProfile())
+            gameBalance = localPackBalance(cardsPerDraw = 1)
         }
         val engine = LocalPackEngine(
             catalogRepository = catalogGateway,
             settings = testGameSettings(
-                cardsPerPack = 1,
                 now = fixedNow,
                 randomSeed = 0,
             ),
@@ -225,20 +223,17 @@ class LocalPackEngineTest {
     private fun localPackProfile(): VariantProfile = VariantProfile(
         id = "local-pack-profile",
         skyQualities = listOf(
-            SkyQualityDefinition("city", "Ville"),
             SkyQualityDefinition("mountain", "Montagne"),
         ),
         finishes = listOf(
-            CardFinishDefinition("standard", "Standard"),
             CardFinishDefinition("holographic", "Holographique", isHolographic = true),
         ),
-        skyQualityWeights = listOf(
-            WeightedCode("mountain", 100),
-            WeightedCode("city", 1),
-        ),
-        finishWeights = listOf(
-            WeightedCode("holographic", 100),
-            WeightedCode("standard", 1),
-        ),
+    )
+
+    private fun localPackBalance(cardsPerDraw: Int) = testGameBalanceDefinition(
+        cardsPerDraw = cardsPerDraw,
+        suburbanMeanPerDay = 1.0,
+        ruralMeanPerDay = 1.0,
+        mountainMeanPerDay = 1.0,
     )
 }

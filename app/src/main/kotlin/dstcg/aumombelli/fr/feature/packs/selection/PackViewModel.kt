@@ -13,10 +13,13 @@ import fr.aumombelli.dstcg.data.StandaloneGameSettings
 import fr.aumombelli.dstcg.data.WeatherPolicy
 import fr.aumombelli.dstcg.data.WeatherState
 import fr.aumombelli.dstcg.data.buildPackChargeUiStatus
+import fr.aumombelli.dstcg.data.drawCooldownDuration
 import fr.aumombelli.dstcg.data.requireUsableProgress
+import fr.aumombelli.dstcg.data.validated
 import fr.aumombelli.dstcg.feature.badges.BadgeItem
 import fr.aumombelli.dstcg.feature.badges.buildNewlyUnlockedBadges
 import fr.aumombelli.dstcg.model.ExtensionDefinition
+import fr.aumombelli.dstcg.model.GameBalanceDefinition
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.StandaloneProgress
@@ -89,15 +92,17 @@ class PackViewModel(
         viewModelScope.launch {
             runCatching {
                 val extensions = catalogRepository.loadExtensions()
+                val gameBalance = catalogRepository.loadGameBalance().validated()
                 val loadedProgress = progressRepository.loadProgress().requireUsableProgress()
-                extensions to loadedProgress
-            }.onSuccess { (extensions, loadedProgress) ->
+                Triple(extensions, loadedProgress, gameBalance)
+            }.onSuccess { (extensions, loadedProgress, gameBalance) ->
                 _uiState.value = PackSelectionUiState(
                     isLoading = false,
                     extensions = extensions,
                     currentCollection = loadedProgress.progress.collection,
                 ).withPackChargeStatus(
                     loadedProgress = loadedProgress,
+                    gameBalance = gameBalance,
                 )
             }.onFailure { exception ->
                 _uiState.value = PackSelectionUiState(
@@ -156,14 +161,15 @@ class PackViewModel(
             try {
                 runCatching {
                     val beforeProgress = progressRepository.loadProgress().requireUsableProgress().progress
-                    val response = packRepository.openPack(extensionId)
+                    packRepository.openPack(extensionId)
+                    val gameBalance = catalogRepository.loadGameBalance().validated()
                     val loadedProgress = progressRepository.loadProgress().requireUsableProgress()
                     val newlyUnlockedBadges = loadNewlyUnlockedBadges(
                         beforeProgress = beforeProgress,
                         afterProgress = loadedProgress.progress,
                     )
-                    Triple(response, loadedProgress, newlyUnlockedBadges)
-                }.onSuccess { (_, loadedProgress, newlyUnlockedBadges) ->
+                    Triple(loadedProgress, newlyUnlockedBadges, gameBalance)
+                }.onSuccess { (loadedProgress, newlyUnlockedBadges, gameBalance) ->
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -171,6 +177,7 @@ class PackViewModel(
                             isAwaitingPackResult = false,
                         ).withPackChargeStatus(
                             loadedProgress = loadedProgress,
+                            gameBalance = gameBalance,
                         )
                     }
                     _events.emit(PackEvent.PackReadyForReveal(newlyUnlockedBadges = newlyUnlockedBadges))
@@ -205,12 +212,14 @@ class PackViewModel(
 
     private fun PackSelectionUiState.withPackChargeStatus(
         loadedProgress: LoadedProgress,
+        gameBalance: GameBalanceDefinition,
     ): PackSelectionUiState {
         val referenceEvidence = gameSettings.timeSource.now()
+        val drawCooldown = gameBalance.drawCooldownDuration()
         val chargeStatus = buildPackChargeUiStatus(
             rechargeState = loadedProgress.progress.rechargeState,
             now = loadedProgress.trustedNow,
-            drawCooldown = gameSettings.drawCooldown,
+            drawCooldown = drawCooldown,
             maxStoredDraws = gameSettings.maxStoredDraws,
             weatherPolicy = gameSettings.weatherPolicy,
         )
@@ -218,7 +227,7 @@ class PackViewModel(
             rechargeState = chargeStatus.rechargeState,
             availableDrawCount = chargeStatus.availableDrawCount,
             maxStoredDraws = chargeStatus.maxStoredDraws,
-            drawCooldown = gameSettings.drawCooldown,
+            drawCooldown = drawCooldown,
             weatherPolicy = gameSettings.weatherPolicy,
             currentWeather = chargeStatus.currentWeather,
             nextChargeAt = chargeStatus.nextChargeAt,

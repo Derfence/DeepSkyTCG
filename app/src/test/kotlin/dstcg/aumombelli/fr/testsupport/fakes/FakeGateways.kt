@@ -8,12 +8,14 @@ import fr.aumombelli.dstcg.data.ProgressGateway
 import fr.aumombelli.dstcg.model.CardDefinition
 import fr.aumombelli.dstcg.model.DrawPackResponse
 import fr.aumombelli.dstcg.model.ExtensionDefinition
+import fr.aumombelli.dstcg.model.GameBalanceDefinition
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.PackCard
 import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.model.VariantProfile
 import fr.aumombelli.dstcg.model.mergePackCards
+import fr.aumombelli.dstcg.testsupport.fixtures.testGameBalanceDefinition
 import fr.aumombelli.dstcg.testsupport.fixtures.testVariantProfiles
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicInteger
@@ -91,9 +93,11 @@ class FakeCatalogGateway : CatalogGateway {
     var extensions: List<ExtensionDefinition> = emptyList()
     var cards: List<CardDefinition> = emptyList()
     var variantProfiles: List<VariantProfile> = testVariantProfiles()
+    var gameBalance: GameBalanceDefinition = testGameBalanceDefinition()
     var extensionsFailure: Throwable? = null
     var cardsFailure: Throwable? = null
     var variantProfilesFailure: Throwable? = null
+    var gameBalanceFailure: Throwable? = null
 
     override suspend fun loadExtensions(): List<ExtensionDefinition> {
         extensionsFailure?.let { throw it }
@@ -108,6 +112,11 @@ class FakeCatalogGateway : CatalogGateway {
     override suspend fun loadVariantProfiles(): List<VariantProfile> {
         variantProfilesFailure?.let { throw it }
         return variantProfiles
+    }
+
+    override suspend fun loadGameBalance(): GameBalanceDefinition {
+        gameBalanceFailure?.let { throw it }
+        return gameBalance
     }
 }
 

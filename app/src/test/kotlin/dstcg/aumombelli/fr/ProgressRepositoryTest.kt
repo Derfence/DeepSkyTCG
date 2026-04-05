@@ -9,6 +9,7 @@ import fr.aumombelli.dstcg.data.ProgressRepository
 import fr.aumombelli.dstcg.data.ProgressSnapshot
 import fr.aumombelli.dstcg.data.StandaloneGameSettings
 import fr.aumombelli.dstcg.data.buildPackChargeUiStatus
+import fr.aumombelli.dstcg.data.drawCooldownDuration
 import fr.aumombelli.dstcg.data.requireUsableProgress
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.OwnedCardEntry
@@ -192,7 +193,7 @@ class ProgressRepositoryTest {
         val chargeStatus = buildPackChargeUiStatus(
             rechargeState = loaded.progress.rechargeState,
             now = loaded.trustedNow,
-            drawCooldown = fixture.settings.drawCooldown,
+            drawCooldown = fixture.gameBalance.drawCooldownDuration(),
             maxStoredDraws = fixture.settings.maxStoredDraws,
             weatherPolicy = DeterministicWeatherCalendar,
         )
@@ -238,7 +239,7 @@ class ProgressRepositoryTest {
         val chargeStatus = buildPackChargeUiStatus(
             rechargeState = loaded.progress.rechargeState,
             now = loaded.trustedNow,
-            drawCooldown = fixture.settings.drawCooldown,
+            drawCooldown = fixture.gameBalance.drawCooldownDuration(),
             maxStoredDraws = fixture.settings.maxStoredDraws,
             weatherPolicy = DeterministicWeatherCalendar,
         )
@@ -259,19 +260,21 @@ class ProgressRepositoryTest {
         val settings = StandaloneGameSettings(
             timeSource = timeSource,
         )
+        val catalogGateway = FakeCatalogGateway().apply {
+            cards = listOf(testCardDefinition("ALP-001", variantProfileId = "observation-default"))
+        }
         return RepositoryFixture(
             secureDataStore = secureDataStore,
             cipher = cipher,
             settings = settings,
             repository = ProgressRepository(
                 secureDataStore = secureDataStore,
-                catalogRepository = FakeCatalogGateway().apply {
-                    cards = listOf(testCardDefinition("ALP-001", variantProfileId = "observation-default"))
-                },
+                catalogRepository = catalogGateway,
                 settings = settings,
                 progressCipher = cipher,
                 installIdFactory = { "install-under-test" },
             ),
+            gameBalance = catalogGateway.gameBalance,
         )
     }
 
@@ -292,5 +295,6 @@ class ProgressRepositoryTest {
         val cipher: fr.aumombelli.dstcg.data.ProgressCipher,
         val settings: StandaloneGameSettings,
         val repository: ProgressRepository,
+        val gameBalance: fr.aumombelli.dstcg.model.GameBalanceDefinition,
     )
 }

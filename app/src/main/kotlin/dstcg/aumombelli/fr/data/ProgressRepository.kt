@@ -37,6 +37,7 @@ class ProgressRepository(
 
     override suspend fun saveProgress(progress: StandaloneProgress) {
         val currentRecord = loadProgressRecord()
+        val drawCooldown = currentDrawCooldown()
         val baseSnapshot = when (val result = currentRecord.result) {
             is ProgressLoadResult.Compromised -> throw CompromisedProgressException(result.message)
             is ProgressLoadResult.Ok,
@@ -53,7 +54,7 @@ class ProgressRepository(
             newPlayerOnboardingStep = progress.newPlayerOnboardingStep,
         ).withNormalizedPackCharge(
             now = effectiveNow,
-            drawCooldown = settings.drawCooldown,
+            drawCooldown = drawCooldown,
             maxStoredDraws = settings.maxStoredDraws,
             weatherPolicy = settings.weatherPolicy,
         )
@@ -91,6 +92,7 @@ class ProgressRepository(
     }
 
     private suspend fun loadProgressRecord(): ProgressRecord {
+        val drawCooldown = currentDrawCooldown()
         val secureEnvelope = runCatching { secureDataStore.data.first() }
             .getOrElse { return ProgressRecord(result = compromisedResult(), snapshot = null, trustedNow = null) }
 
@@ -99,6 +101,7 @@ class ProgressRepository(
                 ?: return ProgressRecord(result = compromisedResult(), snapshot = null, trustedNow = null)
             return normalizeSnapshot(
                 snapshot = snapshot,
+                drawCooldown = drawCooldown,
                 forcePersist = false,
             )
         }
@@ -116,12 +119,14 @@ class ProgressRepository(
                 lastObservedBootMarker = timeEvidence.bootSessionId,
                 tamperFlag = false,
             ),
+            drawCooldown = drawCooldown,
             forcePersist = true,
         )
     }
 
     private suspend fun normalizeSnapshot(
         snapshot: ProgressSnapshot,
+        drawCooldown: Duration,
         forcePersist: Boolean,
     ): ProgressRecord {
         val trustedTime = resolveTrustedTime(snapshot)
@@ -138,7 +143,7 @@ class ProgressRepository(
             newPlayerOnboardingStep = normalizedOnboardingStep,
         ).withNormalizedPackCharge(
             now = trustedTime.trustedNow,
-            drawCooldown = settings.drawCooldown,
+            drawCooldown = drawCooldown,
             maxStoredDraws = settings.maxStoredDraws,
             weatherPolicy = settings.weatherPolicy,
         )
@@ -293,6 +298,9 @@ class ProgressRepository(
     private fun compromisedResult(): ProgressLoadResult.Compromised = ProgressLoadResult.Compromised(
         message = COMPROMISED_PROGRESS_MESSAGE,
     )
+
+    private suspend fun currentDrawCooldown(): Duration =
+        catalogRepository.loadGameBalance().validated().drawCooldownDuration()
 
     private data class ProgressRecord(
         val result: ProgressLoadResult,

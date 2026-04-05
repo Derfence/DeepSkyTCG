@@ -23,8 +23,6 @@ class PackCooldownException(
  * stays deterministic across devices for the same trusted UTC date.
  */
 data class StandaloneGameSettings(
-    val cardsPerPack: Int = 5,
-    val drawCooldown: Duration = DEFAULT_DRAW_COOLDOWN,
     val maxStoredDraws: Int = DEFAULT_MAX_STORED_DRAWS,
     val weatherPolicy: WeatherPolicy = DeterministicWeatherCalendar,
     val timeSource: TrustedTimeSource = ClockTrustedTimeSource(Clock.systemUTC()),
@@ -42,15 +40,25 @@ class LocalPackEngine(
     private val catalogRepository: CatalogGateway,
     private val settings: StandaloneGameSettings,
 ) {
+    private val runtimeCalculator = CatalogBalanceRuntimeCalculator()
+
     suspend fun drawPack(
         extensionId: String,
         rechargeState: PackRechargeState,
         now: Instant,
     ): DrawPackResponse {
+        val cards = catalogRepository.loadCards()
+        val variantProfiles = catalogRepository.loadVariantProfiles()
+        val runtimeCatalog = runtimeCalculator.resolve(
+            cards = cards,
+            variantProfiles = variantProfiles,
+            gameBalance = catalogRepository.loadGameBalance(),
+        )
+        val drawConfig = runtimeCatalog.drawConfig
         val normalizedChargeState = normalizePackRechargeState(
             rechargeState = rechargeState,
             now = now,
-            drawCooldown = settings.drawCooldown,
+            drawCooldown = drawConfig.drawCooldown,
             maxStoredDraws = settings.maxStoredDraws,
             weatherPolicy = settings.weatherPolicy,
         )
@@ -58,7 +66,7 @@ class LocalPackEngine(
             val retryAt = checkNotNull(
                 normalizedChargeState.derivedNextChargeAt(
                     now = now,
-                    drawCooldown = settings.drawCooldown,
+                    drawCooldown = drawConfig.drawCooldown,
                     maxStoredDraws = settings.maxStoredDraws,
                     weatherPolicy = settings.weatherPolicy,
                 ),
@@ -70,26 +78,33 @@ class LocalPackEngine(
         val updatedChargeState = consumePackCharge(
             normalizedState = normalizedChargeState,
             now = now,
-            drawCooldown = settings.drawCooldown,
+            drawCooldown = drawConfig.drawCooldown,
             maxStoredDraws = settings.maxStoredDraws,
         )
 
-        val cards = catalogRepository.loadCards().filter { it.extensionId == extensionId }
-        if (cards.isEmpty()) {
+        val extensionPlan = runtimeCatalog.extensionPlansById[extensionId]
+        if (extensionPlan == null) {
             throw IllegalStateException("Aucune carte n'a ete trouvee pour cette extension.")
         }
-        val variantProfilesById = catalogRepository.loadVariantProfiles().associateBy { it.id }
+        val variantProfilesById = variantProfiles.associateBy { it.id }
         val drawnAt = now.toString()
-        val drawnCards = List(settings.cardsPerPack) {
-            val definition = pickWeighted(cards)
+        val drawnCards = List(drawConfig.cardsPerDraw) {
+            val drawnRarity = pickWeighted(extensionPlan.rarityWeights) { it.weight }.code
+            val weightedCards = checkNotNull(extensionPlan.cardsByRarity[drawnRarity]) {
+                "Aucune carte n'a ete configuree pour la rarete '$drawnRarity' dans '$extensionId'."
+            }
+            val definition = pickWeighted(weightedCards) { it.weight }.card
             val variantProfile = checkNotNull(variantProfilesById[definition.variantProfileId]) {
                 "Profil de variante inconnu '${definition.variantProfileId}' pour la carte '${definition.id}'."
             }
+            val runtimeVariantWeights = checkNotNull(runtimeCatalog.variantWeightsByProfileId[definition.variantProfileId]) {
+                "Poids de variante introuvables pour '${definition.variantProfileId}'."
+            }
             val skyQuality = variantProfile.requireSkyQualityDefinition(
-                pickWeightedCode(variantProfile.skyQualityWeights),
+                pickWeightedCode(runtimeVariantWeights.skyQualityWeights),
             )
             val finish = variantProfile.requireFinishDefinition(
-                pickWeightedCode(variantProfile.finishWeights),
+                pickWeightedCode(runtimeVariantWeights.finishWeights),
             )
             PackCard(
                 cardId = definition.id,
@@ -126,9 +141,6 @@ class LocalPackEngine(
         }
         return entries.last()
     }
-
-    private fun pickWeighted(cards: List<fr.aumombelli.dstcg.model.CardDefinition>) =
-        pickWeighted(cards) { it.drawWeight }
 
     private fun pickWeightedCode(options: List<WeightedCode>): String =
         pickWeighted(options) { it.weight }.code

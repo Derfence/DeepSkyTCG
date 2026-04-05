@@ -11,9 +11,32 @@ import fr.aumombelli.dstcg.testsupport.fixtures.ownedCollectionWithVariants as f
 import fr.aumombelli.dstcg.testsupport.fixtures.testCardDefinition as fixtureTestCardDefinition
 import fr.aumombelli.dstcg.testsupport.fixtures.testPackCard as fixtureTestPackCard
 import fr.aumombelli.dstcg.testsupport.fixtures.testSkyEventCardDefinition as fixtureTestSkyEventCardDefinition
+import fr.aumombelli.dstcg.testsupport.fixtures.testGameBalanceDefinition as fixtureTestGameBalanceDefinition
 import fr.aumombelli.dstcg.testsupport.fixtures.testVariantProfiles as fixtureTestVariantProfiles
 
 fun testVariantProfiles() = fixtureTestVariantProfiles()
+
+fun testGameBalanceDefinition(
+    cardsPerDraw: Int = 5,
+    drawCooldownHours: Double = 6.0,
+    percentUncommonPerDay: Double = 30.0,
+    percentRarePerDay: Double = 15.0,
+    percentEpicPerDay: Double = 5.0,
+    suburbanMeanPerDay: Double = 6.0,
+    ruralMeanPerDay: Double = 3.0,
+    mountainMeanPerDay: Double = 1.0,
+    percentHoloMeanPerDay: Double = 10.0,
+) = fixtureTestGameBalanceDefinition(
+    cardsPerDraw = cardsPerDraw,
+    drawCooldownHours = drawCooldownHours,
+    percentUncommonPerDay = percentUncommonPerDay,
+    percentRarePerDay = percentRarePerDay,
+    percentEpicPerDay = percentEpicPerDay,
+    suburbanMeanPerDay = suburbanMeanPerDay,
+    ruralMeanPerDay = ruralMeanPerDay,
+    mountainMeanPerDay = mountainMeanPerDay,
+    percentHoloMeanPerDay = percentHoloMeanPerDay,
+)
 
 fun testCardDefinition(
     id: String,
@@ -22,7 +45,7 @@ fun testCardDefinition(
     commonName: String? = name,
     catalogNumber: String = id,
     rarityLabel: String = "Common",
-    drawWeight: Int = 1,
+    cardRarityMultiplier: Double = 1.0,
     imageRef: String = "m42_orion_nebula",
     variantProfileId: String = "observation-default",
 ) = fixtureTestCardDefinition(
@@ -32,7 +55,7 @@ fun testCardDefinition(
     commonName = commonName,
     catalogNumber = catalogNumber,
     rarityLabel = rarityLabel,
-    drawWeight = drawWeight,
+    cardRarityMultiplier = cardRarityMultiplier,
     imageRef = imageRef,
     variantProfileId = variantProfileId,
 )

@@ -3,6 +3,7 @@ package fr.aumombelli.dstcg.data
 import fr.aumombelli.dstcg.model.CardDefinition
 import fr.aumombelli.dstcg.model.DrawPackResponse
 import fr.aumombelli.dstcg.model.ExtensionDefinition
+import fr.aumombelli.dstcg.model.GameBalanceDefinition
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.PackCard
 import fr.aumombelli.dstcg.model.StandaloneProgress
@@ -13,6 +14,7 @@ interface CatalogGateway {
     suspend fun loadExtensions(): List<ExtensionDefinition>
     suspend fun loadCards(): List<CardDefinition>
     suspend fun loadVariantProfiles(): List<VariantProfile>
+    suspend fun loadGameBalance(): GameBalanceDefinition
 }
 
 interface ProgressGateway {

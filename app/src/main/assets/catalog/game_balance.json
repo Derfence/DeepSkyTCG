@@ -1,0 +1,1 @@
+{ "cardsPerDraw": 5, "drawCooldownHours": 6.0, "percentUncommonPerDay": 30.0, "percentRarePerDay": 15.0, "percentEpicPerDay": 5.0, "suburbanMeanPerDay": 6.0, "ruralMeanPerDay": 3.0, "mountainMeanPerDay": 1.0, "percentHoloMeanPerDay": 10.0 }

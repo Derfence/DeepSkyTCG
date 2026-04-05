@@ -7,8 +7,6 @@ import fr.aumombelli.dstcg.model.CardFinishDefinition
 import fr.aumombelli.dstcg.model.SkyQualityDefinition
 import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.model.VariantProfile
-import fr.aumombelli.dstcg.model.WeightedCode
-import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -30,6 +28,12 @@ class PackRepositoryTest {
                 testCardDefinition("ALP-002", name = "Galaxie d'Andromede", variantProfileId = "local-pack-profile"),
             )
             variantProfiles = listOf(localPackProfile())
+            gameBalance = testGameBalanceDefinition(
+                cardsPerDraw = 2,
+                suburbanMeanPerDay = 1.0,
+                ruralMeanPerDay = 1.0,
+                mountainMeanPerDay = 1.0,
+            )
         }
         val repository = PackRepository(
             progressRepository = progressGateway,
@@ -37,9 +41,7 @@ class PackRepositoryTest {
             localPackEngine = LocalPackEngine(
                 catalogRepository = catalogGateway,
                 settings = testGameSettings(
-                    cardsPerPack = 2,
                     now = fixedNow,
-                    drawCooldown = Duration.ofHours(6),
                     maxStoredDraws = 10,
                     randomSeed = 4,
                 ),
@@ -57,20 +59,10 @@ class PackRepositoryTest {
     private fun localPackProfile(): VariantProfile = VariantProfile(
         id = "local-pack-profile",
         skyQualities = listOf(
-            SkyQualityDefinition("city", "Ville"),
             SkyQualityDefinition("mountain", "Montagne"),
         ),
         finishes = listOf(
-            CardFinishDefinition("standard", "Standard"),
             CardFinishDefinition("holographic", "Holographique", isHolographic = true),
-        ),
-        skyQualityWeights = listOf(
-            WeightedCode("mountain", 100),
-            WeightedCode("city", 1),
-        ),
-        finishWeights = listOf(
-            WeightedCode("holographic", 100),
-            WeightedCode("standard", 1),
         ),
     )
 }

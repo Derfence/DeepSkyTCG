@@ -22,6 +22,7 @@ import fr.aumombelli.dstcg.model.CardDefinition
 import fr.aumombelli.dstcg.model.CardFinishDefinition
 import fr.aumombelli.dstcg.model.DrawPackResponse
 import fr.aumombelli.dstcg.model.ExtensionDefinition
+import fr.aumombelli.dstcg.model.GameBalanceDefinition
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.OwnedVariantCount
 import fr.aumombelli.dstcg.model.PackRechargeState
@@ -29,9 +30,9 @@ import fr.aumombelli.dstcg.model.PackCard
 import fr.aumombelli.dstcg.model.SkyQualityDefinition
 import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.model.VariantProfile
-import fr.aumombelli.dstcg.model.WeightedCode
 import fr.aumombelli.dstcg.model.mergePackCards
 import fr.aumombelli.dstcg.testCardDefinition
+import fr.aumombelli.dstcg.testGameBalanceDefinition
 import fr.aumombelli.dstcg.testPackCard
 import java.io.File
 import java.time.Instant
@@ -191,18 +192,18 @@ private fun navigationVariantProfile(): VariantProfile = VariantProfile(
     finishes = listOf(
         CardFinishDefinition(code = "standard", label = "Standard"),
     ),
-    skyQualityWeights = listOf(WeightedCode(code = "city", weight = 1)),
-    finishWeights = listOf(WeightedCode(code = "standard", weight = 1)),
 )
 
 private class NavigationCatalogGateway(
     private val extensions: List<ExtensionDefinition>,
     private val cards: List<CardDefinition>,
     private val variantProfiles: List<VariantProfile>,
+    private val gameBalance: GameBalanceDefinition = testGameBalanceDefinition(),
 ) : CatalogGateway {
     override suspend fun loadExtensions(): List<ExtensionDefinition> = extensions
     override suspend fun loadCards(): List<CardDefinition> = cards
     override suspend fun loadVariantProfiles(): List<VariantProfile> = variantProfiles
+    override suspend fun loadGameBalance(): GameBalanceDefinition = gameBalance
 }
 
 private class NavigationCollectionGateway(

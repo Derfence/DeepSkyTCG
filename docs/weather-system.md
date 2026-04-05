@@ -30,7 +30,7 @@ Le moteur de recharge n'utilise pas de flottants. Il convertit les multiplicateu
 - `Clair` = `5`
 - `Pur` = `10`
 
-La base `x1` vaut donc `5` unites par seconde. Pour un cooldown de `6h`, une recharge complete represente `drawCooldown.seconds * 5` unites.
+La base `x1` vaut donc `5` unites par seconde. Une recharge complete represente toujours `drawCooldown.seconds * 5` unites, avec un `drawCooldown` charge au runtime depuis `catalog/game_balance.json` via `drawCooldownHours`.
 
 ## Calendrier meteo deterministe
 
@@ -104,7 +104,7 @@ Representation visuelle actuelle :
 - `Clair` : soleil
 - `Pur` : croissant de lune
 
-L'UI ne rederive plus la logique a partir d'un cooldown brut. Elle consomme le statut produit par le moteur central et la politique meteo partagee.
+L'UI ne rederive plus la logique a partir d'un cooldown fixe. Elle consomme le statut produit par le moteur central, la politique meteo partagee et le cooldown derive du catalogue embarque.
 
 ## Tests
 
