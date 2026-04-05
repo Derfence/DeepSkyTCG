@@ -100,7 +100,7 @@ class PackViewModelTest {
 
     @Test
     fun `open pack reloads saved progress and emits navigation`() = runTest {
-        val response = DrawPackResponse(
+        val response = DrawPackResponse.fromCards(
             extensionId = "core-alpha",
             drawnAt = "2026-03-23T12:00:00Z",
             rechargeState = testRechargeStateWithNextChargeAt(
@@ -166,7 +166,7 @@ class PackViewModelTest {
 
     @Test
     fun `open pack emits newly unlocked badges when collection crosses a badge threshold`() = runTest {
-        val response = DrawPackResponse(
+        val response = DrawPackResponse.fromCards(
             extensionId = "core-alpha",
             drawnAt = "2026-03-23T12:00:00Z",
             rechargeState = testRechargeState(availableDrawCount = 9),
@@ -214,7 +214,7 @@ class PackViewModelTest {
 
     @Test
     fun `open pack emits first pack opened badge when progress count increases to one`() = runTest {
-        val response = DrawPackResponse(
+        val response = DrawPackResponse.fromCards(
             extensionId = "core-alpha",
             drawnAt = "2026-03-23T12:00:00Z",
             rechargeState = testRechargeState(availableDrawCount = 9),

@@ -49,6 +49,11 @@ fun PackOpeningScreen(
 ) {
     val packResult = state.packResult
     val displayCards = state.displayCards
+    val revealItems = if (state.revealItems.isNotEmpty()) {
+        state.revealItems
+    } else {
+        displayCards.map(::AstroPackRevealUiItem)
+    }
     var cardsVisible by remember(packResult?.drawnAt) { mutableStateOf(false) }
     var fullscreenPage by remember(packResult?.drawnAt) { mutableStateOf<Int?>(null) }
     var dismissStartOffset by remember(packResult?.drawnAt) { mutableFloatStateOf(0f) }
@@ -107,7 +112,7 @@ fun PackOpeningScreen(
         dismissRequested = true
     }
 
-    val swipeModifier = if (displayCards.isNotEmpty() && state.errorMessage == null) {
+    val swipeModifier = if (revealItems.isNotEmpty() && state.errorMessage == null) {
         Modifier.pointerInput(packResult?.drawnAt) {
             detectVerticalDragGestures(
                 onDragStart = {
@@ -215,12 +220,12 @@ fun PackOpeningScreen(
                         color = Color(0xFFD8E6F8),
                     )
 
-                    if (displayCards.isNotEmpty()) {
+                    if (revealItems.isNotEmpty()) {
                         key(packResult.drawnAt) {
-                            val pagerState = rememberPagerState(pageCount = { displayCards.size })
+                            val pagerState = rememberPagerState(pageCount = { revealItems.size })
                             val currentPage = pagerState.currentPage
                             val settledPage = pagerState.settledPage
-                            val currentCard = displayCards.getOrNull(currentPage)
+                            val currentItem = revealItems.getOrNull(currentPage)
                             val shouldAnimateSwipeHint =
                                 cardsVisible &&
                                     swipeHintUnlocked &&
@@ -230,7 +235,7 @@ fun PackOpeningScreen(
                                     !verticalDragActive
 
                             LaunchedEffect(packResult.drawnAt, settledPage) {
-                                if (settledPage == displayCards.lastIndex && !hasReachedLastCardOnce) {
+                                if (settledPage == revealItems.lastIndex && !hasReachedLastCardOnce) {
                                     hasReachedLastCardOnce = true
                                 }
                             }
@@ -264,7 +269,7 @@ fun PackOpeningScreen(
                             if (!progressBelowPager) {
                                 PackOpeningProgressIndicator(
                                     currentPage = currentPage,
-                                    total = displayCards.size,
+                                    total = revealItems.size,
                                 )
                             }
 
@@ -277,9 +282,9 @@ fun PackOpeningScreen(
                                 )
                             }
 
-                            if (currentCard != null) {
+                            if (currentItem != null) {
                                 androidx.compose.material3.Text(
-                                    text = currentCard.definition.id,
+                                    text = currentItem.id,
                                     modifier = Modifier
                                         .size(0.dp)
                                         .testTag("pack-opening-current-card-id"),
@@ -297,14 +302,16 @@ fun PackOpeningScreen(
                                     },
                             ) { page ->
                                 RevealCard(
-                                    displayCard = displayCards[page],
+                                    item = revealItems[page],
                                     isCurrentPage = page == currentPage,
                                     showPreviousArrow = page == currentPage && page > 0,
-                                    showNextArrow = page == currentPage && page < displayCards.lastIndex,
+                                    showNextArrow = page == currentPage && page < revealItems.lastIndex,
                                     cardTranslationY = if (page == currentPage) swipeHintOffset.value else 0f,
                                     nudgeActive = page == settledPage && shouldAnimateSwipeHint,
                                     onOpenFullscreen = {
-                                        fullscreenPage = page
+                                        if (revealItems[page] is AstroPackRevealUiItem) {
+                                            fullscreenPage = page
+                                        }
                                     },
                                 )
                             }
@@ -312,7 +319,7 @@ fun PackOpeningScreen(
                             if (progressBelowPager) {
                                 PackOpeningProgressIndicator(
                                     currentPage = currentPage,
-                                    total = displayCards.size,
+                                    total = revealItems.size,
                                 )
                             }
                         }
@@ -328,7 +335,9 @@ fun PackOpeningScreen(
             originBounds = initialBoosterBounds,
         )
 
-        val fullscreenCard = fullscreenPage?.let(displayCards::getOrNull)
+        val fullscreenCard = fullscreenPage
+            ?.let(revealItems::getOrNull)
+            ?.let { item -> (item as? AstroPackRevealUiItem)?.displayCard }
         if (fullscreenCard != null) {
             PackOpeningFullscreenDialog(
                 displayCard = fullscreenCard,

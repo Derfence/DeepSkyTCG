@@ -9,6 +9,7 @@ import fr.aumombelli.dstcg.data.CatalogGateway
 import fr.aumombelli.dstcg.data.CollectionGateway
 import fr.aumombelli.dstcg.data.CollectionRepository
 import fr.aumombelli.dstcg.data.EncryptedProgressEnvelopeSerializer
+import fr.aumombelli.dstcg.data.EquipmentRepository
 import fr.aumombelli.dstcg.data.GameCatalogRepository
 import fr.aumombelli.dstcg.data.LocalPackEngine
 import fr.aumombelli.dstcg.data.PackGateway
@@ -21,6 +22,8 @@ import fr.aumombelli.dstcg.data.StandaloneGameSettings
 import fr.aumombelli.dstcg.model.CardDefinition
 import fr.aumombelli.dstcg.model.CardFinishDefinition
 import fr.aumombelli.dstcg.model.DrawPackResponse
+import fr.aumombelli.dstcg.model.EquipmentCardDefinition
+import fr.aumombelli.dstcg.model.EquipmentSettingsDefinition
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.GameBalanceDefinition
 import fr.aumombelli.dstcg.model.OwnedCollection
@@ -70,6 +73,10 @@ internal fun offlineMainActivityTestAppContainer(
         progressCipher = AesGcmProgressCipher(keyProvider = ::newTestSecretKey),
     )
     val collectionRepository = CollectionRepository(progressRepository)
+    val equipmentRepository = EquipmentRepository(
+        progressRepository = progressRepository,
+        catalogRepository = catalogRepository,
+    )
     val packRepository = PackRepository(
         progressRepository = progressRepository,
         collectionRepository = collectionRepository,
@@ -83,6 +90,7 @@ internal fun offlineMainActivityTestAppContainer(
         progressRepository = progressRepository,
         catalogRepository = catalogRepository,
         collectionRepository = collectionRepository,
+        equipmentRepository = equipmentRepository,
         packRepository = packRepository,
         gameSettings = gameSettings,
     )
@@ -129,7 +137,12 @@ private fun navigationTestAppContainer(
         ),
     )
     val collectionRepository = NavigationCollectionGateway(progressRepository)
-    val packResponse = DrawPackResponse(
+    val catalogRepository = NavigationCatalogGateway(
+        extensions = listOf(extension),
+        cards = listOf(cardDefinition),
+        variantProfiles = listOf(navigationVariantProfile()),
+    )
+    val packResponse = DrawPackResponse.fromCards(
         extensionId = extension.id,
         drawnAt = "2026-03-23T12:00:00Z",
         rechargeState = androidTestRechargeStateWithNextChargeAt(
@@ -148,12 +161,12 @@ private fun navigationTestAppContainer(
 
     return AppContainer(
         progressRepository = progressRepository,
-        catalogRepository = NavigationCatalogGateway(
-            extensions = listOf(extension),
-            cards = listOf(cardDefinition),
-            variantProfiles = listOf(navigationVariantProfile()),
-        ),
+        catalogRepository = catalogRepository,
         collectionRepository = collectionRepository,
+        equipmentRepository = EquipmentRepository(
+            progressRepository = progressRepository,
+            catalogRepository = catalogRepository,
+        ),
         packRepository = NavigationPackGateway(progressRepository, packResponse),
         gameSettings = StandaloneGameSettings(
             entropySource = RandomEntropySource(Random(12345)),
@@ -204,6 +217,10 @@ private class NavigationCatalogGateway(
     override suspend fun loadCards(): List<CardDefinition> = cards
     override suspend fun loadVariantProfiles(): List<VariantProfile> = variantProfiles
     override suspend fun loadGameBalance(): GameBalanceDefinition = gameBalance
+    override suspend fun loadEquipmentCards(): List<EquipmentCardDefinition> = emptyList()
+    override suspend fun loadEquipmentSettings(): EquipmentSettingsDefinition = EquipmentSettingsDefinition(
+        commonReplacementChancePercent = 0.0,
+    )
 }
 
 private class NavigationCollectionGateway(

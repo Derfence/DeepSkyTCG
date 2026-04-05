@@ -8,8 +8,22 @@ Elle conserve :
 - le fond visuel historique de `Start` ;
 - une grande carte centrale `Ouvrir un pack` ;
 - une icone `Bibliotheque` en bas a gauche ;
+- une icone `Equipements` en bas au centre ;
 - une icone `Badges` en bas a droite ;
 - un bouton `Parametres` en haut a droite.
+
+## Equipements
+
+Le bouton `Equipements` ouvre un ecran dedie depuis l'accueil principal.
+
+L'ecran affiche :
+
+- un resume des effets actifs ;
+- trois sections fixes `Observatoire`, `Telescope` et `Monture` ;
+- les cartes possedees par type, avec leur niveau, leur bonus, `Stock xN` et `Activations totales : N` ;
+- le dernier equipement utilise par type quand il existe.
+
+Une seule carte peut etre active a la fois pour un type donne. Les trois types peuvent cependant coexister.
 
 La version n'est plus affichee sur l'ecran d'accueil.
 Elle reste visible dans la section `A propos`.

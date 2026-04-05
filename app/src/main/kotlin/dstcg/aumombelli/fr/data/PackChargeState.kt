@@ -8,6 +8,7 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 import kotlin.math.ceil
+import kotlin.math.roundToLong
 
 internal const val DEFAULT_MAX_STORED_DRAWS = 10
 internal val DEFAULT_DRAW_COOLDOWN: Duration = Duration.ofHours(6)
@@ -44,6 +45,7 @@ internal fun normalizePackRechargeState(
     drawCooldown: Duration,
     maxStoredDraws: Int,
     weatherPolicy: WeatherPolicy,
+    rechargeMultiplier: Double = 1.0,
 ): PackRechargeState {
     if (maxStoredDraws <= 0) {
         return PackRechargeState(
@@ -61,6 +63,7 @@ internal fun normalizePackRechargeState(
     }
 
     val cooldownUnits = drawCooldown.rechargeCooldownUnits()
+    val scaledRechargeMultiplier = rechargeMultiplier.scaledRechargeMultiplier()
     var availableDrawCount = rechargeState.availableDrawCount.coerceIn(0, maxStoredDraws)
     var accumulatedChargeUnits = rechargeState.accumulatedChargeUnits.coerceAtLeast(0L)
     val normalizedNow = now.normalizedRechargeInstant()
@@ -106,7 +109,10 @@ internal fun normalizePackRechargeState(
         val elapsedSeconds = Duration.between(cursor, segmentEnd).seconds.coerceAtLeast(0L)
         val unitsPerSecond = weatherPolicy.weatherAt(cursor).rechargeUnitsPerSecond
         if (elapsedSeconds > 0L && unitsPerSecond > 0L) {
-            accumulatedChargeUnits += elapsedSeconds * unitsPerSecond
+            accumulatedChargeUnits += elapsedSeconds.scaledRechargeUnits(
+                unitsPerSecond = unitsPerSecond,
+                scaledRechargeMultiplier = scaledRechargeMultiplier,
+            )
             if (accumulatedChargeUnits >= cooldownUnits) {
                 val recoveredDrawCount = (accumulatedChargeUnits / cooldownUnits).toInt()
                 availableDrawCount = (availableDrawCount + recoveredDrawCount).coerceAtMost(maxStoredDraws)
@@ -176,6 +182,7 @@ internal fun buildPackChargeUiStatus(
     drawCooldown: Duration,
     maxStoredDraws: Int,
     weatherPolicy: WeatherPolicy,
+    rechargeMultiplier: Double = 1.0,
 ): PackChargeUiStatus {
     val normalizedNow = now.normalizedRechargeInstant()
     val normalizedRechargeState = normalizePackRechargeState(
@@ -184,6 +191,7 @@ internal fun buildPackChargeUiStatus(
         drawCooldown = drawCooldown,
         maxStoredDraws = maxStoredDraws,
         weatherPolicy = weatherPolicy,
+        rechargeMultiplier = rechargeMultiplier,
     )
     val nextChargeAt = computeNextChargeAt(
         rechargeState = normalizedRechargeState,
@@ -191,6 +199,7 @@ internal fun buildPackChargeUiStatus(
         drawCooldown = drawCooldown,
         maxStoredDraws = maxStoredDraws,
         weatherPolicy = weatherPolicy,
+        rechargeMultiplier = rechargeMultiplier,
     )
     val remainingDuration = nextChargeAt?.let { Duration.between(normalizedNow, it) }
         ?.takeUnless { it.isNegative }
@@ -225,6 +234,7 @@ internal fun StandaloneProgress.withNormalizedPackCharge(
     drawCooldown: Duration,
     maxStoredDraws: Int,
     weatherPolicy: WeatherPolicy,
+    rechargeMultiplier: Double = 1.0,
 ): StandaloneProgress {
     return copy(
         rechargeState = normalizePackRechargeState(
@@ -233,6 +243,7 @@ internal fun StandaloneProgress.withNormalizedPackCharge(
             drawCooldown = drawCooldown,
             maxStoredDraws = maxStoredDraws,
             weatherPolicy = weatherPolicy,
+            rechargeMultiplier = rechargeMultiplier,
         ),
     )
 }
@@ -245,6 +256,7 @@ internal fun PackRechargeState.derivedNextChargeAt(
     drawCooldown: Duration,
     maxStoredDraws: Int,
     weatherPolicy: WeatherPolicy,
+    rechargeMultiplier: Double = 1.0,
 ): Instant? = computeNextChargeAt(
     rechargeState = normalizePackRechargeState(
         rechargeState = this,
@@ -252,11 +264,13 @@ internal fun PackRechargeState.derivedNextChargeAt(
         drawCooldown = drawCooldown,
         maxStoredDraws = maxStoredDraws,
         weatherPolicy = weatherPolicy,
+        rechargeMultiplier = rechargeMultiplier,
     ),
     now = now.normalizedRechargeInstant(),
     drawCooldown = drawCooldown,
     maxStoredDraws = maxStoredDraws,
     weatherPolicy = weatherPolicy,
+    rechargeMultiplier = rechargeMultiplier,
 )
 
 private fun computeNextChargeAt(
@@ -265,6 +279,7 @@ private fun computeNextChargeAt(
     drawCooldown: Duration,
     maxStoredDraws: Int,
     weatherPolicy: WeatherPolicy,
+    rechargeMultiplier: Double = 1.0,
 ): Instant? {
     if (maxStoredDraws <= 0 || drawCooldown.isZero || drawCooldown.isNegative) {
         return null
@@ -275,6 +290,7 @@ private fun computeNextChargeAt(
 
     val normalizedNow = now.normalizedRechargeInstant()
     val cooldownUnits = drawCooldown.rechargeCooldownUnits()
+    val scaledRechargeMultiplier = rechargeMultiplier.scaledRechargeMultiplier()
     var remainingUnits = (cooldownUnits - rechargeState.accumulatedChargeUnits)
         .coerceIn(1L, cooldownUnits)
     var cursor = rechargeState.lastChargeEvaluationAt
@@ -294,9 +310,13 @@ private fun computeNextChargeAt(
         }
 
         val secondsUntilBoundary = Duration.between(cursor, nextDayStart).seconds.coerceAtLeast(0L)
-        val unitsUntilBoundary = secondsUntilBoundary * unitsPerSecond
+        val unitsUntilBoundary = secondsUntilBoundary.scaledRechargeUnits(
+            unitsPerSecond = unitsPerSecond,
+            scaledRechargeMultiplier = scaledRechargeMultiplier,
+        )
         if (unitsUntilBoundary >= remainingUnits) {
-            val secondsNeeded = ceil(remainingUnits.toDouble() / unitsPerSecond.toDouble()).toLong()
+            val effectiveUnitsPerSecond = unitsPerSecond.scaledUnitsPerSecond(scaledRechargeMultiplier)
+            val secondsNeeded = ceil(remainingUnits.toDouble() / effectiveUnitsPerSecond).toLong()
             return cursor.plusSeconds(secondsNeeded)
         }
 
@@ -307,6 +327,18 @@ private fun computeNextChargeAt(
 
 private fun Duration.rechargeCooldownUnits(): Long = seconds.coerceAtLeast(0L) * BASE_RECHARGE_UNITS_PER_SECOND
 
+private fun Double.scaledRechargeMultiplier(): Long =
+    (coerceAtLeast(1.0) * RECHARGE_MULTIPLIER_SCALE.toDouble()).roundToLong()
+        .coerceAtLeast(RECHARGE_MULTIPLIER_SCALE)
+
+private fun Long.scaledRechargeUnits(
+    unitsPerSecond: Long,
+    scaledRechargeMultiplier: Long,
+): Long = (this * unitsPerSecond * scaledRechargeMultiplier) / RECHARGE_MULTIPLIER_SCALE
+
+private fun Long.scaledUnitsPerSecond(scaledRechargeMultiplier: Long): Double =
+    this.toDouble() * scaledRechargeMultiplier.toDouble() / RECHARGE_MULTIPLIER_SCALE.toDouble()
+
 private fun Instant.normalizedRechargeInstant(): Instant = truncatedTo(ChronoUnit.SECONDS)
 
 private fun Instant.nextUtcDayStart(): Instant =
@@ -314,3 +346,5 @@ private fun Instant.nextUtcDayStart(): Instant =
         .plusDays(1)
         .atStartOfDay(ZoneOffset.UTC)
         .toInstant()
+
+private const val RECHARGE_MULTIPLIER_SCALE = 1_000L

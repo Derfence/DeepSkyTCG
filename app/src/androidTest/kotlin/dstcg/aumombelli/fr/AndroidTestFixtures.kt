@@ -8,6 +8,9 @@ import fr.aumombelli.dstcg.model.CardVariant
 import fr.aumombelli.dstcg.model.CelestialCoordinates
 import fr.aumombelli.dstcg.model.Declination
 import fr.aumombelli.dstcg.model.DeepSkyDetails
+import fr.aumombelli.dstcg.model.EquipmentBonusUnit
+import fr.aumombelli.dstcg.model.EquipmentCardDefinition
+import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.model.GameBalanceDefinition
 import fr.aumombelli.dstcg.model.LightYearMeasurement
 import fr.aumombelli.dstcg.model.PackCard
@@ -106,6 +109,38 @@ fun testPackCard(
         finishLabel = finishLabel,
         isHolographic = isHolographic,
     ),
+)
+
+fun testEquipmentCardDefinition(
+    id: String,
+    type: EquipmentType = EquipmentType.Observatory,
+    displayName: String = "Equipement test",
+    level: Int = 1,
+    imageRef: String = "equipment_test",
+    packsAffected: Int = 3,
+    bonusValue: Double = when (type) {
+        EquipmentType.Observatory -> 1.25
+        EquipmentType.Telescope -> 8.0
+        EquipmentType.Mount -> 10.0
+    },
+    bonusUnit: EquipmentBonusUnit = when (type) {
+        EquipmentType.Observatory -> EquipmentBonusUnit.RechargeMultiplier
+        EquipmentType.Telescope -> EquipmentBonusUnit.HolographicPercent
+        EquipmentType.Mount -> EquipmentBonusUnit.RarityBoost
+    },
+    dropWeight: Int = 10,
+    description: String = "Carte d'equipement de test.",
+): EquipmentCardDefinition = EquipmentCardDefinition(
+    id = id,
+    type = type,
+    displayName = displayName,
+    level = level,
+    imageRef = imageRef,
+    packsAffected = packsAffected,
+    bonusValue = bonusValue,
+    bonusUnit = bonusUnit,
+    dropWeight = dropWeight,
+    description = description,
 )
 
 fun testSkyEventCardDefinition(

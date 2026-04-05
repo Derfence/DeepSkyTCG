@@ -12,14 +12,18 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.dp
+import fr.aumombelli.dstcg.feature.packs.opening.EquipmentPackRevealUiItem
 import fr.aumombelli.dstcg.model.CardDefinition
 import fr.aumombelli.dstcg.model.DrawPackResponse
+import fr.aumombelli.dstcg.model.EquipmentPackRevealSlot
+import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.model.PackCard
 import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.model.toDisplayVariant
@@ -41,7 +45,7 @@ class PackOpeningScreenTest {
     fun pack_opening_reveals_cards_supports_swipe_and_fullscreen() {
         val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
         val secondCard = testCardDefinition("ALP-002", name = "Galaxie d'Andromede")
-        val packResult = DrawPackResponse(
+        val packResult = DrawPackResponse.fromCards(
             extensionId = "astronomes-en-herbe",
             drawnAt = "2026-03-23T12:00:00Z",
             rechargeState = androidTestRechargeStateWithNextChargeAt(
@@ -134,7 +138,7 @@ class PackOpeningScreenTest {
     @Test
     fun pack_opening_holographic_burst_adds_falling_stars() {
         val holoCard = testCardDefinition("ALP-777", rarityLabel = "Epic")
-        val packResult = DrawPackResponse(
+        val packResult = DrawPackResponse.fromCards(
             extensionId = "astronomes-en-herbe",
             drawnAt = "2026-03-23T12:00:00Z",
             rechargeState = androidTestRechargeStateWithNextChargeAt(
@@ -179,11 +183,57 @@ class PackOpeningScreenTest {
     }
 
     @Test
+    fun pack_opening_renders_equipment_reward_cards() {
+        val definition = testEquipmentCardDefinition(
+            id = "mount-advanced",
+            type = EquipmentType.Mount,
+            displayName = "Monture Niveau 2",
+            level = 2,
+            packsAffected = 4,
+            bonusValue = 18.0,
+            description = "Augmente nettement la chance de promotion de rarete.",
+        )
+        val packResult = DrawPackResponse(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
+            revealSlots = listOf(
+                EquipmentPackRevealSlot(
+                    slotIndex = 0,
+                    definition = definition,
+                ),
+            ),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackOpeningScreen(
+                state = PackOpeningUiState(
+                    packResult = packResult,
+                    revealItems = listOf(EquipmentPackRevealUiItem(definition)),
+                ),
+                onDone = {},
+            )
+        }
+
+        composeRule.advanceToRevealedCards()
+
+        composeRule.onNodeWithTag("pack-opening-current-card-surface").assertIsDisplayed()
+        assertEquals(definition.id, composeRule.readCurrentPackOpeningCardId())
+        composeRule.onNodeWithText("Monture").assertIsDisplayed()
+        composeRule.onNodeWithText("Monture Niveau 2").assertIsDisplayed()
+        composeRule.onNodeWithText("Actif pendant 4 packs").assertIsDisplayed()
+    }
+
+    @Test
     fun pack_opening_unlocks_swipe_hint_for_current_card_after_first_last_card_visit() {
         val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
         val secondCard = testCardDefinition("ALP-002", name = "Galaxie d'Andromede")
         val thirdCard = testCardDefinition("ALP-003", name = "Amas globulaire")
-        val packResult = DrawPackResponse(
+        val packResult = DrawPackResponse.fromCards(
             extensionId = "astronomes-en-herbe",
             drawnAt = "2026-03-23T12:00:00Z",
             rechargeState = androidTestRechargeStateWithNextChargeAt(
@@ -256,7 +306,7 @@ class PackOpeningScreenTest {
     fun pack_opening_reveals_unlocked_hint_after_fullscreen_closes() {
         val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
         val secondCard = testCardDefinition("ALP-002", name = "Galaxie d'Andromede")
-        val packResult = DrawPackResponse(
+        val packResult = DrawPackResponse.fromCards(
             extensionId = "astronomes-en-herbe",
             drawnAt = "2026-03-23T12:00:00Z",
             rechargeState = androidTestRechargeStateWithNextChargeAt(
@@ -375,7 +425,7 @@ class PackOpeningScreenTest {
     fun pack_opening_swipe_up_dismiss_keeps_dragged_position_before_exit_animation_progresses() {
         val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
         val secondCard = testCardDefinition("ALP-002", name = "Galaxie d'Andromede")
-        val packResult = DrawPackResponse(
+        val packResult = DrawPackResponse.fromCards(
             extensionId = "astronomes-en-herbe",
             drawnAt = "2026-03-23T12:00:00Z",
             rechargeState = androidTestRechargeStateWithNextChargeAt(
@@ -432,7 +482,7 @@ class PackOpeningScreenTest {
     @Test
     fun pack_opening_background_art_leaves_visible_sky_quality_frame() {
         val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
-        val packResult = DrawPackResponse(
+        val packResult = DrawPackResponse.fromCards(
             extensionId = "astronomes-en-herbe",
             drawnAt = "2026-03-23T12:00:00Z",
             rechargeState = androidTestRechargeStateWithNextChargeAt(
@@ -476,7 +526,7 @@ class PackOpeningScreenTest {
     @Test
     fun pack_opening_progress_repositions_to_avoid_overlapping_card_on_compact_height() {
         val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
-        val packResult = DrawPackResponse(
+        val packResult = DrawPackResponse.fromCards(
             extensionId = "astronomes-en-herbe",
             drawnAt = "2026-03-23T12:00:00Z",
             rechargeState = androidTestRechargeStateWithNextChargeAt(
@@ -578,7 +628,7 @@ class PackOpeningScreenTest {
         definitions: List<CardDefinition>,
         highestBurstRarity: String = "Rare",
     ): PackOpeningUiState {
-        val packResult = DrawPackResponse(
+        val packResult = DrawPackResponse.fromCards(
             extensionId = "astronomes-en-herbe",
             drawnAt = drawnAt,
             rechargeState = androidTestRechargeStateWithNextChargeAt(

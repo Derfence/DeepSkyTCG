@@ -36,6 +36,8 @@ import fr.aumombelli.dstcg.AppContainer
 import fr.aumombelli.dstcg.feature.badges.BadgeBookScreen
 import fr.aumombelli.dstcg.feature.badges.BadgeBookViewModel
 import fr.aumombelli.dstcg.feature.badges.BadgeUnlockCelebrationOverlay
+import fr.aumombelli.dstcg.feature.equipment.EquipmentScreen
+import fr.aumombelli.dstcg.feature.equipment.EquipmentViewModel
 import fr.aumombelli.dstcg.feature.home.HomeScreen
 import fr.aumombelli.dstcg.feature.home.HomeViewModel
 import fr.aumombelli.dstcg.feature.library.LibraryScreen
@@ -209,6 +211,11 @@ internal fun AppSceneHost(
                             }
                         }
                     },
+                    onOpenEquipment = {
+                        if (!sceneState.transitionLocked) {
+                            scope.launch { transitions.animateHomeToEquipment() }
+                        }
+                    },
                     onOpenBadgeBook = {
                         if (!sceneState.transitionLocked) {
                             scope.launch {
@@ -259,6 +266,36 @@ internal fun AppSceneHost(
                     showOnboardingHint = onboardingCoordinator.uiState.libraryCardHintVisible &&
                         sceneState.onboardingHintsVisible,
                     onOnboardingHintConsumed = onboardingCoordinator::onLibraryCardHintConsumed,
+                )
+            }
+
+            AppScene.Equipment -> {
+                val equipmentViewModel: EquipmentViewModel = viewModel(
+                    key = "equipment",
+                    factory = DstcgViewModelFactory {
+                        EquipmentViewModel(
+                            catalogRepository = appContainer.catalogRepository,
+                            equipmentRepository = appContainer.equipmentRepository,
+                        )
+                    },
+                )
+                val uiState by equipmentViewModel.uiState.collectAsState()
+
+                LaunchedEffect(sceneState.equipmentRefreshSignal) {
+                    if (!uiState.isLoading || uiState.sections.isNotEmpty() || uiState.errorMessage != null) {
+                        equipmentViewModel.refresh()
+                    }
+                }
+
+                BackHandler(enabled = !sceneState.transitionLocked) {
+                    scope.launch { transitions.animateEquipmentToHome() }
+                }
+
+                EquipmentScreen(
+                    state = uiState,
+                    onRefresh = equipmentViewModel::refresh,
+                    onActivateEquipment = equipmentViewModel::activateEquipment,
+                    contentVisible = sceneState.equipmentContentVisible,
                 )
             }
 

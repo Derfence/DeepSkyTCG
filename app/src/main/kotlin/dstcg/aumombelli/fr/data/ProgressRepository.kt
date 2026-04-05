@@ -3,15 +3,21 @@ package fr.aumombelli.dstcg.data
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
+import fr.aumombelli.dstcg.model.ActiveEquipmentEffect
 import fr.aumombelli.dstcg.model.CardDefinition
+import fr.aumombelli.dstcg.model.EquipmentCardDefinition
+import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.OwnedCardEntry
 import fr.aumombelli.dstcg.model.OwnedCollection
+import fr.aumombelli.dstcg.model.OwnedEquipmentCardEntry
+import fr.aumombelli.dstcg.model.OwnedEquipmentInventory
 import fr.aumombelli.dstcg.model.OwnedVariantCount
 import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.model.VariantProfile
 import fr.aumombelli.dstcg.model.normalized
+import fr.aumombelli.dstcg.model.normalizedEquipmentState
 import fr.aumombelli.dstcg.model.normalizedForProgress
 import java.time.Duration
 import java.time.Instant
@@ -38,6 +44,7 @@ class ProgressRepository(
     override suspend fun saveProgress(progress: StandaloneProgress) {
         val currentRecord = loadProgressRecord()
         val drawCooldown = currentDrawCooldown()
+        val equipmentCards = catalogRepository.loadEquipmentCards()
         val baseSnapshot = when (val result = currentRecord.result) {
             is ProgressLoadResult.Compromised -> throw CompromisedProgressException(result.message)
             is ProgressLoadResult.Ok,
@@ -47,17 +54,25 @@ class ProgressRepository(
 
         val timeEvidence = settings.timeSource.now()
         val normalizedCollection = sanitizeCollection(progress.collection)
+        val sanitizedProgress = sanitizeEquipmentState(
+            progress = progress.copy(collection = normalizedCollection),
+            equipmentCards = equipmentCards,
+        )
+        val rechargeMultiplier = resolveActiveEquipmentBonus(
+            activeEquipmentByType = sanitizedProgress.activeEquipmentByType,
+            equipmentCards = equipmentCards,
+        ).rechargeMultiplier
         val effectiveNow = currentRecord.trustedNow ?: timeEvidence.wallClockUtc
-        val normalizedProgress = progress.copy(
-            collection = normalizedCollection,
-            openedPackCount = progress.openedPackCount.coerceAtLeast(0),
-            newPlayerOnboardingStep = progress.newPlayerOnboardingStep,
+        val normalizedProgress = sanitizedProgress.copy(
+            openedPackCount = sanitizedProgress.openedPackCount.coerceAtLeast(0),
+            newPlayerOnboardingStep = sanitizedProgress.newPlayerOnboardingStep,
         ).withNormalizedPackCharge(
             now = effectiveNow,
             drawCooldown = drawCooldown,
             maxStoredDraws = settings.maxStoredDraws,
             weatherPolicy = settings.weatherPolicy,
-        )
+            rechargeMultiplier = rechargeMultiplier,
+        ).normalizedEquipmentState()
 
         val snapshot = ProgressSnapshot(
             installId = baseSnapshot?.installId ?: installIdFactory(),
@@ -66,6 +81,9 @@ class ProgressRepository(
             rechargeState = normalizedProgress.rechargeState,
             openedPackCount = normalizedProgress.openedPackCount.coerceAtLeast(0),
             newPlayerOnboardingStep = normalizedProgress.newPlayerOnboardingStep,
+            equipmentInventory = normalizedProgress.equipmentInventory,
+            activeEquipmentByType = normalizedProgress.activeEquipmentByType,
+            lastActivatedCardIdByType = normalizedProgress.lastActivatedCardIdByType,
             lastTrustedWallClockUtc = effectiveNow.toString(),
             lastTrustedElapsedRealtimeMs = timeEvidence.elapsedRealtimeMs,
             lastObservedBootMarker = timeEvidence.bootSessionId,
@@ -93,6 +111,7 @@ class ProgressRepository(
 
     private suspend fun loadProgressRecord(): ProgressRecord {
         val drawCooldown = currentDrawCooldown()
+        val equipmentCards = catalogRepository.loadEquipmentCards()
         val secureEnvelope = runCatching { secureDataStore.data.first() }
             .getOrElse { return ProgressRecord(result = compromisedResult(), snapshot = null, trustedNow = null) }
 
@@ -102,6 +121,7 @@ class ProgressRepository(
             return normalizeSnapshot(
                 snapshot = snapshot,
                 drawCooldown = drawCooldown,
+                equipmentCards = equipmentCards,
                 forcePersist = false,
             )
         }
@@ -120,6 +140,7 @@ class ProgressRepository(
                 tamperFlag = false,
             ),
             drawCooldown = drawCooldown,
+            equipmentCards = equipmentCards,
             forcePersist = true,
         )
     }
@@ -127,17 +148,25 @@ class ProgressRepository(
     private suspend fun normalizeSnapshot(
         snapshot: ProgressSnapshot,
         drawCooldown: Duration,
+        equipmentCards: List<EquipmentCardDefinition>,
         forcePersist: Boolean,
     ): ProgressRecord {
         val trustedTime = resolveTrustedTime(snapshot)
         val sanitizedCollection = sanitizeCollection(snapshot.collection)
+        val sanitizedProgress = sanitizeEquipmentState(
+            progress = snapshot.toProgress().copy(collection = sanitizedCollection),
+            equipmentCards = equipmentCards,
+        )
         val normalizedOnboardingStep = snapshot.newPlayerOnboardingStep.normalizedForProgress(
             openedPackCount = snapshot.openedPackCount.coerceAtLeast(0),
             collection = sanitizedCollection,
             isLegacySnapshot = snapshot.schemaVersion < ProgressSnapshot.CURRENT_SCHEMA_VERSION,
         )
-        val normalizedProgress = StandaloneProgress(
-            collection = sanitizedCollection,
+        val rechargeMultiplier = resolveActiveEquipmentBonus(
+            activeEquipmentByType = sanitizedProgress.activeEquipmentByType,
+            equipmentCards = equipmentCards,
+        ).rechargeMultiplier
+        val normalizedProgress = sanitizedProgress.copy(
             rechargeState = snapshot.rechargeState,
             openedPackCount = snapshot.openedPackCount.coerceAtLeast(0),
             newPlayerOnboardingStep = normalizedOnboardingStep,
@@ -146,7 +175,8 @@ class ProgressRepository(
             drawCooldown = drawCooldown,
             maxStoredDraws = settings.maxStoredDraws,
             weatherPolicy = settings.weatherPolicy,
-        )
+            rechargeMultiplier = rechargeMultiplier,
+        ).normalizedEquipmentState()
 
         val normalizedSnapshot = snapshot.copy(
             schemaVersion = ProgressSnapshot.CURRENT_SCHEMA_VERSION,
@@ -154,6 +184,9 @@ class ProgressRepository(
             rechargeState = normalizedProgress.rechargeState,
             openedPackCount = normalizedProgress.openedPackCount.coerceAtLeast(0),
             newPlayerOnboardingStep = normalizedProgress.newPlayerOnboardingStep,
+            equipmentInventory = normalizedProgress.equipmentInventory,
+            activeEquipmentByType = normalizedProgress.activeEquipmentByType,
+            lastActivatedCardIdByType = normalizedProgress.lastActivatedCardIdByType,
             lastTrustedWallClockUtc = trustedTime.trustedNow.toString(),
             lastTrustedElapsedRealtimeMs = trustedTime.timeEvidence.elapsedRealtimeMs,
             lastObservedBootMarker = trustedTime.timeEvidence.bootSessionId,
@@ -165,6 +198,9 @@ class ProgressRepository(
             snapshot.rechargeState != normalizedSnapshot.rechargeState ||
             snapshot.openedPackCount != normalizedSnapshot.openedPackCount ||
             snapshot.newPlayerOnboardingStep != normalizedSnapshot.newPlayerOnboardingStep ||
+            snapshot.equipmentInventory != normalizedSnapshot.equipmentInventory ||
+            snapshot.activeEquipmentByType != normalizedSnapshot.activeEquipmentByType ||
+            snapshot.lastActivatedCardIdByType != normalizedSnapshot.lastActivatedCardIdByType ||
             snapshot.tamperFlag ||
             trustedTime.tamperDetected
 
@@ -225,6 +261,57 @@ class ProgressRepository(
         }.toMap().toSortedMap()
 
         return collection.copy(cards = sanitizedCards).normalized()
+    }
+
+    private fun sanitizeEquipmentState(
+        progress: StandaloneProgress,
+        equipmentCards: List<EquipmentCardDefinition>,
+    ): StandaloneProgress {
+        val equipmentCardsById = equipmentCards.associateBy(EquipmentCardDefinition::id)
+        val sanitizedInventory = progress.equipmentInventory.cards.mapNotNull { (cardId, entry) ->
+            val definition = equipmentCardsById[cardId] ?: return@mapNotNull null
+            val normalizedEntry = OwnedEquipmentCardEntry(
+                countOwned = entry.countOwned.coerceAtLeast(0),
+                activationCount = entry.activationCount.coerceAtLeast(0),
+            )
+            if (normalizedEntry.countOwned <= 0 && normalizedEntry.activationCount <= 0) {
+                null
+            } else {
+                definition.id to normalizedEntry
+            }
+        }.toMap()
+
+        val sanitizedActiveEquipment = progress.activeEquipmentByType.mapNotNull { (type, effect) ->
+            val definition = equipmentCardsById[effect.equipmentCardId] ?: return@mapNotNull null
+            if (definition.type != type || definition.type != effect.equipmentType) {
+                return@mapNotNull null
+            }
+            val packsRemaining = effect.packsRemaining.coerceAtLeast(0)
+            if (packsRemaining == 0) {
+                null
+            } else {
+                type to ActiveEquipmentEffect(
+                    equipmentCardId = definition.id,
+                    equipmentType = definition.type,
+                    packsRemaining = packsRemaining,
+                )
+            }
+        }.toMap()
+
+        val sanitizedLastActivated = progress.lastActivatedCardIdByType.mapNotNull { (type, cardId) ->
+            val definition = equipmentCardsById[cardId] ?: return@mapNotNull null
+            if (definition.type != type) {
+                null
+            } else {
+                type to definition.id
+            }
+        }.toMap()
+
+        return progress.copy(
+            equipmentInventory = OwnedEquipmentInventory(sanitizedInventory).normalized(),
+            activeEquipmentByType = sanitizedActiveEquipment,
+            lastActivatedCardIdByType = sanitizedLastActivated.toSortedMap(compareBy(EquipmentType::code)),
+        ).normalizedEquipmentState()
     }
 
     private fun sanitizeOwnedEntry(

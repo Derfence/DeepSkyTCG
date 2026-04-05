@@ -114,6 +114,23 @@ internal class AppSceneTransitionController(
         unlockTransitionsAndRevealOnboardingHints()
     }
 
+    suspend fun animateHomeToEquipment() {
+        val state = readState()
+        if (state.transitionLocked) return
+
+        writeState(
+            state.lockTransitions()
+                .hideHomeContent()
+                .hideLaunchLogo()
+                .hideEquipmentContent(),
+        )
+        delay(520)
+        writeState(readState().prepareEquipmentEntry(nextEquipmentRefreshSignal = state.equipmentRefreshSignal + 1))
+        awaitNextFrame()
+        writeState(readState().enterEquipment().showEquipmentContent())
+        unlockTransitionsAndRevealOnboardingHints()
+    }
+
     suspend fun animateHomeToBadgeBook() {
         val state = readState()
         if (state.transitionLocked) return
@@ -197,6 +214,29 @@ internal class AppSceneTransitionController(
         chestOverlayAlpha.animateTo(1f, animationSpec = tween(durationMillis = 960, easing = FastOutSlowInEasing))
         writeState(readState().enterHome())
         chestProgress.animateTo(0f, animationSpec = tween(durationMillis = 980, easing = FastOutSlowInEasing))
+        val nextState = readState().showHomeContent()
+        writeState(
+            if (nextState.pendingBadgeCelebration.isNotEmpty() && !nextState.badgeCelebrationDeferred) {
+                nextState
+            } else {
+                nextState.unlockTransitions()
+            },
+        )
+        if (nextState.pendingBadgeCelebration.isEmpty() || nextState.badgeCelebrationDeferred) {
+            revealOnboardingHintsAfterTransition()
+        }
+    }
+
+    suspend fun animateEquipmentToHome() {
+        val state = readState()
+        if (state.transitionLocked) return
+
+        writeState(
+            state.lockTransitions()
+                .hideEquipmentContent(),
+        )
+        delay(420)
+        writeState(readState().enterHome())
         val nextState = readState().showHomeContent()
         writeState(
             if (nextState.pendingBadgeCelebration.isNotEmpty() && !nextState.badgeCelebrationDeferred) {

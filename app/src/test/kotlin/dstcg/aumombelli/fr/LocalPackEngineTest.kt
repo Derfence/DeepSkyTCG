@@ -6,6 +6,7 @@ import fr.aumombelli.dstcg.data.DeterministicWeatherCalendar
 import fr.aumombelli.dstcg.data.buildPackChargeUiStatus
 import fr.aumombelli.dstcg.model.CardFinishDefinition
 import fr.aumombelli.dstcg.model.SkyQualityDefinition
+import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.model.VariantProfile
 import java.time.Duration
 import java.time.Instant
@@ -40,7 +41,7 @@ class LocalPackEngineTest {
 
         val response = engine.drawPack(
             extensionId = "astronomes-en-herbe",
-            rechargeState = testRechargeState(),
+            progress = testProgress(testRechargeState()),
             now = fixedNow,
         )
         val chargeStatus = buildPackChargeUiStatus(
@@ -81,7 +82,7 @@ class LocalPackEngineTest {
         repeat(200) {
             val cardId = engine.drawPack(
                 extensionId = "astronomes-en-herbe",
-                rechargeState = testRechargeState(),
+                progress = testProgress(testRechargeState()),
                 now = fixedNow,
             ).cards.single().cardId
             counts[cardId] = counts.getValue(cardId) + 1
@@ -100,9 +101,11 @@ class LocalPackEngineTest {
         val exception = try {
             engine.drawPack(
                 extensionId = "astronomes-en-herbe",
-                rechargeState = testRechargeStateWithNextChargeAt(
-                    availableDrawCount = 0,
-                    nextChargeAt = "2026-03-24T18:00:00Z",
+                progress = testProgress(
+                    testRechargeStateWithNextChargeAt(
+                        availableDrawCount = 0,
+                        nextChargeAt = "2026-03-24T18:00:00Z",
+                    ),
                 ),
                 now = fixedNow,
             )
@@ -137,9 +140,11 @@ class LocalPackEngineTest {
 
         val response = engine.drawPack(
             extensionId = "astronomes-en-herbe",
-            rechargeState = testRechargeStateWithNextChargeAt(
-                availableDrawCount = 5,
-                nextChargeAt = "2026-03-24T14:00:00Z",
+            progress = testProgress(
+                testRechargeStateWithNextChargeAt(
+                    availableDrawCount = 5,
+                    nextChargeAt = "2026-03-24T14:00:00Z",
+                ),
             ),
             now = fixedNow,
         )
@@ -178,9 +183,11 @@ class LocalPackEngineTest {
 
         val response = engine.drawPack(
             extensionId = "astronomes-en-herbe",
-            rechargeState = testRechargeStateWithNextChargeAt(
-                availableDrawCount = 7,
-                nextChargeAt = "2026-03-24T00:00:00Z",
+            progress = testProgress(
+                testRechargeStateWithNextChargeAt(
+                    availableDrawCount = 7,
+                    nextChargeAt = "2026-03-24T00:00:00Z",
+                ),
             ),
             now = fixedNow,
         )
@@ -210,7 +217,7 @@ class LocalPackEngineTest {
         val exception = try {
             engine.drawPack(
                 extensionId = "astronomes-en-herbe",
-                rechargeState = testRechargeState(),
+                progress = testProgress(testRechargeState()),
                 now = fixedNow,
             )
             error("Expected IllegalStateException")
@@ -236,4 +243,10 @@ class LocalPackEngineTest {
         ruralMeanPerDay = 1.0,
         mountainMeanPerDay = 1.0,
     )
+
+    private fun testProgress(rechargeState: fr.aumombelli.dstcg.model.PackRechargeState): StandaloneProgress =
+        StandaloneProgress(
+            collection = ownedCollectionOf(),
+            rechargeState = rechargeState,
+        )
 }

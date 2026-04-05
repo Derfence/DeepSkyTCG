@@ -1,16 +1,55 @@
 package fr.aumombelli.dstcg.model
 
-import kotlinx.serialization.Serializable
-
-@Serializable
 data class DrawPackResponse(
     val extensionId: String,
     val drawnAt: String,
     val rechargeState: PackRechargeState,
-    val cards: List<PackCard>,
-)
+    val revealSlots: List<PackRevealSlot>,
+) {
+    companion object {
+        fun fromCards(
+            extensionId: String,
+            drawnAt: String,
+            rechargeState: PackRechargeState,
+            cards: List<PackCard>,
+        ): DrawPackResponse = DrawPackResponse(
+            extensionId = extensionId,
+            drawnAt = drawnAt,
+            rechargeState = rechargeState,
+            revealSlots = cards.mapIndexed { index, card ->
+                AstronomyPackRevealSlot(
+                    slotIndex = index,
+                    card = card,
+                )
+            },
+        )
+    }
 
-@Serializable
+    val cards: List<PackCard>
+        get() = revealSlots
+            .filterIsInstance<AstronomyPackRevealSlot>()
+            .map { it.card }
+
+    val equipmentCards: List<EquipmentCardDefinition>
+        get() = revealSlots
+            .filterIsInstance<EquipmentPackRevealSlot>()
+            .map { it.definition }
+}
+
+sealed interface PackRevealSlot {
+    val slotIndex: Int
+}
+
+data class AstronomyPackRevealSlot(
+    override val slotIndex: Int,
+    val card: PackCard,
+) : PackRevealSlot
+
+data class EquipmentPackRevealSlot(
+    override val slotIndex: Int,
+    val definition: EquipmentCardDefinition,
+) : PackRevealSlot
+
 data class PackCard(
     val cardId: String,
     val name: String,
@@ -19,7 +58,6 @@ data class PackCard(
     val variant: CardVariant,
 )
 
-@Serializable
 data class CardVariant(
     val skyQuality: String,
     val skyQualityLabel: String,

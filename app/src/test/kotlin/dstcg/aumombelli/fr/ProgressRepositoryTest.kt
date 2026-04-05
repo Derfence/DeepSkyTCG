@@ -248,6 +248,41 @@ class ProgressRepositoryTest {
         assertEquals("2026-03-24T18:00:00Z", chargeStatus.nextChargeAt)
     }
 
+    @Test
+    fun `load progress migrates schema version 3 to version 4 without losing collection or recharge`() = runTest {
+        val fixture = newFixture()
+        writeSecureSnapshot(
+            fixture = fixture,
+            snapshot = ProgressSnapshot(
+                installId = "install-1",
+                schemaVersion = 3,
+                collection = ownedCollectionOf("ALP-001" to 2),
+                rechargeState = testRechargeStateWithNextChargeAt(
+                    availableDrawCount = 4,
+                    nextChargeAt = "2026-03-24T18:00:00Z",
+                    now = fixedNow,
+                ),
+                openedPackCount = 2,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.Completed,
+                lastTrustedWallClockUtc = fixedNow.toString(),
+                lastTrustedElapsedRealtimeMs = 1_000L,
+                lastObservedBootMarker = "test-boot",
+                tamperFlag = false,
+            ),
+        )
+
+        val result = fixture.repository.loadProgress()
+
+        assertTrue(result is ProgressLoadResult.Recovered)
+        val loaded = result.requireUsableProgress().progress
+        assertEquals(2, loaded.collection.cards.getValue("ALP-001").totalOwned)
+        assertEquals(4, loaded.rechargeState.availableDrawCount)
+        assertEquals(2, loaded.openedPackCount)
+        assertTrue(loaded.equipmentInventory.cards.isEmpty())
+        assertTrue(loaded.activeEquipmentByType.isEmpty())
+        assertTrue(loaded.lastActivatedCardIdByType.isEmpty())
+    }
+
     private fun newFixture(
         timeSource: MutableTrustedTimeSource = MutableTrustedTimeSource(
             wallClockUtc = fixedNow,

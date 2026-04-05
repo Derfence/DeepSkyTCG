@@ -68,6 +68,21 @@ class DstcgAppBackNavigationTest {
     }
 
     @Test
+    fun android_back_from_equipment_returns_to_home() {
+        setAppContent(backNavigationTestAppContainer())
+        startAndReachHome()
+
+        composeRule.onNodeWithTag("home-equipment").performClick()
+        advanceBy(900)
+        composeRule.onNodeWithTag("equipment-screen").assertIsDisplayed()
+        composeRule.onNodeWithTag("equipment-section-observatory").assertIsDisplayed()
+
+        pressAndroidBack()
+        advanceBy(900)
+        composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
+    }
+
+    @Test
     fun android_back_from_badge_book_closes_detail_then_returns_to_home() {
         setAppContent(backNavigationTestAppContainer())
         startAndReachHome()

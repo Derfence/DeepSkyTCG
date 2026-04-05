@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 
 data class PackOpeningUiState(
     val packResult: DrawPackResponse? = null,
+    val revealItems: List<PackRevealUiItem> = emptyList(),
     val displayCards: List<DisplayCard> = emptyList(),
     val highestBurstRarity: String? = null,
     val hasHolographicBurst: Boolean = false,

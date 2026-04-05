@@ -9,6 +9,7 @@ import fr.aumombelli.dstcg.data.DeterministicWeatherCalendar
 import fr.aumombelli.dstcg.data.LoadedProgress
 import fr.aumombelli.dstcg.data.PackGateway
 import fr.aumombelli.dstcg.data.ProgressGateway
+import fr.aumombelli.dstcg.data.resolveActiveEquipmentBonus
 import fr.aumombelli.dstcg.data.StandaloneGameSettings
 import fr.aumombelli.dstcg.data.WeatherPolicy
 import fr.aumombelli.dstcg.data.WeatherState
@@ -93,9 +94,10 @@ class PackViewModel(
             runCatching {
                 val extensions = catalogRepository.loadExtensions()
                 val gameBalance = catalogRepository.loadGameBalance().validated()
+                val equipmentCards = catalogRepository.loadEquipmentCards()
                 val loadedProgress = progressRepository.loadProgress().requireUsableProgress()
-                Triple(extensions, loadedProgress, gameBalance)
-            }.onSuccess { (extensions, loadedProgress, gameBalance) ->
+                Quadruple(extensions, loadedProgress, gameBalance, equipmentCards)
+            }.onSuccess { (extensions, loadedProgress, gameBalance, equipmentCards) ->
                 _uiState.value = PackSelectionUiState(
                     isLoading = false,
                     extensions = extensions,
@@ -103,6 +105,7 @@ class PackViewModel(
                 ).withPackChargeStatus(
                     loadedProgress = loadedProgress,
                     gameBalance = gameBalance,
+                    equipmentCards = equipmentCards,
                 )
             }.onFailure { exception ->
                 _uiState.value = PackSelectionUiState(
@@ -163,13 +166,14 @@ class PackViewModel(
                     val beforeProgress = progressRepository.loadProgress().requireUsableProgress().progress
                     packRepository.openPack(extensionId)
                     val gameBalance = catalogRepository.loadGameBalance().validated()
+                    val equipmentCards = catalogRepository.loadEquipmentCards()
                     val loadedProgress = progressRepository.loadProgress().requireUsableProgress()
                     val newlyUnlockedBadges = loadNewlyUnlockedBadges(
                         beforeProgress = beforeProgress,
                         afterProgress = loadedProgress.progress,
                     )
-                    Triple(loadedProgress, newlyUnlockedBadges, gameBalance)
-                }.onSuccess { (loadedProgress, newlyUnlockedBadges, gameBalance) ->
+                    Quadruple(loadedProgress, newlyUnlockedBadges, gameBalance, equipmentCards)
+                }.onSuccess { (loadedProgress, newlyUnlockedBadges, gameBalance, equipmentCards) ->
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -178,6 +182,7 @@ class PackViewModel(
                         ).withPackChargeStatus(
                             loadedProgress = loadedProgress,
                             gameBalance = gameBalance,
+                            equipmentCards = equipmentCards,
                         )
                     }
                     _events.emit(PackEvent.PackReadyForReveal(newlyUnlockedBadges = newlyUnlockedBadges))
@@ -213,15 +218,21 @@ class PackViewModel(
     private fun PackSelectionUiState.withPackChargeStatus(
         loadedProgress: LoadedProgress,
         gameBalance: GameBalanceDefinition,
+        equipmentCards: List<fr.aumombelli.dstcg.model.EquipmentCardDefinition>,
     ): PackSelectionUiState {
         val referenceEvidence = gameSettings.timeSource.now()
         val drawCooldown = gameBalance.drawCooldownDuration()
+        val rechargeMultiplier = resolveActiveEquipmentBonus(
+            activeEquipmentByType = loadedProgress.progress.activeEquipmentByType,
+            equipmentCards = equipmentCards,
+        ).rechargeMultiplier
         val chargeStatus = buildPackChargeUiStatus(
             rechargeState = loadedProgress.progress.rechargeState,
             now = loadedProgress.trustedNow,
             drawCooldown = drawCooldown,
             maxStoredDraws = gameSettings.maxStoredDraws,
             weatherPolicy = gameSettings.weatherPolicy,
+            rechargeMultiplier = rechargeMultiplier,
         )
         return copy(
             rechargeState = chargeStatus.rechargeState,
@@ -239,3 +250,10 @@ class PackViewModel(
         )
     }
 }
+
+private data class Quadruple<A, B, C, D>(
+    val first: A,
+    val second: B,
+    val third: C,
+    val fourth: D,
+)

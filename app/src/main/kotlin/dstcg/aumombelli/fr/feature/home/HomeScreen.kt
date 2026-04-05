@@ -52,6 +52,7 @@ fun HomeScreen(
     state: HomeUiState,
     onOpenPack: () -> Unit,
     onOpenLibrary: () -> Unit,
+    onOpenEquipment: () -> Unit,
     onOpenBadgeBook: () -> Unit,
     onResetProgress: () -> Unit,
     modifier: Modifier = Modifier,
@@ -240,6 +241,21 @@ fun HomeScreen(
                         }
                     }
                     .testTag("home-library"),
+            )
+
+            HomeCornerActionButton(
+                icon = {
+                    Icon(
+                        imageVector = Icons.Filled.AutoAwesome,
+                        contentDescription = "Equipements",
+                        tint = Color.White,
+                    )
+                },
+                enabled = navigationEnabled,
+                onClick = onOpenEquipment,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .testTag("home-equipment"),
             )
 
             HomeCornerActionButton(

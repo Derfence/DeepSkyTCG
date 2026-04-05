@@ -177,6 +177,7 @@ class HomeScreenStateTest {
                     state = state.value,
                     onOpenPack = {},
                     onOpenLibrary = {},
+                    onOpenEquipment = {},
                     onOpenBadgeBook = {},
                     onResetProgress = onResetProgress,
                     showBackground = false,

@@ -9,6 +9,7 @@ import java.time.temporal.ChronoUnit
 import fr.aumombelli.dstcg.testsupport.fixtures.ownedCollectionOf as fixtureOwnedCollectionOf
 import fr.aumombelli.dstcg.testsupport.fixtures.ownedCollectionWithVariants as fixtureOwnedCollectionWithVariants
 import fr.aumombelli.dstcg.testsupport.fixtures.testCardDefinition as fixtureTestCardDefinition
+import fr.aumombelli.dstcg.testsupport.fixtures.testEquipmentCardDefinition as fixtureTestEquipmentCardDefinition
 import fr.aumombelli.dstcg.testsupport.fixtures.testPackCard as fixtureTestPackCard
 import fr.aumombelli.dstcg.testsupport.fixtures.testSkyEventCardDefinition as fixtureTestSkyEventCardDefinition
 import fr.aumombelli.dstcg.testsupport.fixtures.testGameBalanceDefinition as fixtureTestGameBalanceDefinition
@@ -80,6 +81,38 @@ fun testPackCard(
     finish = finish,
     finishLabel = finishLabel,
     isHolographic = isHolographic,
+)
+
+fun testEquipmentCardDefinition(
+    id: String,
+    type: fr.aumombelli.dstcg.model.EquipmentType = fr.aumombelli.dstcg.model.EquipmentType.Observatory,
+    displayName: String = "Equipement test",
+    level: Int = 1,
+    imageRef: String = "equipment_test",
+    packsAffected: Int = 3,
+    bonusValue: Double = when (type) {
+        fr.aumombelli.dstcg.model.EquipmentType.Observatory -> 1.25
+        fr.aumombelli.dstcg.model.EquipmentType.Telescope -> 8.0
+        fr.aumombelli.dstcg.model.EquipmentType.Mount -> 10.0
+    },
+    bonusUnit: fr.aumombelli.dstcg.model.EquipmentBonusUnit = when (type) {
+        fr.aumombelli.dstcg.model.EquipmentType.Observatory -> fr.aumombelli.dstcg.model.EquipmentBonusUnit.RechargeMultiplier
+        fr.aumombelli.dstcg.model.EquipmentType.Telescope -> fr.aumombelli.dstcg.model.EquipmentBonusUnit.HolographicPercent
+        fr.aumombelli.dstcg.model.EquipmentType.Mount -> fr.aumombelli.dstcg.model.EquipmentBonusUnit.RarityBoost
+    },
+    dropWeight: Int = 10,
+    description: String = "Carte d'equipement de test.",
+) = fixtureTestEquipmentCardDefinition(
+    id = id,
+    type = type,
+    displayName = displayName,
+    level = level,
+    imageRef = imageRef,
+    packsAffected = packsAffected,
+    bonusValue = bonusValue,
+    bonusUnit = bonusUnit,
+    dropWeight = dropWeight,
+    description = description,
 )
 
 fun testSkyEventCardDefinition(

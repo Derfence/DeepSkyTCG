@@ -1,14 +1,17 @@
 package fr.aumombelli.dstcg.data
 
 import android.content.Context
+import fr.aumombelli.dstcg.model.AstronomyPackRevealSlot
 import fr.aumombelli.dstcg.model.CardVariant
 import fr.aumombelli.dstcg.model.DrawPackResponse
+import fr.aumombelli.dstcg.model.EquipmentCardDefinition
+import fr.aumombelli.dstcg.model.EquipmentPackRevealSlot
 import fr.aumombelli.dstcg.model.PackCard
 import fr.aumombelli.dstcg.model.PackRechargeState
+import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.model.WeightedCode
 import fr.aumombelli.dstcg.model.requireFinishDefinition
 import fr.aumombelli.dstcg.model.requireSkyQualityDefinition
-import fr.aumombelli.dstcg.model.sortedForPackReveal
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -45,23 +48,30 @@ class LocalPackEngine(
 
     suspend fun drawPack(
         extensionId: String,
-        rechargeState: PackRechargeState,
+        progress: StandaloneProgress,
         now: Instant,
     ): DrawPackResponse {
         val cards = catalogRepository.loadCards()
         val variantProfiles = catalogRepository.loadVariantProfiles()
+        val equipmentCards = catalogRepository.loadEquipmentCards()
+        val equipmentSettings = catalogRepository.loadEquipmentSettings()
         val runtimeCatalog = runtimeCalculator.resolve(
             cards = cards,
             variantProfiles = variantProfiles,
             gameBalance = catalogRepository.loadGameBalance(),
         )
+        val activeBonus = resolveActiveEquipmentBonus(
+            activeEquipmentByType = progress.activeEquipmentByType,
+            equipmentCards = equipmentCards,
+        )
         val drawConfig = runtimeCatalog.drawConfig
         val normalizedChargeState = normalizePackRechargeState(
-            rechargeState = rechargeState,
+            rechargeState = progress.rechargeState,
             now = now,
             drawCooldown = drawConfig.drawCooldown,
             maxStoredDraws = settings.maxStoredDraws,
             weatherPolicy = settings.weatherPolicy,
+            rechargeMultiplier = activeBonus.rechargeMultiplier,
         )
         if (normalizedChargeState.availableDrawCount == 0) {
             val retryAt = checkNotNull(
@@ -70,6 +80,7 @@ class LocalPackEngine(
                     drawCooldown = drawConfig.drawCooldown,
                     maxStoredDraws = settings.maxStoredDraws,
                     weatherPolicy = settings.weatherPolicy,
+                    rechargeMultiplier = activeBonus.rechargeMultiplier,
                 ),
             ) {
                 "Un tirage verrouille doit exposer une heure de recharge suivante."
@@ -89,44 +100,66 @@ class LocalPackEngine(
         }
         val variantProfilesById = variantProfiles.associateBy { it.id }
         val drawnAt = now.toString()
-        val drawnCards = List(drawConfig.cardsPerDraw) {
-            val drawnRarity = pickWeighted(extensionPlan.rarityWeights) { it.weight }.code
-            val weightedCards = checkNotNull(extensionPlan.cardsByRarity[drawnRarity]) {
-                "Aucune carte n'a ete configuree pour la rarete '$drawnRarity' dans '$extensionId'."
-            }
-            val definition = pickWeighted(weightedCards) { it.weight }.card
-            val variantProfile = checkNotNull(variantProfilesById[definition.variantProfileId]) {
-                "Profil de variante inconnu '${definition.variantProfileId}' pour la carte '${definition.id}'."
-            }
-            val runtimeVariantWeights = checkNotNull(runtimeCatalog.variantWeightsByProfileId[definition.variantProfileId]) {
-                "Poids de variante introuvables pour '${definition.variantProfileId}'."
-            }
-            val skyQuality = variantProfile.requireSkyQualityDefinition(
-                pickWeightedCode(runtimeVariantWeights.skyQualityWeights),
+        val revealSlots = List(drawConfig.cardsPerDraw) { slotIndex ->
+            val baseRarity = pickWeighted(extensionPlan.rarityWeights) { it.weight }.code
+            val drawnRarity = maybePromoteRarity(
+                baseRarity = baseRarity,
+                availableRarities = extensionPlan.cardsByRarity.keys,
+                rarityBoostPercent = activeBonus.rarityBoostPercent,
             )
-            val finish = variantProfile.requireFinishDefinition(
-                pickWeightedCode(runtimeVariantWeights.finishWeights),
+            val equipmentReward = maybeDrawEquipmentReward(
+                rarityLabel = drawnRarity,
+                equipmentCards = equipmentCards,
+                replacementChancePercent = equipmentSettings.commonReplacementChancePercent,
             )
-            PackCard(
-                cardId = definition.id,
-                name = definition.name,
-                rarityLabel = definition.rarityLabel,
-                imageRef = definition.imageRef,
-                variant = CardVariant(
-                    skyQuality = skyQuality.code,
-                    skyQualityLabel = skyQuality.label,
-                    finish = finish.code,
-                    finishLabel = finish.label,
-                    isHolographic = finish.isHolographic,
-                ),
-            )
-        }.sortedForPackReveal()
+            if (equipmentReward != null) {
+                EquipmentPackRevealSlot(
+                    slotIndex = slotIndex,
+                    definition = equipmentReward,
+                )
+            } else {
+                val weightedCards = checkNotNull(extensionPlan.cardsByRarity[drawnRarity]) {
+                    "Aucune carte n'a ete configuree pour la rarete '$drawnRarity' dans '$extensionId'."
+                }
+                val definition = pickWeighted(weightedCards) { it.weight }.card
+                val variantProfile = checkNotNull(variantProfilesById[definition.variantProfileId]) {
+                    "Profil de variante inconnu '${definition.variantProfileId}' pour la carte '${definition.id}'."
+                }
+                val runtimeVariantWeights = checkNotNull(runtimeCatalog.variantWeightsByProfileId[definition.variantProfileId]) {
+                    "Poids de variante introuvables pour '${definition.variantProfileId}'."
+                }
+                val skyQuality = variantProfile.requireSkyQualityDefinition(
+                    pickWeightedCode(runtimeVariantWeights.skyQualityWeights),
+                )
+                val finish = pickFinishWithEquipmentBonus(
+                    variantProfile = variantProfile,
+                    runtimeVariantWeights = runtimeVariantWeights,
+                    holographicPercent = activeBonus.holographicPercent,
+                )
+                AstronomyPackRevealSlot(
+                    slotIndex = slotIndex,
+                    card = PackCard(
+                        cardId = definition.id,
+                        name = definition.name,
+                        rarityLabel = definition.rarityLabel,
+                        imageRef = definition.imageRef,
+                        variant = CardVariant(
+                            skyQuality = skyQuality.code,
+                            skyQualityLabel = skyQuality.label,
+                            finish = finish.code,
+                            finishLabel = finish.label,
+                            isHolographic = finish.isHolographic,
+                        ),
+                    ),
+                )
+            }
+        }
 
         return DrawPackResponse(
             extensionId = extensionId,
             drawnAt = drawnAt,
             rechargeState = updatedChargeState,
-            cards = drawnCards,
+            revealSlots = revealSlots,
         )
     }
 
@@ -145,4 +178,90 @@ class LocalPackEngine(
 
     private fun pickWeightedCode(options: List<WeightedCode>): String =
         pickWeighted(options) { it.weight }.code
+
+    private fun maybePromoteRarity(
+        baseRarity: String,
+        availableRarities: Set<String>,
+        rarityBoostPercent: Double,
+    ): String {
+        if (rarityBoostPercent <= 0.0 || baseRarity == "Epic") {
+            return baseRarity
+        }
+        if (!rollPercent(rarityBoostPercent)) {
+            return baseRarity
+        }
+        return nextHigherConfiguredRarity(
+            currentRarity = baseRarity,
+            availableRarities = availableRarities,
+        )
+    }
+
+    private fun maybeDrawEquipmentReward(
+        rarityLabel: String,
+        equipmentCards: List<EquipmentCardDefinition>,
+        replacementChancePercent: Double,
+    ): EquipmentCardDefinition? {
+        if (rarityLabel != "Common") {
+            return null
+        }
+        val weightedEquipmentCards = equipmentCards.filter { it.dropWeight > 0 }
+        if (weightedEquipmentCards.isEmpty()) {
+            return null
+        }
+        if (!rollPercent(replacementChancePercent)) {
+            return null
+        }
+        return pickWeighted(weightedEquipmentCards) { it.dropWeight }
+    }
+
+    private fun pickFinishWithEquipmentBonus(
+        variantProfile: fr.aumombelli.dstcg.model.VariantProfile,
+        runtimeVariantWeights: RuntimeVariantWeights,
+        holographicPercent: Double,
+    ): fr.aumombelli.dstcg.model.CardFinishDefinition {
+        if (holographicPercent <= 0.0) {
+            return variantProfile.requireFinishDefinition(
+                pickWeightedCode(runtimeVariantWeights.finishWeights),
+            )
+        }
+
+        val finishWeightsByCode = runtimeVariantWeights.finishWeights.associateBy { it.code }
+        val holographicEntries = variantProfile.finishes
+            .filter { it.isHolographic }
+            .mapNotNull { finish -> finishWeightsByCode[finish.code] }
+        val nonHolographicEntries = variantProfile.finishes
+            .filterNot { it.isHolographic }
+            .mapNotNull { finish -> finishWeightsByCode[finish.code] }
+
+        if (holographicEntries.isEmpty() || nonHolographicEntries.isEmpty()) {
+            return variantProfile.requireFinishDefinition(
+                pickWeightedCode(runtimeVariantWeights.finishWeights),
+            )
+        }
+
+        val totalWeight = runtimeVariantWeights.finishWeights.sumOf { it.weight }.coerceAtLeast(1)
+        val baseHolographicProbability = holographicEntries.sumOf { it.weight }.toDouble() / totalWeight.toDouble()
+        val finalHolographicProbability = (baseHolographicProbability + holographicPercent / 100.0)
+            .coerceIn(0.0, 1.0)
+        val selectedPool = if (rollProbability(finalHolographicProbability)) {
+            holographicEntries
+        } else {
+            nonHolographicEntries
+        }
+        return variantProfile.requireFinishDefinition(
+            pickWeighted(selectedPool) { it.weight }.code,
+        )
+    }
+
+    private fun rollPercent(percent: Double): Boolean = rollProbability(
+        probability = (percent / 100.0).coerceIn(0.0, 1.0),
+    )
+
+    private fun rollProbability(probability: Double): Boolean {
+        if (probability <= 0.0) return false
+        if (probability >= 1.0) return true
+        val scale = 1_000_000
+        val threshold = (probability * scale).toInt().coerceIn(1, scale)
+        return settings.entropySource.nextInt(scale) < threshold
+    }
 }

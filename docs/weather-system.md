@@ -5,6 +5,7 @@
 Le standalone utilise une meteo 100% offline, deterministe et commune a tous les appareils pour une meme date UTC de confiance. Cette meteo ne depend ni d'une API externe, ni du fuseau du telephone, ni de la locale.
 
 Le systeme n'influe que sur la recharge des boosters.
+Le bonus `Observatoire` s'applique ensuite comme multiplicateur supplementaire sur cette vitesse de recharge.
 
 ## Source de temps
 
@@ -31,6 +32,8 @@ Le moteur de recharge n'utilise pas de flottants. Il convertit les multiplicateu
 - `Pur` = `10`
 
 La base `x1` vaut donc `5` unites par seconde. Une recharge complete represente toujours `drawCooldown.seconds * 5` unites, avec un `drawCooldown` charge au runtime depuis `catalog/game_balance.json` via `drawCooldownHours`.
+
+Quand un `Observatoire` est actif, le multiplicateur meteo est applique en premier, puis multiplie par le bonus de l'equipement. Le moteur conserve tout de meme une representation entiere stable en unites exactes.
 
 ## Calendrier meteo deterministe
 

@@ -3,13 +3,18 @@ package fr.aumombelli.dstcg
 import fr.aumombelli.dstcg.data.CollectionRepository
 import fr.aumombelli.dstcg.data.LocalPackEngine
 import fr.aumombelli.dstcg.data.PackRepository
+import fr.aumombelli.dstcg.model.ActiveEquipmentEffect
 import fr.aumombelli.dstcg.model.CardFinishDefinition
+import fr.aumombelli.dstcg.model.EquipmentSettingsDefinition
+import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.model.SkyQualityDefinition
 import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.model.VariantProfile
+import fr.aumombelli.dstcg.model.entryFor
 import java.time.Instant
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 
 class PackRepositoryTest {
@@ -54,6 +59,65 @@ class PackRepositoryTest {
         assertEquals(response.rechargeState, progressGateway.progress.rechargeState)
         assertEquals(1, progressGateway.progress.openedPackCount)
         assertEquals(3, progressGateway.progress.collection.cards.values.sumOf { it.totalOwned })
+    }
+
+    @Test
+    fun `open pack stores equipment rewards and expires active effects after use`() = runTest {
+        val fixedNow = Instant.parse("2026-03-24T12:00:00Z")
+        val rewardCard = testEquipmentCardDefinition(
+            id = "mount-beginner",
+            type = EquipmentType.Mount,
+            packsAffected = 1,
+            dropWeight = 1,
+        )
+        val progressGateway = FakeProgressGateway().apply {
+            progress = StandaloneProgress(
+                collection = ownedCollectionOf("ALP-001" to 1),
+                rechargeState = testRechargeState(),
+                activeEquipmentByType = mapOf(
+                    EquipmentType.Mount to ActiveEquipmentEffect(
+                        equipmentCardId = rewardCard.id,
+                        equipmentType = EquipmentType.Mount,
+                        packsRemaining = 1,
+                    ),
+                ),
+            )
+        }
+        val catalogGateway = FakeCatalogGateway().apply {
+            cards = listOf(
+                testCardDefinition("ALP-001", name = "Nebuleuse d'Orion", variantProfileId = "local-pack-profile"),
+            )
+            variantProfiles = listOf(localPackProfile())
+            gameBalance = testGameBalanceDefinition(
+                cardsPerDraw = 1,
+                suburbanMeanPerDay = 1.0,
+                ruralMeanPerDay = 1.0,
+                mountainMeanPerDay = 1.0,
+            )
+            equipmentCards = listOf(rewardCard)
+            equipmentSettings = EquipmentSettingsDefinition(
+                commonReplacementChancePercent = 100.0,
+            )
+        }
+        val repository = PackRepository(
+            progressRepository = progressGateway,
+            collectionRepository = CollectionRepository(progressGateway),
+            localPackEngine = LocalPackEngine(
+                catalogRepository = catalogGateway,
+                settings = testGameSettings(
+                    now = fixedNow,
+                    maxStoredDraws = 10,
+                    randomSeed = 0,
+                ),
+            ),
+        )
+
+        val response = repository.openPack("astronomes-en-herbe")
+
+        assertEquals(listOf(rewardCard.id), response.equipmentCards.map { it.id })
+        assertEquals(1, progressGateway.progress.equipmentInventory.entryFor(rewardCard.id).countOwned)
+        assertFalse(progressGateway.progress.activeEquipmentByType.containsKey(EquipmentType.Mount))
+        assertEquals(1, progressGateway.progress.collection.cards.values.sumOf { it.totalOwned })
     }
 
     private fun localPackProfile(): VariantProfile = VariantProfile(

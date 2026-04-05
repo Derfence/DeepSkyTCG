@@ -11,6 +11,7 @@ internal data class AppSceneUiState(
     val launchLogoRaised: Boolean = false,
     val homeContentVisible: Boolean = false,
     val libraryContentVisible: Boolean = false,
+    val equipmentContentVisible: Boolean = false,
     val badgeBookContentVisible: Boolean = false,
     val packSceneVisible: Boolean = false,
     val packExtensionListVisible: Boolean = false,
@@ -18,6 +19,7 @@ internal data class AppSceneUiState(
     val rootHeightPx: Float = 0f,
     val homeHeroCardTopPx: Float = 0f,
     val libraryRefreshSignal: Int = 0,
+    val equipmentRefreshSignal: Int = 0,
     val badgeBookRefreshSignal: Int = 0,
     val packRefreshSignal: Int = 0,
     val packReadySignal: Int = 0,
@@ -52,6 +54,10 @@ internal fun AppSceneUiState.showHomeContent(): AppSceneUiState = copy(homeConte
 internal fun AppSceneUiState.hideLibraryContent(): AppSceneUiState = copy(libraryContentVisible = false)
 
 internal fun AppSceneUiState.showLibraryContent(): AppSceneUiState = copy(libraryContentVisible = true)
+
+internal fun AppSceneUiState.hideEquipmentContent(): AppSceneUiState = copy(equipmentContentVisible = false)
+
+internal fun AppSceneUiState.showEquipmentContent(): AppSceneUiState = copy(equipmentContentVisible = true)
 
 internal fun AppSceneUiState.hideBadgeBookContent(): AppSceneUiState = copy(badgeBookContentVisible = false)
 
@@ -88,6 +94,14 @@ internal fun AppSceneUiState.prepareLibraryEntry(nextLibraryRefreshSignal: Int):
 )
 
 internal fun AppSceneUiState.enterLibrary(): AppSceneUiState = copy(currentScene = AppScene.Library)
+
+internal fun AppSceneUiState.prepareEquipmentEntry(nextEquipmentRefreshSignal: Int): AppSceneUiState = copy(
+    homeContentVisible = false,
+    equipmentContentVisible = false,
+    equipmentRefreshSignal = nextEquipmentRefreshSignal,
+)
+
+internal fun AppSceneUiState.enterEquipment(): AppSceneUiState = copy(currentScene = AppScene.Equipment)
 
 internal fun AppSceneUiState.prepareBadgeBookEntry(nextBadgeBookRefreshSignal: Int): AppSceneUiState = copy(
     homeContentVisible = false,

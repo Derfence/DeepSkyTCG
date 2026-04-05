@@ -31,7 +31,14 @@ class CatalogSyncTest(unittest.TestCase):
         temp_dir = Path(tempfile.mkdtemp(prefix="catalog-sync-"))
         catalog_dir = temp_dir / "catalog"
         catalog_dir.mkdir(parents=True, exist_ok=True)
-        for file_name in ["extensions.json", "cards.json", "variant_profiles.json", "game_balance.json"]:
+        for file_name in [
+            "extensions.json",
+            "cards.json",
+            "variant_profiles.json",
+            "game_balance.json",
+            "equipment_cards.json",
+            "equipment_settings.json",
+        ]:
             payload = (SOURCE_CATALOG_DIR / file_name).read_bytes()
             (catalog_dir / file_name).write_bytes(payload)
         return temp_dir, catalog_dir
@@ -46,6 +53,8 @@ class CatalogSyncTest(unittest.TestCase):
             cards=self.read_json(catalog_dir / "cards.json"),
             variant_profiles=self.read_json(catalog_dir / "variant_profiles.json"),
             balance_data=self.catalog_sync.load_balance_data(catalog_dir / "game_balance.json"),
+            equipment_cards=self.catalog_sync.load_equipment_cards_data(catalog_dir / "equipment_cards.json"),
+            equipment_settings=self.catalog_sync.load_equipment_settings_data(catalog_dir / "equipment_settings.json"),
         )
 
     def read_sheets(self, workbook_path: Path):
@@ -55,6 +64,7 @@ class CatalogSyncTest(unittest.TestCase):
         ordered_names = [
             self.catalog_sync.CATALOGUE_SHEET_NAME,
             self.catalog_sync.DATA_SHEET_NAME,
+            self.catalog_sync.EQUIPMENT_SHEET_NAME,
             self.catalog_sync.RESULTS_SHEET_NAME,
         ]
         self.catalog_sync.write_workbook(
@@ -103,8 +113,12 @@ class CatalogSyncTest(unittest.TestCase):
         original_cards = self.read_json(catalog_dir / "cards.json")
         original_profiles = self.read_json(catalog_dir / "variant_profiles.json")
         original_balance = self.read_json(catalog_dir / "game_balance.json")
+        original_equipment_cards = self.read_json(catalog_dir / "equipment_cards.json")
+        original_equipment_settings = self.read_json(catalog_dir / "equipment_settings.json")
 
-        _, applied_cards, applied_profiles, applied_balance = self.catalog_sync.apply_workbook(workbook_path, catalog_dir)
+        _, applied_cards, applied_profiles, applied_balance, applied_equipment_cards, applied_equipment_settings = (
+            self.catalog_sync.apply_workbook(workbook_path, catalog_dir)
+        )
 
         self.assertEqual(
             {card["id"]: card["cardRarityMultiplier"] for card in original_cards},
@@ -112,8 +126,13 @@ class CatalogSyncTest(unittest.TestCase):
         )
         self.assertEqual(original_profiles, applied_profiles)
         self.assertEqual(original_balance, self.catalog_sync.balance_data_to_json(applied_balance))
+        self.assertEqual(original_equipment_cards, applied_equipment_cards)
         self.assertEqual(
-            {"Catalogue", "Donnees", "Resultats"},
+            original_equipment_settings,
+            self.catalog_sync.equipment_settings_to_json(applied_equipment_settings),
+        )
+        self.assertEqual(
+            {"Catalogue", "Donnees", "Equipements", "Resultats"},
             set(self.read_sheets(workbook_path).keys()),
         )
 
@@ -257,6 +276,64 @@ class CatalogSyncTest(unittest.TestCase):
 
         self.assertAlmostEqual(0.75, probabilities_by_rarity["Rare"], places=6)
         self.assertAlmostEqual(0.25, probabilities_by_rarity["Epic"], places=6)
+
+    def test_apply_rejects_invalid_equipment_bonus_unit(self):
+        temp_dir, catalog_dir = self.create_temp_catalog_dir()
+        workbook_path = temp_dir / "catalogue.xlsx"
+        self.export_workbook(workbook_path, catalog_dir)
+
+        sheets = self.read_sheets(workbook_path)
+        equipment_sheet = sheets[self.catalog_sync.EQUIPMENT_SHEET_NAME]
+        header = equipment_sheet.rows[0]
+        bonus_unit_index = header.index("bonusUnit")
+        equipment_sheet.rows[1][bonus_unit_index] = "rarityBoost"
+        self.write_sheets(workbook_path, sheets)
+
+        with self.assertRaisesRegex(self.catalog_sync.CatalogSheetError, "must use bonusUnit"):
+            self.catalog_sync.apply_workbook(workbook_path, catalog_dir)
+
+    def test_apply_persists_equipment_settings_and_results_section(self):
+        temp_dir, catalog_dir = self.create_temp_catalog_dir()
+        workbook_path = temp_dir / "catalogue.xlsx"
+        self.export_workbook(workbook_path, catalog_dir)
+
+        sheets = self.read_sheets(workbook_path)
+        data_sheet = sheets[self.catalog_sync.DATA_SHEET_NAME]
+        self.set_cell(data_sheet, 19, 1, "EquipmentChancePercent")
+        self.set_cell(data_sheet, 19, 2, "7.5")
+        self.write_sheets(workbook_path, sheets)
+
+        _, _, _, _, _, applied_equipment_settings = self.catalog_sync.apply_workbook(workbook_path, catalog_dir)
+        self.assertEqual(
+            {"commonReplacementChancePercent": 7.5},
+            self.catalog_sync.equipment_settings_to_json(applied_equipment_settings),
+        )
+
+        result_sheet = self.read_sheets(workbook_path)[self.catalog_sync.RESULTS_SHEET_NAME]
+        equipment_rows = self.section_rows(result_sheet, self.catalog_sync.RESULTS_EQUIPMENT_SECTION)
+        self.assertTrue(equipment_rows)
+        self.assertEqual(
+            {"equipmentCardId", "equipmentType", "displayName", "level", "packsAffected", "bonusValue", "bonusUnit", "dropWeight", "description"},
+            set(equipment_rows[0].keys()),
+        )
+
+    def test_apply_reads_legacy_equipment_chance_from_b19(self):
+        temp_dir, catalog_dir = self.create_temp_catalog_dir()
+        workbook_path = temp_dir / "catalogue.xlsx"
+        self.export_workbook(workbook_path, catalog_dir)
+
+        sheets = self.read_sheets(workbook_path)
+        data_sheet = sheets[self.catalog_sync.DATA_SHEET_NAME]
+        self.set_cell(data_sheet, 19, 1, "EquipmentChancePercent")
+        self.set_cell(data_sheet, 19, 2, "12.5")
+        self.write_sheets(workbook_path, sheets)
+
+        _, _, _, _, _, applied_equipment_settings = self.catalog_sync.apply_workbook(workbook_path, catalog_dir)
+
+        self.assertEqual(
+            {"commonReplacementChancePercent": 12.5},
+            self.catalog_sync.equipment_settings_to_json(applied_equipment_settings),
+        )
 
     def test_apply_writes_raw_assets_without_precomputed_weights(self):
         temp_dir, catalog_dir = self.create_temp_catalog_dir()
