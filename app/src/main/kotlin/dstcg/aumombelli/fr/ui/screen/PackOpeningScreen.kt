@@ -10,12 +10,14 @@ import fr.aumombelli.dstcg.ui.viewmodel.PackOpeningUiState
 fun PackOpeningScreen(
     state: PackOpeningUiState,
     onDone: () -> Unit,
+    showPersistentDismissHint: Boolean = false,
     initialBoosterBounds: PackRevealBounds? = null,
     modifier: Modifier = Modifier,
 ) {
     PackOpeningFeatureScreen(
         state = state,
         onDone = onDone,
+        showPersistentDismissHint = showPersistentDismissHint,
         initialBoosterBounds = initialBoosterBounds,
         modifier = modifier,
     )

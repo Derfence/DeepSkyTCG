@@ -12,6 +12,7 @@ import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.model.WeightedCode
 import fr.aumombelli.dstcg.model.requireFinishDefinition
 import fr.aumombelli.dstcg.model.requireSkyQualityDefinition
+import fr.aumombelli.dstcg.model.sortedRevealSlotsForPackReveal
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -153,7 +154,7 @@ class LocalPackEngine(
                     ),
                 )
             }
-        }
+        }.sortedRevealSlotsForPackReveal()
 
         return DrawPackResponse(
             extensionId = extensionId,

@@ -47,6 +47,7 @@ import fr.aumombelli.dstcg.feature.packs.opening.PackOpeningViewModel
 import fr.aumombelli.dstcg.feature.packs.selection.PackEvent
 import fr.aumombelli.dstcg.feature.packs.selection.PackSelectionScreen
 import fr.aumombelli.dstcg.feature.packs.selection.PackViewModel
+import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.ui.motion.AppScene
 import fr.aumombelli.dstcg.ui.motion.AppSkyBackdrop
 import fr.aumombelli.dstcg.ui.motion.BrandLogoVariant
@@ -422,9 +423,14 @@ internal fun AppSceneHost(
                         },
                     )
                     val openingUiState by openingViewModel.uiState.collectAsState()
+                    val showPersistentDismissHint =
+                        sceneState.onboardingHintsVisible &&
+                            onboardingCoordinator.uiState.currentStep != null &&
+                            onboardingCoordinator.uiState.currentStep != NewPlayerOnboardingStep.Completed
 
                     PackOpeningScreen(
                         state = openingUiState,
+                        showPersistentDismissHint = showPersistentDismissHint,
                         initialBoosterBounds = sceneState.selectedPackRevealBounds,
                         dismissSignal = sceneState.packOpeningExitSignal,
                         onDone = {

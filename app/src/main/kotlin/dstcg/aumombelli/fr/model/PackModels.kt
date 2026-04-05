@@ -75,3 +75,35 @@ fun List<PackCard>.sortedForPackReveal(): List<PackCard> =
                 .thenBy { it.index },
         )
         .map { it.value }
+
+fun List<PackRevealSlot>.sortedRevealSlotsForPackReveal(): List<PackRevealSlot> =
+    withIndex()
+        .sortedWith(
+            compareBy<IndexedValue<PackRevealSlot>> { indexedValue ->
+                when (val slot = indexedValue.value) {
+                    is AstronomyPackRevealSlot -> slot.card.variant.isHolographic
+                    is EquipmentPackRevealSlot -> false
+                }
+            }.thenBy { indexedValue ->
+                when (val slot = indexedValue.value) {
+                    is AstronomyPackRevealSlot -> raritySortPriority(slot.card.rarityLabel)
+                    is EquipmentPackRevealSlot -> raritySortPriority("Common")
+                }
+            }.thenBy { indexedValue ->
+                when (val slot = indexedValue.value) {
+                    is AstronomyPackRevealSlot -> skyQualitySortPriority(slot.card.variant.skyQuality)
+                    is EquipmentPackRevealSlot -> Int.MAX_VALUE
+                }
+            }.thenBy { indexedValue ->
+                when (val slot = indexedValue.value) {
+                    is AstronomyPackRevealSlot -> ""
+                    is EquipmentPackRevealSlot -> slot.definition.type.code
+                }
+            }.thenBy { indexedValue ->
+                when (val slot = indexedValue.value) {
+                    is AstronomyPackRevealSlot -> 0
+                    is EquipmentPackRevealSlot -> slot.definition.level
+                }
+            }.thenBy { it.index },
+        )
+        .map { it.value }

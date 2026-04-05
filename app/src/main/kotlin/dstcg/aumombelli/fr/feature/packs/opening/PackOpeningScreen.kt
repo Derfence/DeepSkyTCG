@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -37,13 +38,16 @@ import fr.aumombelli.dstcg.ui.motion.PackRevealBounds
 import fr.aumombelli.dstcg.ui.motion.RarityBurstOverlay
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
+import kotlin.math.abs
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 
 @Composable
 fun PackOpeningScreen(
     state: PackOpeningUiState,
     onDone: () -> Unit,
     dismissSignal: Int = 0,
+    showPersistentDismissHint: Boolean = false,
     initialBoosterBounds: PackRevealBounds? = null,
     modifier: Modifier = Modifier,
 ) {
@@ -226,13 +230,21 @@ fun PackOpeningScreen(
                             val currentPage = pagerState.currentPage
                             val settledPage = pagerState.settledPage
                             val currentItem = revealItems.getOrNull(currentPage)
+                            val pagerIsFullySettled =
+                                !pagerState.isScrollInProgress &&
+                                    currentPage == settledPage &&
+                                    abs(pagerState.currentPageOffsetFraction) < 0.001f
                             val shouldAnimateSwipeHint =
                                 cardsVisible &&
                                     swipeHintUnlocked &&
-                                    currentPage == settledPage &&
+                                    pagerIsFullySettled &&
                                     fullscreenPage == null &&
                                     !dismissRequested &&
                                     !verticalDragActive
+                            val showSwipeHintLabel =
+                                cardsVisible &&
+                                    !dismissRequested &&
+                                    (showPersistentDismissHint || shouldAnimateSwipeHint)
 
                             LaunchedEffect(packResult.drawnAt, settledPage) {
                                 if (settledPage == revealItems.lastIndex && !hasReachedLastCardOnce) {
@@ -249,9 +261,11 @@ fun PackOpeningScreen(
                             LaunchedEffect(
                                 packResult.drawnAt,
                                 shouldAnimateSwipeHint,
+                                settledPage,
                             ) {
                                 swipeHintOffset.snapTo(0f)
                                 if (!shouldAnimateSwipeHint) return@LaunchedEffect
+                                delay(450)
 
                                 while (true) {
                                     swipeHintOffset.animateTo(
@@ -266,6 +280,23 @@ fun PackOpeningScreen(
                                 }
                             }
 
+                            LaunchedEffect(packResult.drawnAt) {
+                                snapshotFlow {
+                                    PagerScrollSnapshot(
+                                        isScrollInProgress = pagerState.isScrollInProgress,
+                                        currentPage = pagerState.currentPage,
+                                        offsetFraction = pagerState.currentPageOffsetFraction,
+                                    )
+                                }.collect { snapshot ->
+                                    if (
+                                        !snapshot.isScrollInProgress &&
+                                        abs(snapshot.offsetFraction) > 0.001f
+                                    ) {
+                                        pagerState.animateScrollToPage(snapshot.currentPage)
+                                    }
+                                }
+                            }
+
                             if (!progressBelowPager) {
                                 PackOpeningProgressIndicator(
                                     currentPage = currentPage,
@@ -273,7 +304,7 @@ fun PackOpeningScreen(
                                 )
                             }
 
-                            if (shouldAnimateSwipeHint) {
+                            if (showSwipeHintLabel) {
                                 androidx.compose.material3.Text(
                                     text = "Glisse vers le haut pour revenir au menu.",
                                     color = Color(0xFFF8D98D),
@@ -373,3 +404,9 @@ private fun shouldPlacePackOpeningProgressBelowPager(
 private val PackOpeningRevealHorizontalChrome = 80.dp
 private val PackOpeningRevealHeaderEstimate = 112.dp
 private val PackOpeningProgressReserve = 40.dp
+
+private data class PagerScrollSnapshot(
+    val isScrollInProgress: Boolean,
+    val currentPage: Int,
+    val offsetFraction: Float,
+)
