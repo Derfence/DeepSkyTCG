@@ -8,6 +8,7 @@ import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.WeightedCode
 import fr.aumombelli.dstcg.model.requireFinishDefinition
 import fr.aumombelli.dstcg.model.requireSkyQualityDefinition
+import fr.aumombelli.dstcg.model.sortedForPackReveal
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -119,7 +120,7 @@ class LocalPackEngine(
                     isHolographic = finish.isHolographic,
                 ),
             )
-        }
+        }.sortedForPackReveal()
 
         return DrawPackResponse(
             extensionId = extensionId,

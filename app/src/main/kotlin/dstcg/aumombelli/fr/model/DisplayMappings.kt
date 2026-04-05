@@ -78,16 +78,8 @@ fun OwnedCardEntry.toDisplayVariants(variantProfile: VariantProfile): List<Displ
         }
         .sortedWith(
             compareByDescending<DisplayCardVariant> { it.isHolographic }
-                .thenByDescending { skyQualityRank(it.skyQuality) }
+                .thenByDescending { skyQualitySortPriority(it.skyQuality) }
                 .thenByDescending { it.count }
                 .thenBy { it.skyQualityLabel }
                 .thenBy { it.finishLabel },
         )
-
-private fun skyQualityRank(code: String): Int = when (code) {
-    "mountain" -> 4
-    "rural" -> 3
-    "suburban" -> 2
-    "city" -> 1
-    else -> 0
-}

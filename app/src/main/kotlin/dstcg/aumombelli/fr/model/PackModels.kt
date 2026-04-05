@@ -27,3 +27,13 @@ data class CardVariant(
     val finishLabel: String,
     val isHolographic: Boolean,
 )
+
+fun List<PackCard>.sortedForPackReveal(): List<PackCard> =
+    withIndex()
+        .sortedWith(
+            compareBy<IndexedValue<PackCard>> { it.value.variant.isHolographic }
+                .thenBy { raritySortPriority(it.value.rarityLabel) }
+                .thenBy { skyQualitySortPriority(it.value.variant.skyQuality) }
+                .thenBy { it.index },
+        )
+        .map { it.value }
