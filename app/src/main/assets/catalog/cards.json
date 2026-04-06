@@ -4,7 +4,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Albireo",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "albireo",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -34,7 +34,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Algol",
     "rarityLabel": "Uncommon",
-    "drawWeight": 21429,
+    "cardRarityMultiplier": 1,
     "imageRef": "algol",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -64,7 +64,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Almach",
     "rarityLabel": "Uncommon",
-    "drawWeight": 21429,
+    "cardRarityMultiplier": 1,
     "imageRef": "almach",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -94,7 +94,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Altair",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "altair",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -124,7 +124,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Andromede",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "andromeda_constellation",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -158,7 +158,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Arcturus",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "arcturus",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -188,7 +188,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Aurore boreale",
     "rarityLabel": "Epic",
-    "drawWeight": 16667,
+    "cardRarityMultiplier": 1,
     "imageRef": "aurora_borealis",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -222,7 +222,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Betelgeuse",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "betelgeuse",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -252,7 +252,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Capella",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "capella",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -282,7 +282,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Cassiopee",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "cassiopeia_constellation",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -316,7 +316,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Amas du Cintre",
     "rarityLabel": "Uncommon",
-    "drawWeight": 21429,
+    "cardRarityMultiplier": 1,
     "imageRef": "coathanger",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -353,7 +353,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Comete C/2020 F3 NEOWISE",
     "rarityLabel": "Epic",
-    "drawWeight": 16667,
+    "cardRarityMultiplier": 1,
     "imageRef": "comet_neowise",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -378,7 +378,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Cygne",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "cygnus_constellation",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -412,7 +412,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Double Amas de Persee",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "double_cluster",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -449,7 +449,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Gemeaux",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "gemini_constellation",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -483,7 +483,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Geminides",
     "rarityLabel": "Uncommon",
-    "drawWeight": 21429,
+    "cardRarityMultiplier": 1,
     "imageRef": "geminids_meteor_shower",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -517,7 +517,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Comete de Halley",
     "rarityLabel": "Epic",
-    "drawWeight": 16667,
+    "cardRarityMultiplier": 1,
     "imageRef": "halley_comet",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -542,7 +542,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Hyades",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "hyades",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -579,7 +579,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Leonides",
     "rarityLabel": "Uncommon",
-    "drawWeight": 21429,
+    "cardRarityMultiplier": 1,
     "imageRef": "leonids_meteor_shower",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -613,7 +613,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Lyre",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "lyra_constellation",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -647,7 +647,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Amas du Canard Sauvage",
     "rarityLabel": "Uncommon",
-    "drawWeight": 21429,
+    "cardRarityMultiplier": 1,
     "imageRef": "m11_wild_duck_cluster",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -684,7 +684,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Grand amas d'Hercule",
     "rarityLabel": "Uncommon",
-    "drawWeight": 21429,
+    "cardRarityMultiplier": 1,
     "imageRef": "m13_hercules",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -721,7 +721,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Nebuleuse de l'Aigle",
     "rarityLabel": "Rare",
-    "drawWeight": 18750,
+    "cardRarityMultiplier": 1,
     "imageRef": "m16_eagle_nebula",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -758,7 +758,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Nebuleuse du Cygne",
     "rarityLabel": "Rare",
-    "drawWeight": 18750,
+    "cardRarityMultiplier": 1,
     "imageRef": "m17_swan_nebula",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -795,7 +795,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "M22",
     "rarityLabel": "Uncommon",
-    "drawWeight": 21429,
+    "cardRarityMultiplier": 1,
     "imageRef": "m22_globular_cluster",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -832,7 +832,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Nuage stellaire du Sagittaire",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "m24_star_cloud",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -868,7 +868,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Nebuleuse Dumbbell",
     "rarityLabel": "Uncommon",
-    "drawWeight": 21429,
+    "cardRarityMultiplier": 1,
     "imageRef": "m27_dumbbell",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -905,7 +905,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Galaxie d'Andromede",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "m31_andromeda",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -942,7 +942,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Galaxie du Triangle",
     "rarityLabel": "Rare",
-    "drawWeight": 18750,
+    "cardRarityMultiplier": 1,
     "imageRef": "m33_triangulum",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -979,7 +979,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "M37",
     "rarityLabel": "Uncommon",
-    "drawWeight": 21429,
+    "cardRarityMultiplier": 1,
     "imageRef": "m37_open_cluster",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -1016,7 +1016,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "M38",
     "rarityLabel": "Uncommon",
-    "drawWeight": 21429,
+    "cardRarityMultiplier": 1,
     "imageRef": "m38_open_cluster",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -1053,7 +1053,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "M39",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "m39_open_cluster",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -1090,7 +1090,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "M41",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "m41_open_cluster",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -1127,7 +1127,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Nebuleuse d'Orion",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "m42_orion_nebula",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -1164,7 +1164,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Pleiades",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "m45_pleiades",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -1201,7 +1201,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "M46",
     "rarityLabel": "Uncommon",
-    "drawWeight": 21429,
+    "cardRarityMultiplier": 1,
     "imageRef": "m46_open_cluster",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -1238,7 +1238,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Nebuleuse de la Lyre",
     "rarityLabel": "Rare",
-    "drawWeight": 18750,
+    "cardRarityMultiplier": 1,
     "imageRef": "m57_ring",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -1275,7 +1275,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Amas du Papillon",
     "rarityLabel": "Uncommon",
-    "drawWeight": 21429,
+    "cardRarityMultiplier": 1,
     "imageRef": "m6_butterfly_cluster",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -1312,7 +1312,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Nebuleuse de la Lagune",
     "rarityLabel": "Uncommon",
-    "drawWeight": 21429,
+    "cardRarityMultiplier": 1,
     "imageRef": "m8_lagoon_nebula",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -1349,7 +1349,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Galaxie de Bode",
     "rarityLabel": "Rare",
-    "drawWeight": 18750,
+    "cardRarityMultiplier": 1,
     "imageRef": "m81_bode",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -1386,7 +1386,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Galaxie du Cigare",
     "rarityLabel": "Rare",
-    "drawWeight": 18750,
+    "cardRarityMultiplier": 1,
     "imageRef": "m82_cigar",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -1423,7 +1423,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Mira",
     "rarityLabel": "Rare",
-    "drawWeight": 18750,
+    "cardRarityMultiplier": 1,
     "imageRef": "mira",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -1453,7 +1453,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Mizar et Alcor",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "mizar_alcor",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -1483,7 +1483,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Nebuleuse de l'Amerique du Nord",
     "rarityLabel": "Rare",
-    "drawWeight": 18750,
+    "cardRarityMultiplier": 1,
     "imageRef": "ngc7000_north_america",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -1520,7 +1520,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Orion",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "orion_constellation",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -1554,7 +1554,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Perseides",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "perseids_meteor_shower",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -1588,7 +1588,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Persee",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "perseus_constellation",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -1622,7 +1622,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Etoile Polaire",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "polaris",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -1652,7 +1652,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Sirius",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "sirius",
     "variantProfileId": "observation-default",
     "astronomy": {
@@ -1682,7 +1682,7 @@
     "extensionId": "astronomes-en-herbe",
     "name": "Grande Ourse",
     "rarityLabel": "Common",
-    "drawWeight": 20000,
+    "cardRarityMultiplier": 1,
     "imageRef": "ursa_major_constellation",
     "variantProfileId": "observation-default",
     "astronomy": {

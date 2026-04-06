@@ -1,12 +1,39 @@
 # Accueil
 
-La scene `Start` affiche maintenant :
+La scene d'accueil est maintenant unique et remplace `Start` et `Main menu`.
 
-- aucun message de progression locale quand le chargement est sain ou seulement recupere ;
-- un bouton `Réinitialiser la bibliothèque` toujours visible ;
-- une confirmation avant reset avec validation activee apres 2 secondes ;
-- un footer avec la version `v1.0` a gauche ;
-- une zone `à propos` au centre ouvrant un panneau de credits.
+Elle conserve :
+
+- l'animation d'ouverture avec le logo au centre qui monte ensuite en haut de l'ecran ;
+- le fond visuel historique de `Start` ;
+- une grande carte centrale `Ouvrir un pack` ;
+- une icone `Bibliotheque` en bas a gauche ;
+- une icone `Equipements` en bas au centre, debloquee apres la premiere carte d'equipement obtenue ;
+- une icone `Badges` en bas a droite ;
+- un bouton `Parametres` en haut a droite.
+
+## Equipements
+
+Le bouton `Equipements` apparait uniquement apres l'obtention de la premiere carte d'equipement, puis ouvre un ecran dedie depuis l'accueil principal.
+
+L'ecran affiche :
+
+- un resume des effets actifs ;
+- trois sections fixes `Observatoire`, `Telescope` et `Monture` ;
+- les cartes possedees par type, avec leur niveau, leur bonus, `Stock xN` et `Activations totales : N` ;
+- le dernier equipement utilise par type quand il existe.
+
+Une seule carte peut etre active a la fois pour un type donne. Les trois types peuvent cependant coexister.
+
+La version n'est plus affichee sur l'ecran d'accueil.
+Elle reste visible dans la section `A propos`.
+
+## Parametres
+
+Le menu ancre en haut a droite contient :
+
+- `Réinitialiser la bibliothèque`
+- `A propos`
 
 ## Reset
 
@@ -14,17 +41,15 @@ Le reset reste disponible depuis l'accueil, meme sans erreur prealable.
 
 Le flux attendu est :
 
-1. Appuyer sur `Réinitialiser la bibliothèque`.
-2. Lire la confirmation.
-3. Attendre 2 secondes pour que `Valider` devienne actif.
-4. Valider ou annuler.
+1. Ouvrir `Parametres`.
+2. Appuyer sur `Réinitialiser la bibliothèque`.
+3. Lire la confirmation.
+4. Attendre 2 secondes pour que `Valider` devienne actif.
+5. Valider ou annuler.
 
 ## Credits
 
-Le panneau de credits peut s'ouvrir :
-
-- par balayage vers le haut sur la zone `à propos` ;
-- par tap sur la zone `à propos`.
+Le panneau `A propos` s'ouvre depuis `Parametres`.
 
 Le panneau se ferme :
 
@@ -36,13 +61,13 @@ Le panneau se ferme :
 
 La version affichee et le contenu du panneau sont centralises dans :
 
-- `app/src/main/kotlin/dstcg/aumombelli/fr/feature/start/StartAboutContent.kt`
+- `app/src/main/kotlin/dstcg/aumombelli/fr/feature/home/HomeAboutContent.kt`
 
 Pour changer les credits :
 
-1. Modifier `StartFooterAppVersion` pour la version affichee.
-2. Modifier `StartAboutSections` pour ajuster les titres et les lignes du panneau.
+1. Modifier `HomeAboutAppVersion` pour la version affichee.
+2. Modifier `HomeAboutSections` pour ajuster les titres et les lignes du panneau.
 
 Les styles et comportements d'ouverture/fermeture vivent dans :
 
-- `app/src/main/kotlin/dstcg/aumombelli/fr/feature/start/StartOverlays.kt`
+- `app/src/main/kotlin/dstcg/aumombelli/fr/feature/home/HomeOverlays.kt`

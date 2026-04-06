@@ -11,7 +11,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_PATH = ROOT / "scripts" / "catalog_sync.py"
 SOURCE_CATALOG_DIR = ROOT / "app" / "src" / "main" / "assets" / "catalog"
-SOURCE_WORKBOOK_PATH = ROOT / "catalogue_astronomie.xlsx"
 
 
 def load_catalog_sync_module():
@@ -32,7 +31,14 @@ class CatalogSyncTest(unittest.TestCase):
         temp_dir = Path(tempfile.mkdtemp(prefix="catalog-sync-"))
         catalog_dir = temp_dir / "catalog"
         catalog_dir.mkdir(parents=True, exist_ok=True)
-        for file_name in ["extensions.json", "cards.json", "variant_profiles.json"]:
+        for file_name in [
+            "extensions.json",
+            "cards.json",
+            "variant_profiles.json",
+            "game_balance.json",
+            "equipment_cards.json",
+            "equipment_settings.json",
+        ]:
             payload = (SOURCE_CATALOG_DIR / file_name).read_bytes()
             (catalog_dir / file_name).write_bytes(payload)
         return temp_dir, catalog_dir
@@ -40,16 +46,15 @@ class CatalogSyncTest(unittest.TestCase):
     def read_json(self, path: Path):
         return json.loads(path.read_text(encoding="utf-8"))
 
-    def write_json(self, path: Path, payload) -> None:
-        path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
     def export_workbook(self, workbook_path: Path, catalog_dir: Path) -> None:
         self.catalog_sync.export_workbook(
             sheet_path=workbook_path,
             extensions=self.read_json(catalog_dir / "extensions.json"),
             cards=self.read_json(catalog_dir / "cards.json"),
             variant_profiles=self.read_json(catalog_dir / "variant_profiles.json"),
-            settings=self.catalog_sync.default_global_settings(),
+            balance_data=self.catalog_sync.load_balance_data(catalog_dir / "game_balance.json"),
+            equipment_cards=self.catalog_sync.load_equipment_cards_data(catalog_dir / "equipment_cards.json"),
+            equipment_settings=self.catalog_sync.load_equipment_settings_data(catalog_dir / "equipment_settings.json"),
         )
 
     def read_sheets(self, workbook_path: Path):
@@ -58,47 +63,23 @@ class CatalogSyncTest(unittest.TestCase):
     def write_sheets(self, workbook_path: Path, sheets) -> None:
         ordered_names = [
             self.catalog_sync.CATALOGUE_SHEET_NAME,
-            self.catalog_sync.PROBABILITIES_SHEET_NAME,
+            self.catalog_sync.DATA_SHEET_NAME,
+            self.catalog_sync.EQUIPMENT_SHEET_NAME,
             self.catalog_sync.RESULTS_SHEET_NAME,
-            self.catalog_sync.CALIBRATION_SHEET_NAME,
         ]
         self.catalog_sync.write_workbook(
             workbook_path,
             [sheets[name] for name in ordered_names if name in sheets],
         )
 
-    def set_named_table_value(
-        self,
-        sheet,
-        section_name: str,
-        identifier_field: str,
-        identifier_value: str,
-        target_field: str,
-        new_value,
-    ) -> None:
-        rows = sheet.rows
-        section_row = next(
-            index for index, row in enumerate(rows) if row and row[0].strip() == section_name
-        )
-        header_row = rows[section_row + 1]
-        header_index = {name: idx for idx, name in enumerate(header_row)}
-        data_start = section_row + 2
-        for row_index in range(data_start, len(rows)):
-            row = rows[row_index]
-            if not row or all(not str(value).strip() for value in row):
-                break
-            if row[0].strip() in {
-                self.catalog_sync.GLOBAL_SETTINGS_SECTION,
-                self.catalog_sync.VARIANT_PROFILES_SECTION,
-                self.catalog_sync.EXTENSION_BALANCE_SECTION,
-            }:
-                break
-            while len(rows[row_index]) <= max(header_index[identifier_field], header_index[target_field]):
-                rows[row_index].append("")
-            if str(rows[row_index][header_index[identifier_field]]).strip() == identifier_value:
-                rows[row_index][header_index[target_field]] = new_value
-                return
-        raise AssertionError(f"Unable to find {identifier_value} in section {section_name}.")
+    def set_cell(self, sheet, row_number: int, column_number: int, new_value) -> None:
+        row_index = row_number - 1
+        column_index = column_number - 1
+        while len(sheet.rows) <= row_index:
+            sheet.rows.append([])
+        while len(sheet.rows[row_index]) <= column_index:
+            sheet.rows[row_index].append("")
+        sheet.rows[row_index][column_index] = new_value
 
     def set_catalogue_value(self, sheet, card_id: str, field: str, new_value) -> None:
         header = sheet.rows[0]
@@ -114,76 +95,46 @@ class CatalogSyncTest(unittest.TestCase):
                 return
         raise AssertionError(f"Unable to find card {card_id}.")
 
-    def find_combo_row(self, result_sheet):
-        rows = result_sheet.rows
-        section_row = next(
-            index for index, row in enumerate(rows) if row and row[0].strip() == "RarestComboChecks"
-        )
-        header = rows[section_row + 1]
-        header_index = {name: idx for idx, name in enumerate(header)}
-        data_row = rows[section_row + 2]
-        return {
-            key: data_row[index]
-            for key, index in header_index.items()
-        }
+    def section_rows(self, sheet, section_name: str):
+        return [
+            row
+            for _, row in self.catalog_sync.parse_section_table(
+                sheet.rows,
+                section_name,
+                self.catalog_sync.RESULTS_SHEET_NAME,
+            )
+        ]
 
-    def find_first_section_row(self, sheet, section_name: str):
-        rows = sheet.rows
-        section_row = next(
-            index for index, row in enumerate(rows) if row and row[0].strip() == section_name
-        )
-        header = rows[section_row + 1]
-        header_index = {name: idx for idx, name in enumerate(header)}
-        data_row = rows[section_row + 2]
-        return {
-            key: data_row[index]
-            for key, index in header_index.items()
-        }
-
-    def get_named_table_value(
-        self,
-        sheet,
-        section_name: str,
-        identifier_field: str,
-        identifier_value: str,
-        target_field: str,
-    ):
-        for _, row in self.catalog_sync.parse_named_table(sheet.rows, section_name):
-            if row[identifier_field] == identifier_value:
-                return row[target_field]
-        raise AssertionError(f"Unable to find {identifier_value} in section {section_name}.")
-
-    def test_export_then_apply_preserves_existing_weights(self):
+    def test_export_then_apply_preserves_raw_catalog_and_balance(self):
         temp_dir, catalog_dir = self.create_temp_catalog_dir()
         workbook_path = temp_dir / "catalogue.xlsx"
         self.export_workbook(workbook_path, catalog_dir)
 
         original_cards = self.read_json(catalog_dir / "cards.json")
         original_profiles = self.read_json(catalog_dir / "variant_profiles.json")
+        original_balance = self.read_json(catalog_dir / "game_balance.json")
+        original_equipment_cards = self.read_json(catalog_dir / "equipment_cards.json")
+        original_equipment_settings = self.read_json(catalog_dir / "equipment_settings.json")
 
-        _, applied_cards, applied_profiles = self.catalog_sync.apply_workbook(workbook_path, catalog_dir)
+        _, applied_cards, applied_profiles, applied_balance, applied_equipment_cards, applied_equipment_settings = (
+            self.catalog_sync.apply_workbook(workbook_path, catalog_dir)
+        )
 
         self.assertEqual(
-            {card["id"]: card["drawWeight"] for card in original_cards},
-            {card["id"]: card["drawWeight"] for card in applied_cards},
+            {card["id"]: card["cardRarityMultiplier"] for card in original_cards},
+            {card["id"]: card["cardRarityMultiplier"] for card in applied_cards},
+        )
+        self.assertEqual(original_profiles, applied_profiles)
+        self.assertEqual(original_balance, self.catalog_sync.balance_data_to_json(applied_balance))
+        self.assertEqual(original_equipment_cards, applied_equipment_cards)
+        self.assertEqual(
+            original_equipment_settings,
+            self.catalog_sync.equipment_settings_to_json(applied_equipment_settings),
         )
         self.assertEqual(
-            {
-                profile["id"]: {
-                    "sky": {entry["code"]: entry["weight"] for entry in profile["skyQualityWeights"]},
-                    "finish": {entry["code"]: entry["weight"] for entry in profile["finishWeights"]},
-                }
-                for profile in original_profiles
-            },
-            {
-                profile["id"]: {
-                    "sky": {entry["code"]: entry["weight"] for entry in profile["skyQualityWeights"]},
-                    "finish": {entry["code"]: entry["weight"] for entry in profile["finishWeights"]},
-                }
-                for profile in applied_profiles
-            },
+            {"Catalogue", "Donnees", "Equipements", "Resultats"},
+            set(self.read_sheets(workbook_path).keys()),
         )
-        self.assertTrue(all(card["drawWeight"] > 0 for card in applied_cards))
 
     def test_apply_rejects_non_positive_city_probability(self):
         temp_dir, catalog_dir = self.create_temp_catalog_dir()
@@ -191,31 +142,10 @@ class CatalogSyncTest(unittest.TestCase):
         self.export_workbook(workbook_path, catalog_dir)
 
         sheets = self.read_sheets(workbook_path)
-        probabilities = sheets[self.catalog_sync.PROBABILITIES_SHEET_NAME]
-        self.set_named_table_value(
-            probabilities,
-            self.catalog_sync.VARIANT_PROFILES_SECTION,
-            "variantProfileId",
-            "observation-default",
-            "suburbanMeanDays",
-            "0.1",
-        )
-        self.set_named_table_value(
-            probabilities,
-            self.catalog_sync.VARIANT_PROFILES_SECTION,
-            "variantProfileId",
-            "observation-default",
-            "ruralMeanDays",
-            "0.1",
-        )
-        self.set_named_table_value(
-            probabilities,
-            self.catalog_sync.VARIANT_PROFILES_SECTION,
-            "variantProfileId",
-            "observation-default",
-            "mountainMeanDays",
-            "0.1",
-        )
+        data_sheet = sheets[self.catalog_sync.DATA_SHEET_NAME]
+        self.set_cell(data_sheet, 7, 2, "10")
+        self.set_cell(data_sheet, 8, 2, "10")
+        self.set_cell(data_sheet, 9, 2, "10")
         self.write_sheets(workbook_path, sheets)
 
         with self.assertRaisesRegex(self.catalog_sync.CatalogSheetError, "city probability"):
@@ -227,15 +157,8 @@ class CatalogSyncTest(unittest.TestCase):
         self.export_workbook(workbook_path, catalog_dir)
 
         sheets = self.read_sheets(workbook_path)
-        probabilities = sheets[self.catalog_sync.PROBABILITIES_SHEET_NAME]
-        self.set_named_table_value(
-            probabilities,
-            self.catalog_sync.VARIANT_PROFILES_SECTION,
-            "variantProfileId",
-            "observation-default",
-            "holographicMeanDays",
-            "0.04",
-        )
+        data_sheet = sheets[self.catalog_sync.DATA_SHEET_NAME]
+        self.set_cell(data_sheet, 11, 4, "100")
         self.write_sheets(workbook_path, sheets)
 
         with self.assertRaisesRegex(self.catalog_sync.CatalogSheetError, "standard probability"):
@@ -247,37 +170,16 @@ class CatalogSyncTest(unittest.TestCase):
         self.export_workbook(workbook_path, catalog_dir)
 
         sheets = self.read_sheets(workbook_path)
-        probabilities = sheets[self.catalog_sync.PROBABILITIES_SHEET_NAME]
-        self.set_named_table_value(
-            probabilities,
-            self.catalog_sync.EXTENSION_BALANCE_SECTION,
-            "extensionId",
-            "astronomes-en-herbe",
-            "uncommonBaseCardMeanDays",
-            "0.2",
-        )
-        self.set_named_table_value(
-            probabilities,
-            self.catalog_sync.EXTENSION_BALANCE_SECTION,
-            "extensionId",
-            "astronomes-en-herbe",
-            "rareBaseCardMeanDays",
-            "0.2",
-        )
-        self.set_named_table_value(
-            probabilities,
-            self.catalog_sync.EXTENSION_BALANCE_SECTION,
-            "extensionId",
-            "astronomes-en-herbe",
-            "rarestComboMeanDays",
-            "0.1",
-        )
+        data_sheet = sheets[self.catalog_sync.DATA_SHEET_NAME]
+        self.set_cell(data_sheet, 15, 5, "40")
+        self.set_cell(data_sheet, 16, 5, "35")
+        self.set_cell(data_sheet, 17, 5, "25")
         self.write_sheets(workbook_path, sheets)
 
-        with self.assertRaisesRegex(self.catalog_sync.CatalogSheetError, "Common probability"):
+        with self.assertRaisesRegex(self.catalog_sync.CatalogSheetError, "common probability"):
             self.catalog_sync.apply_workbook(workbook_path, catalog_dir)
 
-    def test_higher_card_multiplier_makes_a_card_rarer(self):
+    def test_higher_card_multiplier_makes_a_card_more_frequent(self):
         temp_dir, catalog_dir = self.create_temp_catalog_dir()
         workbook_path = temp_dir / "catalogue.xlsx"
         self.export_workbook(workbook_path, catalog_dir)
@@ -288,113 +190,167 @@ class CatalogSyncTest(unittest.TestCase):
         self.set_catalogue_value(catalogue, "aeh-m42-orion-nebula", "cardRarityMultiplier", "1")
         self.write_sheets(workbook_path, sheets)
 
-        _, cards, _ = self.catalog_sync.apply_workbook(workbook_path, catalog_dir)
-        weights_by_id = {card["id"]: card["drawWeight"] for card in cards}
-
-        self.assertLess(weights_by_id["aeh-m31-andromeda"], weights_by_id["aeh-m42-orion-nebula"])
-
-    def test_results_sheet_uses_formulas_for_numeric_columns(self):
-        temp_dir, catalog_dir = self.create_temp_catalog_dir()
-        workbook_path = temp_dir / "catalogue.xlsx"
-        self.export_workbook(workbook_path, catalog_dir)
         self.catalog_sync.apply_workbook(workbook_path, catalog_dir)
-
         result_sheet = self.read_sheets(workbook_path)[self.catalog_sync.RESULTS_SHEET_NAME]
-        variant_row = self.find_first_section_row(result_sheet, "VariantProfiles")
-        card_row = self.find_first_section_row(result_sheet, "Cards")
-        combo_row = self.find_combo_row(result_sheet)
+        rows = self.section_rows(result_sheet, "Cards")
+        probabilities_by_id = {
+            row["cardId"]: float(row["finalProbability"])
+            for row in rows
+        }
 
-        self.assertTrue(str(variant_row["weight"]).startswith("="))
-        self.assertTrue(str(variant_row["probability"]).startswith("="))
-        self.assertTrue(str(card_row["drawWeight"]).startswith("="))
-        self.assertTrue(str(card_row["meanDays"]).startswith("="))
-        self.assertTrue(str(combo_row["comboProbability"]).startswith("="))
-        self.assertTrue(str(combo_row["targetMeanDays"]).startswith("="))
+        self.assertGreater(probabilities_by_id["aeh-m31-andromeda"], probabilities_by_id["aeh-m42-orion-nebula"])
 
-    def test_runtime_rarest_combo_mean_days_matches_target(self):
+    def test_extension_rarity_probabilities_are_renormalized_over_present_rarities(self):
         temp_dir, catalog_dir = self.create_temp_catalog_dir()
         workbook_path = temp_dir / "catalogue.xlsx"
         self.export_workbook(workbook_path, catalog_dir)
 
         sheets = self.read_sheets(workbook_path)
-        target_mean_days = float(
-            self.get_named_table_value(
-                sheets[self.catalog_sync.PROBABILITIES_SHEET_NAME],
-                self.catalog_sync.EXTENSION_BALANCE_SECTION,
-                "extensionId",
-                "astronomes-en-herbe",
-                "rarestComboMeanDays",
-            ),
+        catalogue = sheets[self.catalog_sync.CATALOGUE_SHEET_NAME]
+        extra_extension_row = ["extension", "rare-et-epic", "Rare et Epic", "cover_rare_epic"]
+        header = catalogue.rows[0]
+        template_card = {name: "" for name in header}
+        template_card.update(
+            {
+                "rowType": "card",
+                "extensionId": "rare-et-epic",
+                "rarityLabel": "Rare",
+                "cardRarityMultiplier": "1",
+                "imageRef": "img_1",
+                "variantProfileId": "observation-default",
+                "commonName": "Rare 1",
+                "primaryCatalogName": "Messier",
+                "catalogNumber": "R-1",
+                "objectFamily": "deep_sky",
+                "objectTypeLabel": "Nebuleuse",
+                "constellation": "Orion",
+                "mainSeason": "Hiver",
+                "rightAscensionHours": "5",
+                "rightAscensionMinutes": "35",
+                "rightAscensionSeconds": "17.3",
+                "rightAscensionLabel": "AD 05h 35m 17,3s",
+                "declinationSign": "-",
+                "declinationDegrees": "5",
+                "declinationArcMinutes": "23",
+                "declinationArcSeconds": "28",
+                "declinationLabel": "-05° 23′ 28″",
+                "coordinatesLabel": "AD 05h 35m 17,3s ; Dec -05° 23′ 28″",
+                "shortDescription": "Carte rare",
+                "detailType": "deep_sky",
+                "distanceLightYears": "1500",
+                "distanceLabel": "1 500 annees-lumiere",
+                "realSizeLightYears": "25",
+                "realSizeLabel": "25 annees-lumiere",
+                "visualFullMoonWidth": "2.1",
+                "visualFullMoonHeight": "1.94",
+                "angularWidthDegrees": "1",
+                "angularWidthArcMinutes": "5",
+                "angularWidthArcSeconds": "0",
+                "angularWidthLabel": "1°05′00″",
+                "angularHeightDegrees": "1",
+                "angularHeightArcMinutes": "0",
+                "angularHeightArcSeconds": "0",
+                "angularHeightLabel": "1°00′00″",
+                "visualSizeLabel": "2,10 × 1,94 (1°05′00″ × 1°00′00″)",
+                "absoluteMagnitudeValue": "-4.1",
+                "absoluteMagnitudeLabel": "-4.1",
+            },
         )
+        rare_card = template_card | {"cardId": "rare-1", "name": "Rare 1", "catalogNumber": "R-1", "rarityLabel": "Rare"}
+        epic_card = template_card | {"cardId": "epic-1", "name": "Epic 1", "catalogNumber": "E-1", "rarityLabel": "Epic"}
+        catalogue.rows.append(extra_extension_row)
+        catalogue.rows.append([rare_card.get(column, "") for column in header])
+        catalogue.rows.append([epic_card.get(column, "") for column in header])
+        self.write_sheets(workbook_path, sheets)
 
-        _, applied_cards, applied_profiles = self.catalog_sync.apply_workbook(workbook_path, catalog_dir)
+        self.catalog_sync.apply_workbook(workbook_path, catalog_dir)
+        result_sheet = self.read_sheets(workbook_path)[self.catalog_sync.RESULTS_SHEET_NAME]
+        rarity_rows = [
+            row for row in self.section_rows(result_sheet, "RaritySummary")
+            if row["extensionId"] == "rare-et-epic"
+        ]
+        probabilities_by_rarity = {
+            row["rarityLabel"]: float(row["extensionProbability"])
+            for row in rarity_rows
+        }
 
-        settings = self.catalog_sync.default_global_settings()
-        cards_by_extension: dict[str, list[dict]] = {}
-        for card in applied_cards:
-            cards_by_extension.setdefault(card["extensionId"], []).append(card)
-        profiles_by_id = {profile["id"]: profile for profile in applied_profiles}
-        extension_variant_profiles = self.catalog_sync.require_single_variant_profile_per_extension(applied_cards)
+        self.assertAlmostEqual(0.75, probabilities_by_rarity["Rare"], places=6)
+        self.assertAlmostEqual(0.25, probabilities_by_rarity["Epic"], places=6)
 
-        extension_cards = cards_by_extension["astronomes-en-herbe"]
-        total_weight = sum(card["drawWeight"] for card in extension_cards)
-        cards_by_rarity: dict[str, list[dict]] = {}
-        for card in extension_cards:
-            cards_by_rarity.setdefault(card["rarityLabel"], []).append(card)
-        highest_rarity = sorted(cards_by_rarity, key=self.catalog_sync.rarity_sort_priority)[-1]
-        rarest_card = min(
-            cards_by_rarity[highest_rarity],
-            key=lambda card: (card["drawWeight"], card["id"]),
-        )
-        variant_profile = profiles_by_id[extension_variant_profiles["astronomes-en-herbe"]]
-        rarest_sky = self.catalog_sync.rarest_weighted_code(variant_profile["skyQualityWeights"])
-        holographic = self.catalog_sync.weighted_code_lookup(variant_profile["finishWeights"], "holographic")
-        combo_probability = (
-            self.catalog_sync.Fraction(rarest_card["drawWeight"], total_weight)
-            * self.catalog_sync.Fraction(
-                rarest_sky["weight"],
-                self.catalog_sync.total_weight_of_codes(variant_profile["skyQualityWeights"]),
-            )
-            * self.catalog_sync.Fraction(
-                holographic["weight"],
-                self.catalog_sync.total_weight_of_codes(variant_profile["finishWeights"]),
-            )
-        )
-        actual_mean_days = float(self.catalog_sync.mean_days(combo_probability, settings))
-
-        self.assertAlmostEqual(actual_mean_days, target_mean_days, places=6)
-
-    def test_apply_supports_resultats_workbook_without_probabilities_sheet(self):
-        if not SOURCE_WORKBOOK_PATH.exists():
-            self.skipTest("Le workbook Resultats source n'est pas disponible dans ce workspace.")
-
+    def test_apply_rejects_invalid_equipment_bonus_unit(self):
         temp_dir, catalog_dir = self.create_temp_catalog_dir()
-        workbook_path = temp_dir / "catalogue-resultats.xlsx"
-        workbook_path.write_bytes(SOURCE_WORKBOOK_PATH.read_bytes())
+        workbook_path = temp_dir / "catalogue.xlsx"
+        self.export_workbook(workbook_path, catalog_dir)
 
-        _, applied_cards, applied_profiles = self.catalog_sync.apply_workbook(workbook_path, catalog_dir)
+        sheets = self.read_sheets(workbook_path)
+        equipment_sheet = sheets[self.catalog_sync.EQUIPMENT_SHEET_NAME]
+        header = equipment_sheet.rows[0]
+        bonus_unit_index = header.index("bonusUnit")
+        equipment_sheet.rows[1][bonus_unit_index] = "rarityBoost"
+        self.write_sheets(workbook_path, sheets)
 
-        weights_by_id = {card["id"]: card["drawWeight"] for card in applied_cards}
-        self.assertEqual(20000, weights_by_id["aeh-albireo"])
-        self.assertEqual(21429, weights_by_id["aeh-algol"])
-        self.assertEqual(18750, weights_by_id["aeh-m16-eagle"])
-        self.assertEqual(16667, weights_by_id["aeh-aurora-borealis"])
+        with self.assertRaisesRegex(self.catalog_sync.CatalogSheetError, "must use bonusUnit"):
+            self.catalog_sync.apply_workbook(workbook_path, catalog_dir)
 
-        profiles_by_id = {profile["id"]: profile for profile in applied_profiles}
-        observation_profile = profiles_by_id["observation-default"]
+    def test_apply_persists_equipment_settings_and_results_section(self):
+        temp_dir, catalog_dir = self.create_temp_catalog_dir()
+        workbook_path = temp_dir / "catalogue.xlsx"
+        self.export_workbook(workbook_path, catalog_dir)
+
+        sheets = self.read_sheets(workbook_path)
+        data_sheet = sheets[self.catalog_sync.DATA_SHEET_NAME]
+        self.set_cell(data_sheet, 19, 1, "EquipmentChancePercent")
+        self.set_cell(data_sheet, 19, 2, "7.5")
+        self.write_sheets(workbook_path, sheets)
+
+        _, _, _, _, _, applied_equipment_settings = self.catalog_sync.apply_workbook(workbook_path, catalog_dir)
         self.assertEqual(
-            {"city": 10, "suburban": 6, "rural": 3, "mountain": 1},
-            {entry["code"]: entry["weight"] for entry in observation_profile["skyQualityWeights"]},
-        )
-        self.assertEqual(
-            {"standard": 18, "holographic": 2},
-            {entry["code"]: entry["weight"] for entry in observation_profile["finishWeights"]},
+            {"commonReplacementChancePercent": 7.5},
+            self.catalog_sync.equipment_settings_to_json(applied_equipment_settings),
         )
 
+        result_sheet = self.read_sheets(workbook_path)[self.catalog_sync.RESULTS_SHEET_NAME]
+        equipment_rows = self.section_rows(result_sheet, self.catalog_sync.RESULTS_EQUIPMENT_SECTION)
+        self.assertTrue(equipment_rows)
         self.assertEqual(
-            {"Catalogue", "Donnees", "Resultats"},
-            set(self.read_sheets(workbook_path).keys()),
+            {"equipmentCardId", "equipmentType", "displayName", "level", "packsAffected", "bonusValue", "bonusUnit", "dropWeight", "description"},
+            set(equipment_rows[0].keys()),
         )
+
+    def test_apply_reads_legacy_equipment_chance_from_b19(self):
+        temp_dir, catalog_dir = self.create_temp_catalog_dir()
+        workbook_path = temp_dir / "catalogue.xlsx"
+        self.export_workbook(workbook_path, catalog_dir)
+
+        sheets = self.read_sheets(workbook_path)
+        data_sheet = sheets[self.catalog_sync.DATA_SHEET_NAME]
+        self.set_cell(data_sheet, 19, 1, "EquipmentChancePercent")
+        self.set_cell(data_sheet, 19, 2, "12.5")
+        self.write_sheets(workbook_path, sheets)
+
+        _, _, _, _, _, applied_equipment_settings = self.catalog_sync.apply_workbook(workbook_path, catalog_dir)
+
+        self.assertEqual(
+            {"commonReplacementChancePercent": 12.5},
+            self.catalog_sync.equipment_settings_to_json(applied_equipment_settings),
+        )
+
+    def test_apply_writes_raw_assets_without_precomputed_weights(self):
+        temp_dir, catalog_dir = self.create_temp_catalog_dir()
+        workbook_path = temp_dir / "catalogue.xlsx"
+        self.export_workbook(workbook_path, catalog_dir)
+
+        self.catalog_sync.apply_workbook(workbook_path, catalog_dir)
+
+        cards = self.read_json(catalog_dir / "cards.json")
+        variant_profiles = self.read_json(catalog_dir / "variant_profiles.json")
+        balance = self.read_json(catalog_dir / "game_balance.json")
+
+        self.assertIn("cardRarityMultiplier", cards[0])
+        self.assertNotIn("drawWeight", cards[0])
+        self.assertNotIn("skyQualityWeights", variant_profiles[0])
+        self.assertNotIn("finishWeights", variant_profiles[0])
+        self.assertEqual(5, balance["cardsPerDraw"])
 
 
 if __name__ == "__main__":

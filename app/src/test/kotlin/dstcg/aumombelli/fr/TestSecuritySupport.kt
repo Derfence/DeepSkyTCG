@@ -5,7 +5,6 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.emptyPreferences
 import fr.aumombelli.dstcg.data.AesGcmProgressCipher
 import fr.aumombelli.dstcg.data.ClockTrustedTimeSource
-import fr.aumombelli.dstcg.data.DEFAULT_DRAW_COOLDOWN
 import fr.aumombelli.dstcg.data.DEFAULT_MAX_STORED_DRAWS
 import fr.aumombelli.dstcg.data.ProgressCipher
 import fr.aumombelli.dstcg.data.RandomEntropySource
@@ -26,15 +25,11 @@ import kotlinx.coroutines.sync.withLock
 
 fun testGameSettings(
     now: Instant,
-    cardsPerPack: Int = 5,
-    drawCooldown: Duration = DEFAULT_DRAW_COOLDOWN,
     maxStoredDraws: Int = DEFAULT_MAX_STORED_DRAWS,
     elapsedRealtimeMs: Long = 1_000L,
     bootSessionId: String = "test-boot",
     randomSeed: Int = 0,
 ): StandaloneGameSettings = StandaloneGameSettings(
-    cardsPerPack = cardsPerPack,
-    drawCooldown = drawCooldown,
     maxStoredDraws = maxStoredDraws,
     timeSource = ClockTrustedTimeSource(
         clock = Clock.fixed(now, ZoneOffset.UTC),

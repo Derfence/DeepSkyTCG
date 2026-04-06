@@ -10,16 +10,6 @@
     "finishes": [
       { "code": "standard", "label": "Standard", "isHolographic": false },
       { "code": "holographic", "label": "Holographique", "isHolographic": true }
-    ],
-    "skyQualityWeights": [
-      { "code": "city", "weight": 10 },
-      { "code": "suburban", "weight": 6 },
-      { "code": "rural", "weight": 3 },
-      { "code": "mountain", "weight": 1 }
-    ],
-    "finishWeights": [
-      { "code": "standard", "weight": 18 },
-      { "code": "holographic", "weight": 2 }
     ]
   }
 ]

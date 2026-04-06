@@ -14,8 +14,6 @@ data class VariantProfile(
     val id: String,
     val skyQualities: List<SkyQualityDefinition>,
     val finishes: List<CardFinishDefinition>,
-    val skyQualityWeights: List<WeightedCode>,
-    val finishWeights: List<WeightedCode>,
 )
 
 @Serializable
@@ -43,8 +41,21 @@ data class CardDefinition(
     val extensionId: String,
     val name: String,
     val rarityLabel: String,
-    val drawWeight: Int,
+    val cardRarityMultiplier: Double,
     val imageRef: String,
     val variantProfileId: String,
     val astronomy: AstronomyInfo,
+)
+
+@Serializable
+data class GameBalanceDefinition(
+    val cardsPerDraw: Int,
+    val drawCooldownHours: Double,
+    val percentUncommonPerDay: Double,
+    val percentRarePerDay: Double,
+    val percentEpicPerDay: Double,
+    val suburbanMeanPerDay: Double,
+    val ruralMeanPerDay: Double,
+    val mountainMeanPerDay: Double,
+    val percentHoloMeanPerDay: Double,
 )

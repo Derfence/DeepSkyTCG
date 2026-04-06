@@ -2,17 +2,24 @@ package fr.aumombelli.dstcg.testsupport.fakes
 
 import fr.aumombelli.dstcg.data.CatalogGateway
 import fr.aumombelli.dstcg.data.CollectionGateway
+import fr.aumombelli.dstcg.data.EquipmentGateway
 import fr.aumombelli.dstcg.data.PackGateway
 import fr.aumombelli.dstcg.data.ProgressLoadResult
 import fr.aumombelli.dstcg.data.ProgressGateway
 import fr.aumombelli.dstcg.model.CardDefinition
 import fr.aumombelli.dstcg.model.DrawPackResponse
+import fr.aumombelli.dstcg.model.EquipmentCardDefinition
+import fr.aumombelli.dstcg.model.EquipmentSettingsDefinition
+import fr.aumombelli.dstcg.model.EquipmentState
 import fr.aumombelli.dstcg.model.ExtensionDefinition
+import fr.aumombelli.dstcg.model.GameBalanceDefinition
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.PackCard
+import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.model.VariantProfile
 import fr.aumombelli.dstcg.model.mergePackCards
+import fr.aumombelli.dstcg.testsupport.fixtures.testGameBalanceDefinition
 import fr.aumombelli.dstcg.testsupport.fixtures.testVariantProfiles
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicInteger
@@ -22,8 +29,7 @@ import kotlinx.coroutines.flow.StateFlow
 class FakeProgressGateway : ProgressGateway {
     var progress = StandaloneProgress(
         collection = OwnedCollection(),
-        availableDrawCount = 10,
-        nextChargeAt = null,
+        rechargeState = PackRechargeState(),
     )
     var loadFailure: Throwable? = null
     var compromisedMessage: String? = null
@@ -61,8 +67,7 @@ class FakeProgressGateway : ProgressGateway {
         recoveryNotice = null
         progress = StandaloneProgress(
             collection = OwnedCollection(),
-            availableDrawCount = 10,
-            nextChargeAt = null,
+            rechargeState = PackRechargeState(),
         )
     }
 }
@@ -92,9 +97,17 @@ class FakeCatalogGateway : CatalogGateway {
     var extensions: List<ExtensionDefinition> = emptyList()
     var cards: List<CardDefinition> = emptyList()
     var variantProfiles: List<VariantProfile> = testVariantProfiles()
+    var gameBalance: GameBalanceDefinition = testGameBalanceDefinition()
+    var equipmentCards: List<EquipmentCardDefinition> = emptyList()
+    var equipmentSettings: EquipmentSettingsDefinition = EquipmentSettingsDefinition(
+        commonReplacementChancePercent = 0.0,
+    )
     var extensionsFailure: Throwable? = null
     var cardsFailure: Throwable? = null
     var variantProfilesFailure: Throwable? = null
+    var gameBalanceFailure: Throwable? = null
+    var equipmentCardsFailure: Throwable? = null
+    var equipmentSettingsFailure: Throwable? = null
 
     override suspend fun loadExtensions(): List<ExtensionDefinition> {
         extensionsFailure?.let { throw it }
@@ -109,6 +122,21 @@ class FakeCatalogGateway : CatalogGateway {
     override suspend fun loadVariantProfiles(): List<VariantProfile> {
         variantProfilesFailure?.let { throw it }
         return variantProfiles
+    }
+
+    override suspend fun loadGameBalance(): GameBalanceDefinition {
+        gameBalanceFailure?.let { throw it }
+        return gameBalance
+    }
+
+    override suspend fun loadEquipmentCards(): List<EquipmentCardDefinition> {
+        equipmentCardsFailure?.let { throw it }
+        return equipmentCards
+    }
+
+    override suspend fun loadEquipmentSettings(): EquipmentSettingsDefinition {
+        equipmentSettingsFailure?.let { throw it }
+        return equipmentSettings
     }
 }
 
@@ -131,5 +159,23 @@ class FakePackGateway : PackGateway {
         onOpenPack?.invoke(extensionId)
         return checkNotNull(openPackResponse) { "openPackResponse must be configured in FakePackGateway." }
             .also { packFlow.value = it }
+    }
+}
+
+class FakeEquipmentGateway : EquipmentGateway {
+    var equipmentState: EquipmentState = EquipmentState()
+    var loadFailure: Throwable? = null
+    var activateFailure: Throwable? = null
+    val activateCalls = mutableListOf<String>()
+
+    override suspend fun loadEquipmentState(): EquipmentState {
+        loadFailure?.let { throw it }
+        return equipmentState
+    }
+
+    override suspend fun activateEquipment(equipmentCardId: String): EquipmentState {
+        activateCalls += equipmentCardId
+        activateFailure?.let { throw it }
+        return equipmentState
     }
 }

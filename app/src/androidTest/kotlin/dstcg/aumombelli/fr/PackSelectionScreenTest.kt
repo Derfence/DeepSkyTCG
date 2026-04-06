@@ -1,5 +1,6 @@
 package fr.aumombelli.dstcg
 
+import android.os.SystemClock
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -16,10 +17,12 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
 import fr.aumombelli.dstcg.model.ExtensionDefinition
+import fr.aumombelli.dstcg.testsupport.androidTestRechargeStateWithNextChargeAt
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.screen.PackSelectionScreen
 import fr.aumombelli.dstcg.ui.viewmodel.PackSelectionUiState
 import java.time.Duration
+import java.time.Instant
 import kotlin.math.abs
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -290,11 +293,17 @@ class PackSelectionScreenTest {
                     extensions = listOf(
                         ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
                     ),
+                    rechargeState = androidTestRechargeStateWithNextChargeAt(
+                        availableDrawCount = 0,
+                        nextChargeAt = "2999-01-01T00:00:00Z",
+                    ),
                     availableDrawCount = 0,
                     nextChargeAt = "2999-01-01T00:00:00Z",
                     remainingDuration = Duration.ofHours(6),
                     rechargeProgress = 0f,
                     isDrawLocked = true,
+                    trustedNow = Instant.parse("2026-03-24T12:00:00Z"),
+                    trustedElapsedRealtimeMs = SystemClock.elapsedRealtime(),
                 ),
                 onRefresh = {},
                 onSelectExtension = {},
@@ -306,7 +315,21 @@ class PackSelectionScreenTest {
             )
         }
 
+        val titleBounds = composeRule.onNodeWithTag("pack-title").fetchSemanticsNode().boundsInRoot
+        val forecastBounds = composeRule.onNodeWithTag("pack-weather-forecast").fetchSemanticsNode().boundsInRoot
+        val statusBounds = composeRule.onNodeWithTag("pack-status").fetchSemanticsNode().boundsInRoot
+
+        assertTrue(titleBounds.bottom <= forecastBounds.top)
+        assertTrue(forecastBounds.bottom <= statusBounds.top)
+        composeRule.onNodeWithTag("pack-weather-title").assertIsDisplayed()
+        composeRule.onNodeWithTag("pack-weather-time").assertTextContains("12:00 UTC")
+        composeRule.onNodeWithTag("pack-weather-forecast").assertIsDisplayed()
+        composeRule.onNodeWithTag("pack-weather-day-0").assertIsDisplayed()
+        composeRule.onNodeWithTag("pack-weather-day-6").assertIsDisplayed()
+        composeRule.onNodeWithTag("pack-weather-day-multiplier-0").assertTextContains("x1")
+        composeRule.onNodeWithTag("pack-weather-day-multiplier-1").assertTextContains("x0")
         composeRule.onNodeWithTag("pack-status-count").assertTextContains("0/10")
+        composeRule.onAllNodesWithTag("pack-status-weather").assertCountEquals(0)
         composeRule.onNodeWithTag("pack-status-remaining")
             .assertTextContains("Prochaine charge dans", substring = true)
         composeRule.onNodeWithTag("pack-status-progress").assertIsDisplayed()

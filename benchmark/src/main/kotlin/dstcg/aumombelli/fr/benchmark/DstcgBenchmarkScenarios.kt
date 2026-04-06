@@ -9,26 +9,26 @@ import androidx.test.uiautomator.Until
 internal const val TargetPackageName = "fr.aumombelli.dstcg"
 private const val LaunchSceneExtraKey = "fr.aumombelli.dstcg.extra.LAUNCH_SCENE"
 private const val ResetProgressExtraKey = "fr.aumombelli.dstcg.extra.RESET_PROGRESS"
-private const val LaunchSceneMainMenu = "main-menu"
+private const val LaunchSceneHome = "main-menu"
 private const val DefaultUiTimeoutMs = 12_000L
 private const val TagProbeTimeoutMs = 750L
 
-internal fun MacrobenchmarkScope.startAndReachMainMenu(
+internal fun MacrobenchmarkScope.startAndReachHome(
     resetProgressOnLaunch: Boolean = false,
 ) {
     pressHome()
-    startActivityAndWait(launchMainMenuIntent(resetProgressOnLaunch))
+    startActivityAndWait(launchHomeIntent(resetProgressOnLaunch))
     waitForTagOrText(
-        tag = "menu-open-pack",
-        text = "Open Pack",
+        tag = "home-open-pack",
+        text = "Ouvrir un pack",
         timeoutMs = 20_000L,
     )
 }
 
 internal fun MacrobenchmarkScope.openLibrary() {
     tapTagOrText(
-        tag = "menu-library",
-        text = "Library",
+        tag = "home-library",
+        text = "Bibliothèque",
     )
     waitForTextContains("Les cartes obtenues")
 }
@@ -48,10 +48,10 @@ internal fun MacrobenchmarkScope.scrollLibraryGrid() {
     }
 }
 
-internal fun MacrobenchmarkScope.openPackFlowAndReturnToMenu() {
+internal fun MacrobenchmarkScope.openPackFlowAndReturnToHome() {
     tapTagOrText(
-        tag = "menu-open-pack",
-        text = "Open Pack",
+        tag = "home-open-pack",
+        text = "Ouvrir un pack",
     )
     waitForTextContains("Choisis l'extension")
     tapFirstExtensionObserver()
@@ -63,8 +63,8 @@ internal fun MacrobenchmarkScope.openPackFlowAndReturnToMenu() {
     )
     device.pressBack()
     waitForTagOrText(
-        tag = "menu-open-pack",
-        text = "Open Pack",
+        tag = "home-open-pack",
+        text = "Ouvrir un pack",
         timeoutMs = 20_000L,
     )
 }
@@ -172,10 +172,10 @@ private fun MacrobenchmarkScope.tapObject(target: UiObject2) {
     device.waitForIdle()
 }
 
-private fun launchMainMenuIntent(resetProgressOnLaunch: Boolean): Intent = Intent(Intent.ACTION_MAIN).apply {
+private fun launchHomeIntent(resetProgressOnLaunch: Boolean): Intent = Intent(Intent.ACTION_MAIN).apply {
     setClassName(TargetPackageName, "$TargetPackageName.MainActivity")
     addCategory(Intent.CATEGORY_LAUNCHER)
     addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    putExtra(LaunchSceneExtraKey, LaunchSceneMainMenu)
+    putExtra(LaunchSceneExtraKey, LaunchSceneHome)
     putExtra(ResetProgressExtraKey, resetProgressOnLaunch)
 }

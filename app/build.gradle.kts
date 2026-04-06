@@ -5,6 +5,13 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
 }
 
+val generatedHomeCardAssetDir = layout.buildDirectory.dir("generated/assets/homeCard/main")
+
+val syncHomeCardAsset by tasks.registering(Sync::class) {
+    from(rootProject.file("design-explorations/carte_finale.svg"))
+    into(generatedHomeCardAssetDir)
+}
+
 android {
     namespace = "fr.aumombelli.dstcg"
     buildToolsVersion = "36.1.0"
@@ -19,8 +26,8 @@ android {
         applicationId = "fr.aumombelli.dstcg"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 3
+        versionName = "1.3.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
@@ -56,6 +63,12 @@ android {
         compose = true
     }
 
+    sourceSets {
+        getByName("main") {
+            assets.srcDir(generatedHomeCardAssetDir)
+        }
+    }
+
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
     }
@@ -63,6 +76,10 @@ android {
     testOptions {
         unitTests.isIncludeAndroidResources = true
     }
+}
+
+tasks.named("preBuild") {
+    dependsOn(syncHomeCardAsset)
 }
 
 dependencies {

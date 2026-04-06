@@ -2,7 +2,10 @@ package fr.aumombelli.dstcg.data
 
 import android.content.Context
 import fr.aumombelli.dstcg.model.CardDefinition
+import fr.aumombelli.dstcg.model.EquipmentCardDefinition
+import fr.aumombelli.dstcg.model.EquipmentSettingsDefinition
 import fr.aumombelli.dstcg.model.ExtensionDefinition
+import fr.aumombelli.dstcg.model.GameBalanceDefinition
 import fr.aumombelli.dstcg.model.VariantProfile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -21,6 +24,12 @@ class GameCatalogRepository(
     private var cardsCache: List<CardDefinition>? = null
     @Volatile
     private var variantProfilesCache: List<VariantProfile>? = null
+    @Volatile
+    private var gameBalanceCache: GameBalanceDefinition? = null
+    @Volatile
+    private var equipmentCardsCache: List<EquipmentCardDefinition>? = null
+    @Volatile
+    private var equipmentSettingsCache: EquipmentSettingsDefinition? = null
 
     override suspend fun loadExtensions(): List<ExtensionDefinition> = withContext(Dispatchers.IO) {
         extensionsCache ?: context.assets.open("catalog/extensions.json").bufferedReader().use { reader ->
@@ -40,6 +49,28 @@ class GameCatalogRepository(
         variantProfilesCache ?: context.assets.open("catalog/variant_profiles.json").bufferedReader().use { reader ->
             json.decodeFromString<List<VariantProfile>>(reader.readText()).sortedBy { it.id }
                 .also { variantProfilesCache = it }
+        }
+    }
+
+    override suspend fun loadGameBalance(): GameBalanceDefinition = withContext(Dispatchers.IO) {
+        gameBalanceCache ?: context.assets.open("catalog/game_balance.json").bufferedReader().use { reader ->
+            json.decodeFromString<GameBalanceDefinition>(reader.readText())
+                .also { gameBalanceCache = it }
+        }
+    }
+
+    override suspend fun loadEquipmentCards(): List<EquipmentCardDefinition> = withContext(Dispatchers.IO) {
+        equipmentCardsCache ?: context.assets.open("catalog/equipment_cards.json").bufferedReader().use { reader ->
+            json.decodeFromString<List<EquipmentCardDefinition>>(reader.readText())
+                .sortedBy { it.id }
+                .also { equipmentCardsCache = it }
+        }
+    }
+
+    override suspend fun loadEquipmentSettings(): EquipmentSettingsDefinition = withContext(Dispatchers.IO) {
+        equipmentSettingsCache ?: context.assets.open("catalog/equipment_settings.json").bufferedReader().use { reader ->
+            json.decodeFromString<EquipmentSettingsDefinition>(reader.readText())
+                .also { equipmentSettingsCache = it }
         }
     }
 }

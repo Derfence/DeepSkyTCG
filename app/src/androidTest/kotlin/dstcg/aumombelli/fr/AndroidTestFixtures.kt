@@ -8,11 +8,37 @@ import fr.aumombelli.dstcg.model.CardVariant
 import fr.aumombelli.dstcg.model.CelestialCoordinates
 import fr.aumombelli.dstcg.model.Declination
 import fr.aumombelli.dstcg.model.DeepSkyDetails
+import fr.aumombelli.dstcg.model.EquipmentBonusUnit
+import fr.aumombelli.dstcg.model.EquipmentCardDefinition
+import fr.aumombelli.dstcg.model.EquipmentType
+import fr.aumombelli.dstcg.model.GameBalanceDefinition
 import fr.aumombelli.dstcg.model.LightYearMeasurement
 import fr.aumombelli.dstcg.model.PackCard
 import fr.aumombelli.dstcg.model.RightAscension
 import fr.aumombelli.dstcg.model.SkyEventDetails
 import fr.aumombelli.dstcg.model.VisualSize
+
+fun testGameBalanceDefinition(
+    cardsPerDraw: Int = 5,
+    drawCooldownHours: Double = 6.0,
+    percentUncommonPerDay: Double = 30.0,
+    percentRarePerDay: Double = 15.0,
+    percentEpicPerDay: Double = 5.0,
+    suburbanMeanPerDay: Double = 6.0,
+    ruralMeanPerDay: Double = 3.0,
+    mountainMeanPerDay: Double = 1.0,
+    percentHoloMeanPerDay: Double = 10.0,
+): GameBalanceDefinition = GameBalanceDefinition(
+    cardsPerDraw = cardsPerDraw,
+    drawCooldownHours = drawCooldownHours,
+    percentUncommonPerDay = percentUncommonPerDay,
+    percentRarePerDay = percentRarePerDay,
+    percentEpicPerDay = percentEpicPerDay,
+    suburbanMeanPerDay = suburbanMeanPerDay,
+    ruralMeanPerDay = ruralMeanPerDay,
+    mountainMeanPerDay = mountainMeanPerDay,
+    percentHoloMeanPerDay = percentHoloMeanPerDay,
+)
 
 fun testCardDefinition(
     id: String,
@@ -21,7 +47,7 @@ fun testCardDefinition(
     commonName: String? = name,
     catalogNumber: String = id,
     rarityLabel: String = "Common",
-    drawWeight: Int = 1,
+    cardRarityMultiplier: Double = 1.0,
     imageRef: String = "m42_orion_nebula",
     variantProfileId: String = "observation-default",
 ): CardDefinition = CardDefinition(
@@ -29,7 +55,7 @@ fun testCardDefinition(
     extensionId = extensionId,
     name = name,
     rarityLabel = rarityLabel,
-    drawWeight = drawWeight,
+    cardRarityMultiplier = cardRarityMultiplier,
     imageRef = imageRef,
     variantProfileId = variantProfileId,
     astronomy = AstronomyInfo(
@@ -85,6 +111,38 @@ fun testPackCard(
     ),
 )
 
+fun testEquipmentCardDefinition(
+    id: String,
+    type: EquipmentType = EquipmentType.Observatory,
+    displayName: String = "Equipement test",
+    level: Int = 1,
+    imageRef: String = "equipment_test",
+    packsAffected: Int = 3,
+    bonusValue: Double = when (type) {
+        EquipmentType.Observatory -> 1.25
+        EquipmentType.Telescope -> 8.0
+        EquipmentType.Mount -> 10.0
+    },
+    bonusUnit: EquipmentBonusUnit = when (type) {
+        EquipmentType.Observatory -> EquipmentBonusUnit.RechargeMultiplier
+        EquipmentType.Telescope -> EquipmentBonusUnit.HolographicPercent
+        EquipmentType.Mount -> EquipmentBonusUnit.RarityBoost
+    },
+    dropWeight: Int = 10,
+    description: String = "Carte d'equipement de test.",
+): EquipmentCardDefinition = EquipmentCardDefinition(
+    id = id,
+    type = type,
+    displayName = displayName,
+    level = level,
+    imageRef = imageRef,
+    packsAffected = packsAffected,
+    bonusValue = bonusValue,
+    bonusUnit = bonusUnit,
+    dropWeight = dropWeight,
+    description = description,
+)
+
 fun testSkyEventCardDefinition(
     id: String,
     name: String = "Perseides",
@@ -94,7 +152,7 @@ fun testSkyEventCardDefinition(
     extensionId = "astronomes-en-herbe",
     name = name,
     rarityLabel = "Epic",
-    drawWeight = 1,
+    cardRarityMultiplier = 1.0,
     imageRef = "sky_event",
     variantProfileId = "observation-default",
     astronomy = AstronomyInfo(

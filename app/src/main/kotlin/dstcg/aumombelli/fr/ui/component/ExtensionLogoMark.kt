@@ -8,6 +8,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import fr.aumombelli.dstcg.ui.motion.BrandLogoVariant
 import fr.aumombelli.dstcg.ui.motion.ExtensionAnimationStyle
 import fr.aumombelli.dstcg.ui.motion.ExtensionConstellationOverlay
 import fr.aumombelli.dstcg.ui.motion.LaunchLogoMark
@@ -37,7 +38,7 @@ fun ExtensionLogoMark(
             )
         } else {
             LaunchLogoMark(
-                showWordmark = false,
+                variant = BrandLogoVariant.Badge17,
                 emblemSize = size,
             )
         }

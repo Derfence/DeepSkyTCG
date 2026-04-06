@@ -28,11 +28,13 @@ class PackOpeningViewModelTest {
             )
         }
         val packGateway = FakePackGateway().apply {
-            openPackResponse = DrawPackResponse(
+            openPackResponse = DrawPackResponse.fromCards(
                 extensionId = "astronomes-en-herbe",
                 drawnAt = "2026-03-24T12:00:00Z",
-                availableDrawCount = 9,
-                nextChargeAt = "2026-03-24T18:00:00Z",
+                rechargeState = testRechargeStateWithNextChargeAt(
+                    availableDrawCount = 9,
+                    nextChargeAt = "2026-03-24T18:00:00Z",
+                ),
                 cards = listOf(
                     testPackCard(
                         cardId = "M42",

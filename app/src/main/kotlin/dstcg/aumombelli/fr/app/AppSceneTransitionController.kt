@@ -24,16 +24,24 @@ internal class AppSceneTransitionController(
     private val writeState: (AppSceneUiState) -> Unit,
     private val awaitNextFrame: suspend () -> Unit,
 ) {
-    suspend fun finishPackOpeningToMenu() {
+    suspend fun finishPackOpeningToHome() {
         val state = readState()
         if (state.transitionLocked) return
 
-        writeState(state.lockTransitions().preparePackOpeningReturnToMenu())
+        writeState(state.lockTransitions().preparePackOpeningReturnToHome())
         awaitNextFrame()
         appContainer.packRepository.clearCurrentPackResult()
-        writeState(readState().showMenuContent())
-        if (readState().pendingBadgeCelebration.isEmpty() || readState().badgeCelebrationDeferred) {
-            unlockTransitionsAndRevealOnboardingHints()
+        animateBackdropToHome()
+        val nextState = readState().showHomeContent()
+        writeState(
+            if (nextState.pendingBadgeCelebration.isNotEmpty() && !nextState.badgeCelebrationDeferred) {
+                nextState
+            } else {
+                nextState.unlockTransitions()
+            },
+        )
+        if (nextState.pendingBadgeCelebration.isEmpty() || nextState.badgeCelebrationDeferred) {
+            revealOnboardingHintsAfterTransition()
         }
     }
 
@@ -53,18 +61,196 @@ internal class AppSceneTransitionController(
         delay(900)
         writeState(readState().raiseLaunchLogo())
         delay(720)
-        writeState(readState().showStartCard())
+        writeState(readState().showHomeContent())
+        delay(260)
+        writeState(readState().hideLaunchLogo())
+        revealOnboardingHintsAfterTransition()
     }
 
-    suspend fun animateStartToMenu() {
+    suspend fun animateHomeToPackSelection() {
         val state = readState()
         if (state.transitionLocked) return
 
         writeState(
             state.lockTransitions()
-                .hideMenuContent()
-                .hideLaunchLogo(),
+                .hideHomeContent(),
         )
+        delay(560)
+        writeState(readState().hideLaunchLogo().hidePackSelectionScene())
+        animateBackdropToPackSelection()
+        appContainer.packRepository.clearCurrentPackResult()
+        writeState(readState().preparePackSelection(nextPackRefreshSignal = state.packRefreshSignal + 1))
+        awaitNextFrame()
+        writeState(readState().showPackScene())
+        delay(460)
+        writeState(readState().showPackExtensionList())
+        delay(760)
+        unlockTransitionsAndRevealOnboardingHints()
+    }
+
+    suspend fun animateHomeToLibrary() {
+        val state = readState()
+        if (state.transitionLocked) return
+
+        coroutineScope {
+            writeState(
+                state.lockTransitions()
+                    .hideHomeContent()
+                    .hideLaunchLogo()
+                    .hideLibraryContent(),
+            )
+        }
+        delay(520)
+        writeState(readState().prepareLibraryEntry(nextLibraryRefreshSignal = state.libraryRefreshSignal + 1))
+        bookProgress.snapTo(0f)
+        bookOverlayAlpha.snapTo(1f)
+        bookProgress.animateTo(1f, animationSpec = tween(durationMillis = 980, easing = FastOutSlowInEasing))
+        writeState(readState().enterLibrary())
+        awaitNextFrame()
+        writeState(readState().showLibraryContent())
+        bookOverlayAlpha.animateTo(0f, animationSpec = tween(durationMillis = 960, easing = FastOutSlowInEasing))
+        bookProgress.snapTo(0f)
+        bookOverlayAlpha.snapTo(1f)
+        unlockTransitionsAndRevealOnboardingHints()
+    }
+
+    suspend fun animateHomeToEquipment() {
+        val state = readState()
+        if (state.transitionLocked) return
+
+        writeState(
+            state.lockTransitions()
+                .hideHomeContent()
+                .hideLaunchLogo()
+                .hideEquipmentContent(),
+        )
+        delay(520)
+        writeState(readState().prepareEquipmentEntry(nextEquipmentRefreshSignal = state.equipmentRefreshSignal + 1))
+        awaitNextFrame()
+        writeState(readState().enterEquipment().showEquipmentContent())
+        unlockTransitionsAndRevealOnboardingHints()
+    }
+
+    suspend fun animateHomeToBadgeBook() {
+        val state = readState()
+        if (state.transitionLocked) return
+
+        writeState(
+            state.lockTransitions()
+                .hideHomeContent()
+                .hideLaunchLogo()
+                .hideBadgeBookContent(),
+        )
+        delay(520)
+        writeState(readState().prepareBadgeBookEntry(nextBadgeBookRefreshSignal = state.badgeBookRefreshSignal + 1))
+        chestProgress.snapTo(0f)
+        chestOverlayAlpha.snapTo(1f)
+        chestProgress.animateTo(1f, animationSpec = tween(durationMillis = 980, easing = FastOutSlowInEasing))
+        writeState(readState().enterBadgeBook())
+        awaitNextFrame()
+        writeState(readState().showBadgeBookContent())
+        chestOverlayAlpha.animateTo(0f, animationSpec = tween(durationMillis = 960, easing = FastOutSlowInEasing))
+        chestProgress.snapTo(0f)
+        chestOverlayAlpha.snapTo(1f)
+        unlockTransitionsAndRevealOnboardingHints()
+    }
+
+    suspend fun animatePackSelectionToHome() {
+        val state = readState()
+        if (state.transitionLocked) return
+
+        writeState(
+            state.lockTransitions()
+                .hidePackExtensionList(),
+        )
+        delay(760)
+        writeState(readState().hidePackSelectionScene())
+        delay(420)
+        appContainer.packRepository.clearCurrentPackResult()
+        writeState(readState().switchPackSelectionToHome())
+        awaitNextFrame()
+        animateBackdropToHome()
+        val nextState = readState().showHomeContent().hidePackSelectionScene()
+        writeState(nextState)
+        unlockTransitionsAndRevealOnboardingHints()
+    }
+
+    suspend fun animateLibraryToHome() {
+        val state = readState()
+        if (state.transitionLocked) return
+
+        writeState(
+            state.lockTransitions()
+                .hideLibraryContent(),
+        )
+        bookProgress.snapTo(1f)
+        bookOverlayAlpha.snapTo(0f)
+        bookOverlayAlpha.animateTo(1f, animationSpec = tween(durationMillis = 960, easing = FastOutSlowInEasing))
+        writeState(readState().enterHome())
+        bookProgress.animateTo(0f, animationSpec = tween(durationMillis = 980, easing = FastOutSlowInEasing))
+        val nextState = readState().showHomeContent()
+        writeState(
+            if (nextState.pendingBadgeCelebration.isNotEmpty() && !nextState.badgeCelebrationDeferred) {
+                nextState
+            } else {
+                nextState.unlockTransitions()
+            },
+        )
+        if (nextState.pendingBadgeCelebration.isEmpty() || nextState.badgeCelebrationDeferred) {
+            revealOnboardingHintsAfterTransition()
+        }
+    }
+
+    suspend fun animateBadgeBookToHome() {
+        val state = readState()
+        if (state.transitionLocked) return
+
+        writeState(
+            state.lockTransitions()
+                .hideBadgeBookContent(),
+        )
+        chestProgress.snapTo(1f)
+        chestOverlayAlpha.snapTo(0f)
+        chestOverlayAlpha.animateTo(1f, animationSpec = tween(durationMillis = 960, easing = FastOutSlowInEasing))
+        writeState(readState().enterHome())
+        chestProgress.animateTo(0f, animationSpec = tween(durationMillis = 980, easing = FastOutSlowInEasing))
+        val nextState = readState().showHomeContent()
+        writeState(
+            if (nextState.pendingBadgeCelebration.isNotEmpty() && !nextState.badgeCelebrationDeferred) {
+                nextState
+            } else {
+                nextState.unlockTransitions()
+            },
+        )
+        if (nextState.pendingBadgeCelebration.isEmpty() || nextState.badgeCelebrationDeferred) {
+            revealOnboardingHintsAfterTransition()
+        }
+    }
+
+    suspend fun animateEquipmentToHome() {
+        val state = readState()
+        if (state.transitionLocked) return
+
+        writeState(
+            state.lockTransitions()
+                .hideEquipmentContent(),
+        )
+        delay(420)
+        writeState(readState().enterHome())
+        val nextState = readState().showHomeContent()
+        writeState(
+            if (nextState.pendingBadgeCelebration.isNotEmpty() && !nextState.badgeCelebrationDeferred) {
+                nextState
+            } else {
+                nextState.unlockTransitions()
+            },
+        )
+        if (nextState.pendingBadgeCelebration.isEmpty() || nextState.badgeCelebrationDeferred) {
+            revealOnboardingHintsAfterTransition()
+        }
+    }
+
+    private suspend fun animateBackdropToPackSelection() {
         coroutineScope {
             launch {
                 cameraTilt.animateTo(
@@ -87,152 +273,28 @@ internal class AppSceneTransitionController(
                 }
             }
         }
-        writeState(
-            readState()
-                .enterMainMenu()
-                .showMenuContent()
-                .unlockTransitions(),
-        )
-        revealOnboardingHintsAfterTransition()
     }
 
-    suspend fun animateMenuToLibrary() {
-        val state = readState()
-        if (state.transitionLocked) return
-
-        writeState(
-            state.lockTransitions()
-                .hideMenuContent()
-                .hideLibraryContent(),
-        )
-        delay(520)
-        writeState(readState().prepareLibraryEntry(nextLibraryRefreshSignal = state.libraryRefreshSignal + 1))
-        bookProgress.snapTo(0f)
-        bookOverlayAlpha.snapTo(1f)
-        bookProgress.animateTo(1f, animationSpec = tween(durationMillis = 980, easing = FastOutSlowInEasing))
-        writeState(readState().enterLibrary())
-        awaitNextFrame()
-        writeState(readState().showLibraryContent())
-        bookOverlayAlpha.animateTo(0f, animationSpec = tween(durationMillis = 960, easing = FastOutSlowInEasing))
-        bookProgress.snapTo(0f)
-        bookOverlayAlpha.snapTo(1f)
-        unlockTransitionsAndRevealOnboardingHints()
-    }
-
-    suspend fun animateMenuToPackSelection() {
-        val state = readState()
-        if (state.transitionLocked) return
-
-        writeState(state.lockTransitions().hideMenuContent().hidePackSelectionScene())
-        delay(520)
-        appContainer.packRepository.clearCurrentPackResult()
-        writeState(readState().preparePackSelection(nextPackRefreshSignal = state.packRefreshSignal + 1))
-        awaitNextFrame()
-        writeState(readState().showPackScene())
-        delay(460)
-        writeState(readState().showPackExtensionList())
-        delay(760)
-        unlockTransitionsAndRevealOnboardingHints()
-    }
-
-    suspend fun animateMenuToBadgeBook() {
-        val state = readState()
-        if (state.transitionLocked) return
-
-        writeState(
-            state.lockTransitions()
-                .hideMenuContent()
-                .hideBadgeBookContent(),
-        )
-        delay(520)
-        writeState(readState().prepareBadgeBookEntry(nextBadgeBookRefreshSignal = state.badgeBookRefreshSignal + 1))
-        chestProgress.snapTo(0f)
-        chestOverlayAlpha.snapTo(1f)
-        chestProgress.animateTo(1f, animationSpec = tween(durationMillis = 980, easing = FastOutSlowInEasing))
-        writeState(readState().enterBadgeBook())
-        awaitNextFrame()
-        writeState(readState().showBadgeBookContent())
-        chestOverlayAlpha.animateTo(0f, animationSpec = tween(durationMillis = 960, easing = FastOutSlowInEasing))
-        chestProgress.snapTo(0f)
-        chestOverlayAlpha.snapTo(1f)
-        unlockTransitionsAndRevealOnboardingHints()
-    }
-
-    suspend fun animatePackSelectionToMenu() {
-        val state = readState()
-        if (state.transitionLocked) return
-
-        writeState(
-            state.lockTransitions()
-                .hideMenuContent()
-                .hidePackExtensionList(),
-        )
-        delay(760)
-        writeState(readState().hidePackSelectionScene())
-        delay(420)
-        appContainer.packRepository.clearCurrentPackResult()
-        writeState(readState().switchPackSelectionToMenu())
-        awaitNextFrame()
-        writeState(
-            readState()
-                .showMenuContent()
-                .hidePackSelectionScene(),
-        )
-        delay(520)
-        unlockTransitionsAndRevealOnboardingHints()
-    }
-
-    suspend fun animateLibraryToMenu() {
-        val state = readState()
-        if (state.transitionLocked) return
-
-        writeState(
-            state.lockTransitions()
-                .hideMenuContent()
-                .hideLibraryContent(),
-        )
-        bookProgress.snapTo(1f)
-        bookOverlayAlpha.snapTo(0f)
-        bookOverlayAlpha.animateTo(1f, animationSpec = tween(durationMillis = 960, easing = FastOutSlowInEasing))
-        writeState(readState().enterMainMenu())
-        bookProgress.animateTo(0f, animationSpec = tween(durationMillis = 980, easing = FastOutSlowInEasing))
-        val nextState = readState().showMenuContent()
-        writeState(
-            if (nextState.pendingBadgeCelebration.isNotEmpty() && !nextState.badgeCelebrationDeferred) {
-                nextState
-            } else {
-                nextState.unlockTransitions()
-            },
-        )
-        if (nextState.pendingBadgeCelebration.isEmpty() || nextState.badgeCelebrationDeferred) {
-            revealOnboardingHintsAfterTransition()
-        }
-    }
-
-    suspend fun animateBadgeBookToMenu() {
-        val state = readState()
-        if (state.transitionLocked) return
-
-        writeState(
-            state.lockTransitions()
-                .hideMenuContent()
-                .hideBadgeBookContent(),
-        )
-        chestProgress.snapTo(1f)
-        chestOverlayAlpha.snapTo(0f)
-        chestOverlayAlpha.animateTo(1f, animationSpec = tween(durationMillis = 960, easing = FastOutSlowInEasing))
-        writeState(readState().enterMainMenu())
-        chestProgress.animateTo(0f, animationSpec = tween(durationMillis = 980, easing = FastOutSlowInEasing))
-        val nextState = readState().showMenuContent()
-        writeState(
-            if (nextState.pendingBadgeCelebration.isNotEmpty() && !nextState.badgeCelebrationDeferred) {
-                nextState
-            } else {
-                nextState.unlockTransitions()
-            },
-        )
-        if (nextState.pendingBadgeCelebration.isEmpty() || nextState.badgeCelebrationDeferred) {
-            revealOnboardingHintsAfterTransition()
+    private suspend fun animateBackdropToHome() {
+        coroutineScope {
+            launch {
+                cameraTilt.animateTo(
+                    targetValue = 0f,
+                    animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
+                )
+            }
+            launch {
+                mountainSkyBlend.animateTo(
+                    targetValue = 0f,
+                    animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
+                )
+            }
+            launch {
+                horizonLights.animateTo(
+                    targetValue = if (skyVariant.hasHorizonLights) 1f else 0f,
+                    animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
+                )
+            }
         }
     }
 

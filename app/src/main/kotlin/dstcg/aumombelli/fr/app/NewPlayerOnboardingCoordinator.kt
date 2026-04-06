@@ -30,7 +30,7 @@ internal class NewPlayerOnboardingCoordinator(
         uiState = uiState.copy(currentStep = progress.newPlayerOnboardingStep)
     }
 
-    suspend fun onMenuOpenPackSelected() {
+    suspend fun onHomeOpenPackSelected() {
         advanceTo(NewPlayerOnboardingStep.SelectFirstExtension) {
             it == NewPlayerOnboardingStep.OpenFirstPackMenu
         }
@@ -42,13 +42,31 @@ internal class NewPlayerOnboardingCoordinator(
         }
     }
 
-    suspend fun onFirstPackOpened(): Boolean {
+    suspend fun onPackOpened(): Boolean {
         val currentStep = uiState.currentStep ?: return false
-        if (currentStep == NewPlayerOnboardingStep.Completed) return false
-        if (currentStep == NewPlayerOnboardingStep.ViewBadges) return false
+        return when (currentStep) {
+            NewPlayerOnboardingStep.OpenFirstPackMenu,
+            NewPlayerOnboardingStep.SelectFirstExtension,
+            NewPlayerOnboardingStep.SelectFirstBooster,
+            -> {
+                persistStep(NewPlayerOnboardingStep.ViewLibrary)
+                true
+            }
 
-        persistStep(NewPlayerOnboardingStep.ViewLibrary)
-        return true
+            NewPlayerOnboardingStep.OpenSecondPackMenu -> {
+                persistStep(NewPlayerOnboardingStep.ViewEquipmentMenu)
+                true
+            }
+
+            NewPlayerOnboardingStep.ViewEquipmentMenu,
+            NewPlayerOnboardingStep.ActivateFirstEquipment,
+            -> true
+
+            NewPlayerOnboardingStep.ViewLibrary,
+            NewPlayerOnboardingStep.ViewBadges,
+            NewPlayerOnboardingStep.Completed,
+            -> false
+        }
     }
 
     suspend fun onLibraryOpened(): Boolean {
@@ -61,16 +79,31 @@ internal class NewPlayerOnboardingCoordinator(
     }
 
     suspend fun onBadgeBookOpened() {
-        advanceTo(NewPlayerOnboardingStep.Completed) {
+        advanceTo(NewPlayerOnboardingStep.OpenSecondPackMenu) {
             it == NewPlayerOnboardingStep.ViewBadges
         }
         uiState = uiState.copy(libraryCardHintVisible = false)
+    }
+
+    suspend fun onEquipmentOpened() {
+        advanceTo(NewPlayerOnboardingStep.ActivateFirstEquipment) {
+            it == NewPlayerOnboardingStep.ViewEquipmentMenu
+        }
+    }
+
+    suspend fun onEquipmentActivated() {
+        advanceTo(NewPlayerOnboardingStep.Completed) {
+            it == NewPlayerOnboardingStep.ActivateFirstEquipment
+        }
     }
 
     fun onLibraryCardHintConsumed() {
         if (!uiState.libraryCardHintVisible) return
         uiState = uiState.copy(libraryCardHintVisible = false)
     }
+
+    fun isBlockingStep(step: NewPlayerOnboardingStep? = uiState.currentStep): Boolean =
+        NewPlayerOnboardingInteractionPolicy.isBlockingStep(step)
 
     fun activeCoachmark(
         currentScene: AppScene,
@@ -83,14 +116,14 @@ internal class NewPlayerOnboardingCoordinator(
         return when (step) {
             NewPlayerOnboardingStep.OpenFirstPackMenu -> {
                 if (
-                    currentScene == AppScene.MainMenu &&
-                    sceneState.menuContentVisible &&
+                    currentScene == AppScene.Home &&
+                    sceneState.homeContentVisible &&
                     sceneState.onboardingHintsVisible &&
                     !sceneState.transitionLocked &&
-                    sceneState.coachmarkTargetBounds.containsKey(NewPlayerOnboardingTarget.MenuOpenPack)
+                    sceneState.coachmarkTargetBounds.containsKey(NewPlayerOnboardingTarget.HomeOpenPack)
                 ) {
                     NewPlayerCoachmarkSpec(
-                        target = NewPlayerOnboardingTarget.MenuOpenPack,
+                        target = NewPlayerOnboardingTarget.HomeOpenPack,
                         title = "Premières cartes",
                         message = "Commençons ta collection de cartes d'objets célestes !",
                     )
@@ -136,14 +169,14 @@ internal class NewPlayerOnboardingCoordinator(
 
             NewPlayerOnboardingStep.ViewLibrary -> {
                 if (
-                    currentScene == AppScene.MainMenu &&
-                    sceneState.menuContentVisible &&
+                    currentScene == AppScene.Home &&
+                    sceneState.homeContentVisible &&
                     sceneState.onboardingHintsVisible &&
                     !sceneState.transitionLocked &&
-                    sceneState.coachmarkTargetBounds.containsKey(NewPlayerOnboardingTarget.MenuLibrary)
+                    sceneState.coachmarkTargetBounds.containsKey(NewPlayerOnboardingTarget.HomeLibrary)
                 ) {
                     NewPlayerCoachmarkSpec(
-                        target = NewPlayerOnboardingTarget.MenuLibrary,
+                        target = NewPlayerOnboardingTarget.HomeLibrary,
                         title = "Retrouve tes cartes",
                         message = "Ouvre la bibliotheque pour revoir les cartes que tu as obtenues.",
                     )
@@ -154,17 +187,56 @@ internal class NewPlayerOnboardingCoordinator(
 
             NewPlayerOnboardingStep.ViewBadges -> {
                 if (
-                    currentScene == AppScene.MainMenu &&
-                    sceneState.menuContentVisible &&
+                    currentScene == AppScene.Home &&
+                    sceneState.homeContentVisible &&
                     sceneState.onboardingHintsVisible &&
                     !sceneState.transitionLocked &&
                     !badgeCelebrationVisible &&
-                    sceneState.coachmarkTargetBounds.containsKey(NewPlayerOnboardingTarget.MenuBadges)
+                    sceneState.coachmarkTargetBounds.containsKey(NewPlayerOnboardingTarget.HomeBadges)
                 ) {
                     NewPlayerCoachmarkSpec(
-                        target = NewPlayerOnboardingTarget.MenuBadges,
+                        target = NewPlayerOnboardingTarget.HomeBadges,
                         title = "Badges d'astronome",
                         message = "Ton premier badge t'attend ici !",
+                    )
+                } else {
+                    null
+                }
+            }
+
+            NewPlayerOnboardingStep.OpenSecondPackMenu -> null
+
+            NewPlayerOnboardingStep.ViewEquipmentMenu -> {
+                if (
+                    currentScene == AppScene.Home &&
+                    sceneState.homeContentVisible &&
+                    sceneState.onboardingHintsVisible &&
+                    !sceneState.transitionLocked &&
+                    !badgeCelebrationVisible &&
+                    sceneState.coachmarkTargetBounds.containsKey(NewPlayerOnboardingTarget.HomeEquipment)
+                ) {
+                    NewPlayerCoachmarkSpec(
+                        target = NewPlayerOnboardingTarget.HomeEquipment,
+                        title = "Menu equipement",
+                        message = "Ton nouvel equipement est accessible ici depuis l'accueil.",
+                    )
+                } else {
+                    null
+                }
+            }
+
+            NewPlayerOnboardingStep.ActivateFirstEquipment -> {
+                if (
+                    currentScene == AppScene.Equipment &&
+                    sceneState.equipmentContentVisible &&
+                    sceneState.onboardingHintsVisible &&
+                    !sceneState.transitionLocked &&
+                    sceneState.coachmarkTargetBounds.containsKey(NewPlayerOnboardingTarget.EquipmentActivation)
+                ) {
+                    NewPlayerCoachmarkSpec(
+                        target = NewPlayerOnboardingTarget.EquipmentActivation,
+                        title = "Active ta carte",
+                        message = "Active cet equipement pour ameliorer les prochains packs.",
                     )
                 } else {
                     null

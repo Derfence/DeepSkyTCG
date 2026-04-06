@@ -5,6 +5,8 @@ import fr.aumombelli.dstcg.data.AndroidKeystoreProgressCipher
 import fr.aumombelli.dstcg.data.CatalogGateway
 import fr.aumombelli.dstcg.data.CollectionGateway
 import fr.aumombelli.dstcg.data.CollectionRepository
+import fr.aumombelli.dstcg.data.EquipmentGateway
+import fr.aumombelli.dstcg.data.EquipmentRepository
 import fr.aumombelli.dstcg.data.GameCatalogRepository
 import fr.aumombelli.dstcg.data.LocalPackEngine
 import fr.aumombelli.dstcg.data.PackGateway
@@ -17,6 +19,7 @@ class AppContainer(
     val progressRepository: ProgressGateway,
     val catalogRepository: CatalogGateway,
     val collectionRepository: CollectionGateway,
+    val equipmentRepository: EquipmentGateway,
     val packRepository: PackGateway,
     val gameSettings: StandaloneGameSettings,
 ) {
@@ -34,6 +37,10 @@ class AppContainer(
             val collectionRepository = CollectionRepository(
                 progressRepository = progressRepository,
             )
+            val equipmentRepository = EquipmentRepository(
+                progressRepository = progressRepository,
+                catalogRepository = catalogRepository,
+            )
             val packRepository = PackRepository(
                 progressRepository = progressRepository,
                 collectionRepository = collectionRepository,
@@ -47,6 +54,7 @@ class AppContainer(
                 progressRepository = progressRepository,
                 catalogRepository = catalogRepository,
                 collectionRepository = collectionRepository,
+                equipmentRepository = equipmentRepository,
                 packRepository = packRepository,
                 gameSettings = gameSettings,
             )

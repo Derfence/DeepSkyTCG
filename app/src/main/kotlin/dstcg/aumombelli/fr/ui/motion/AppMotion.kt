@@ -39,9 +39,9 @@ enum class SkyBackdropVariant(
 }
 
 enum class AppScene {
-    Start,
-    MainMenu,
+    Home,
     Library,
+    Equipment,
     BadgeBook,
     PackSelection,
     PackOpening,

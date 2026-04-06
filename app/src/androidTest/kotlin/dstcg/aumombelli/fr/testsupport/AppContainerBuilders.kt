@@ -2,7 +2,6 @@ package fr.aumombelli.dstcg.testsupport
 
 import android.content.Context
 import androidx.datastore.core.DataStoreFactory
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import fr.aumombelli.dstcg.AppContainer
 import fr.aumombelli.dstcg.data.AesGcmProgressCipher
 import fr.aumombelli.dstcg.data.AndroidTrustedTimeSource
@@ -10,6 +9,7 @@ import fr.aumombelli.dstcg.data.CatalogGateway
 import fr.aumombelli.dstcg.data.CollectionGateway
 import fr.aumombelli.dstcg.data.CollectionRepository
 import fr.aumombelli.dstcg.data.EncryptedProgressEnvelopeSerializer
+import fr.aumombelli.dstcg.data.EquipmentRepository
 import fr.aumombelli.dstcg.data.GameCatalogRepository
 import fr.aumombelli.dstcg.data.LocalPackEngine
 import fr.aumombelli.dstcg.data.PackGateway
@@ -22,16 +22,23 @@ import fr.aumombelli.dstcg.data.StandaloneGameSettings
 import fr.aumombelli.dstcg.model.CardDefinition
 import fr.aumombelli.dstcg.model.CardFinishDefinition
 import fr.aumombelli.dstcg.model.DrawPackResponse
+import fr.aumombelli.dstcg.model.EquipmentCardDefinition
+import fr.aumombelli.dstcg.model.EquipmentSettingsDefinition
 import fr.aumombelli.dstcg.model.ExtensionDefinition
+import fr.aumombelli.dstcg.model.GameBalanceDefinition
+import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.OwnedCollection
+import fr.aumombelli.dstcg.model.OwnedEquipmentCardEntry
+import fr.aumombelli.dstcg.model.OwnedEquipmentInventory
 import fr.aumombelli.dstcg.model.OwnedVariantCount
+import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.PackCard
 import fr.aumombelli.dstcg.model.SkyQualityDefinition
 import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.model.VariantProfile
-import fr.aumombelli.dstcg.model.WeightedCode
 import fr.aumombelli.dstcg.model.mergePackCards
 import fr.aumombelli.dstcg.testCardDefinition
+import fr.aumombelli.dstcg.testGameBalanceDefinition
 import fr.aumombelli.dstcg.testPackCard
 import java.io.File
 import java.time.Instant
@@ -51,18 +58,12 @@ internal fun offlineMainActivityTestAppContainer(
 ): AppContainer {
     val appContext = context.applicationContext
     val secureFile = File(appContext.cacheDir, dataStoreFileName.replace(".preferences_pb", ".secure.json"))
-    val legacyFile = File(appContext.cacheDir, dataStoreFileName)
     secureFile.delete()
-    legacyFile.delete()
     val catalogRepository = GameCatalogRepository(appContext)
     val secureDataStore = DataStoreFactory.create(
         serializer = EncryptedProgressEnvelopeSerializer,
         scope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
         produceFile = { secureFile },
-    )
-    val legacyDataStore = PreferenceDataStoreFactory.create(
-        scope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
-        produceFile = { legacyFile },
     )
     val gameSettings = StandaloneGameSettings(
         timeSource = AndroidTrustedTimeSource(appContext),
@@ -70,12 +71,15 @@ internal fun offlineMainActivityTestAppContainer(
     )
     val progressRepository = ProgressRepository(
         secureDataStore = secureDataStore,
-        legacyDataStore = legacyDataStore,
         catalogRepository = catalogRepository,
         settings = gameSettings,
         progressCipher = AesGcmProgressCipher(keyProvider = ::newTestSecretKey),
     )
     val collectionRepository = CollectionRepository(progressRepository)
+    val equipmentRepository = EquipmentRepository(
+        progressRepository = progressRepository,
+        catalogRepository = catalogRepository,
+    )
     val packRepository = PackRepository(
         progressRepository = progressRepository,
         collectionRepository = collectionRepository,
@@ -89,6 +93,7 @@ internal fun offlineMainActivityTestAppContainer(
         progressRepository = progressRepository,
         catalogRepository = catalogRepository,
         collectionRepository = collectionRepository,
+        equipmentRepository = equipmentRepository,
         packRepository = packRepository,
         gameSettings = gameSettings,
     )
@@ -110,6 +115,7 @@ internal fun backNavigationTestAppContainer(): AppContainer {
                 ),
             ),
         ),
+        unlockEquipmentMenu = true,
     )
 }
 
@@ -121,6 +127,7 @@ internal fun badgeCelebrationBackNavigationTestAppContainer(): AppContainer {
 
 private fun navigationTestAppContainer(
     initialCollection: OwnedCollection,
+    unlockEquipmentMenu: Boolean = false,
 ): AppContainer {
     val extension = ExtensionDefinition(
         id = "astronomes-en-herbe",
@@ -131,16 +138,36 @@ private fun navigationTestAppContainer(
     val progressRepository = MutableProgressGateway(
         initialProgress = StandaloneProgress(
             collection = initialCollection,
-            availableDrawCount = 10,
-            nextChargeAt = null,
+            rechargeState = PackRechargeState(),
+            newPlayerOnboardingStep = if (initialCollection.cards.isEmpty()) {
+                NewPlayerOnboardingStep.OpenFirstPackMenu
+            } else {
+                NewPlayerOnboardingStep.Completed
+            },
+            equipmentInventory = if (unlockEquipmentMenu) {
+                OwnedEquipmentInventory(
+                    cards = mapOf(
+                        "starter-equipment" to OwnedEquipmentCardEntry(countOwned = 1),
+                    ),
+                )
+            } else {
+                OwnedEquipmentInventory()
+            },
         ),
     )
     val collectionRepository = NavigationCollectionGateway(progressRepository)
-    val packResponse = DrawPackResponse(
+    val catalogRepository = NavigationCatalogGateway(
+        extensions = listOf(extension),
+        cards = listOf(cardDefinition),
+        variantProfiles = listOf(navigationVariantProfile()),
+    )
+    val packResponse = DrawPackResponse.fromCards(
         extensionId = extension.id,
         drawnAt = "2026-03-23T12:00:00Z",
-        availableDrawCount = 9,
-        nextChargeAt = "2026-03-24T18:00:00Z",
+        rechargeState = androidTestRechargeStateWithNextChargeAt(
+            availableDrawCount = 9,
+            nextChargeAt = "2026-03-24T18:00:00Z",
+        ),
         cards = listOf(
             testPackCard(
                 cardId = "ALP-001",
@@ -153,12 +180,12 @@ private fun navigationTestAppContainer(
 
     return AppContainer(
         progressRepository = progressRepository,
-        catalogRepository = NavigationCatalogGateway(
-            extensions = listOf(extension),
-            cards = listOf(cardDefinition),
-            variantProfiles = listOf(navigationVariantProfile()),
-        ),
+        catalogRepository = catalogRepository,
         collectionRepository = collectionRepository,
+        equipmentRepository = EquipmentRepository(
+            progressRepository = progressRepository,
+            catalogRepository = catalogRepository,
+        ),
         packRepository = NavigationPackGateway(progressRepository, packResponse),
         gameSettings = StandaloneGameSettings(
             entropySource = RandomEntropySource(Random(12345)),
@@ -184,8 +211,7 @@ private class MutableProgressGateway(
     override suspend fun resetProgress() {
         progress = StandaloneProgress(
             collection = OwnedCollection(),
-            availableDrawCount = 10,
-            nextChargeAt = null,
+            rechargeState = PackRechargeState(),
         )
     }
 }
@@ -198,18 +224,22 @@ private fun navigationVariantProfile(): VariantProfile = VariantProfile(
     finishes = listOf(
         CardFinishDefinition(code = "standard", label = "Standard"),
     ),
-    skyQualityWeights = listOf(WeightedCode(code = "city", weight = 1)),
-    finishWeights = listOf(WeightedCode(code = "standard", weight = 1)),
 )
 
 private class NavigationCatalogGateway(
     private val extensions: List<ExtensionDefinition>,
     private val cards: List<CardDefinition>,
     private val variantProfiles: List<VariantProfile>,
+    private val gameBalance: GameBalanceDefinition = testGameBalanceDefinition(),
 ) : CatalogGateway {
     override suspend fun loadExtensions(): List<ExtensionDefinition> = extensions
     override suspend fun loadCards(): List<CardDefinition> = cards
     override suspend fun loadVariantProfiles(): List<VariantProfile> = variantProfiles
+    override suspend fun loadGameBalance(): GameBalanceDefinition = gameBalance
+    override suspend fun loadEquipmentCards(): List<EquipmentCardDefinition> = emptyList()
+    override suspend fun loadEquipmentSettings(): EquipmentSettingsDefinition = EquipmentSettingsDefinition(
+        commonReplacementChancePercent = 0.0,
+    )
 }
 
 private class NavigationCollectionGateway(
@@ -245,8 +275,7 @@ private class NavigationPackGateway(
         progressRepository.saveProgress(
             progress.copy(
                 collection = mergedCollection,
-                availableDrawCount = openPackResponse.availableDrawCount,
-                nextChargeAt = openPackResponse.nextChargeAt,
+                rechargeState = openPackResponse.rechargeState,
                 openedPackCount = progress.openedPackCount + 1,
             ),
         )

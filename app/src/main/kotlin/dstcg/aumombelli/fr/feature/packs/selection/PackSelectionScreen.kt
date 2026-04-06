@@ -37,13 +37,15 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
-import fr.aumombelli.dstcg.data.DEFAULT_DRAW_COOLDOWN
 import fr.aumombelli.dstcg.data.buildPackChargeUiStatus
 import fr.aumombelli.dstcg.performance.LocalAppPerformanceProfile
 import fr.aumombelli.dstcg.ui.motion.MotionCard
 import fr.aumombelli.dstcg.ui.motion.PackRevealBounds
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
+import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
 import kotlinx.coroutines.delay
 import kotlin.math.roundToLong
 
@@ -65,11 +67,10 @@ fun PackSelectionScreen(
     interactionsEnabled: Boolean = true,
 ) {
     val performanceProfile = LocalAppPerformanceProfile.current
-    val shouldTickChargeStatus = state.availableDrawCount < state.maxStoredDraws && state.nextChargeAt != null
+    val shouldTickChargeStatus = state.rechargeState.availableDrawCount < state.maxStoredDraws
     val now by produceState(
         initialValue = state.trustedNow,
-        state.availableDrawCount,
-        state.nextChargeAt,
+        state.rechargeState,
         state.trustedNow,
         state.trustedElapsedRealtimeMs,
         shouldTickChargeStatus,
@@ -78,12 +79,13 @@ fun PackSelectionScreen(
             trustedNow = state.trustedNow,
             trustedElapsedRealtimeMs = state.trustedElapsedRealtimeMs,
         )
-        if (!shouldTickChargeStatus) {
-            return@produceState
-        }
-
         while (true) {
-            delay(1_000)
+            val delayMillis = if (shouldTickChargeStatus) {
+                1_000L
+            } else {
+                millisUntilNextUtcDayStart(value).coerceAtLeast(1_000L)
+            }
+            delay(delayMillis)
             value = computeTrustedNow(
                 trustedNow = state.trustedNow,
                 trustedElapsedRealtimeMs = state.trustedElapsedRealtimeMs,
@@ -91,12 +93,21 @@ fun PackSelectionScreen(
         }
     }
     val liveChargeStatus = buildPackChargeUiStatus(
-        availableDrawCount = state.availableDrawCount,
-        nextChargeAt = state.nextChargeAt,
+        rechargeState = state.rechargeState,
         now = now,
-        drawCooldown = DEFAULT_DRAW_COOLDOWN,
+        drawCooldown = state.drawCooldown,
         maxStoredDraws = state.maxStoredDraws,
+        weatherPolicy = state.weatherPolicy,
     )
+    val weatherForecast = remember(now, state.weatherPolicy) {
+        buildWeatherForecastDayUiModels(
+            now = now,
+            weatherPolicy = state.weatherPolicy,
+        )
+    }
+    val weatherForecastUtcTimeLabel = remember(now) {
+        formatWeatherForecastUtcTimeLabel(now)
+    }
     val remainingDurationText = formatRemainingDuration(liveChargeStatus.remainingDuration)
     val drawLocked = liveChargeStatus.isDrawLocked
     val selectedExtension = state.extensions.firstOrNull { it.id == state.selectedExtensionId }
@@ -235,9 +246,21 @@ fun PackSelectionScreen(
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = Color.White,
-                modifier = Modifier.graphicsLayer {
-                    alpha = stageTextAlpha
-                },
+                modifier = Modifier
+                    .graphicsLayer {
+                        alpha = stageTextAlpha
+                    }
+                    .testTag("pack-title"),
+            )
+
+            WeatherForecastCard(
+                forecast = weatherForecast,
+                utcTimeLabel = weatherForecastUtcTimeLabel,
+                modifier = Modifier
+                    .graphicsLayer {
+                        alpha = stageTextAlpha
+                    }
+                    .testTag("pack-weather-forecast"),
             )
 
             PackChargeStatus(
@@ -406,4 +429,12 @@ private fun PackChargeStatus(
             modifier = Modifier.testTag("pack-status-remaining"),
         )
     }
+}
+
+private fun millisUntilNextUtcDayStart(now: Instant): Long {
+    val nextUtcDayStart = LocalDate.ofInstant(now, ZoneOffset.UTC)
+        .plusDays(1)
+        .atStartOfDay(ZoneOffset.UTC)
+        .toInstant()
+    return Duration.between(now, nextUtcDayStart).toMillis().coerceAtLeast(0L)
 }

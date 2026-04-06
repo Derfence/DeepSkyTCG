@@ -9,7 +9,7 @@ enum class AppLaunchScene(
     val wireValue: String,
 ) {
     Start("start"),
-    MainMenu("main-menu"),
+    Home("home"),
 }
 
 data class AppLaunchConfig(
@@ -20,15 +20,25 @@ data class AppLaunchConfig(
 internal fun parseAppLaunchConfig(
     rawSceneValue: String?,
     resetProgressOnLaunch: Boolean,
-): AppLaunchConfig = AppLaunchConfig(
-    scene = AppLaunchScene.entries.firstOrNull { it.wireValue == rawSceneValue } ?: AppLaunchScene.Start,
-    resetProgressOnLaunch = resetProgressOnLaunch,
-)
+): AppLaunchConfig {
+    val scene = when (rawSceneValue) {
+        AppLaunchScene.Home.wireValue,
+        "main-menu",
+        -> AppLaunchScene.Home
+
+        AppLaunchScene.Start.wireValue -> AppLaunchScene.Start
+        else -> AppLaunchScene.Start
+    }
+    return AppLaunchConfig(
+        scene = scene,
+        resetProgressOnLaunch = resetProgressOnLaunch,
+    )
+}
 
 internal fun initialAppSceneUiState(launchConfig: AppLaunchConfig): AppSceneUiState = when (launchConfig.scene) {
     AppLaunchScene.Start -> AppSceneUiState()
-    AppLaunchScene.MainMenu -> AppSceneUiState(
-        currentScene = AppScene.MainMenu,
-        menuContentVisible = !launchConfig.resetProgressOnLaunch,
+    AppLaunchScene.Home -> AppSceneUiState(
+        currentScene = AppScene.Home,
+        homeContentVisible = !launchConfig.resetProgressOnLaunch,
     )
 }

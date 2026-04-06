@@ -9,6 +9,9 @@ enum class NewPlayerOnboardingStep {
     SelectFirstBooster,
     ViewLibrary,
     ViewBadges,
+    OpenSecondPackMenu,
+    ViewEquipmentMenu,
+    ActivateFirstEquipment,
     Completed,
 }
 

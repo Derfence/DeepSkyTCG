@@ -50,3 +50,11 @@ fun raritySortPriority(rarityLabel: String): Int = when (rarityLabel) {
     "Epic" -> 3
     else -> 4
 }
+
+fun skyQualitySortPriority(code: String): Int = when (code) {
+    "city" -> 1
+    "suburban" -> 2
+    "rural" -> 3
+    "mountain" -> 4
+    else -> 0
+}

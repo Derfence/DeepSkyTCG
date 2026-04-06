@@ -1,147 +1,43 @@
-package fr.aumombelli.dstcg.feature.start
+package fr.aumombelli.dstcg.feature.home
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.rememberDraggableState
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-@Composable
-internal fun StartFooter(
-    contentAlpha: Float,
-    onOpenAbout: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val interactionSource = remember { MutableInteractionSource() }
-    var dragDistance by remember { mutableFloatStateOf(0f) }
-    var dragOpened by remember { mutableStateOf(false) }
-
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .windowInsetsPadding(
-                WindowInsets.safeDrawing.only(
-                    WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom,
-                ),
-            )
-            .graphicsLayer {
-                alpha = contentAlpha
-                translationY = (1f - contentAlpha) * 32f
-            }
-            .padding(horizontal = 24.dp, vertical = 18.dp)
-            .testTag("start-footer"),
-    ) {
-        Text(
-            text = StartFooterAppVersion,
-            color = Color(0xFFD5E4F7),
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .testTag("start-footer-version"),
-        )
-
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .width(220.dp)
-                .height(96.dp)
-                .draggable(
-                    orientation = Orientation.Vertical,
-                    state = rememberDraggableState { delta ->
-                        if (dragOpened) {
-                            return@rememberDraggableState
-                        }
-                        dragDistance += delta
-                        if (dragDistance <= -24f) {
-                            dragOpened = true
-                            onOpenAbout()
-                        }
-                    },
-                    onDragStarted = {
-                        dragDistance = 0f
-                        dragOpened = false
-                    },
-                    onDragStopped = {
-                        dragDistance = 0f
-                        dragOpened = false
-                    },
-                )
-                .clickable(
-                    interactionSource = interactionSource,
-                    indication = null,
-                    onClick = onOpenAbout,
-                )
-                .padding(horizontal = 18.dp, vertical = 12.dp)
-                .testTag("start-about-trigger"),
-        ) {
-            Text(
-                text = "à propos",
-                color = Color.White,
-                style = MaterialTheme.typography.labelLarge,
-                textAlign = TextAlign.Center,
-            )
-            Icon(
-                imageVector = Icons.Rounded.KeyboardArrowDown,
-                contentDescription = null,
-                tint = Color(0xFFD5E4F7),
-                modifier = Modifier.testTag("start-about-arrow"),
-            )
-        }
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun StartAboutSheet(
+internal fun HomeAboutSheet(
     visible: Boolean,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
@@ -159,7 +55,7 @@ internal fun StartAboutSheet(
         containerColor = Color.Transparent,
         scrimColor = Color.Black.copy(alpha = 0.62f),
         sheetMaxWidth = Dp.Unspecified,
-        modifier = modifier.testTag("start-about-sheet-container"),
+        modifier = modifier.testTag("home-about-sheet-container"),
         dragHandle = null,
     ) {
         Column(
@@ -174,7 +70,7 @@ internal fun StartAboutSheet(
                         ),
                     ),
                 )
-                .testTag("start-about-sheet")
+                .testTag("home-about-sheet")
                 .padding(horizontal = 24.dp, vertical = 20.dp),
         ) {
             Column(
@@ -182,7 +78,7 @@ internal fun StartAboutSheet(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .testTag("start-about-sheet-header"),
+                    .testTag("home-about-sheet-header"),
             ) {
                 Box(
                     modifier = Modifier
@@ -192,7 +88,7 @@ internal fun StartAboutSheet(
                             color = Color(0xFF7992AE),
                             shape = RoundedCornerShape(999.dp),
                         )
-                        .testTag("start-about-sheet-handle"),
+                        .testTag("home-about-sheet-handle"),
                 )
                 Text(
                     text = "Crédits",
@@ -201,10 +97,10 @@ internal fun StartAboutSheet(
                     color = Color.White,
                 )
                 Text(
-                    text = StartFooterAppVersion,
+                    text = HomeAboutAppVersion,
                     color = Color(0xFFF4D48A),
                     style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.testTag("start-about-sheet-version"),
+                    modifier = Modifier.testTag("home-about-sheet-version"),
                 )
                 Text(
                     text = "Fais glisser le panneau vers le bas ou touche le fond pour le fermer.",
@@ -220,7 +116,7 @@ internal fun StartAboutSheet(
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState()),
             ) {
-                StartAboutSections.forEach { section ->
+                HomeAboutSections.forEach { section ->
                     Column(
                         verticalArrangement = Arrangement.spacedBy(6.dp),
                         modifier = Modifier.fillMaxWidth(),
@@ -246,7 +142,7 @@ internal fun StartAboutSheet(
 }
 
 @Composable
-internal fun StartResetConfirmationDialog(
+internal fun HomeResetConfirmationDialog(
     onConfirm: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
@@ -264,13 +160,13 @@ internal fun StartResetConfirmationDialog(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .testTag("start-reset-confirmation"),
+            .testTag("home-reset-confirmation"),
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = 0.68f))
-                .testTag("start-reset-confirmation-scrim"),
+                .testTag("home-reset-confirmation-scrim"),
         )
 
         Card(
@@ -293,7 +189,7 @@ internal fun StartResetConfirmationDialog(
                 Text(
                     text = "Cette action efface la progression locale et recrée une bibliothèque vide.",
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.testTag("start-reset-confirmation-message"),
+                    modifier = Modifier.testTag("home-reset-confirmation-message"),
                 )
                 Text(
                     text = "Le bouton de validation s'active après un court délai de sécurité.",
@@ -305,7 +201,7 @@ internal fun StartResetConfirmationDialog(
                     enabled = confirmUnlockProgress.value >= 0.999f,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .testTag("start-reset-confirmation-confirm"),
+                        .testTag("home-reset-confirmation-confirm"),
                 ) {
                     Text("Valider")
                 }
@@ -313,7 +209,7 @@ internal fun StartResetConfirmationDialog(
                     onClick = onCancel,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .testTag("start-reset-confirmation-cancel"),
+                        .testTag("home-reset-confirmation-cancel"),
                 ) {
                     Text("Annuler")
                 }

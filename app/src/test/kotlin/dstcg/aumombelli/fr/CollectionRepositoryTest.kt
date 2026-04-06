@@ -12,8 +12,10 @@ class CollectionRepositoryTest {
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
                 collection = ownedCollectionOf("ALP-001" to 1),
-                availableDrawCount = 4,
-                nextChargeAt = "2026-03-25T00:00:00Z",
+                rechargeState = testRechargeStateWithNextChargeAt(
+                    availableDrawCount = 4,
+                    nextChargeAt = "2026-03-25T00:00:00Z",
+                ),
             )
         }
         val repository = CollectionRepository(progressGateway)
@@ -28,8 +30,10 @@ class CollectionRepositoryTest {
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
                 collection = ownedCollectionOf("ALP-001" to 1),
-                availableDrawCount = 4,
-                nextChargeAt = "2026-03-25T00:00:00Z",
+                rechargeState = testRechargeStateWithNextChargeAt(
+                    availableDrawCount = 4,
+                    nextChargeAt = "2026-03-25T00:00:00Z",
+                ),
             )
         }
         val repository = CollectionRepository(progressGateway)
@@ -38,8 +42,11 @@ class CollectionRepositoryTest {
         repository.saveCollection(newCollection)
 
         assertEquals(newCollection, progressGateway.progress.collection)
-        assertEquals(4, progressGateway.progress.availableDrawCount)
-        assertEquals("2026-03-25T00:00:00Z", progressGateway.progress.nextChargeAt)
+        assertEquals(4, progressGateway.progress.rechargeState.availableDrawCount)
+        assertEquals(
+            "2026-03-24T12:00:00Z",
+            progressGateway.progress.rechargeState.lastChargeEvaluationAt,
+        )
     }
 
     @Test

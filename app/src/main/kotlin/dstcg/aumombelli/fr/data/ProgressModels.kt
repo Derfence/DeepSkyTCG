@@ -1,7 +1,11 @@
 package fr.aumombelli.dstcg.data
 
 import fr.aumombelli.dstcg.model.OwnedCollection
+import fr.aumombelli.dstcg.model.EquipmentType
+import fr.aumombelli.dstcg.model.ActiveEquipmentEffect
+import fr.aumombelli.dstcg.model.OwnedEquipmentInventory
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
+import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.StandaloneProgress
 import java.time.Instant
 import kotlinx.serialization.Serializable
@@ -11,10 +15,12 @@ data class ProgressSnapshot(
     val installId: String,
     val schemaVersion: Int = CURRENT_SCHEMA_VERSION,
     val collection: OwnedCollection,
-    val availableDrawCount: Int = DEFAULT_MAX_STORED_DRAWS,
-    val nextChargeAt: String? = null,
+    val rechargeState: PackRechargeState = PackRechargeState(),
     val openedPackCount: Int = 0,
     val newPlayerOnboardingStep: NewPlayerOnboardingStep = NewPlayerOnboardingStep.OpenFirstPackMenu,
+    val equipmentInventory: OwnedEquipmentInventory = OwnedEquipmentInventory(),
+    val activeEquipmentByType: Map<EquipmentType, ActiveEquipmentEffect> = emptyMap(),
+    val lastActivatedCardIdByType: Map<EquipmentType, String> = emptyMap(),
     val lastTrustedWallClockUtc: String,
     val lastTrustedElapsedRealtimeMs: Long = 0L,
     val lastObservedBootMarker: String,
@@ -22,14 +28,16 @@ data class ProgressSnapshot(
 ) {
     fun toProgress(): StandaloneProgress = StandaloneProgress(
         collection = collection,
-        availableDrawCount = availableDrawCount,
-        nextChargeAt = nextChargeAt,
+        rechargeState = rechargeState,
         openedPackCount = openedPackCount,
         newPlayerOnboardingStep = newPlayerOnboardingStep,
+        equipmentInventory = equipmentInventory,
+        activeEquipmentByType = activeEquipmentByType,
+        lastActivatedCardIdByType = lastActivatedCardIdByType,
     )
 
     companion object {
-        const val CURRENT_SCHEMA_VERSION: Int = 2
+        const val CURRENT_SCHEMA_VERSION: Int = 4
     }
 }
 

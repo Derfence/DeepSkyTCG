@@ -1,6 +1,8 @@
 package fr.aumombelli.dstcg.data
 
 import fr.aumombelli.dstcg.model.DrawPackResponse
+import fr.aumombelli.dstcg.model.addRewards
+import fr.aumombelli.dstcg.model.consumeEquipmentEffectsAfterPackOpen
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -26,18 +28,18 @@ class PackRepository(
         val progress = loadedProgress.progress
         val packResponse = localPackEngine.drawPack(
             extensionId = extensionId,
-            availableDrawCount = progress.availableDrawCount,
-            nextChargeAt = progress.nextChargeAt,
+            progress = progress,
             now = loadedProgress.trustedNow,
         )
         val mergedCollection = collectionRepository.mergeCards(progress.collection, packResponse.cards)
+        val mergedEquipmentInventory = progress.equipmentInventory.addRewards(packResponse.equipmentCards)
         progressRepository.saveProgress(
             progress.copy(
                 collection = mergedCollection,
-                availableDrawCount = packResponse.availableDrawCount,
-                nextChargeAt = packResponse.nextChargeAt,
+                equipmentInventory = mergedEquipmentInventory,
+                rechargeState = packResponse.rechargeState,
                 openedPackCount = progress.openedPackCount + 1,
-            ),
+            ).consumeEquipmentEffectsAfterPackOpen(),
         )
         currentPackResult.value = packResponse
         packResponse

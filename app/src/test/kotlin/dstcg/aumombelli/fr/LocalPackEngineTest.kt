@@ -2,10 +2,12 @@ package fr.aumombelli.dstcg
 
 import fr.aumombelli.dstcg.data.LocalPackEngine
 import fr.aumombelli.dstcg.data.PackCooldownException
+import fr.aumombelli.dstcg.data.DeterministicWeatherCalendar
+import fr.aumombelli.dstcg.data.buildPackChargeUiStatus
 import fr.aumombelli.dstcg.model.CardFinishDefinition
 import fr.aumombelli.dstcg.model.SkyQualityDefinition
+import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.model.VariantProfile
-import fr.aumombelli.dstcg.model.WeightedCode
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.test.runTest
@@ -27,11 +29,11 @@ class LocalPackEngineTest {
                 ),
             )
             variantProfiles = listOf(localPackProfile())
+            gameBalance = localPackBalance(cardsPerDraw = 2)
         }
         val engine = LocalPackEngine(
             catalogRepository = catalogGateway,
             settings = testGameSettings(
-                cardsPerPack = 2,
                 now = fixedNow,
                 randomSeed = 0,
             ),
@@ -39,14 +41,20 @@ class LocalPackEngineTest {
 
         val response = engine.drawPack(
             extensionId = "astronomes-en-herbe",
-            availableDrawCount = 10,
-            nextChargeAt = null,
+            progress = testProgress(testRechargeState()),
             now = fixedNow,
+        )
+        val chargeStatus = buildPackChargeUiStatus(
+            rechargeState = response.rechargeState,
+            now = fixedNow,
+            drawCooldown = Duration.ofHours(6),
+            maxStoredDraws = 10,
+            weatherPolicy = DeterministicWeatherCalendar,
         )
 
         assertEquals("2026-03-24T12:00:00Z", response.drawnAt)
-        assertEquals(9, response.availableDrawCount)
-        assertEquals("2026-03-24T18:00:00Z", response.nextChargeAt)
+        assertEquals(9, response.rechargeState.availableDrawCount)
+        assertEquals("2026-03-24T18:00:00Z", chargeStatus.nextChargeAt)
         assertEquals(listOf("ALP-001", "ALP-001"), response.cards.map { it.cardId })
         assertEquals(listOf("Montagne", "Montagne"), response.cards.map { it.variant.skyQualityLabel })
         assertEquals(listOf("Holographique", "Holographique"), response.cards.map { it.variant.finishLabel })
@@ -56,17 +64,16 @@ class LocalPackEngineTest {
     fun `draw pack favors higher weighted cards across repeated draws`() = runTest {
         val catalogGateway = FakeCatalogGateway().apply {
             cards = listOf(
-                testCardDefinition(id = "HEAVY", drawWeight = 100, variantProfileId = "local-pack-profile"),
-                testCardDefinition(id = "LIGHT", drawWeight = 1, variantProfileId = "local-pack-profile"),
+                testCardDefinition(id = "HEAVY", cardRarityMultiplier = 100.0, variantProfileId = "local-pack-profile"),
+                testCardDefinition(id = "LIGHT", cardRarityMultiplier = 1.0, variantProfileId = "local-pack-profile"),
             )
             variantProfiles = listOf(localPackProfile())
+            gameBalance = localPackBalance(cardsPerDraw = 1)
         }
         val engine = LocalPackEngine(
             catalogRepository = catalogGateway,
             settings = testGameSettings(
-                cardsPerPack = 1,
                 now = fixedNow,
-                drawCooldown = Duration.ZERO,
                 randomSeed = 1234,
             ),
         )
@@ -75,8 +82,7 @@ class LocalPackEngineTest {
         repeat(200) {
             val cardId = engine.drawPack(
                 extensionId = "astronomes-en-herbe",
-                availableDrawCount = 10,
-                nextChargeAt = null,
+                progress = testProgress(testRechargeState()),
                 now = fixedNow,
             ).cards.single().cardId
             counts[cardId] = counts.getValue(cardId) + 1
@@ -95,8 +101,12 @@ class LocalPackEngineTest {
         val exception = try {
             engine.drawPack(
                 extensionId = "astronomes-en-herbe",
-                availableDrawCount = 0,
-                nextChargeAt = "2026-03-24T18:00:00Z",
+                progress = testProgress(
+                    testRechargeStateWithNextChargeAt(
+                        availableDrawCount = 0,
+                        nextChargeAt = "2026-03-24T18:00:00Z",
+                    ),
+                ),
                 now = fixedNow,
             )
             error("Expected PackCooldownException")
@@ -118,11 +128,11 @@ class LocalPackEngineTest {
                 ),
             )
             variantProfiles = listOf(localPackProfile())
+            gameBalance = localPackBalance(cardsPerDraw = 1)
         }
         val engine = LocalPackEngine(
             catalogRepository = catalogGateway,
             settings = testGameSettings(
-                cardsPerPack = 1,
                 now = fixedNow,
                 randomSeed = 0,
             ),
@@ -130,13 +140,24 @@ class LocalPackEngineTest {
 
         val response = engine.drawPack(
             extensionId = "astronomes-en-herbe",
-            availableDrawCount = 5,
-            nextChargeAt = "2026-03-24T14:00:00Z",
+            progress = testProgress(
+                testRechargeStateWithNextChargeAt(
+                    availableDrawCount = 5,
+                    nextChargeAt = "2026-03-24T14:00:00Z",
+                ),
+            ),
             now = fixedNow,
         )
+        val chargeStatus = buildPackChargeUiStatus(
+            rechargeState = response.rechargeState,
+            now = fixedNow,
+            drawCooldown = Duration.ofHours(6),
+            maxStoredDraws = 10,
+            weatherPolicy = DeterministicWeatherCalendar,
+        )
 
-        assertEquals(4, response.availableDrawCount)
-        assertEquals("2026-03-24T14:00:00Z", response.nextChargeAt)
+        assertEquals(4, response.rechargeState.availableDrawCount)
+        assertEquals("2026-03-24T14:00:00Z", chargeStatus.nextChargeAt)
     }
 
     @Test
@@ -150,11 +171,11 @@ class LocalPackEngineTest {
                 ),
             )
             variantProfiles = listOf(localPackProfile())
+            gameBalance = localPackBalance(cardsPerDraw = 1)
         }
         val engine = LocalPackEngine(
             catalogRepository = catalogGateway,
             settings = testGameSettings(
-                cardsPerPack = 1,
                 now = fixedNow,
                 randomSeed = 0,
             ),
@@ -162,13 +183,24 @@ class LocalPackEngineTest {
 
         val response = engine.drawPack(
             extensionId = "astronomes-en-herbe",
-            availableDrawCount = 7,
-            nextChargeAt = "2026-03-24T00:00:00Z",
+            progress = testProgress(
+                testRechargeStateWithNextChargeAt(
+                    availableDrawCount = 7,
+                    nextChargeAt = "2026-03-24T00:00:00Z",
+                ),
+            ),
             now = fixedNow,
         )
+        val chargeStatus = buildPackChargeUiStatus(
+            rechargeState = response.rechargeState,
+            now = fixedNow,
+            drawCooldown = Duration.ofHours(6),
+            maxStoredDraws = 10,
+            weatherPolicy = DeterministicWeatherCalendar,
+        )
 
-        assertEquals(9, response.availableDrawCount)
-        assertEquals("2026-03-24T18:00:00Z", response.nextChargeAt)
+        assertEquals(9, response.rechargeState.availableDrawCount)
+        assertEquals("2026-03-24T18:00:00Z", chargeStatus.nextChargeAt)
     }
 
     @Test
@@ -185,8 +217,7 @@ class LocalPackEngineTest {
         val exception = try {
             engine.drawPack(
                 extensionId = "astronomes-en-herbe",
-                availableDrawCount = 10,
-                nextChargeAt = null,
+                progress = testProgress(testRechargeState()),
                 now = fixedNow,
             )
             error("Expected IllegalStateException")
@@ -199,20 +230,23 @@ class LocalPackEngineTest {
     private fun localPackProfile(): VariantProfile = VariantProfile(
         id = "local-pack-profile",
         skyQualities = listOf(
-            SkyQualityDefinition("city", "Ville"),
             SkyQualityDefinition("mountain", "Montagne"),
         ),
         finishes = listOf(
-            CardFinishDefinition("standard", "Standard"),
             CardFinishDefinition("holographic", "Holographique", isHolographic = true),
         ),
-        skyQualityWeights = listOf(
-            WeightedCode("mountain", 100),
-            WeightedCode("city", 1),
-        ),
-        finishWeights = listOf(
-            WeightedCode("holographic", 100),
-            WeightedCode("standard", 1),
-        ),
     )
+
+    private fun localPackBalance(cardsPerDraw: Int) = testGameBalanceDefinition(
+        cardsPerDraw = cardsPerDraw,
+        suburbanMeanPerDay = 1.0,
+        ruralMeanPerDay = 1.0,
+        mountainMeanPerDay = 1.0,
+    )
+
+    private fun testProgress(rechargeState: fr.aumombelli.dstcg.model.PackRechargeState): StandaloneProgress =
+        StandaloneProgress(
+            collection = ownedCollectionOf(),
+            rechargeState = rechargeState,
+        )
 }

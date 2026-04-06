@@ -22,8 +22,10 @@ data class OwnedVariantCount(
 
 data class StandaloneProgress(
     val collection: OwnedCollection,
-    val availableDrawCount: Int = 10,
-    val nextChargeAt: String? = null,
+    val rechargeState: PackRechargeState = PackRechargeState(),
     val openedPackCount: Int = 0,
     val newPlayerOnboardingStep: NewPlayerOnboardingStep = NewPlayerOnboardingStep.OpenFirstPackMenu,
+    val equipmentInventory: OwnedEquipmentInventory = OwnedEquipmentInventory(),
+    val activeEquipmentByType: Map<EquipmentType, ActiveEquipmentEffect> = emptyMap(),
+    val lastActivatedCardIdByType: Map<EquipmentType, String> = emptyMap(),
 )
