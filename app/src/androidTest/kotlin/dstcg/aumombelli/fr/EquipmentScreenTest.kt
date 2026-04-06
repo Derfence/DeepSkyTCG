@@ -1,0 +1,267 @@
+package fr.aumombelli.dstcg
+
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.unit.dp
+import fr.aumombelli.dstcg.feature.equipment.EquipmentActiveSummaryItemUi
+import fr.aumombelli.dstcg.feature.equipment.EquipmentCategoryIconUi
+import fr.aumombelli.dstcg.feature.equipment.EquipmentCategoryVisualUi
+import fr.aumombelli.dstcg.feature.equipment.EquipmentInventoryCardUi
+import fr.aumombelli.dstcg.feature.equipment.EquipmentSectionUi
+import fr.aumombelli.dstcg.feature.equipment.EquipmentUiState
+import fr.aumombelli.dstcg.model.EquipmentType
+import fr.aumombelli.dstcg.ui.screen.EquipmentScreen
+import org.junit.Rule
+import org.junit.Test
+
+class EquipmentScreenTest {
+    @get:Rule
+    val composeRule = createComposeRule()
+
+    @Test
+    fun equipment_screen_renders_visual_sections_and_active_summary() {
+        composeRule.setContent {
+            EquipmentScreen(
+                state = EquipmentUiState(
+                    isLoading = false,
+                    activeEffects = listOf(
+                        EquipmentActiveSummaryItemUi(
+                            type = EquipmentType.Observatory,
+                            visual = testEquipmentCategoryVisual(EquipmentType.Observatory),
+                            displayName = "Observatoire expert",
+                            bonusLabel = "x1,5 recharge",
+                            packsRemaining = 3,
+                        ),
+                    ),
+                    sections = listOf(
+                        testEquipmentSection(
+                            type = EquipmentType.Observatory,
+                            statusLabel = "2 cartes en reserve",
+                            lastActivatedLabel = "Observatoire debutant",
+                            cards = listOf(
+                                testEquipmentInventoryCard(
+                                    definition = testEquipmentCardDefinition(
+                                        id = "observatory-1",
+                                        type = EquipmentType.Observatory,
+                                        displayName = "Observatoire debutant",
+                                        level = 1,
+                                    ),
+                                    stockCount = 2,
+                                    activationCount = 3,
+                                    activationEnabled = true,
+                                ),
+                                testEquipmentInventoryCard(
+                                    definition = testEquipmentCardDefinition(
+                                        id = "observatory-2",
+                                        type = EquipmentType.Observatory,
+                                        displayName = "Observatoire expert",
+                                        level = 2,
+                                    ),
+                                    stockCount = 1,
+                                    activationCount = 1,
+                                ),
+                                testEquipmentInventoryCard(
+                                    definition = testEquipmentCardDefinition(
+                                        id = "observatory-3",
+                                        type = EquipmentType.Observatory,
+                                        displayName = "Observatoire legendaire",
+                                        level = 3,
+                                    ),
+                                    stockCount = 0,
+                                    activationCount = 0,
+                                ),
+                            ),
+                        ),
+                        testEquipmentSection(
+                            type = EquipmentType.Telescope,
+                            statusLabel = "1 carte en reserve",
+                            cards = listOf(
+                                testEquipmentInventoryCard(
+                                    definition = testEquipmentCardDefinition(
+                                        id = "telescope-1",
+                                        type = EquipmentType.Telescope,
+                                        displayName = "Telescope debutant",
+                                        level = 1,
+                                    ),
+                                    stockCount = 1,
+                                    activationCount = 2,
+                                    activationEnabled = true,
+                                ),
+                                testEquipmentInventoryCard(
+                                    definition = testEquipmentCardDefinition(
+                                        id = "telescope-2",
+                                        type = EquipmentType.Telescope,
+                                        displayName = "Telescope expert",
+                                        level = 2,
+                                    ),
+                                ),
+                                testEquipmentInventoryCard(
+                                    definition = testEquipmentCardDefinition(
+                                        id = "telescope-3",
+                                        type = EquipmentType.Telescope,
+                                        displayName = "Telescope legendaire",
+                                        level = 3,
+                                    ),
+                                ),
+                            ),
+                        ),
+                        testEquipmentSection(
+                            type = EquipmentType.Mount,
+                            statusLabel = "Aucune carte en reserve",
+                            cards = listOf(
+                                testEquipmentInventoryCard(
+                                    definition = testEquipmentCardDefinition(
+                                        id = "mount-1",
+                                        type = EquipmentType.Mount,
+                                        displayName = "Monture debutante",
+                                        level = 1,
+                                    ),
+                                ),
+                                testEquipmentInventoryCard(
+                                    definition = testEquipmentCardDefinition(
+                                        id = "mount-2",
+                                        type = EquipmentType.Mount,
+                                        displayName = "Monture experte",
+                                        level = 2,
+                                    ),
+                                ),
+                                testEquipmentInventoryCard(
+                                    definition = testEquipmentCardDefinition(
+                                        id = "mount-3",
+                                        type = EquipmentType.Mount,
+                                        displayName = "Monture legendaire",
+                                        level = 3,
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+                onRefresh = {},
+                onActivateEquipment = {},
+            )
+        }
+
+        composeRule.onNodeWithTag("equipment-active-observatory").assertIsDisplayed()
+        composeRule.onNodeWithTag("equipment-icon-observatory").assertIsDisplayed()
+        composeRule.onNodeWithTag("equipment-benefit-observatory").assertIsDisplayed()
+        composeRule.onNodeWithTag("equipment-section-status-observatory").assertIsDisplayed()
+        composeRule.onNodeWithTag("equipment-last-used-observatory").assertIsDisplayed()
+        composeRule.onNodeWithTag("equipment-cards-observatory").assertIsDisplayed()
+        composeRule.onNodeWithTag("equipment-card-observatory-1").assertIsDisplayed()
+        composeRule.onNodeWithTag("equipment-icon-telescope").assertIsDisplayed()
+        composeRule.onNodeWithTag("equipment-icon-mount").assertIsDisplayed()
+    }
+
+    @Test
+    fun equipment_category_row_scrolls_horizontally_on_compact_width() {
+        composeRule.setContent {
+            Box(modifier = Modifier.size(width = 320.dp, height = 640.dp)) {
+                EquipmentScreen(
+                    state = EquipmentUiState(
+                        isLoading = false,
+                        sections = listOf(
+                            testEquipmentSection(
+                                type = EquipmentType.Observatory,
+                                statusLabel = "3 cartes en reserve",
+                                cards = listOf(
+                                    testEquipmentInventoryCard(
+                                        definition = testEquipmentCardDefinition(
+                                            id = "observatory-1",
+                                            type = EquipmentType.Observatory,
+                                            displayName = "Observatoire debutant",
+                                            level = 1,
+                                        ),
+                                        stockCount = 2,
+                                        activationCount = 3,
+                                        activationEnabled = true,
+                                    ),
+                                    testEquipmentInventoryCard(
+                                        definition = testEquipmentCardDefinition(
+                                            id = "observatory-2",
+                                            type = EquipmentType.Observatory,
+                                            displayName = "Observatoire expert",
+                                            level = 2,
+                                        ),
+                                        stockCount = 1,
+                                        activationCount = 1,
+                                        activationEnabled = true,
+                                    ),
+                                    testEquipmentInventoryCard(
+                                        definition = testEquipmentCardDefinition(
+                                            id = "observatory-3",
+                                            type = EquipmentType.Observatory,
+                                            displayName = "Observatoire legendaire",
+                                            level = 3,
+                                        ),
+                                        stockCount = 1,
+                                        activationCount = 0,
+                                        activationEnabled = true,
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                    onRefresh = {},
+                    onActivateEquipment = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("equipment-card-observatory-1").assertIsDisplayed()
+        composeRule.onNodeWithTag("equipment-cards-observatory").performScrollToIndex(2)
+        composeRule.onNodeWithTag("equipment-card-observatory-3").assertIsDisplayed()
+    }
+
+    private fun testEquipmentSection(
+        type: EquipmentType,
+        statusLabel: String,
+        lastActivatedLabel: String? = null,
+        cards: List<EquipmentInventoryCardUi>,
+    ): EquipmentSectionUi = EquipmentSectionUi(
+        type = type,
+        title = type.displayName,
+        visual = testEquipmentCategoryVisual(type),
+        statusLabel = statusLabel,
+        lastActivatedLabel = lastActivatedLabel,
+        cards = cards,
+    )
+
+    private fun testEquipmentInventoryCard(
+        definition: fr.aumombelli.dstcg.model.EquipmentCardDefinition,
+        stockCount: Int = 0,
+        activationCount: Int = 0,
+        isActive: Boolean = false,
+        packsRemaining: Int? = null,
+        activationEnabled: Boolean = false,
+    ): EquipmentInventoryCardUi = EquipmentInventoryCardUi(
+        definition = definition,
+        stockCount = stockCount,
+        activationCount = activationCount,
+        isActive = isActive,
+        packsRemaining = packsRemaining,
+        activationEnabled = activationEnabled,
+    )
+
+    private fun testEquipmentCategoryVisual(type: EquipmentType): EquipmentCategoryVisualUi = when (type) {
+        EquipmentType.Observatory -> EquipmentCategoryVisualUi(
+            icon = EquipmentCategoryIconUi.Observatory,
+            benefitLabel = "Recharge des packs",
+        )
+
+        EquipmentType.Telescope -> EquipmentCategoryVisualUi(
+            icon = EquipmentCategoryIconUi.Telescope,
+            benefitLabel = "Chance holographique",
+        )
+
+        EquipmentType.Mount -> EquipmentCategoryVisualUi(
+            icon = EquipmentCategoryIconUi.Mount,
+            benefitLabel = "Promotion de rarete",
+        )
+    }
+}

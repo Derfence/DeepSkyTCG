@@ -9,6 +9,7 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
@@ -40,7 +41,9 @@ class LocalEndToEndTest {
         val firstDrawnCardId = openPackAndCaptureVisibleCardId()
 
         verifyLibraryContainsDrawnCard(firstDrawnCardId)
-        verifyBadgesCoachmarkAppearsAfterLibrary()
+        openBadgeBookAndLaunchEquipmentChapter()
+        openSecondPackAndReachEquipmentMenu()
+        activateFirstEquipmentAndCompleteOnboarding()
     }
 
     @After
@@ -107,8 +110,43 @@ class LocalEndToEndTest {
         composeRule.waitUntilTagEnabled("home-open-pack", timeoutMillis = 10_000)
     }
 
-    private fun verifyBadgesCoachmarkAppearsAfterLibrary() {
+    private fun openBadgeBookAndLaunchEquipmentChapter() {
         composeRule.onNodeWithTag("new-player-coachmark-HomeBadges").assertIsDisplayed()
+        composeRule.onNodeWithTag("home-badges").performClick()
+        composeRule.waitUntilTagExists("badge-book-scroll", timeoutMillis = 10_000)
+        composeRule.pressAndroidBack()
+        composeRule.waitUntilTagEnabled("home-open-pack", timeoutMillis = 10_000)
+    }
+
+    private fun openSecondPackAndReachEquipmentMenu() {
+        composeRule.onNodeWithTag("home-open-pack").performClick()
+        composeRule.waitUntilTagEnabled("pack-extension-enter-${LocalE2eConfig.extensionId}", timeoutMillis = 15_000)
+        composeRule.onNodeWithTag("pack-extension-enter-${LocalE2eConfig.extensionId}").performClick()
+        composeRule.waitUntilTagEnabled("pack-booster-0", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("pack-booster-0").performClick()
+        composeRule.waitUntilTagExists("pack-opening-title", timeoutMillis = 20_000)
+
+        repeat(4) {
+            composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeLeft() }
+            composeRule.waitForIdle()
+        }
+
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeUp() }
+        composeRule.waitForPackReturnToMenu()
+        composeRule.waitUntilTagDisplayed("new-player-coachmark-HomeEquipment", timeoutMillis = 10_000)
+    }
+
+    private fun activateFirstEquipmentAndCompleteOnboarding() {
+        composeRule.onNodeWithTag("home-equipment").performClick()
+        composeRule.waitUntilTagExists("equipment-screen", timeoutMillis = 10_000)
+        composeRule.waitUntilTagDisplayed("new-player-coachmark-EquipmentActivation", timeoutMillis = 10_000)
+
+        val activationTag = composeRule.firstTagStartingWith("equipment-activate-")
+            ?: error("No equipment activation button was found.")
+        composeRule.onNodeWithTag(activationTag).performClick()
+
+        composeRule.waitUntilTagGone("new-player-coachmark-EquipmentActivation", timeoutMillis = 10_000)
+        composeRule.waitUntilTagGone("new-player-coachmark-overlay", timeoutMillis = 10_000)
     }
 
     private fun verifyRechargeStatusIsVisible() {
@@ -204,6 +242,29 @@ class LocalEndToEndTest {
         if (!node.config.contains(SemanticsProperties.Text)) return null
         val textValues = node.config[SemanticsProperties.Text]
         return textValues.joinToString(separator = "") { annotated -> annotated.toString() }
+    }
+
+    private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.firstTagStartingWith(
+        prefix: String,
+    ): String? {
+        val queue = ArrayDeque(
+            listOf(
+                onRoot(useUnmergedTree = true).fetchSemanticsNode(),
+            ),
+        )
+        while (queue.isNotEmpty()) {
+            val node = queue.removeFirst()
+            val tag = if (node.config.contains(SemanticsProperties.TestTag)) {
+                node.config[SemanticsProperties.TestTag]
+            } else {
+                null
+            }
+            if (tag != null && tag.startsWith(prefix)) {
+                return tag
+            }
+            queue.addAll(node.children)
+        }
+        return null
     }
 
     private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.firstNodeWithTag(

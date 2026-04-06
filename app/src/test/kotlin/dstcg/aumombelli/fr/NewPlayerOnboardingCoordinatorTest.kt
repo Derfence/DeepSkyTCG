@@ -18,7 +18,7 @@ import org.junit.Test
 
 class NewPlayerOnboardingCoordinatorTest {
     @Test
-    fun `coordinator persists the first journey sequence`() = runTest {
+    fun `coordinator persists the full onboarding sequence through equipment activation`() = runTest {
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
                 collection = OwnedCollection(),
@@ -32,12 +32,16 @@ class NewPlayerOnboardingCoordinatorTest {
         coordinator.syncFromProgress()
         coordinator.onHomeOpenPackSelected()
         coordinator.onExtensionSelected()
-        val shouldDeferBadgeCelebration = coordinator.onFirstPackOpened()
+        val shouldDeferBadgeCelebration = coordinator.onPackOpened()
         val shouldResumeBadgeCelebration = coordinator.onLibraryOpened()
         coordinator.onBadgeBookOpened()
+        val shouldDeferEquipmentChapterBadges = coordinator.onPackOpened()
+        coordinator.onEquipmentOpened()
+        coordinator.onEquipmentActivated()
 
         assertTrue(shouldDeferBadgeCelebration)
         assertTrue(shouldResumeBadgeCelebration)
+        assertTrue(shouldDeferEquipmentChapterBadges)
         assertEquals(NewPlayerOnboardingStep.Completed, coordinator.uiState.currentStep)
         assertEquals(NewPlayerOnboardingStep.Completed, progressGateway.progress.newPlayerOnboardingStep)
         assertFalse(coordinator.uiState.libraryCardHintVisible)
@@ -107,6 +111,89 @@ class NewPlayerOnboardingCoordinatorTest {
                 message = "Ton premier badge t'attend ici !",
             ),
             visibleCoachmark,
+        )
+    }
+
+    @Test
+    fun `badge book visit opens second pack chapter and equipment activation completes onboarding`() = runTest {
+        val progressGateway = FakeProgressGateway().apply {
+            progress = StandaloneProgress(
+                collection = ownedCollectionOf("ALP-001" to 1),
+                rechargeState = testRechargeState(availableDrawCount = 9),
+                openedPackCount = 1,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.ViewBadges,
+            )
+        }
+        val coordinator = NewPlayerOnboardingCoordinator(progressGateway)
+
+        coordinator.syncFromProgress()
+        coordinator.onBadgeBookOpened()
+
+        assertEquals(NewPlayerOnboardingStep.OpenSecondPackMenu, coordinator.uiState.currentStep)
+
+        val shouldDeferBadgeCelebration = coordinator.onPackOpened()
+
+        assertTrue(shouldDeferBadgeCelebration)
+        assertEquals(NewPlayerOnboardingStep.ViewEquipmentMenu, coordinator.uiState.currentStep)
+
+        coordinator.onEquipmentOpened()
+        assertEquals(NewPlayerOnboardingStep.ActivateFirstEquipment, coordinator.uiState.currentStep)
+
+        coordinator.onEquipmentActivated()
+        assertEquals(NewPlayerOnboardingStep.Completed, coordinator.uiState.currentStep)
+        assertEquals(NewPlayerOnboardingStep.Completed, progressGateway.progress.newPlayerOnboardingStep)
+    }
+
+    @Test
+    fun `open second pack chapter stays silent on home and equipment coachmarks still appear afterwards`() = runTest {
+        val progressGateway = FakeProgressGateway().apply {
+            progress = StandaloneProgress(
+                collection = ownedCollectionOf("ALP-001" to 1),
+                rechargeState = testRechargeState(availableDrawCount = 9),
+                openedPackCount = 1,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.OpenSecondPackMenu,
+            )
+        }
+        val coordinator = NewPlayerOnboardingCoordinator(progressGateway)
+        val homeSceneState = AppSceneUiState(
+            currentScene = AppScene.Home,
+            homeContentVisible = true,
+            coachmarkTargetBounds = mapOf(
+                NewPlayerOnboardingTarget.HomeOpenPack to Rect(10f, 20f, 120f, 72f),
+            ),
+        )
+        val equipmentSceneState = AppSceneUiState(
+            currentScene = AppScene.Equipment,
+            equipmentContentVisible = true,
+            coachmarkTargetBounds = mapOf(
+                NewPlayerOnboardingTarget.EquipmentActivation to Rect(20f, 40f, 160f, 96f),
+            ),
+        )
+
+        coordinator.syncFromProgress()
+
+        assertNull(
+            coordinator.activeCoachmark(
+                currentScene = AppScene.Home,
+                sceneState = homeSceneState,
+                badgeCelebrationVisible = false,
+            ),
+        )
+
+        coordinator.onPackOpened()
+        coordinator.onEquipmentOpened()
+
+        assertEquals(
+            NewPlayerCoachmarkSpec(
+                target = NewPlayerOnboardingTarget.EquipmentActivation,
+                title = "Active ta carte",
+                message = "Active cet equipement pour ameliorer les prochains packs.",
+            ),
+            coordinator.activeCoachmark(
+                currentScene = AppScene.Equipment,
+                sceneState = equipmentSceneState,
+                badgeCelebrationVisible = false,
+            ),
         )
     }
 

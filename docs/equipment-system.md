@@ -21,6 +21,19 @@ Chaque carte d'equipement est un consommable data-driven avec un niveau immuable
 5. Le joueur active plus tard une carte depuis l'ecran `Equipements`.
 6. L'activation consomme exactement une carte possedee et applique l'effet sur les prochains packs.
 
+## Overrides onboarding
+
+- 1er pack de l'onboarding :
+  - aucune carte d'equipement ne peut apparaitre, meme si `EquipmentChancePercent` vaut `100`.
+- 2e pack de l'onboarding, apres la visite du carnet `Badges` :
+  - exactement une carte d'equipement est garantie ;
+  - seules les cartes `level == 1` avec `dropWeight > 0` sont candidates ;
+  - le remplacement aleatoire normal est desactive pour ce pack ;
+  - un slot `Common` est remplace en priorite ;
+  - s'il n'existe aucun slot `Common`, le slot de plus faible rarete finale est remplace ;
+  - la taille du pack reste strictement identique.
+- Une fois ce deuxieme pack termine ou hors onboarding, les regles standards reprennent immediatement.
+
 ## Bonus
 
 - `Monture` : ajoute une chance additive de promouvoir un slot d'un palier de rarete, sans depasser `Epic`.
@@ -41,9 +54,10 @@ Chaque carte d'equipement est un consommable data-driven avec un niveau immuable
 L'ecran `Equipements` de l'accueil affiche :
 
 - un resume des effets actifs ;
-- une section par type ;
+- une section visuelle par type, sur une ligne dediee ;
+- une icone miniature dediee a chaque categorie ;
 - le dernier equipement utilise par type quand il existe ;
-- les cartes possedees avec niveau, bonus, stock, activations totales et etat actif.
+- les cartes possedees dans une rangee horizontale par categorie, avec niveau, bonus, stock, activations totales et etat actif.
 
 ## Catalogue
 

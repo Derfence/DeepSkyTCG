@@ -255,6 +255,14 @@ fun HomeScreen(
                 onClick = onOpenEquipment,
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
+                    .onGloballyPositioned { coordinates ->
+                        if (contentVisible) {
+                            onCoachmarkTargetBoundsChanged(
+                                NewPlayerOnboardingTarget.HomeEquipment,
+                                coordinates.boundsInRoot(),
+                            )
+                        }
+                    }
                     .testTag("home-equipment"),
             )
 

@@ -10,16 +10,31 @@ import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.model.bonusLabel
 import fr.aumombelli.dstcg.model.entryFor
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class EquipmentActiveSummaryItemUi(
     val type: EquipmentType,
+    val visual: EquipmentCategoryVisualUi,
     val displayName: String,
     val bonusLabel: String,
     val packsRemaining: Int,
+)
+
+enum class EquipmentCategoryIconUi {
+    Observatory,
+    Telescope,
+    Mount,
+}
+
+data class EquipmentCategoryVisualUi(
+    val icon: EquipmentCategoryIconUi,
+    val benefitLabel: String,
 )
 
 data class EquipmentInventoryCardUi(
@@ -34,6 +49,8 @@ data class EquipmentInventoryCardUi(
 data class EquipmentSectionUi(
     val type: EquipmentType,
     val title: String,
+    val visual: EquipmentCategoryVisualUi,
+    val statusLabel: String,
     val lastActivatedLabel: String? = null,
     val cards: List<EquipmentInventoryCardUi> = emptyList(),
 )
@@ -46,12 +63,20 @@ data class EquipmentUiState(
     val errorMessage: String? = null,
 )
 
+sealed interface EquipmentEvent {
+    data class Activated(
+        val equipmentCardId: String,
+    ) : EquipmentEvent
+}
+
 class EquipmentViewModel(
     private val catalogRepository: CatalogGateway,
     private val equipmentRepository: EquipmentGateway,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(EquipmentUiState())
     val uiState: StateFlow<EquipmentUiState> = _uiState.asStateFlow()
+    private val _events = MutableSharedFlow<EquipmentEvent>(extraBufferCapacity = 1)
+    val events: SharedFlow<EquipmentEvent> = _events.asSharedFlow()
 
     init {
         refresh()
@@ -105,6 +130,7 @@ class EquipmentViewModel(
                 )
             }.onSuccess { updatedState ->
                 _uiState.value = updatedState
+                _events.tryEmit(EquipmentEvent.Activated(equipmentCardId))
             }.onFailure { error ->
                 _uiState.update {
                     it.copy(
@@ -127,6 +153,7 @@ private fun buildEquipmentUiState(
         val definition = cardsById[effect.equipmentCardId] ?: return@mapNotNull null
         EquipmentActiveSummaryItemUi(
             type = type,
+            visual = type.toCategoryVisualUi(),
             displayName = definition.displayName,
             bonusLabel = definition.bonusLabel(),
             packsRemaining = effect.packsRemaining,
@@ -154,9 +181,18 @@ private fun buildEquipmentSection(
     val activeEffect = equipmentState.activeEquipmentByType[type]
     val lastActivatedLabel = equipmentState.lastActivatedCardIdByType[type]
         ?.let { cardId -> equipmentCards.firstOrNull { it.id == cardId }?.displayName }
+    val totalOwnedCount = equipmentCards.sumOf { definition ->
+        equipmentState.inventory.entryFor(definition.id).countOwned
+    }
     return EquipmentSectionUi(
         type = type,
         title = type.displayName,
+        visual = type.toCategoryVisualUi(),
+        statusLabel = when {
+            activeEffect != null -> "${activeEffect.packsRemaining} packs actifs"
+            totalOwnedCount > 0 -> "$totalOwnedCount carte${if (totalOwnedCount > 1) "s" else ""} en reserve"
+            else -> "Aucune carte en reserve"
+        },
         lastActivatedLabel = lastActivatedLabel,
         cards = equipmentCards.map { definition ->
             val entry = equipmentState.inventory.entryFor(definition.id)
@@ -169,5 +205,22 @@ private fun buildEquipmentSection(
                 activationEnabled = entry.countOwned > 0 && activeEffect == null,
             )
         },
+    )
+}
+
+private fun EquipmentType.toCategoryVisualUi(): EquipmentCategoryVisualUi = when (this) {
+    EquipmentType.Observatory -> EquipmentCategoryVisualUi(
+        icon = EquipmentCategoryIconUi.Observatory,
+        benefitLabel = "Recharge des packs",
+    )
+
+    EquipmentType.Telescope -> EquipmentCategoryVisualUi(
+        icon = EquipmentCategoryIconUi.Telescope,
+        benefitLabel = "Chance holographique",
+    )
+
+    EquipmentType.Mount -> EquipmentCategoryVisualUi(
+        icon = EquipmentCategoryIconUi.Mount,
+        benefitLabel = "Promotion de rarete",
     )
 }

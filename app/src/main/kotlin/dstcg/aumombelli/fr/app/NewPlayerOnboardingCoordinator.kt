@@ -42,13 +42,31 @@ internal class NewPlayerOnboardingCoordinator(
         }
     }
 
-    suspend fun onFirstPackOpened(): Boolean {
+    suspend fun onPackOpened(): Boolean {
         val currentStep = uiState.currentStep ?: return false
-        if (currentStep == NewPlayerOnboardingStep.Completed) return false
-        if (currentStep == NewPlayerOnboardingStep.ViewBadges) return false
+        return when (currentStep) {
+            NewPlayerOnboardingStep.OpenFirstPackMenu,
+            NewPlayerOnboardingStep.SelectFirstExtension,
+            NewPlayerOnboardingStep.SelectFirstBooster,
+            -> {
+                persistStep(NewPlayerOnboardingStep.ViewLibrary)
+                true
+            }
 
-        persistStep(NewPlayerOnboardingStep.ViewLibrary)
-        return true
+            NewPlayerOnboardingStep.OpenSecondPackMenu -> {
+                persistStep(NewPlayerOnboardingStep.ViewEquipmentMenu)
+                true
+            }
+
+            NewPlayerOnboardingStep.ViewEquipmentMenu,
+            NewPlayerOnboardingStep.ActivateFirstEquipment,
+            -> true
+
+            NewPlayerOnboardingStep.ViewLibrary,
+            NewPlayerOnboardingStep.ViewBadges,
+            NewPlayerOnboardingStep.Completed,
+            -> false
+        }
     }
 
     suspend fun onLibraryOpened(): Boolean {
@@ -61,10 +79,22 @@ internal class NewPlayerOnboardingCoordinator(
     }
 
     suspend fun onBadgeBookOpened() {
-        advanceTo(NewPlayerOnboardingStep.Completed) {
+        advanceTo(NewPlayerOnboardingStep.OpenSecondPackMenu) {
             it == NewPlayerOnboardingStep.ViewBadges
         }
         uiState = uiState.copy(libraryCardHintVisible = false)
+    }
+
+    suspend fun onEquipmentOpened() {
+        advanceTo(NewPlayerOnboardingStep.ActivateFirstEquipment) {
+            it == NewPlayerOnboardingStep.ViewEquipmentMenu
+        }
+    }
+
+    suspend fun onEquipmentActivated() {
+        advanceTo(NewPlayerOnboardingStep.Completed) {
+            it == NewPlayerOnboardingStep.ActivateFirstEquipment
+        }
     }
 
     fun onLibraryCardHintConsumed() {
@@ -165,6 +195,45 @@ internal class NewPlayerOnboardingCoordinator(
                         target = NewPlayerOnboardingTarget.HomeBadges,
                         title = "Badges d'astronome",
                         message = "Ton premier badge t'attend ici !",
+                    )
+                } else {
+                    null
+                }
+            }
+
+            NewPlayerOnboardingStep.OpenSecondPackMenu -> null
+
+            NewPlayerOnboardingStep.ViewEquipmentMenu -> {
+                if (
+                    currentScene == AppScene.Home &&
+                    sceneState.homeContentVisible &&
+                    sceneState.onboardingHintsVisible &&
+                    !sceneState.transitionLocked &&
+                    !badgeCelebrationVisible &&
+                    sceneState.coachmarkTargetBounds.containsKey(NewPlayerOnboardingTarget.HomeEquipment)
+                ) {
+                    NewPlayerCoachmarkSpec(
+                        target = NewPlayerOnboardingTarget.HomeEquipment,
+                        title = "Menu equipement",
+                        message = "Ton nouvel equipement est accessible ici depuis l'accueil.",
+                    )
+                } else {
+                    null
+                }
+            }
+
+            NewPlayerOnboardingStep.ActivateFirstEquipment -> {
+                if (
+                    currentScene == AppScene.Equipment &&
+                    sceneState.equipmentContentVisible &&
+                    sceneState.onboardingHintsVisible &&
+                    !sceneState.transitionLocked &&
+                    sceneState.coachmarkTargetBounds.containsKey(NewPlayerOnboardingTarget.EquipmentActivation)
+                ) {
+                    NewPlayerCoachmarkSpec(
+                        target = NewPlayerOnboardingTarget.EquipmentActivation,
+                        title = "Active ta carte",
+                        message = "Active cet equipement pour ameliorer les prochains packs.",
                     )
                 } else {
                     null

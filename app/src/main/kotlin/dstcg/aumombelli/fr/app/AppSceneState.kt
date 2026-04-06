@@ -47,9 +47,13 @@ internal fun AppSceneUiState.raiseLaunchLogo(): AppSceneUiState = copy(launchLog
 
 internal fun AppSceneUiState.hideLaunchLogo(): AppSceneUiState = copy(launchLogoVisible = false)
 
-internal fun AppSceneUiState.hideHomeContent(): AppSceneUiState = copy(homeContentVisible = false)
+internal fun AppSceneUiState.hideHomeContent(): AppSceneUiState = copy(
+    homeContentVisible = false,
+)
 
-internal fun AppSceneUiState.showHomeContent(): AppSceneUiState = copy(homeContentVisible = true)
+internal fun AppSceneUiState.showHomeContent(): AppSceneUiState = copy(
+    homeContentVisible = true,
+)
 
 internal fun AppSceneUiState.hideLibraryContent(): AppSceneUiState = copy(libraryContentVisible = false)
 

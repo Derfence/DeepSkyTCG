@@ -6,10 +6,13 @@ import fr.aumombelli.dstcg.model.CardVariant
 import fr.aumombelli.dstcg.model.DrawPackResponse
 import fr.aumombelli.dstcg.model.EquipmentCardDefinition
 import fr.aumombelli.dstcg.model.EquipmentPackRevealSlot
+import fr.aumombelli.dstcg.model.EquipmentSettingsDefinition
+import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.PackCard
 import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.model.WeightedCode
+import fr.aumombelli.dstcg.model.raritySortPriority
 import fr.aumombelli.dstcg.model.requireFinishDefinition
 import fr.aumombelli.dstcg.model.requireSkyQualityDefinition
 import fr.aumombelli.dstcg.model.sortedRevealSlotsForPackReveal
@@ -100,59 +103,59 @@ class LocalPackEngine(
             throw IllegalStateException("Aucune carte n'a ete trouvee pour cette extension.")
         }
         val variantProfilesById = variantProfiles.associateBy { it.id }
+        val equipmentDrawPolicy = resolveEquipmentDrawPolicy(
+            progress = progress,
+            equipmentCards = equipmentCards,
+            equipmentSettings = equipmentSettings,
+        )
         val drawnAt = now.toString()
-        val revealSlots = List(drawConfig.cardsPerDraw) { slotIndex ->
+        val plannedRevealSlots = List(drawConfig.cardsPerDraw) { slotIndex ->
             val baseRarity = pickWeighted(extensionPlan.rarityWeights) { it.weight }.code
-            val drawnRarity = maybePromoteRarity(
-                baseRarity = baseRarity,
-                availableRarities = extensionPlan.cardsByRarity.keys,
-                rarityBoostPercent = activeBonus.rarityBoostPercent,
+            PlannedRevealSlot(
+                slotIndex = slotIndex,
+                rarityLabel = maybePromoteRarity(
+                    baseRarity = baseRarity,
+                    availableRarities = extensionPlan.cardsByRarity.keys,
+                    rarityBoostPercent = activeBonus.rarityBoostPercent,
+                ),
             )
-            val equipmentReward = maybeDrawEquipmentReward(
-                rarityLabel = drawnRarity,
-                equipmentCards = equipmentCards,
-                replacementChancePercent = equipmentSettings.commonReplacementChancePercent,
-            )
-            if (equipmentReward != null) {
+        }
+        val forcedEquipmentReward = resolveForcedEquipmentReward(
+            plannedRevealSlots = plannedRevealSlots,
+            drawPolicy = equipmentDrawPolicy,
+        )
+        val revealSlots = plannedRevealSlots.map { plannedSlot ->
+            if (forcedEquipmentReward?.slotIndex == plannedSlot.slotIndex) {
                 EquipmentPackRevealSlot(
-                    slotIndex = slotIndex,
-                    definition = equipmentReward,
+                    slotIndex = plannedSlot.slotIndex,
+                    definition = forcedEquipmentReward.definition,
                 )
             } else {
-                val weightedCards = checkNotNull(extensionPlan.cardsByRarity[drawnRarity]) {
-                    "Aucune carte n'a ete configuree pour la rarete '$drawnRarity' dans '$extensionId'."
+                val equipmentReward = when (equipmentDrawPolicy) {
+                    is EquipmentDrawPolicy.Standard -> maybeDrawEquipmentReward(
+                        rarityLabel = plannedSlot.rarityLabel,
+                        equipmentCards = equipmentCards,
+                        replacementChancePercent = equipmentDrawPolicy.replacementChancePercent,
+                    )
+
+                    EquipmentDrawPolicy.Disabled,
+                    is EquipmentDrawPolicy.ForceSingleLevelOne,
+                    -> null
                 }
-                val definition = pickWeighted(weightedCards) { it.weight }.card
-                val variantProfile = checkNotNull(variantProfilesById[definition.variantProfileId]) {
-                    "Profil de variante inconnu '${definition.variantProfileId}' pour la carte '${definition.id}'."
+                if (equipmentReward != null) {
+                    EquipmentPackRevealSlot(
+                        slotIndex = plannedSlot.slotIndex,
+                        definition = equipmentReward,
+                    )
+                } else {
+                    drawAstronomyRevealSlot(
+                        plannedSlot = plannedSlot,
+                        extensionPlan = extensionPlan,
+                        variantProfilesById = variantProfilesById,
+                        runtimeCatalog = runtimeCatalog,
+                        activeBonus = activeBonus,
+                    )
                 }
-                val runtimeVariantWeights = checkNotNull(runtimeCatalog.variantWeightsByProfileId[definition.variantProfileId]) {
-                    "Poids de variante introuvables pour '${definition.variantProfileId}'."
-                }
-                val skyQuality = variantProfile.requireSkyQualityDefinition(
-                    pickWeightedCode(runtimeVariantWeights.skyQualityWeights),
-                )
-                val finish = pickFinishWithEquipmentBonus(
-                    variantProfile = variantProfile,
-                    runtimeVariantWeights = runtimeVariantWeights,
-                    holographicPercent = activeBonus.holographicPercent,
-                )
-                AstronomyPackRevealSlot(
-                    slotIndex = slotIndex,
-                    card = PackCard(
-                        cardId = definition.id,
-                        name = definition.name,
-                        rarityLabel = definition.rarityLabel,
-                        imageRef = definition.imageRef,
-                        variant = CardVariant(
-                            skyQuality = skyQuality.code,
-                            skyQualityLabel = skyQuality.label,
-                            finish = finish.code,
-                            finishLabel = finish.label,
-                            isHolographic = finish.isHolographic,
-                        ),
-                    ),
-                )
             }
         }.sortedRevealSlotsForPackReveal()
 
@@ -161,6 +164,94 @@ class LocalPackEngine(
             drawnAt = drawnAt,
             rechargeState = updatedChargeState,
             revealSlots = revealSlots,
+        )
+    }
+
+    private fun drawAstronomyRevealSlot(
+        plannedSlot: PlannedRevealSlot,
+        extensionPlan: ExtensionDrawPlan,
+        variantProfilesById: Map<String, fr.aumombelli.dstcg.model.VariantProfile>,
+        runtimeCatalog: RuntimeCatalogBalance,
+        activeBonus: ActiveEquipmentBonus,
+    ): AstronomyPackRevealSlot {
+        val weightedCards = checkNotNull(extensionPlan.cardsByRarity[plannedSlot.rarityLabel]) {
+            "Aucune carte n'a ete configuree pour la rarete '${plannedSlot.rarityLabel}'."
+        }
+        val definition = pickWeighted(weightedCards) { it.weight }.card
+        val variantProfile = checkNotNull(variantProfilesById[definition.variantProfileId]) {
+            "Profil de variante inconnu '${definition.variantProfileId}' pour la carte '${definition.id}'."
+        }
+        val runtimeVariantWeights = checkNotNull(runtimeCatalog.variantWeightsByProfileId[definition.variantProfileId]) {
+            "Poids de variante introuvables pour '${definition.variantProfileId}'."
+        }
+        val skyQuality = variantProfile.requireSkyQualityDefinition(
+            pickWeightedCode(runtimeVariantWeights.skyQualityWeights),
+        )
+        val finish = pickFinishWithEquipmentBonus(
+            variantProfile = variantProfile,
+            runtimeVariantWeights = runtimeVariantWeights,
+            holographicPercent = activeBonus.holographicPercent,
+        )
+        return AstronomyPackRevealSlot(
+            slotIndex = plannedSlot.slotIndex,
+            card = PackCard(
+                cardId = definition.id,
+                name = definition.name,
+                rarityLabel = definition.rarityLabel,
+                imageRef = definition.imageRef,
+                variant = CardVariant(
+                    skyQuality = skyQuality.code,
+                    skyQualityLabel = skyQuality.label,
+                    finish = finish.code,
+                    finishLabel = finish.label,
+                    isHolographic = finish.isHolographic,
+                ),
+            ),
+        )
+    }
+
+    private fun resolveEquipmentDrawPolicy(
+        progress: StandaloneProgress,
+        equipmentCards: List<EquipmentCardDefinition>,
+        equipmentSettings: EquipmentSettingsDefinition,
+    ): EquipmentDrawPolicy = when {
+        progress.openedPackCount == 0 &&
+            progress.newPlayerOnboardingStep in FIRST_PACK_ONBOARDING_STEPS ->
+            EquipmentDrawPolicy.Disabled
+
+        progress.openedPackCount == 1 &&
+            progress.newPlayerOnboardingStep == NewPlayerOnboardingStep.OpenSecondPackMenu ->
+            EquipmentDrawPolicy.ForceSingleLevelOne(
+                candidates = equipmentCards.filter { it.level == 1 && it.dropWeight > 0 },
+            )
+
+        else -> EquipmentDrawPolicy.Standard(
+            replacementChancePercent = equipmentSettings.commonReplacementChancePercent,
+        )
+    }
+
+    private fun resolveForcedEquipmentReward(
+        plannedRevealSlots: List<PlannedRevealSlot>,
+        drawPolicy: EquipmentDrawPolicy,
+    ): ForcedEquipmentReward? {
+        val policy = drawPolicy as? EquipmentDrawPolicy.ForceSingleLevelOne ?: return null
+        require(policy.candidates.isNotEmpty()) {
+            "Le second pack d'onboarding requiert au moins une carte d'equipement de niveau 1 avec un poids positif."
+        }
+        val slotIndex = plannedRevealSlots
+            .firstOrNull { it.rarityLabel == "Common" }
+            ?.slotIndex
+            ?: checkNotNull(
+                plannedRevealSlots.minWithOrNull(
+                    compareBy<PlannedRevealSlot> { raritySortPriority(it.rarityLabel) }
+                        .thenBy { it.slotIndex },
+                ),
+            ) {
+                "Un pack d'onboarding doit contenir au moins un slot a remplacer."
+            }.slotIndex
+        return ForcedEquipmentReward(
+            slotIndex = slotIndex,
+            definition = pickWeighted(policy.candidates) { it.dropWeight },
         )
     }
 
@@ -264,5 +355,35 @@ class LocalPackEngine(
         val scale = 1_000_000
         val threshold = (probability * scale).toInt().coerceIn(1, scale)
         return settings.entropySource.nextInt(scale) < threshold
+    }
+
+    private data class PlannedRevealSlot(
+        val slotIndex: Int,
+        val rarityLabel: String,
+    )
+
+    private data class ForcedEquipmentReward(
+        val slotIndex: Int,
+        val definition: EquipmentCardDefinition,
+    )
+
+    private sealed interface EquipmentDrawPolicy {
+        data object Disabled : EquipmentDrawPolicy
+
+        data class Standard(
+            val replacementChancePercent: Double,
+        ) : EquipmentDrawPolicy
+
+        data class ForceSingleLevelOne(
+            val candidates: List<EquipmentCardDefinition>,
+        ) : EquipmentDrawPolicy
+    }
+
+    private companion object {
+        val FIRST_PACK_ONBOARDING_STEPS = setOf(
+            NewPlayerOnboardingStep.OpenFirstPackMenu,
+            NewPlayerOnboardingStep.SelectFirstExtension,
+            NewPlayerOnboardingStep.SelectFirstBooster,
+        )
     }
 }

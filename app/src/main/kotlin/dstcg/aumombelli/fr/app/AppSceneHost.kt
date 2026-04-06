@@ -37,6 +37,7 @@ import fr.aumombelli.dstcg.feature.badges.BadgeBookScreen
 import fr.aumombelli.dstcg.feature.badges.BadgeBookViewModel
 import fr.aumombelli.dstcg.feature.badges.BadgeUnlockCelebrationOverlay
 import fr.aumombelli.dstcg.feature.equipment.EquipmentScreen
+import fr.aumombelli.dstcg.feature.equipment.EquipmentEvent
 import fr.aumombelli.dstcg.feature.equipment.EquipmentViewModel
 import fr.aumombelli.dstcg.feature.home.HomeScreen
 import fr.aumombelli.dstcg.feature.home.HomeViewModel
@@ -214,7 +215,10 @@ internal fun AppSceneHost(
                     },
                     onOpenEquipment = {
                         if (!sceneState.transitionLocked) {
-                            scope.launch { transitions.animateHomeToEquipment() }
+                            scope.launch {
+                                onboardingCoordinator.onEquipmentOpened()
+                                transitions.animateHomeToEquipment()
+                            }
                         }
                     },
                     onOpenBadgeBook = {
@@ -288,6 +292,14 @@ internal fun AppSceneHost(
                     }
                 }
 
+                LaunchedEffect(equipmentViewModel) {
+                    equipmentViewModel.events.collect { event ->
+                        when (event) {
+                            is EquipmentEvent.Activated -> onboardingCoordinator.onEquipmentActivated()
+                        }
+                    }
+                }
+
                 BackHandler(enabled = !sceneState.transitionLocked) {
                     scope.launch { transitions.animateEquipmentToHome() }
                 }
@@ -297,6 +309,12 @@ internal fun AppSceneHost(
                     onRefresh = equipmentViewModel::refresh,
                     onActivateEquipment = equipmentViewModel::activateEquipment,
                     contentVisible = sceneState.equipmentContentVisible,
+                    onOnboardingActivationBoundsChanged = { bounds ->
+                        sceneStateHolder.value = sceneStateHolder.value.withCoachmarkTargetBounds(
+                            NewPlayerOnboardingTarget.EquipmentActivation,
+                            bounds,
+                        )
+                    },
                 )
             }
 
@@ -360,7 +378,7 @@ internal fun AppSceneHost(
                     packViewModel.events.collect { event ->
                         when (event) {
                             is PackEvent.PackReadyForReveal -> {
-                                val shouldDeferBadgeCelebration = onboardingCoordinator.onFirstPackOpened()
+                                val shouldDeferBadgeCelebration = onboardingCoordinator.onPackOpened()
                                 sceneStateHolder.value = sceneStateHolder.value.registerPackReady(
                                     event.newlyUnlockedBadges,
                                     deferBadgeCelebration = shouldDeferBadgeCelebration,
