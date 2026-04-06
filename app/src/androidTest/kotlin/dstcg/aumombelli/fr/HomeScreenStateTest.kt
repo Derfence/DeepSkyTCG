@@ -100,6 +100,8 @@ class HomeScreenStateTest {
         )
 
         composeRule.onNodeWithTag("home-settings").performClick()
+        composeRule.mainClock.advanceTimeBy(1)
+        composeRule.waitForIdle()
         composeRule.onNodeWithTag("home-settings-reset").performClick()
         composeRule.mainClock.advanceTimeBy(1)
         composeRule.waitForIdle()
@@ -150,6 +152,8 @@ class HomeScreenStateTest {
         )
 
         composeRule.onNodeWithTag("home-settings").performClick()
+        composeRule.mainClock.advanceTimeBy(1)
+        composeRule.waitForIdle()
         composeRule.onNodeWithTag("home-settings-reset").performClick()
         composeRule.mainClock.advanceTimeBy(1)
         composeRule.waitForIdle()

@@ -105,6 +105,7 @@ internal fun AppSceneHost(
     val onboardingCoordinator = remember(appContainer) {
         NewPlayerOnboardingCoordinator(appContainer.progressRepository)
     }
+    val onboardingStep = onboardingCoordinator.uiState.currentStep
 
     val launchLogoAlpha by animateFloatAsState(
         targetValue = if (sceneState.launchLogoVisible) 1f else 0f,
@@ -188,14 +189,20 @@ internal fun AppSceneHost(
                 )
                 val uiState by homeViewModel.uiState.collectAsState()
 
-                BackHandler(enabled = !sceneState.transitionLocked) {
+                BackHandler(
+                    enabled = !sceneState.transitionLocked &&
+                        NewPlayerOnboardingInteractionPolicy.allowsHomeExit(onboardingStep),
+                ) {
                     activity?.finish()
                 }
 
                 HomeScreen(
                     state = uiState,
                     onOpenPack = {
-                        if (!sceneState.transitionLocked) {
+                        if (
+                            !sceneState.transitionLocked &&
+                            NewPlayerOnboardingInteractionPolicy.allowsHomeOpenPack(onboardingStep)
+                        ) {
                             scope.launch {
                                 onboardingCoordinator.onHomeOpenPackSelected()
                                 transitions.animateHomeToPackSelection()
@@ -203,7 +210,10 @@ internal fun AppSceneHost(
                         }
                     },
                     onOpenLibrary = {
-                        if (!sceneState.transitionLocked) {
+                        if (
+                            !sceneState.transitionLocked &&
+                            NewPlayerOnboardingInteractionPolicy.allowsHomeLibrary(onboardingStep)
+                        ) {
                             scope.launch {
                                 val shouldResumeBadgeCelebration = onboardingCoordinator.onLibraryOpened()
                                 if (shouldResumeBadgeCelebration) {
@@ -214,7 +224,10 @@ internal fun AppSceneHost(
                         }
                     },
                     onOpenEquipment = {
-                        if (!sceneState.transitionLocked) {
+                        if (
+                            !sceneState.transitionLocked &&
+                            NewPlayerOnboardingInteractionPolicy.allowsHomeEquipment(onboardingStep)
+                        ) {
                             scope.launch {
                                 onboardingCoordinator.onEquipmentOpened()
                                 transitions.animateHomeToEquipment()
@@ -222,7 +235,10 @@ internal fun AppSceneHost(
                         }
                     },
                     onOpenBadgeBook = {
-                        if (!sceneState.transitionLocked) {
+                        if (
+                            !sceneState.transitionLocked &&
+                            NewPlayerOnboardingInteractionPolicy.allowsHomeBadgeBook(onboardingStep)
+                        ) {
                             scope.launch {
                                 onboardingCoordinator.onBadgeBookOpened()
                                 transitions.animateHomeToBadgeBook()
@@ -233,6 +249,8 @@ internal fun AppSceneHost(
                     showBackground = false,
                     contentVisible = sceneState.homeContentVisible,
                     interactionsEnabled = !sceneState.transitionLocked,
+                    allowAuxiliaryActions = NewPlayerOnboardingInteractionPolicy
+                        .allowsHomeAuxiliaryActions(onboardingStep),
                     onHeroCardTopChanged = { topPx ->
                         sceneStateHolder.value = sceneStateHolder.value.withHomeHeroCardTop(topPx)
                     },
@@ -300,14 +318,21 @@ internal fun AppSceneHost(
                     }
                 }
 
-                BackHandler(enabled = !sceneState.transitionLocked) {
+                BackHandler(
+                    enabled = !sceneState.transitionLocked &&
+                        NewPlayerOnboardingInteractionPolicy.allowsEquipmentBack(onboardingStep),
+                ) {
                     scope.launch { transitions.animateEquipmentToHome() }
                 }
 
                 EquipmentScreen(
                     state = uiState,
                     onRefresh = equipmentViewModel::refresh,
-                    onActivateEquipment = equipmentViewModel::activateEquipment,
+                    onActivateEquipment = { cardId ->
+                        if (NewPlayerOnboardingInteractionPolicy.allowsEquipmentActivation(onboardingStep)) {
+                            equipmentViewModel.activateEquipment(cardId)
+                        }
+                    },
                     contentVisible = sceneState.equipmentContentVisible,
                     onOnboardingActivationBoundsChanged = { bounds ->
                         sceneStateHolder.value = sceneStateHolder.value.withCoachmarkTargetBounds(
@@ -390,7 +415,9 @@ internal fun AppSceneHost(
 
                 if (sceneState.currentScene == AppScene.PackSelection) {
                     BackHandler(
-                        enabled = !sceneState.transitionLocked && !uiState.isAwaitingPackResult,
+                        enabled = !sceneState.transitionLocked &&
+                            !uiState.isAwaitingPackResult &&
+                            NewPlayerOnboardingInteractionPolicy.allowsPackSelectionBack(onboardingStep),
                     ) {
                         if (uiState.selectedExtensionId != null) {
                             packViewModel.clearExtensionSelection()
@@ -408,11 +435,21 @@ internal fun AppSceneHost(
                     state = uiState,
                     onRefresh = packViewModel::refresh,
                     onSelectExtension = { extensionId ->
-                        packViewModel.selectExtension(extensionId)
-                        scope.launch { onboardingCoordinator.onExtensionSelected() }
+                        if (NewPlayerOnboardingInteractionPolicy.allowsPackSelectionExtensionSelection(onboardingStep)) {
+                            packViewModel.selectExtension(extensionId)
+                            scope.launch { onboardingCoordinator.onExtensionSelected() }
+                        }
                     },
-                    onSelectBooster = packViewModel::selectBooster,
-                    onOpenPack = packViewModel::openPack,
+                    onSelectBooster = { boosterIndex ->
+                        if (NewPlayerOnboardingInteractionPolicy.allowsPackSelectionBoosterSelection(onboardingStep)) {
+                            packViewModel.selectBooster(boosterIndex)
+                        }
+                    },
+                    onOpenPack = { extensionId ->
+                        if (NewPlayerOnboardingInteractionPolicy.allowsPackSelectionBoosterSelection(onboardingStep)) {
+                            packViewModel.openPack(extensionId)
+                        }
+                    },
                     onPackRevealReady = {
                         sceneStateHolder.value = sceneStateHolder.value.enterPackOpening()
                     },

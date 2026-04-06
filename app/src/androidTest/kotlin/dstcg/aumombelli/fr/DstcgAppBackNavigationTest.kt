@@ -25,6 +25,7 @@ class DstcgAppBackNavigationTest {
         startAndReachHome()
 
         composeRule.onNodeWithTag("home-settings").performClick()
+        advanceBy(1)
         composeRule.onNodeWithTag("home-settings-reset").performClick()
         advanceBy(1)
         composeRule.onNodeWithTag("home-reset-confirmation").assertIsDisplayed()
@@ -42,12 +43,13 @@ class DstcgAppBackNavigationTest {
         startAndReachHome()
 
         composeRule.onNodeWithTag("home-settings").performClick()
+        advanceBy(1)
         composeRule.onNodeWithTag("home-settings-about").performClick()
-        advanceBy(400)
+        advanceUntilTagDisplayed("home-about-sheet", timeoutMillis = 5_000)
         composeRule.onNodeWithTag("home-about-sheet").assertIsDisplayed()
 
         pressAndroidBack()
-        advanceBy(400)
+        advanceUntilTagGone("home-about-sheet", timeoutMillis = 5_000)
         composeRule.onAllNodesWithTag("home-about-sheet").assertCountEquals(0)
         composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
         assertTrue(!composeRule.activity.isFinishing)
@@ -112,17 +114,17 @@ class DstcgAppBackNavigationTest {
         startAndReachHome()
 
         composeRule.onNodeWithTag("home-open-pack").performClick()
-        advanceBy(1_900)
+        advanceUntilTagEnabled("pack-extension-enter-astronomes-en-herbe", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").performClick()
-        advanceBy(1_900)
+        advanceUntilTagEnabled("pack-booster-0", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("pack-booster-0").assertIsDisplayed()
 
         pressAndroidBack()
-        advanceBy(900)
+        advanceUntilTagDisplayed("pack-extension-enter-astronomes-en-herbe", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").assertIsDisplayed()
 
         pressAndroidBack()
-        advanceBy(1_900)
+        advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
     }
 
@@ -132,15 +134,15 @@ class DstcgAppBackNavigationTest {
         startAndReachHome()
 
         composeRule.onNodeWithTag("home-open-pack").performClick()
-        advanceBy(1_900)
+        advanceUntilTagEnabled("pack-extension-enter-astronomes-en-herbe", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").performClick()
-        advanceBy(1_900)
+        advanceUntilTagEnabled("pack-booster-0", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("pack-booster-0").performClick()
-        advanceBy(6_400)
+        advanceUntilTagDisplayed("pack-opening-current-card-surface", timeoutMillis = 15_000)
         composeRule.onNodeWithTag("pack-opening-current-card-surface").assertIsDisplayed()
 
         pressAndroidBack()
-        advanceBy(700)
+        advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
     }
 
@@ -150,15 +152,15 @@ class DstcgAppBackNavigationTest {
         startAndReachHome()
 
         composeRule.onNodeWithTag("home-open-pack").performClick()
-        advanceBy(1_900)
+        advanceUntilTagEnabled("pack-extension-enter-astronomes-en-herbe", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").performClick()
-        advanceBy(1_900)
+        advanceUntilTagEnabled("pack-booster-0", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("pack-booster-0").performClick()
-        advanceBy(6_400)
+        advanceUntilTagDisplayed("pack-opening-current-card-surface", timeoutMillis = 15_000)
         composeRule.onNodeWithTag("pack-opening-current-card-surface").assertIsDisplayed()
 
         pressAndroidBack()
-        advanceBy(1_000)
+        advanceUntilTagDisplayed("new-player-coachmark-HomeLibrary", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("new-player-coachmark-HomeLibrary").assertIsDisplayed()
         composeRule.onAllNodesWithTag("badge-unlock-celebration").assertCountEquals(0)
 
@@ -210,5 +212,46 @@ class DstcgAppBackNavigationTest {
             composeRule.activity.onBackPressedDispatcher.onBackPressed()
         }
         composeRule.waitForIdle()
+    }
+
+    private fun advanceUntilTagDisplayed(tag: String, timeoutMillis: Long = 5_000) {
+        advanceUntil(timeoutMillis) {
+            runCatching {
+                composeRule.onNodeWithTag(tag).assertIsDisplayed()
+                true
+            }.getOrDefault(false)
+        }
+    }
+
+    private fun advanceUntilTagEnabled(tag: String, timeoutMillis: Long = 5_000) {
+        advanceUntil(timeoutMillis) {
+            runCatching {
+                composeRule.onNodeWithTag(tag).assertIsEnabled()
+                true
+            }.getOrDefault(false)
+        }
+    }
+
+    private fun advanceUntilTagGone(tag: String, timeoutMillis: Long = 5_000) {
+        advanceUntil(timeoutMillis) {
+            composeRule.onAllNodesWithTag(tag, useUnmergedTree = true)
+                .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                .isEmpty()
+        }
+    }
+
+    private fun advanceUntil(timeoutMillis: Long, condition: () -> Boolean) {
+        val deadline = timeoutMillis.coerceAtLeast(0L)
+        var elapsed = 0L
+        while (elapsed <= deadline) {
+            if (condition()) {
+                return
+            }
+            advanceBy(100)
+            elapsed += 100
+        }
+        throw androidx.compose.ui.test.ComposeTimeoutException(
+            "Condition still not satisfied after ${timeoutMillis} ms",
+        )
     }
 }

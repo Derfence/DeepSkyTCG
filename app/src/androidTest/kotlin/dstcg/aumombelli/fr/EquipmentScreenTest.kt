@@ -4,8 +4,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.feature.equipment.EquipmentActiveSummaryItemUi
@@ -154,7 +156,9 @@ class EquipmentScreenTest {
         composeRule.onNodeWithTag("equipment-last-used-observatory").assertIsDisplayed()
         composeRule.onNodeWithTag("equipment-cards-observatory").assertIsDisplayed()
         composeRule.onNodeWithTag("equipment-card-observatory-1").assertIsDisplayed()
+        composeRule.onNodeWithTag("equipment-list").performScrollToNode(hasTestTag("equipment-section-telescope"))
         composeRule.onNodeWithTag("equipment-icon-telescope").assertIsDisplayed()
+        composeRule.onNodeWithTag("equipment-list").performScrollToNode(hasTestTag("equipment-section-mount"))
         composeRule.onNodeWithTag("equipment-icon-mount").assertIsDisplayed()
     }
 

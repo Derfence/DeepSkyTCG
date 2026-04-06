@@ -29,6 +29,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.unit.dp
@@ -41,10 +43,12 @@ internal fun HomePackCard(
     title: String,
     subtitle: String,
     onClick: () -> Unit,
+    interactionTestTag: String? = null,
     modifier: Modifier = Modifier,
 ) {
     MotionCard(
         modifier = modifier
+            .semantics(mergeDescendants = true) {}
             .graphicsLayer {
                 alpha = if (enabled) 1f else 0.78f
             },
@@ -83,6 +87,13 @@ internal fun HomePackCard(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
+                    .then(
+                        if (interactionTestTag != null) {
+                            Modifier.testTag(interactionTestTag)
+                        } else {
+                            Modifier
+                        },
+                    )
                     .clickable(
                         enabled = enabled,
                         onClick = onClick,

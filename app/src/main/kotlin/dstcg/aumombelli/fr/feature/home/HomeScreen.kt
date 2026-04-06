@@ -59,6 +59,7 @@ fun HomeScreen(
     showBackground: Boolean = true,
     contentVisible: Boolean = true,
     interactionsEnabled: Boolean = true,
+    allowAuxiliaryActions: Boolean = true,
     onHeroCardTopChanged: (Float) -> Unit = {},
     onCoachmarkTargetBoundsChanged: (NewPlayerOnboardingTarget, Rect?) -> Unit = { _, _ -> },
 ) {
@@ -105,6 +106,14 @@ fun HomeScreen(
         }
     }
 
+    LaunchedEffect(allowAuxiliaryActions) {
+        if (!allowAuxiliaryActions) {
+            settingsExpanded = false
+            resetConfirmationVisible = false
+            aboutSheetVisible = false
+        }
+    }
+
     BackHandler(enabled = settingsExpanded || resetConfirmationVisible || aboutSheetVisible) {
         when {
             resetConfirmationVisible -> resetConfirmationVisible = false
@@ -134,7 +143,11 @@ fun HomeScreen(
                     .testTag("home-settings-anchor"),
             ) {
                 IconButton(
-                    onClick = { settingsExpanded = true },
+                    onClick = {
+                        if (allowAuxiliaryActions) {
+                            settingsExpanded = true
+                        }
+                    },
                     enabled = settingsEnabled,
                     modifier = Modifier
                         .size(52.dp)
@@ -187,6 +200,7 @@ fun HomeScreen(
                     else -> "Traverse l'observatoire et découvre une nouvelle extension."
                 },
                 onClick = onOpenPack,
+                interactionTestTag = "home-open-pack",
                 modifier = Modifier
                     .align(Alignment.Center)
                     .fillMaxWidth(0.76f)
@@ -200,7 +214,6 @@ fun HomeScreen(
                             )
                         }
                     }
-                    .testTag("home-open-pack"),
             )
 
             state.errorMessage?.let { error ->

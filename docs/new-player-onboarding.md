@@ -2,7 +2,7 @@
 
 ## Objectif
 
-Le standalone guide maintenant le premier parcours joueur sans bloquer l'interface.
+Le standalone guide maintenant le premier parcours joueur avec un onboarding obligatoire sur les etapes guidees, puis une pause libre apres `Badges`.
 
 La sequence persistante est :
 
@@ -17,6 +17,7 @@ La sequence persistante est :
 9. `Completed`
 
 Chaque etape est stockee dans la progression locale securisee et rejouee jusqu'a completion.
+Toutes les actions hors parcours deviennent des no-op silencieux pendant les etapes guidees, sans changement visuel.
 Les hints d'onboarding n'apparaissent qu'une fois les animations de transition terminees et la scene stabilisee.
 
 ## Parcours
@@ -46,12 +47,15 @@ Les hints d'onboarding n'apparaissent qu'une fois les animations de transition t
 - Quand le joueur revient a l'accueil, la celebration de badge differee est rejouee si elle est encore en memoire.
 - Apres cette celebration, un coachmark cible `Badges` tant que le carnet n'a pas ete ouvert.
 
-### 4. Chapitre equipement
+### 4. Pause libre puis chapitre equipement
 
 - L'ouverture du carnet `Badges` ne termine plus l'onboarding ; elle debloque l'etape `OpenSecondPackMenu`.
-- Au retour accueil apres `Badges`, aucun nouveau coachmark n'est affiche.
-- Le second pack reste accessible normalement via `Ouvrir un pack`, mais cette etape n'est plus guidee visuellement.
-- Pendant ce deuxieme tirage d'onboarding :
+- `OpenSecondPackMenu` est une pause silencieuse :
+  - aucun coachmark n'est affiche ;
+  - aucun blocage supplementaire n'est applique ;
+  - `Home`, `Bibliotheque`, `Badges`, `Equipements`, `Packs` et le retour arriere Android redeviennent normaux.
+- Le premier pack effectivement ouvert apres cette pause devient le deuxieme tirage d'onboarding.
+- Pendant ce tirage special :
   - aucun coachmark n'est ajoute dans `PackSelection` ;
   - les remplacements aleatoires d'equipement sont desactives ;
   - exactement un slot est remplace par une carte d'equipement `level == 1`, choisie selon `dropWeight` ;
@@ -69,7 +73,7 @@ Les hints d'onboarding n'apparaissent qu'une fois les animations de transition t
   - collection vide et `openedPackCount == 0` : `OpenFirstPackMenu`
   - collection non vide ou `openedPackCount > 0` : `Completed`
 - Si l'application est relancee entre le premier pack et la bibliotheque, le guidage reprend depuis l'etape persistante. La celebration de badge etant transitoire, le fallback reste le coachmark `Badges`.
-- Si l'application est relancee pendant le chapitre equipement, le guidage reprend sur `OpenSecondPackMenu`, `ViewEquipmentMenu` ou `ActivateFirstEquipment` selon l'etape sauvegardee.
+- Si l'application est relancee pendant le chapitre equipement, le guidage reprend sur la pause libre `OpenSecondPackMenu`, `ViewEquipmentMenu` ou `ActivateFirstEquipment` selon l'etape sauvegardee.
 
 ## Cibles et tags UI
 
@@ -109,5 +113,6 @@ La couverture ajoutee ou mise a jour comprend :
 - `LocalEndToEndTest`
 - `LibraryScreenTest`
 - `PackOpeningScreenTest`
+- `NewPlayerOnboardingInteractionPolicyTest`
 
 Les tests relies a un device Android restent a executer via `connectedDebugAndroidTest` depuis Windows avec un emulateur ou un appareil ADB disponible.

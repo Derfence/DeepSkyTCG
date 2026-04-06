@@ -437,7 +437,10 @@ class PackOpeningScreenTest {
         composeRule.onAllNodesWithTag("pack-opening-last-card-nudge").assertCountEquals(1)
 
         composeRule.mainClock.autoAdvance = true
-        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeRight() }
+        composeRule.onNodeWithTag("pack-opening-pager").performTouchInput { swipeRight() }
+        if (!composeRule.waitUntilCardId("ALP-001", timeoutMillis = 1_500)) {
+            composeRule.onNodeWithTag("pack-opening-pager").performTouchInput { swipeRight() }
+        }
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.safeReadCurrentPackOpeningCardId() == "ALP-001"
         }
@@ -761,6 +764,16 @@ class PackOpeningScreenTest {
             abs(cardBounds.center.x - rootBounds.center.x) <= tolerancePx,
         )
     }
+
+    private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.waitUntilCardId(
+        cardId: String,
+        timeoutMillis: Long,
+    ): Boolean = runCatching {
+        waitUntil(timeoutMillis) {
+            safeReadCurrentPackOpeningCardId() == cardId
+        }
+        true
+    }.getOrDefault(false)
 
     private fun buildPackOpeningState(
         drawnAt: String,

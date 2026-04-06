@@ -6,6 +6,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -72,7 +73,6 @@ fun PackOpeningScreen(
     val burstProgress = remember(packResult?.drawnAt) { Animatable(0f) }
     val cardsEntranceProgress = remember(packResult?.drawnAt) { Animatable(0f) }
     val dismissProgress = remember(packResult?.drawnAt) { Animatable(0f) }
-    val swipeHintOffset = remember(packResult?.drawnAt) { Animatable(0f) }
 
     LaunchedEffect(packResult?.drawnAt) {
         if (packResult == null) return@LaunchedEffect
@@ -88,7 +88,6 @@ fun PackOpeningScreen(
         burstProgress.snapTo(0f)
         cardsEntranceProgress.snapTo(0f)
         dismissProgress.snapTo(0f)
-        swipeHintOffset.snapTo(0f)
         burstProgress.animateTo(1f, animationSpec = tween(durationMillis = 4800, easing = FastOutSlowInEasing))
         cardsVisible = true
         cardsEntranceProgress.animateTo(
@@ -101,7 +100,6 @@ fun PackOpeningScreen(
         if (!dismissRequested) return@LaunchedEffect
         verticalDragActive = false
         swipeOffset = 0f
-        swipeHintOffset.snapTo(0f)
         dismissProgress.animateTo(
             targetValue = 1f,
             animationSpec = tween(durationMillis = 420, easing = FastOutSlowInEasing),
@@ -258,28 +256,6 @@ fun PackOpeningScreen(
                                 swipeHintUnlocked = true
                             }
 
-                            LaunchedEffect(
-                                packResult.drawnAt,
-                                shouldAnimateSwipeHint,
-                                settledPage,
-                            ) {
-                                swipeHintOffset.snapTo(0f)
-                                if (!shouldAnimateSwipeHint) return@LaunchedEffect
-                                delay(450)
-
-                                while (true) {
-                                    swipeHintOffset.animateTo(
-                                        targetValue = -26f,
-                                        animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
-                                    )
-                                    swipeHintOffset.animateTo(
-                                        targetValue = 0f,
-                                        animationSpec = tween(durationMillis = 360, easing = FastOutSlowInEasing),
-                                    )
-                                    delay(1_150)
-                                }
-                            }
-
                             LaunchedEffect(packResult.drawnAt) {
                                 snapshotFlow {
                                     PagerScrollSnapshot(
@@ -304,15 +280,6 @@ fun PackOpeningScreen(
                                 )
                             }
 
-                            if (showSwipeHintLabel) {
-                                androidx.compose.material3.Text(
-                                    text = "Glisse vers le haut pour revenir au menu.",
-                                    color = Color(0xFFF8D98D),
-                                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier.testTag("pack-opening-swipe-hint-label"),
-                                )
-                            }
-
                             if (currentItem != null) {
                                 androidx.compose.material3.Text(
                                     text = currentItem.id,
@@ -322,29 +289,46 @@ fun PackOpeningScreen(
                                 )
                             }
 
-                            HorizontalPager(
-                                state = pagerState,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .graphicsLayer {
-                                        alpha = cardsEntranceProgress.value
-                                        translationY = (1f - cardsEntranceProgress.value) *
-                                            if (rootHeightPx > 0f) rootHeightPx else 960f
-                                    },
-                            ) { page ->
-                                RevealCard(
-                                    item = revealItems[page],
-                                    isCurrentPage = page == currentPage,
-                                    showPreviousArrow = page == currentPage && page > 0,
-                                    showNextArrow = page == currentPage && page < revealItems.lastIndex,
-                                    cardTranslationY = if (page == currentPage) swipeHintOffset.value else 0f,
-                                    nudgeActive = page == settledPage && shouldAnimateSwipeHint,
-                                    onOpenFullscreen = {
-                                        if (revealItems[page] is AstroPackRevealUiItem) {
-                                            fullscreenPage = page
-                                        }
-                                    },
-                                )
+                            Box(
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                HorizontalPager(
+                                    state = pagerState,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .testTag("pack-opening-pager")
+                                        .graphicsLayer {
+                                            alpha = cardsEntranceProgress.value
+                                            translationY = (1f - cardsEntranceProgress.value) *
+                                                if (rootHeightPx > 0f) rootHeightPx else 960f
+                                        },
+                                ) { page ->
+                                    RevealCard(
+                                        item = revealItems[page],
+                                        isCurrentPage = page == currentPage,
+                                        showPreviousArrow = page == currentPage && page > 0,
+                                        showNextArrow = page == currentPage && page < revealItems.lastIndex,
+                                        cardTranslationY = 0f,
+                                        nudgeActive = page == settledPage && shouldAnimateSwipeHint,
+                                        onOpenFullscreen = {
+                                            if (revealItems[page] is AstroPackRevealUiItem) {
+                                                fullscreenPage = page
+                                            }
+                                        },
+                                    )
+                                }
+
+                                if (showSwipeHintLabel) {
+                                    androidx.compose.material3.Text(
+                                        text = "Glisse vers le haut pour revenir au menu.",
+                                        color = Color(0xFFF8D98D),
+                                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier
+                                            .align(Alignment.TopCenter)
+                                            .padding(top = 10.dp)
+                                            .testTag("pack-opening-swipe-hint-label"),
+                                    )
+                                }
                             }
 
                             if (progressBelowPager) {

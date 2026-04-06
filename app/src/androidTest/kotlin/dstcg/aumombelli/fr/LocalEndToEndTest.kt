@@ -116,6 +116,12 @@ class LocalEndToEndTest {
         composeRule.waitUntilTagExists("badge-book-scroll", timeoutMillis = 10_000)
         composeRule.pressAndroidBack()
         composeRule.waitUntilTagEnabled("home-open-pack", timeoutMillis = 10_000)
+        composeRule.waitUntilTagGone("new-player-coachmark-overlay", timeoutMillis = 10_000)
+
+        composeRule.onNodeWithTag("home-equipment").performClick()
+        composeRule.waitUntilTagExists("equipment-screen", timeoutMillis = 10_000)
+        composeRule.pressAndroidBack()
+        composeRule.waitUntilTagEnabled("home-open-pack", timeoutMillis = 10_000)
     }
 
     private fun openSecondPackAndReachEquipmentMenu() {

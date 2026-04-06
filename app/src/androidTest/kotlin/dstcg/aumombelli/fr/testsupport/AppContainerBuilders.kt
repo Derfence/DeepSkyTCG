@@ -26,6 +26,7 @@ import fr.aumombelli.dstcg.model.EquipmentCardDefinition
 import fr.aumombelli.dstcg.model.EquipmentSettingsDefinition
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.GameBalanceDefinition
+import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.OwnedVariantCount
 import fr.aumombelli.dstcg.model.PackRechargeState
@@ -134,6 +135,11 @@ private fun navigationTestAppContainer(
         initialProgress = StandaloneProgress(
             collection = initialCollection,
             rechargeState = PackRechargeState(),
+            newPlayerOnboardingStep = if (initialCollection.cards.isEmpty()) {
+                NewPlayerOnboardingStep.OpenFirstPackMenu
+            } else {
+                NewPlayerOnboardingStep.Completed
+            },
         ),
     )
     val collectionRepository = NavigationCollectionGateway(progressRepository)

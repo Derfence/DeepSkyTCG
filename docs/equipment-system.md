@@ -26,6 +26,7 @@ Chaque carte d'equipement est un consommable data-driven avec un niveau immuable
 - 1er pack de l'onboarding :
   - aucune carte d'equipement ne peut apparaitre, meme si `EquipmentChancePercent` vaut `100`.
 - 2e pack de l'onboarding, apres la visite du carnet `Badges` :
+  - il correspond au premier pack effectivement ouvert apres la pause silencieuse `OpenSecondPackMenu` ;
   - exactement une carte d'equipement est garantie ;
   - seules les cartes `level == 1` avec `dropWeight > 0` sont candidates ;
   - le remplacement aleatoire normal est desactive pour ce pack ;

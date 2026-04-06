@@ -102,6 +102,9 @@ internal class NewPlayerOnboardingCoordinator(
         uiState = uiState.copy(libraryCardHintVisible = false)
     }
 
+    fun isBlockingStep(step: NewPlayerOnboardingStep? = uiState.currentStep): Boolean =
+        NewPlayerOnboardingInteractionPolicy.isBlockingStep(step)
+
     fun activeCoachmark(
         currentScene: AppScene,
         sceneState: AppSceneUiState,

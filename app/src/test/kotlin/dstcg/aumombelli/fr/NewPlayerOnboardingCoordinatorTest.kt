@@ -179,6 +179,7 @@ class NewPlayerOnboardingCoordinatorTest {
                 badgeCelebrationVisible = false,
             ),
         )
+        assertFalse(coordinator.isBlockingStep())
 
         coordinator.onPackOpened()
         coordinator.onEquipmentOpened()

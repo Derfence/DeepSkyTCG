@@ -101,7 +101,8 @@ fun EquipmentScreen(
             contentPadding = PaddingValues(16.dp),
             modifier = Modifier
                 .fillMaxSize()
-                .dstcgContentInsetsPadding(includeBottom = true),
+                .dstcgContentInsetsPadding(includeBottom = true)
+                .testTag("equipment-list"),
         ) {
             item(key = "equipment-header") {
                 EquipmentHeader(
