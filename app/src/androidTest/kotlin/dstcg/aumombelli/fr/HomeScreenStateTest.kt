@@ -58,6 +58,27 @@ class HomeScreenStateTest {
     }
 
     @Test
+    fun equipment_action_is_hidden_until_it_is_unlocked() {
+        val state = setHomeScreenContent(
+            HomeUiState(
+                isLoading = false,
+                isEquipmentMenuVisible = false,
+            ),
+        )
+
+        composeRule.onAllNodesWithTag("home-equipment").assertCountEquals(0)
+
+        composeRule.runOnIdle {
+            state.value = HomeUiState(
+                isLoading = false,
+                isEquipmentMenuVisible = true,
+            )
+        }
+
+        composeRule.onNodeWithTag("home-equipment").assertIsDisplayed()
+    }
+
+    @Test
     fun settings_menu_is_visible_and_can_open_about_sheet() {
         setHomeScreenContent(
             HomeUiState(

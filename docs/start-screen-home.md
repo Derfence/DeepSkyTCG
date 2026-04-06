@@ -8,13 +8,13 @@ Elle conserve :
 - le fond visuel historique de `Start` ;
 - une grande carte centrale `Ouvrir un pack` ;
 - une icone `Bibliotheque` en bas a gauche ;
-- une icone `Equipements` en bas au centre ;
+- une icone `Equipements` en bas au centre, debloquee apres la premiere carte d'equipement obtenue ;
 - une icone `Badges` en bas a droite ;
 - un bouton `Parametres` en haut a droite.
 
 ## Equipements
 
-Le bouton `Equipements` ouvre un ecran dedie depuis l'accueil principal.
+Le bouton `Equipements` apparait uniquement apres l'obtention de la premiere carte d'equipement, puis ouvre un ecran dedie depuis l'accueil principal.
 
 L'ecran affiche :
 

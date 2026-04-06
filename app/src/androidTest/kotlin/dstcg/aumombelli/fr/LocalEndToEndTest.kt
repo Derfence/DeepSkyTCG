@@ -1,6 +1,7 @@
 package fr.aumombelli.dstcg
 
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -117,11 +118,7 @@ class LocalEndToEndTest {
         composeRule.pressAndroidBack()
         composeRule.waitUntilTagEnabled("home-open-pack", timeoutMillis = 10_000)
         composeRule.waitUntilTagGone("new-player-coachmark-overlay", timeoutMillis = 10_000)
-
-        composeRule.onNodeWithTag("home-equipment").performClick()
-        composeRule.waitUntilTagExists("equipment-screen", timeoutMillis = 10_000)
-        composeRule.pressAndroidBack()
-        composeRule.waitUntilTagEnabled("home-open-pack", timeoutMillis = 10_000)
+        composeRule.onAllNodesWithTag("home-equipment").assertCountEquals(0)
     }
 
     private fun openSecondPackAndReachEquipmentMenu() {

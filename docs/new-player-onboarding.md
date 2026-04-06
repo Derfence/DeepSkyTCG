@@ -53,7 +53,8 @@ Les hints d'onboarding n'apparaissent qu'une fois les animations de transition t
 - `OpenSecondPackMenu` est une pause silencieuse :
   - aucun coachmark n'est affiche ;
   - aucun blocage supplementaire n'est applique ;
-  - `Home`, `Bibliotheque`, `Badges`, `Equipements`, `Packs` et le retour arriere Android redeviennent normaux.
+  - `Home`, `Bibliotheque`, `Badges`, `Packs` et le retour arriere Android redeviennent normaux ;
+  - `Equipements` reste simplement absent tant que la premiere carte d'equipement n'a pas encore ete obtenue.
 - Le premier pack effectivement ouvert apres cette pause devient le deuxieme tirage d'onboarding.
 - Pendant ce tirage special :
   - aucun coachmark n'est ajoute dans `PackSelection` ;
@@ -61,7 +62,7 @@ Les hints d'onboarding n'apparaissent qu'une fois les animations de transition t
   - exactement un slot est remplace par une carte d'equipement `level == 1`, choisie selon `dropWeight` ;
   - un slot `Common` est privilegie ; sinon le slot de plus faible rarete finale est remplace ;
   - le premier tirage reste force sans equipement, meme si `EquipmentChancePercent` vaut `100`.
-- De retour accueil, un coachmark cible `Equipements`.
+- De retour accueil, un coachmark cible `Equipements` au moment ou le bouton devient visible avec la premiere carte obtenue.
 - Une fois le menu ouvert, un dernier coachmark cible le premier bouton `Activer` eligible.
 - L'onboarding se termine a la premiere activation reussie.
 

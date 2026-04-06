@@ -10,7 +10,7 @@ Au lancement, l'application :
 
 - affiche le decor et les animations d'introduction existants ;
 - affiche un accueil unique avec une grande carte `Ouvrir un pack`, la bibliotheque, les badges et un menu parametres ;
-- expose un ecran `Equipements` autonome depuis l'accueil pour stocker et activer des cartes consommables ;
+- debloque un ecran `Equipements` autonome depuis l'accueil apres l'obtention de la premiere carte d'equipement ;
 - guide les nouveaux joueurs vers leur premier pack, leur bibliotheque puis leurs badges ;
 - permet d'ouvrir des packs localement ;
 - persiste la collection et l'etat de recharge des boosters ;
@@ -53,7 +53,7 @@ Au lancement, l'application :
 
 - Demarrage : animation d'introduction, logo qui monte puis affichage de l'accueil.
 - `Accueil -> packs` : reutilisation de l'ancienne transition `Start -> Main menu`, puis ouverture d'un booster local sans appel reseau.
-- `Accueil -> equipements` : consultation de l'inventaire d'equipements, activation d'une carte par type et lecture du dernier equipement utilise.
+- `Accueil -> equipements` : consultation de l'inventaire d'equipements, activation d'une carte par type et lecture du dernier equipement utilise, une fois le menu debloque.
 - `Accueil -> packs -> bibliotheque -> badges` : premier parcours guide par coachmarks persistants, affiches apres stabilisation des transitions.
 - `Accueil -> bibliotheque` : consultation de la collection persistante.
 - Dans la bibliotheque, les cartes non obtenues gardent leur cadre et leurs informations visibles, mais leur illustration reste masquee jusqu'a la premiere obtention.
@@ -105,7 +105,7 @@ Le standalone conserve :
 - la bibliotheque, les apercus et le plein ecran des cartes ;
 - le masquage volontaire des illustrations des cartes non obtenues dans la grille de bibliotheque ;
 - le stock disponible et la recharge visible dans l'interface ;
-- un bouton `Equipements` entre `Bibliotheque` et `Badges` sur l'accueil ;
+- un bouton `Equipements` entre `Bibliotheque` et `Badges` sur l'accueil, visible apres la premiere carte d'equipement obtenue ;
 - l'inventaire d'equipements, leurs activations totales et le dernier equipement utilise par type ;
 - un module de prevision meteo UTC sur 7 jours dans l'ecran des packs, avec icones et multiplicateurs.
 

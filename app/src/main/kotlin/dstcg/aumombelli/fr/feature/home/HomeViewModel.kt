@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import fr.aumombelli.dstcg.data.ProgressGateway
 import fr.aumombelli.dstcg.data.ProgressLoadResult
+import fr.aumombelli.dstcg.model.hasUnlockedEquipmentMenu
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,6 +14,7 @@ data class HomeUiState(
     val isLoading: Boolean = true,
     val errorMessage: String? = null,
     val isResettingProgress: Boolean = false,
+    val isEquipmentMenuVisible: Boolean = false,
 )
 
 class HomeViewModel(
@@ -22,6 +24,10 @@ class HomeViewModel(
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     init {
+        refreshProgressState()
+    }
+
+    fun refresh() {
         refreshProgressState()
     }
 
@@ -52,8 +58,16 @@ class HomeViewModel(
             runCatching { progressRepository.loadProgress() }
                 .onSuccess { result ->
                     _uiState.value = when (result) {
-                        is ProgressLoadResult.Ok -> HomeUiState(isLoading = false)
-                        is ProgressLoadResult.Recovered -> HomeUiState(isLoading = false)
+                        is ProgressLoadResult.Ok -> HomeUiState(
+                            isLoading = false,
+                            isEquipmentMenuVisible = result.progress.hasUnlockedEquipmentMenu(),
+                        )
+
+                        is ProgressLoadResult.Recovered -> HomeUiState(
+                            isLoading = false,
+                            isEquipmentMenuVisible = result.progress.hasUnlockedEquipmentMenu(),
+                        )
+
                         is ProgressLoadResult.Compromised -> HomeUiState(
                             isLoading = false,
                             errorMessage = result.message,

@@ -28,6 +28,8 @@ import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.GameBalanceDefinition
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.OwnedCollection
+import fr.aumombelli.dstcg.model.OwnedEquipmentCardEntry
+import fr.aumombelli.dstcg.model.OwnedEquipmentInventory
 import fr.aumombelli.dstcg.model.OwnedVariantCount
 import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.PackCard
@@ -113,6 +115,7 @@ internal fun backNavigationTestAppContainer(): AppContainer {
                 ),
             ),
         ),
+        unlockEquipmentMenu = true,
     )
 }
 
@@ -124,6 +127,7 @@ internal fun badgeCelebrationBackNavigationTestAppContainer(): AppContainer {
 
 private fun navigationTestAppContainer(
     initialCollection: OwnedCollection,
+    unlockEquipmentMenu: Boolean = false,
 ): AppContainer {
     val extension = ExtensionDefinition(
         id = "astronomes-en-herbe",
@@ -139,6 +143,15 @@ private fun navigationTestAppContainer(
                 NewPlayerOnboardingStep.OpenFirstPackMenu
             } else {
                 NewPlayerOnboardingStep.Completed
+            },
+            equipmentInventory = if (unlockEquipmentMenu) {
+                OwnedEquipmentInventory(
+                    cards = mapOf(
+                        "starter-equipment" to OwnedEquipmentCardEntry(countOwned = 1),
+                    ),
+                )
+            } else {
+                OwnedEquipmentInventory()
             },
         ),
     )

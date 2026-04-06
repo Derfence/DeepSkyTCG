@@ -30,7 +30,7 @@ class HomeScreenLaunchTest {
         composeRule.onNodeWithTag("home-logo-lockup").assertIsDisplayed()
         composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
         composeRule.onNodeWithTag("home-library").assertIsDisplayed()
-        composeRule.onNodeWithTag("home-equipment").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("home-equipment").assertCountEquals(0)
         composeRule.onNodeWithTag("home-badges").assertIsDisplayed()
         composeRule.onNodeWithTag("home-settings").assertIsDisplayed()
         composeRule.onAllNodesWithTag("start-footer-version").assertCountEquals(0)

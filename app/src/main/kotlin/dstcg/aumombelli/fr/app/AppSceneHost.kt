@@ -75,6 +75,7 @@ internal fun AppSceneHost(
         mutableStateOf(initialAppSceneUiState(launchConfig))
     }
     val sceneState = sceneStateHolder.value
+    val hasEnteredHomeOnce = remember(launchConfig) { mutableStateOf(false) }
 
     val cameraTilt = remember(launchConfig) { Animatable(0f) }
     val mountainSkyBlend = remember(launchConfig) { Animatable(0f) }
@@ -188,6 +189,14 @@ internal fun AppSceneHost(
                     },
                 )
                 val uiState by homeViewModel.uiState.collectAsState()
+
+                LaunchedEffect(Unit) {
+                    if (hasEnteredHomeOnce.value) {
+                        homeViewModel.refresh()
+                    } else {
+                        hasEnteredHomeOnce.value = true
+                    }
+                }
 
                 BackHandler(
                     enabled = !sceneState.transitionLocked &&

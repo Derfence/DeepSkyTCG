@@ -54,6 +54,7 @@ Chaque carte d'equipement est un consommable data-driven avec un niveau immuable
 
 L'ecran `Equipements` de l'accueil affiche :
 
+- un bouton `Equipements` sur `Home`, masque tant qu'aucune carte d'equipement n'a encore ete obtenue ;
 - un resume des effets actifs ;
 - une section visuelle par type, sur une ligne dediee ;
 - une icone miniature dediee a chaque categorie ;

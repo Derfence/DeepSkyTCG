@@ -1,11 +1,15 @@
 package fr.aumombelli.dstcg
 
 import fr.aumombelli.dstcg.feature.home.HomeViewModel
+import fr.aumombelli.dstcg.model.OwnedEquipmentCardEntry
+import fr.aumombelli.dstcg.model.OwnedEquipmentInventory
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -26,6 +30,7 @@ class HomeViewModelTest {
         assertEquals(1, progressGateway.loadCallCount.get())
         assertEquals(false, viewModel.uiState.value.isLoading)
         assertNull(viewModel.uiState.value.errorMessage)
+        assertFalse(viewModel.uiState.value.isEquipmentMenuVisible)
     }
 
     @Test
@@ -64,6 +69,24 @@ class HomeViewModelTest {
 
         assertEquals(false, viewModel.uiState.value.isLoading)
         assertNull(viewModel.uiState.value.errorMessage)
+    }
+
+    @Test
+    fun `equipment menu becomes visible after first equipment is stored`() = runTest {
+        val progressGateway = FakeProgressGateway().apply {
+            progress = progress.copy(
+                equipmentInventory = OwnedEquipmentInventory(
+                    cards = mapOf(
+                        "observatory-1" to OwnedEquipmentCardEntry(countOwned = 1),
+                    ),
+                ),
+            )
+        }
+
+        val viewModel = HomeViewModel(progressGateway)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isEquipmentMenuVisible)
     }
 
     @Test

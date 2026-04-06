@@ -83,3 +83,8 @@ fun StandaloneProgress.toEquipmentState(): EquipmentState = EquipmentState(
     }.toMap(),
     lastActivatedCardIdByType = lastActivatedCardIdByType.toSortedMap(compareBy { it.code }),
 )
+
+fun StandaloneProgress.hasUnlockedEquipmentMenu(): Boolean =
+    equipmentInventory.cards.isNotEmpty() ||
+        activeEquipmentByType.isNotEmpty() ||
+        lastActivatedCardIdByType.isNotEmpty()

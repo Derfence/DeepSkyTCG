@@ -102,7 +102,14 @@ fun HomeScreen(
             aboutSheetVisible = false
             onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeOpenPack, null)
             onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeLibrary, null)
+            onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeEquipment, null)
             onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeBadges, null)
+        }
+    }
+
+    LaunchedEffect(contentVisible, state.isEquipmentMenuVisible) {
+        if (!contentVisible || !state.isEquipmentMenuVisible) {
+            onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeEquipment, null)
         }
     }
 
@@ -256,28 +263,30 @@ fun HomeScreen(
                     .testTag("home-library"),
             )
 
-            HomeCornerActionButton(
-                icon = {
-                    Icon(
-                        imageVector = Icons.Filled.AutoAwesome,
-                        contentDescription = "Equipements",
-                        tint = Color.White,
-                    )
-                },
-                enabled = navigationEnabled,
-                onClick = onOpenEquipment,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .onGloballyPositioned { coordinates ->
-                        if (contentVisible) {
-                            onCoachmarkTargetBoundsChanged(
-                                NewPlayerOnboardingTarget.HomeEquipment,
-                                coordinates.boundsInRoot(),
-                            )
+            if (state.isEquipmentMenuVisible) {
+                HomeCornerActionButton(
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Filled.AutoAwesome,
+                            contentDescription = "Equipements",
+                            tint = Color.White,
+                        )
+                    },
+                    enabled = navigationEnabled,
+                    onClick = onOpenEquipment,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .onGloballyPositioned { coordinates ->
+                            if (contentVisible) {
+                                onCoachmarkTargetBoundsChanged(
+                                    NewPlayerOnboardingTarget.HomeEquipment,
+                                    coordinates.boundsInRoot(),
+                                )
+                            }
                         }
-                    }
-                    .testTag("home-equipment"),
-            )
+                        .testTag("home-equipment"),
+                )
+            }
 
             HomeCornerActionButton(
                 icon = {
