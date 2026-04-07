@@ -147,6 +147,34 @@ class DstcgAppBackNavigationTest {
     }
 
     @Test
+    fun second_pack_selection_entry_keeps_extension_cards_hidden_until_intro_begins() {
+        setAppContent(backNavigationTestAppContainer())
+        startAndReachHome()
+
+        composeRule.onNodeWithTag("home-open-pack").performClick()
+        advanceUntilTagEnabled("pack-extension-enter-astronomes-en-herbe", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").performClick()
+        advanceUntilTagEnabled("pack-booster-0", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("pack-booster-0").performClick()
+        advanceUntilTagDisplayed("pack-opening-current-card-surface", timeoutMillis = 15_000)
+
+        pressAndroidBack()
+        advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
+
+        composeRule.onNodeWithTag("home-open-pack").performClick()
+        advanceBy(700)
+        assertTrue(
+            runCatching {
+                composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").assertIsDisplayed()
+                false
+            }.getOrDefault(true),
+        )
+
+        advanceUntilTagDisplayed("pack-extension-enter-astronomes-en-herbe", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").assertIsDisplayed()
+    }
+
+    @Test
     fun android_back_from_pack_opening_with_new_badge_defers_celebration_until_library_is_seen() {
         setAppContent(badgeCelebrationBackNavigationTestAppContainer())
         startAndReachHome()

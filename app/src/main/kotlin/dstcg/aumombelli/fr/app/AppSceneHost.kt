@@ -460,6 +460,7 @@ internal fun AppSceneHost(
                         }
                     },
                     onPackRevealReady = {
+                        packViewModel.clearExtensionSelection()
                         sceneStateHolder.value = sceneStateHolder.value.enterPackOpening()
                     },
                     onSelectedBoosterBoundsChanged = { bounds ->
