@@ -30,9 +30,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -135,6 +138,7 @@ fun PackSelectionScreen(
     val heroProgress = remember { Animatable(0f) }
     val boosterIntroProgress = remember { Animatable(0f) }
     val boosterSelectionProgress = remember { Animatable(0f) }
+    var screenBounds by remember { mutableStateOf<Rect?>(null) }
     var handledPackSignal by remember(displayedExtension?.id) { mutableIntStateOf(packReadySignal) }
 
     LaunchedEffect(state.extensions, drawLocked) {
@@ -223,6 +227,9 @@ fun PackSelectionScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
+            .onGloballyPositioned { coordinates ->
+                screenBounds = coordinates.boundsInRoot()
+            }
             .graphicsLayer {
                 alpha = sceneAlpha
             }
@@ -232,7 +239,8 @@ fun PackSelectionScreen(
                 } else {
                     Brush.verticalGradient(listOf(Color.Transparent, Color.Transparent))
                 },
-            ),
+            )
+            .testTag("pack-screen-root"),
     ) {
         Column(
             verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -354,6 +362,7 @@ fun PackSelectionScreen(
                             drawLocked = drawLocked,
                             selectedBoosterIndex = state.selectedBoosterIndex,
                             isAwaitingPackResult = state.isAwaitingPackResult,
+                            screenBounds = screenBounds,
                             onSelectBooster = { boosterIndex ->
                                 onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.PackSelectionBooster, null)
                                 onSelectBooster(boosterIndex)

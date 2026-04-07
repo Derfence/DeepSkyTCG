@@ -24,6 +24,7 @@ import fr.aumombelli.dstcg.ui.viewmodel.PackSelectionUiState
 import java.time.Duration
 import java.time.Instant
 import kotlin.math.abs
+import kotlin.math.absoluteValue
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -245,6 +246,66 @@ class PackSelectionScreenTest {
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag("pack-booster-3").assertIsDisplayed()
+    }
+
+    @Test
+    fun selected_extension_hero_expands_over_header_area() {
+        val state = mutableStateOf(
+            PackSelectionUiState(
+                isLoading = false,
+                extensions = listOf(
+                    ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                ),
+                selectedExtensionId = "astronomes-en-herbe",
+            ),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackSelectionScreen(
+                state = state.value,
+                onRefresh = {},
+                onSelectExtension = {},
+                onSelectBooster = {},
+                onOpenPack = {},
+                onPackRevealReady = {},
+                packReadySignal = 0,
+                showBackground = false,
+            )
+        }
+
+        composeRule.mainClock.advanceTimeBy(1_000)
+        composeRule.waitForIdle()
+
+        val screenBounds = composeRule.onNodeWithTag("pack-screen-root").fetchSemanticsNode().boundsInRoot
+        val titleBounds = composeRule.onNodeWithTag("pack-title").fetchSemanticsNode().boundsInRoot
+        val stageBounds = composeRule.onNodeWithTag("pack-extension-stage").fetchSemanticsNode().boundsInRoot
+        val heroBounds = composeRule.onNodeWithTag("pack-extension-hero").fetchSemanticsNode().boundsInRoot
+
+        assertTrue(
+            "Expected hero top ${heroBounds.top} to be above title top ${titleBounds.top}.",
+            heroBounds.top <= titleBounds.top,
+        )
+        assertTrue(
+            "Expected hero left ${heroBounds.left} to align with screen left ${screenBounds.left}.",
+            (heroBounds.left - screenBounds.left).absoluteValue <= 2f,
+        )
+        assertTrue(
+            "Expected hero top ${heroBounds.top} to align with screen top ${screenBounds.top}.",
+            (heroBounds.top - screenBounds.top).absoluteValue <= 2f,
+        )
+        assertTrue(
+            "Expected hero height ${heroBounds.height} to exceed stage height ${stageBounds.height}.",
+            heroBounds.height > stageBounds.height,
+        )
+        assertTrue(
+            "Expected hero right ${heroBounds.right} to align with screen right ${screenBounds.right}.",
+            (heroBounds.right - screenBounds.right).absoluteValue <= 2f,
+        )
+        assertTrue(
+            "Expected hero bottom ${heroBounds.bottom} to align with screen bottom ${screenBounds.bottom}.",
+            (heroBounds.bottom - screenBounds.bottom).absoluteValue <= 2f,
+        )
     }
 
     @Test

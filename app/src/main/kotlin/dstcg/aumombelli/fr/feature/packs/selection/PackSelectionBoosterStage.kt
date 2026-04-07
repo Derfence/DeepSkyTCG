@@ -3,16 +3,19 @@ package fr.aumombelli.dstcg.feature.packs.selection
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -21,8 +24,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -44,61 +49,158 @@ internal fun ExtensionBoosterStage(
     drawLocked: Boolean,
     selectedBoosterIndex: Int?,
     isAwaitingPackResult: Boolean,
+    screenBounds: Rect? = null,
     onSelectBooster: (Int) -> Unit,
     onSelectedBoosterBoundsChanged: (PackRevealBounds?) -> Unit,
     onFirstBoosterBoundsChanged: (Rect?) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-        val heroHeight = lerp(EXTENSION_CARD_HEIGHT, maxHeight, heroProgress)
+    var stageLeftInsetPx by remember { mutableFloatStateOf(0f) }
+    var stageRightInsetPx by remember { mutableFloatStateOf(0f) }
+    var stageTopInsetPx by remember { mutableFloatStateOf(0f) }
+    var stageBottomInsetPx by remember { mutableFloatStateOf(0f) }
+
+    BoxWithConstraints(
+        modifier = modifier
+            .fillMaxSize()
+            .testTag("pack-extension-stage")
+            .onGloballyPositioned { coordinates ->
+                val stageBounds = coordinates.boundsInRoot()
+                val currentScreenBounds = screenBounds
+                stageLeftInsetPx = if (currentScreenBounds != null) {
+                    (stageBounds.left - currentScreenBounds.left).coerceAtLeast(0f)
+                } else {
+                    0f
+                }
+                stageRightInsetPx = if (currentScreenBounds != null) {
+                    (currentScreenBounds.right - stageBounds.right).coerceAtLeast(0f)
+                } else {
+                    0f
+                }
+                stageTopInsetPx = if (currentScreenBounds != null) {
+                    (stageBounds.top - currentScreenBounds.top).coerceAtLeast(0f)
+                } else {
+                    0f
+                }
+                stageBottomInsetPx = if (currentScreenBounds != null) {
+                    (currentScreenBounds.bottom - stageBounds.bottom).coerceAtLeast(0f)
+                } else {
+                    0f
+                }
+            },
+    ) {
+        val stageLeftInset = with(LocalDensity.current) { stageLeftInsetPx.toDp() }
+        val stageRightInset = with(LocalDensity.current) { stageRightInsetPx.toDp() }
+        val stageTopInset = with(LocalDensity.current) { stageTopInsetPx.toDp() }
+        val stageBottomInset = with(LocalDensity.current) { stageBottomInsetPx.toDp() }
+        val heroWidth = lerp(
+            maxWidth,
+            maxWidth + stageLeftInset + stageRightInset,
+            heroProgress,
+        )
+        val heroHeight = lerp(
+            EXTENSION_CARD_HEIGHT,
+            maxHeight + stageTopInset + stageBottomInset,
+            heroProgress,
+        )
+        val heroLeft = lerp(
+            start = 0.dp,
+            stop = -stageLeftInset,
+            fraction = heroProgress,
+        )
         val heroTop = lerp(
             start = EXTENSION_LIST_TOP_PADDING +
                 (EXTENSION_CARD_HEIGHT + EXTENSION_CARD_SPACING) * extensionIndex.toFloat(),
-            stop = 0.dp,
+            stop = -stageTopInset,
             fraction = heroProgress,
         )
 
-        MotionCard(
+        OverflowTopAlignedHero(
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .padding(top = heroTop)
-                .fillMaxWidth()
-                .height(heroHeight),
+                .absoluteOffset(x = heroLeft, y = heroTop)
+                .fillMaxWidth(),
+            width = heroWidth,
+            height = heroHeight,
         ) {
+            MotionCard(
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(18.dp),
+                ) {
+                    androidx.compose.material3.Text(
+                        text = extension.name,
+                        style = androidx.compose.material3.MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .graphicsLayer {
+                                alpha = (1f - boosterSelectionProgress).coerceIn(0f, 1f)
+                                translationY = (1f - heroProgress) * 112f
+                                translationX = (1f - heroProgress) * -76f
+                            },
+                    )
+                    BoosterField(
+                        extension = extension,
+                        selectedBoosterIndex = selectedBoosterIndex,
+                        drawLocked = drawLocked,
+                        isAwaitingPackResult = isAwaitingPackResult,
+                        onSelectBooster = onSelectBooster,
+                        onSelectedBoosterBoundsChanged = onSelectedBoosterBoundsChanged,
+                        onFirstBoosterBoundsChanged = onFirstBoosterBoundsChanged,
+                        introProgress = boosterIntroProgress,
+                        selectionProgress = boosterSelectionProgress,
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .fillMaxSize()
+                            .padding(
+                                start = stageLeftInset,
+                                top = 88.dp + stageTopInset,
+                                end = stageRightInset,
+                                bottom = 18.dp + stageBottomInset,
+                            ),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun OverflowTopAlignedHero(
+    width: androidx.compose.ui.unit.Dp,
+    height: androidx.compose.ui.unit.Dp,
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    Layout(
+        modifier = modifier,
+        content = {
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(18.dp),
-            ) {
-                androidx.compose.material3.Text(
-                    text = extension.name,
-                    style = androidx.compose.material3.MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .graphicsLayer {
-                            alpha = (1f - boosterSelectionProgress).coerceIn(0f, 1f)
-                            translationY = (1f - heroProgress) * 112f
-                            translationX = (1f - heroProgress) * -76f
-                        },
-                )
-                BoosterField(
-                    extension = extension,
-                    selectedBoosterIndex = selectedBoosterIndex,
-                    drawLocked = drawLocked,
-                    isAwaitingPackResult = isAwaitingPackResult,
-                    onSelectBooster = onSelectBooster,
-                    onSelectedBoosterBoundsChanged = onSelectedBoosterBoundsChanged,
-                    onFirstBoosterBoundsChanged = onFirstBoosterBoundsChanged,
-                    introProgress = boosterIntroProgress,
-                    selectionProgress = boosterSelectionProgress,
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .fillMaxSize()
-                        .padding(top = 88.dp, bottom = 18.dp),
-                )
-            }
+                    .width(width)
+                    .height(height)
+                    .testTag("pack-extension-hero"),
+                content = content,
+            )
+        },
+    ) { measurables, constraints ->
+        val childConstraints = constraints.copy(
+            minWidth = width.roundToPx(),
+            maxWidth = width.roundToPx(),
+            minHeight = height.roundToPx(),
+            maxHeight = height.roundToPx(),
+        )
+        val placeable = measurables.single().measure(childConstraints)
+        layout(
+            width = constraints.maxWidth,
+            height = constraints.maxHeight,
+        ) {
+            placeable.placeRelative(0, 0)
         }
     }
 }
