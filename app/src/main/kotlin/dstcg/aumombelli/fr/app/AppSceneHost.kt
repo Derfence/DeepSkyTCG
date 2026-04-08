@@ -322,7 +322,15 @@ internal fun AppSceneHost(
                 LaunchedEffect(equipmentViewModel) {
                     equipmentViewModel.events.collect { event ->
                         when (event) {
-                            is EquipmentEvent.Activated -> onboardingCoordinator.onEquipmentActivated()
+                            is EquipmentEvent.Activated -> {
+                                sceneStateHolder.value = sceneStateHolder.value
+                                    .hideOnboardingHints()
+                                    .withCoachmarkTargetBounds(
+                                        NewPlayerOnboardingTarget.EquipmentActivation,
+                                        null,
+                                    )
+                                onboardingCoordinator.onEquipmentActivated()
+                            }
                         }
                     }
                 }

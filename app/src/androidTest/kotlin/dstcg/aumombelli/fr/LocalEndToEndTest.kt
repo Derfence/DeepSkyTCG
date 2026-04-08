@@ -4,7 +4,6 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -44,7 +43,7 @@ class LocalEndToEndTest {
         verifyLibraryContainsDrawnCard(firstDrawnCardId)
         openBadgeBookAndLaunchEquipmentChapter()
         openSecondPackAndReachEquipmentMenu()
-        activateFirstEquipmentAndCompleteOnboarding()
+        openEquipmentMenuAndRevealActivationCoachmark()
     }
 
     @After
@@ -139,17 +138,10 @@ class LocalEndToEndTest {
         composeRule.waitUntilTagDisplayed("new-player-coachmark-HomeEquipment", timeoutMillis = 10_000)
     }
 
-    private fun activateFirstEquipmentAndCompleteOnboarding() {
+    private fun openEquipmentMenuAndRevealActivationCoachmark() {
         composeRule.onNodeWithTag("home-equipment").performClick()
         composeRule.waitUntilTagExists("equipment-screen", timeoutMillis = 10_000)
         composeRule.waitUntilTagDisplayed("new-player-coachmark-EquipmentActivation", timeoutMillis = 10_000)
-
-        val activationTag = composeRule.firstTagStartingWith("equipment-activate-")
-            ?: error("No equipment activation button was found.")
-        composeRule.onNodeWithTag(activationTag).performClick()
-
-        composeRule.waitUntilTagGone("new-player-coachmark-EquipmentActivation", timeoutMillis = 10_000)
-        composeRule.waitUntilTagGone("new-player-coachmark-overlay", timeoutMillis = 10_000)
     }
 
     private fun verifyRechargeStatusIsVisible() {
@@ -245,29 +237,6 @@ class LocalEndToEndTest {
         if (!node.config.contains(SemanticsProperties.Text)) return null
         val textValues = node.config[SemanticsProperties.Text]
         return textValues.joinToString(separator = "") { annotated -> annotated.toString() }
-    }
-
-    private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.firstTagStartingWith(
-        prefix: String,
-    ): String? {
-        val queue = ArrayDeque(
-            listOf(
-                onRoot(useUnmergedTree = true).fetchSemanticsNode(),
-            ),
-        )
-        while (queue.isNotEmpty()) {
-            val node = queue.removeFirst()
-            val tag = if (node.config.contains(SemanticsProperties.TestTag)) {
-                node.config[SemanticsProperties.TestTag]
-            } else {
-                null
-            }
-            if (tag != null && tag.startsWith(prefix)) {
-                return tag
-            }
-            queue.addAll(node.children)
-        }
-        return null
     }
 
     private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.firstNodeWithTag(

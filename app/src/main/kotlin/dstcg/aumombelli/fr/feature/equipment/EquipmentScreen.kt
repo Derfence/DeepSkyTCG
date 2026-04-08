@@ -63,14 +63,18 @@ fun EquipmentScreen(
     onOnboardingActivationBoundsChanged: (Rect?) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    val onboardingActivationTargetEnabled =
+        contentVisible &&
+            state.activatingCardId == null &&
+            state.activeEffects.isEmpty()
     val firstActivatableCardId = state.sections.asSequence()
         .flatMap { it.cards.asSequence() }
-        .firstOrNull { it.activationEnabled }
+        .firstOrNull { it.activationEnabled && onboardingActivationTargetEnabled }
         ?.definition
         ?.id
 
-    LaunchedEffect(firstActivatableCardId) {
-        if (firstActivatableCardId == null) {
+    LaunchedEffect(firstActivatableCardId, onboardingActivationTargetEnabled) {
+        if (firstActivatableCardId == null || !onboardingActivationTargetEnabled) {
             onOnboardingActivationBoundsChanged(null)
         }
     }
@@ -506,7 +510,12 @@ private fun EquipmentInventoryCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .onGloballyPositioned { coordinates ->
-                            if (highlightOnboardingActivationTarget && contentVisible) {
+                            if (
+                                highlightOnboardingActivationTarget &&
+                                contentVisible &&
+                                card.activationEnabled &&
+                                !isActivating
+                            ) {
                                 onOnboardingActivationBoundsChanged(coordinates.boundsInRoot())
                             }
                         }

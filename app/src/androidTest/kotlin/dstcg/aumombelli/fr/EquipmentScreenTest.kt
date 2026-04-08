@@ -2,6 +2,10 @@ package fr.aumombelli.dstcg
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasTestTag
@@ -18,6 +22,7 @@ import fr.aumombelli.dstcg.feature.equipment.EquipmentSectionUi
 import fr.aumombelli.dstcg.feature.equipment.EquipmentUiState
 import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.ui.screen.EquipmentScreen
+import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
 
@@ -220,6 +225,127 @@ class EquipmentScreenTest {
         composeRule.onNodeWithTag("equipment-card-observatory-1").assertIsDisplayed()
         composeRule.onNodeWithTag("equipment-cards-observatory").performScrollToIndex(2)
         composeRule.onNodeWithTag("equipment-card-observatory-3").assertIsDisplayed()
+    }
+
+    @Test
+    fun equipment_activation_target_is_cleared_when_activation_starts() {
+        var state by mutableStateOf(
+            EquipmentUiState(
+                isLoading = false,
+                sections = listOf(
+                    testEquipmentSection(
+                        type = EquipmentType.Observatory,
+                        statusLabel = "1 carte en reserve",
+                        cards = listOf(
+                            testEquipmentInventoryCard(
+                                definition = testEquipmentCardDefinition(
+                                    id = "observatory-1",
+                                    type = EquipmentType.Observatory,
+                                    displayName = "Observatoire debutant",
+                                    level = 1,
+                                ),
+                                stockCount = 1,
+                                activationCount = 0,
+                                activationEnabled = true,
+                            ),
+                        ),
+                    ),
+                    testEquipmentSection(
+                        type = EquipmentType.Telescope,
+                        statusLabel = "1 carte en reserve",
+                        cards = listOf(
+                            testEquipmentInventoryCard(
+                                definition = testEquipmentCardDefinition(
+                                    id = "telescope-1",
+                                    type = EquipmentType.Telescope,
+                                    displayName = "Telescope debutant",
+                                    level = 1,
+                                ),
+                                stockCount = 1,
+                                activationCount = 0,
+                                activationEnabled = true,
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+        var lastReportedBounds: Rect? = null
+
+        composeRule.setContent {
+            EquipmentScreen(
+                state = state,
+                onRefresh = {},
+                onActivateEquipment = {},
+                onOnboardingActivationBoundsChanged = { bounds ->
+                    lastReportedBounds = bounds
+                },
+            )
+        }
+
+        composeRule.waitUntil(timeoutMillis = 5_000) { lastReportedBounds != null }
+
+        composeRule.runOnIdle {
+            state = state.copy(activatingCardId = "observatory-1")
+        }
+
+        composeRule.waitUntil(timeoutMillis = 5_000) { lastReportedBounds == null }
+
+        composeRule.runOnIdle {
+            state = state.copy(
+                activatingCardId = null,
+                activeEffects = listOf(
+                    EquipmentActiveSummaryItemUi(
+                        type = EquipmentType.Observatory,
+                        visual = testEquipmentCategoryVisual(EquipmentType.Observatory),
+                        displayName = "Observatoire debutant",
+                        bonusLabel = "x1,5 recharge",
+                        packsRemaining = 3,
+                    ),
+                ),
+                sections = listOf(
+                    testEquipmentSection(
+                        type = EquipmentType.Observatory,
+                        statusLabel = "3 packs actifs",
+                        lastActivatedLabel = "Observatoire debutant",
+                        cards = listOf(
+                            testEquipmentInventoryCard(
+                                definition = testEquipmentCardDefinition(
+                                    id = "observatory-1",
+                                    type = EquipmentType.Observatory,
+                                    displayName = "Observatoire debutant",
+                                    level = 1,
+                                ),
+                                stockCount = 0,
+                                activationCount = 1,
+                                isActive = true,
+                                packsRemaining = 3,
+                            ),
+                        ),
+                    ),
+                    testEquipmentSection(
+                        type = EquipmentType.Telescope,
+                        statusLabel = "1 carte en reserve",
+                        cards = listOf(
+                            testEquipmentInventoryCard(
+                                definition = testEquipmentCardDefinition(
+                                    id = "telescope-1",
+                                    type = EquipmentType.Telescope,
+                                    displayName = "Telescope debutant",
+                                    level = 1,
+                                ),
+                                stockCount = 1,
+                                activationCount = 0,
+                                activationEnabled = true,
+                            ),
+                        ),
+                    ),
+                ),
+            )
+        }
+
+        composeRule.waitForIdle()
+        assertNull(lastReportedBounds)
     }
 
     private fun testEquipmentSection(
