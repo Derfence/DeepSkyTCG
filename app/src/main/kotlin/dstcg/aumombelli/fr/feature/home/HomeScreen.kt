@@ -7,11 +7,13 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
@@ -41,6 +43,7 @@ import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
@@ -134,7 +137,7 @@ fun HomeScreen(
             .fillMaxSize()
             .background(brush = backgroundBrush),
     ) {
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .dstcgContentInsetsPadding(includeBottom = true)
@@ -144,6 +147,11 @@ fun HomeScreen(
                     translationY = contentTranslationY
                 },
         ) {
+            val heroCardWidth = calculateHomeHeroCardWidth(
+                availableWidth = maxWidth,
+                availableHeight = maxHeight,
+            )
+
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
@@ -210,7 +218,7 @@ fun HomeScreen(
                 interactionTestTag = "home-open-pack",
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .fillMaxWidth(0.76f)
+                    .width(heroCardWidth)
                     .aspectRatio(TRADING_CARD_WIDTH_OVER_HEIGHT)
                     .onGloballyPositioned { coordinates ->
                         onHeroCardTopChanged(coordinates.boundsInRoot().top)
@@ -327,6 +335,17 @@ fun HomeScreen(
             )
         }
     }
+}
+
+private fun calculateHomeHeroCardWidth(
+    availableWidth: Dp,
+    availableHeight: Dp,
+): Dp {
+    val widthLimitedSize = availableWidth * 0.82f
+    val heightLimitedSize = availableHeight * 0.37f
+    return widthLimitedSize
+        .coerceAtMost(heightLimitedSize)
+        .coerceAtMost(320.dp)
 }
 
 @Composable

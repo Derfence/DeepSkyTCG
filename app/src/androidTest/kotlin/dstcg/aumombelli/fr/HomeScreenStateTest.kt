@@ -1,7 +1,10 @@
 package fr.aumombelli.dstcg
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -15,10 +18,13 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
 import fr.aumombelli.dstcg.feature.home.HomeScreen
 import fr.aumombelli.dstcg.feature.home.HomeUiState
+import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.theme.DstcgTheme
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import androidx.compose.ui.unit.dp
 
 class HomeScreenStateTest {
     @get:Rule
@@ -191,6 +197,38 @@ class HomeScreenStateTest {
         }
     }
 
+    @Test
+    fun pack_card_size_adapts_to_viewport_height_while_preserving_ratio() {
+        val viewportWidthDp = mutableStateOf(411)
+        val viewportHeightDp = mutableStateOf(731)
+        setHomeScreenContentInViewport(
+            widthDp = viewportWidthDp,
+            heightDp = viewportHeightDp,
+            state = HomeUiState(isLoading = false),
+        )
+        composeRule.waitForIdle()
+        val shortViewportBounds = composeRule.onNodeWithTag("home-open-pack").fetchSemanticsNode().boundsInRoot
+
+        composeRule.runOnIdle {
+            viewportWidthDp.value = 393
+            viewportHeightDp.value = 808
+        }
+        composeRule.waitForIdle()
+        val tallViewportBounds = composeRule.onNodeWithTag("home-open-pack").fetchSemanticsNode().boundsInRoot
+
+        assertTrue(tallViewportBounds.width > shortViewportBounds.width)
+        assertEquals(
+            TRADING_CARD_WIDTH_OVER_HEIGHT,
+            shortViewportBounds.width / shortViewportBounds.height,
+            0.01f,
+        )
+        assertEquals(
+            TRADING_CARD_WIDTH_OVER_HEIGHT,
+            tallViewportBounds.width / tallViewportBounds.height,
+            0.01f,
+        )
+    }
+
     private fun setHomeScreenContent(
         initialState: HomeUiState,
         onResetProgress: () -> Unit = {},
@@ -211,5 +249,33 @@ class HomeScreenStateTest {
             }
         }
         return state
+    }
+
+    private fun setHomeScreenContentInViewport(
+        widthDp: MutableState<Int>,
+        heightDp: MutableState<Int>,
+        state: HomeUiState,
+    ) {
+        composeRule.setContent {
+            DstcgTheme {
+                Box(
+                    modifier = Modifier.size(
+                        width = widthDp.value.dp,
+                        height = heightDp.value.dp,
+                    ),
+                ) {
+                    HomeScreen(
+                        state = state,
+                        onOpenPack = {},
+                        onOpenLibrary = {},
+                        onOpenEquipment = {},
+                        onOpenBadgeBook = {},
+                        onResetProgress = {},
+                        showBackground = false,
+                        contentVisible = true,
+                    )
+                }
+            }
+        }
     }
 }
