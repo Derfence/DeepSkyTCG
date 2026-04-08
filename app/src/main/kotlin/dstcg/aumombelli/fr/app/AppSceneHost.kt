@@ -9,9 +9,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -39,6 +37,7 @@ import fr.aumombelli.dstcg.feature.badges.BadgeUnlockCelebrationOverlay
 import fr.aumombelli.dstcg.feature.equipment.EquipmentScreen
 import fr.aumombelli.dstcg.feature.equipment.EquipmentEvent
 import fr.aumombelli.dstcg.feature.equipment.EquipmentViewModel
+import fr.aumombelli.dstcg.feature.home.HOME_LOGO_LANDING_SCALE
 import fr.aumombelli.dstcg.feature.home.HomeScreen
 import fr.aumombelli.dstcg.feature.home.HomeViewModel
 import fr.aumombelli.dstcg.feature.library.LibraryScreen
@@ -128,13 +127,19 @@ internal fun AppSceneHost(
         animationSpec = tween(durationMillis = 520, easing = FastOutSlowInEasing),
         label = "home-lockup-reveal",
     )
-    val statusBarInsetPx = WindowInsets.statusBars.getTop(density).toFloat()
-    val launchBadgeBaseSize = 128.dp
-    val launchBadgeLandingSize = launchBadgeBaseSize * 0.88f
-    val launchLogoTargetTranslationY = if (sceneState.rootHeightPx > 0f && sceneState.homeHeroCardTopPx > 0f) {
-        (sceneState.homeHeroCardTopPx / 2f) - (sceneState.rootHeightPx / 2f) + (statusBarInsetPx * 0.18f)
+    val launchBadgeLandingSize = if (sceneState.homeLogoBadgeLandingSizePx > 0f) {
+        with(density) { sceneState.homeLogoBadgeLandingSizePx.toDp() }
     } else {
-        -(220f - statusBarInsetPx * 0.18f)
+        112.dp
+    }
+    val launchBadgeBaseSize = launchBadgeLandingSize / HOME_LOGO_LANDING_SCALE
+    val launchLogoTargetTranslationY = if (
+        sceneState.rootHeightPx > 0f &&
+        sceneState.homeLogoBadgeCenterYPx > 0f
+    ) {
+        sceneState.homeLogoBadgeCenterYPx - (sceneState.rootHeightPx / 2f)
+    } else {
+        -220f
     }
     val homeLogoVariant = remember(skyVariant) { homeLogoVariantFor(skyVariant) }
     val homeLogoLayoutSpec = remember(homeLogoVariant) { brandLogoLayoutSpec(homeLogoVariant) }
@@ -260,8 +265,12 @@ internal fun AppSceneHost(
                     interactionsEnabled = !sceneState.transitionLocked,
                     allowAuxiliaryActions = NewPlayerOnboardingInteractionPolicy
                         .allowsHomeAuxiliaryActions(onboardingStep),
-                    onHeroCardTopChanged = { topPx ->
-                        sceneStateHolder.value = sceneStateHolder.value.withHomeHeroCardTop(topPx)
+                    homeLogoVariant = homeLogoVariant,
+                    onHomeLogoLayoutChanged = { badgeCenterYInRootPx, landingSizePx ->
+                        sceneStateHolder.value = sceneStateHolder.value.withHomeLogoBadgeLayout(
+                            centerYPx = badgeCenterYInRootPx,
+                            landingSizePx = landingSizePx,
+                        )
                     },
                     onCoachmarkTargetBoundsChanged = { target, bounds ->
                         sceneStateHolder.value = sceneStateHolder.value.withCoachmarkTargetBounds(target, bounds)

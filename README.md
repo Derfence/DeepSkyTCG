@@ -47,6 +47,7 @@ Au lancement, l'application :
 - `model/` : modeles de catalogue, collection, packs et progression locale.
 - `assets/catalog/` : catalogue embarque (`extensions.json`, `cards.json`, `variant_profiles.json`, `game_balance.json`, `equipment_cards.json`, `equipment_settings.json`).
 - `ui/motion/LaunchLogoMark.kt` : composant de logo reutilisant les exports finaux de marque.
+- `feature/home/HomeResponsiveLayout.kt` : regles de layout responsive partagees entre l'accueil et la cible finale du logo d'introduction.
 - `res/drawable-nodpi/` et `res/mipmap-anydpi-*/` : exports PNG et ressources launcher Android derives des logos valides.
 
 ## Flux utilisateur

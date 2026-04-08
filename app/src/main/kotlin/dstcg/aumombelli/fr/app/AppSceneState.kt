@@ -17,7 +17,8 @@ internal data class AppSceneUiState(
     val packExtensionListVisible: Boolean = false,
     val transitionLocked: Boolean = false,
     val rootHeightPx: Float = 0f,
-    val homeHeroCardTopPx: Float = 0f,
+    val homeLogoBadgeCenterYPx: Float = 0f,
+    val homeLogoBadgeLandingSizePx: Float = 0f,
     val libraryRefreshSignal: Int = 0,
     val equipmentRefreshSignal: Int = 0,
     val badgeBookRefreshSignal: Int = 0,
@@ -33,7 +34,20 @@ internal data class AppSceneUiState(
 
 internal fun AppSceneUiState.withRootHeight(heightPx: Float): AppSceneUiState = copy(rootHeightPx = heightPx)
 
-internal fun AppSceneUiState.withHomeHeroCardTop(topPx: Float): AppSceneUiState = copy(homeHeroCardTopPx = topPx)
+internal fun AppSceneUiState.withHomeLogoBadgeLayout(
+    centerYPx: Float,
+    landingSizePx: Float,
+): AppSceneUiState = if (
+    kotlin.math.abs(homeLogoBadgeCenterYPx - centerYPx) < 0.5f &&
+    kotlin.math.abs(homeLogoBadgeLandingSizePx - landingSizePx) < 0.5f
+) {
+    this
+} else {
+    copy(
+        homeLogoBadgeCenterYPx = centerYPx,
+        homeLogoBadgeLandingSizePx = landingSizePx,
+    )
+}
 
 internal fun AppSceneUiState.resetLaunchSequence(): AppSceneUiState = copy(
     launchLogoVisible = false,
