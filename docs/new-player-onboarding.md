@@ -45,6 +45,7 @@ Les hints d'onboarding n'apparaissent qu'une fois les animations de transition t
 - Lors de la premiere visite bibliotheque, un micro-hint local s'affiche :
   `Touche une carte obtenue pour l'ouvrir.`
 - Quand le joueur revient a l'accueil, la celebration de badge differee est rejouee si elle est encore en memoire.
+- Cette celebration demarre au centre de l'ecran, avec son libelle immediatement au-dessus du badge a l'apparition ; le libelle reste fixe pendant que le badge vient ensuite se ranger juste au-dessus du bouton `Badges` de l'accueil.
 - Apres cette celebration, un coachmark cible `Badges` tant que le carnet n'a pas ete ouvert.
 
 ### 4. Pause libre puis chapitre equipement

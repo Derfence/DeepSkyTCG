@@ -568,10 +568,13 @@ internal fun AppSceneHost(
             overlayAlpha = chestOverlayAlpha.value,
         )
 
+        val badgeCelebrationTargetBounds =
+            sceneState.coachmarkTargetBounds[NewPlayerOnboardingTarget.HomeBadges]
         val badgeCelebrationVisible = sceneState.currentScene == AppScene.Home &&
             sceneState.homeContentVisible &&
             sceneState.pendingBadgeCelebration.isNotEmpty() &&
-            !sceneState.badgeCelebrationDeferred
+            !sceneState.badgeCelebrationDeferred &&
+            badgeCelebrationTargetBounds != null
 
         onboardingCoordinator.activeCoachmark(
             currentScene = sceneState.currentScene,
@@ -589,7 +592,7 @@ internal fun AppSceneHost(
 
         BadgeUnlockCelebrationOverlay(
             badges = sceneState.pendingBadgeCelebration,
-            targetBounds = sceneState.coachmarkTargetBounds[NewPlayerOnboardingTarget.HomeBadges],
+            targetBounds = badgeCelebrationTargetBounds,
             visible = badgeCelebrationVisible,
             onFinished = transitions::completeBadgeCelebration,
             modifier = Modifier.fillMaxSize(),

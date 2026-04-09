@@ -47,12 +47,14 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.motion.MotionCard
 import fr.aumombelli.dstcg.ui.motion.BrandLogoVariant
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
+import kotlin.math.roundToInt
 
 @Composable
 fun HomeScreen(
@@ -170,9 +172,9 @@ fun HomeScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .offset { IntOffset(x = 0, y = contentTranslationY.roundToInt()) }
                         .graphicsLayer {
                             alpha = contentAlpha
-                            translationY = contentTranslationY
                         },
                 ) {
                     Box(
