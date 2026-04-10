@@ -7,12 +7,15 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
@@ -28,6 +31,7 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -36,7 +40,6 @@ import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.motion.AnimatedExtensionPackCard
 import fr.aumombelli.dstcg.ui.motion.MotionCard
-import fr.aumombelli.dstcg.ui.motion.PACK_REVEAL_WIDTH_FRACTION
 import fr.aumombelli.dstcg.ui.motion.PackRevealBounds
 
 @Composable
@@ -93,6 +96,27 @@ internal fun ExtensionBoosterStage(
         val stageRightInset = with(LocalDensity.current) { stageRightInsetPx.toDp() }
         val stageTopInset = with(LocalDensity.current) { stageTopInsetPx.toDp() }
         val stageBottomInset = with(LocalDensity.current) { stageBottomInsetPx.toDp() }
+        val layoutDirection = LocalLayoutDirection.current
+        val safeInsets = WindowInsets.safeDrawing.asPaddingValues()
+        val safeStartInset = safeInsets.calculateLeftPadding(layoutDirection)
+        val safeTopInset = safeInsets.calculateTopPadding()
+        val safeEndInset = safeInsets.calculateRightPadding(layoutDirection)
+        val safeBottomInset = safeInsets.calculateBottomPadding()
+        val screenWidth = maxWidth + stageLeftInset + stageRightInset
+        val screenHeight = maxHeight + stageTopInset + stageBottomInset
+        val stageChrome = calculatePackSelectionBoosterStageChrome(
+            screenWidth = screenWidth,
+            screenHeight = screenHeight,
+            safeStartInset = safeStartInset,
+            safeTopInset = safeTopInset,
+            safeEndInset = safeEndInset,
+            safeBottomInset = safeBottomInset,
+            stageStartInset = stageLeftInset,
+            stageTopInset = stageTopInset,
+            stageEndInset = stageRightInset,
+            stageBottomInset = stageBottomInset,
+            heroProgress = heroProgress,
+        )
         val heroWidth = lerp(
             maxWidth,
             maxWidth + stageLeftInset + stageRightInset,
@@ -127,9 +151,7 @@ internal fun ExtensionBoosterStage(
                 modifier = Modifier.fillMaxSize(),
             ) {
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(18.dp),
+                    modifier = Modifier.fillMaxSize(),
                 ) {
                     androidx.compose.material3.Text(
                         text = extension.name,
@@ -138,6 +160,8 @@ internal fun ExtensionBoosterStage(
                         color = Color.White,
                         modifier = Modifier
                             .align(Alignment.TopCenter)
+                            .absoluteOffset(y = stageChrome.titleTopPadding)
+                            .testTag("pack-extension-title")
                             .graphicsLayer {
                                 alpha = (1f - boosterSelectionProgress).coerceIn(0f, 1f)
                                 translationY = (1f - heroProgress) * 112f
@@ -158,10 +182,10 @@ internal fun ExtensionBoosterStage(
                             .align(Alignment.TopStart)
                             .fillMaxSize()
                             .padding(
-                                start = stageLeftInset,
-                                top = 88.dp + stageTopInset,
-                                end = stageRightInset,
-                                bottom = 18.dp + stageBottomInset,
+                                start = stageChrome.fieldStartPadding,
+                                top = stageChrome.fieldTopPadding,
+                                end = stageChrome.fieldEndPadding,
+                                bottom = stageChrome.fieldBottomPadding,
                             ),
                     )
                 }
@@ -227,6 +251,10 @@ private fun BoosterField(
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
         val introSequenceComplete = introProgress >= 0.99f
         var firstBoosterCoachmarkReady by remember(extension.id) { mutableStateOf(false) }
+        val gridMetrics = calculatePackSelectionBoosterGridMetrics(
+            availableWidth = maxWidth,
+            availableHeight = maxHeight,
+        )
 
         LaunchedEffect(introSequenceComplete, selectedBoosterIndex, drawLocked, isAwaitingPackResult) {
             val canShowCoachmark = introSequenceComplete &&
@@ -242,20 +270,6 @@ private fun BoosterField(
             firstBoosterCoachmarkReady = true
         }
 
-        val horizontalGap = 18.dp
-        val verticalGap = 20.dp
-        val revealWidth = minOf(
-            maxWidth * PACK_REVEAL_WIDTH_FRACTION,
-            maxHeight * TRADING_CARD_WIDTH_OVER_HEIGHT,
-        )
-        val revealHeight = revealWidth / TRADING_CARD_WIDTH_OVER_HEIGHT
-        val gridPackWidth = minOf(
-            (maxWidth - horizontalGap) / 2,
-            ((maxHeight - verticalGap) / 2) * TRADING_CARD_WIDTH_OVER_HEIGHT,
-        )
-        val gridPackHeight = gridPackWidth / TRADING_CARD_WIDTH_OVER_HEIGHT
-        val gridStartX = (maxWidth - (gridPackWidth * 2 + horizontalGap)) / 2
-        val gridStartY = (maxHeight - (gridPackHeight * 2 + verticalGap)) / 2
         val revealCenterX = maxWidth / 2
         val revealCenterY = maxHeight / 2
 
@@ -268,16 +282,16 @@ private fun BoosterField(
             }
             val row = index / 2
             val column = index % 2
-            val startCenterX = gridStartX +
-                gridPackWidth / 2 +
-                if (column == 1) gridPackWidth + horizontalGap else 0.dp
-            val startCenterY = gridStartY +
-                gridPackHeight / 2 +
-                if (row == 1) gridPackHeight + verticalGap else 0.dp
+            val startCenterX = gridMetrics.gridStartX +
+                gridMetrics.gridPackWidth / 2 +
+                if (column == 1) gridMetrics.gridPackWidth + gridMetrics.horizontalGap else 0.dp
+            val startCenterY = gridMetrics.gridStartY +
+                gridMetrics.gridPackHeight / 2 +
+                if (row == 1) gridMetrics.gridPackHeight + gridMetrics.verticalGap else 0.dp
             val currentWidth = if (isSelected) {
-                lerp(gridPackWidth, revealWidth, selectionProgress)
+                lerp(gridMetrics.gridPackWidth, gridMetrics.revealWidth, selectionProgress)
             } else {
-                gridPackWidth
+                gridMetrics.gridPackWidth
             }
             val currentHeight = currentWidth / TRADING_CARD_WIDTH_OVER_HEIGHT
             val currentCenterX = if (isSelected) {

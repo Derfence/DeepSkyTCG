@@ -1,6 +1,8 @@
 package fr.aumombelli.dstcg
 
 import android.os.SystemClock
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -15,6 +17,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.testsupport.androidTestRechargeStateWithNextChargeAt
@@ -305,6 +308,55 @@ class PackSelectionScreenTest {
         assertTrue(
             "Expected hero bottom ${heroBounds.bottom} to align with screen bottom ${screenBounds.bottom}.",
             (heroBounds.bottom - screenBounds.bottom).absoluteValue <= 2f,
+        )
+    }
+
+    @Test
+    fun selected_extension_offsets_title_from_screen_top_and_keeps_compact_boosters_large() {
+        val state = mutableStateOf(
+            PackSelectionUiState(
+                isLoading = false,
+                extensions = listOf(
+                    ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                ),
+                selectedExtensionId = "astronomes-en-herbe",
+            ),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            Box(modifier = androidx.compose.ui.Modifier.size(width = 411.dp, height = 731.dp)) {
+                PackSelectionScreen(
+                    state = state.value,
+                    onRefresh = {},
+                    onSelectExtension = {},
+                    onSelectBooster = {},
+                    onOpenPack = {},
+                    onPackRevealReady = {},
+                    packReadySignal = 0,
+                    showBackground = false,
+                )
+            }
+        }
+
+        composeRule.mainClock.advanceTimeBy(1_800)
+        composeRule.waitForIdle()
+
+        val screenBounds = composeRule.onNodeWithTag("pack-screen-root").fetchSemanticsNode().boundsInRoot
+        val titleBounds = composeRule.onNodeWithTag("pack-extension-title").fetchSemanticsNode().boundsInRoot
+        val boosterBounds = composeRule.onNodeWithTag("pack-booster-0").fetchSemanticsNode().boundsInRoot
+
+        assertTrue(
+            "Expected extension title top ${titleBounds.top} to sit below screen top ${screenBounds.top}.",
+            titleBounds.top >= screenBounds.top + 8f,
+        )
+        assertTrue(
+            "Expected first booster top ${boosterBounds.top} to stay below extension title bottom ${titleBounds.bottom}.",
+            boosterBounds.top >= titleBounds.bottom + 4f,
+        )
+        assertTrue(
+            "Expected compact booster width ${boosterBounds.width} to keep a strong presence within screen width ${screenBounds.width}.",
+            boosterBounds.width / screenBounds.width >= 0.40f,
         )
     }
 
