@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -70,6 +71,7 @@ fun PackOpeningScreen(
     var handledDismissSignal by remember(packResult?.drawnAt) { mutableIntStateOf(dismissSignal) }
     var verticalDragActive by remember(packResult?.drawnAt) { mutableStateOf(false) }
     var rootHeightPx by remember(packResult?.drawnAt) { mutableFloatStateOf(0f) }
+    var transitionBoosterBounds by remember(packResult?.drawnAt) { mutableStateOf<PackRevealBounds?>(null) }
     val scale = remember(packResult?.drawnAt) { Animatable(1f) }
     val burstProgress = remember(packResult?.drawnAt) { Animatable(0f) }
     val cardsEntranceProgress = remember(packResult?.drawnAt) { Animatable(0f) }
@@ -87,6 +89,7 @@ fun PackOpeningScreen(
         swipeOffset = 0f
         dismissRequested = false
         verticalDragActive = false
+        transitionBoosterBounds = null
         scale.snapTo(1f)
         burstProgress.snapTo(0f)
         cardsEntranceProgress.snapTo(0f)
@@ -181,19 +184,6 @@ fun PackOpeningScreen(
         }
 
         if (!cardsVisible) {
-            BoosterCover(
-                extensionId = packResult.extensionId,
-                scale = scale.value,
-                exitProgress = packExitProgress,
-                initialBoosterBounds = initialBoosterBounds,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer {
-                        alpha = 1f - dismissProgress.value
-                        translationY = dismissBaseOffset + (-720f * dismissProgress.value)
-                    },
-            )
-        } else {
             BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxSize()
@@ -213,196 +203,192 @@ fun PackOpeningScreen(
                     sceneLayout = sceneLayout,
                 )
 
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(sceneLayout.sectionSpacing),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(
-                            horizontal = sceneLayout.horizontalContentPadding,
-                            vertical = sceneLayout.verticalContentPadding,
-                        ),
+                PackOpeningRevealStageScaffold(
+                    extensionLabel = packOpeningExtensionLabel(displayCards, packResult),
+                    currentPage = 0,
+                    totalItems = revealItems.size.coerceAtLeast(1),
+                    sceneLayout = sceneLayout,
+                    progressBelowPager = progressBelowPager,
+                    headerAlpha = 0f,
                 ) {
-                    androidx.compose.material3.Text(
-                        text = "Ouverture du pack",
-                        style = if (sceneLayout.compactHeader) {
-                            androidx.compose.material3.MaterialTheme.typography.titleLarge
-                        } else {
-                            androidx.compose.material3.MaterialTheme.typography.headlineMedium
+                    BoosterCover(
+                        extensionId = packResult.extensionId,
+                        scale = scale.value,
+                        exitProgress = packExitProgress,
+                        onBoundsChanged = { bounds ->
+                            transitionBoosterBounds = bounds
                         },
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        modifier = Modifier.testTag("pack-opening-title"),
+                        modifier = Modifier.fillMaxSize(),
                     )
-                    androidx.compose.material3.Text(
-                        text = "Extension : ${packOpeningExtensionLabel(displayCards, packResult)}",
-                        color = Color(0xFFD8E6F8),
-                        style = if (sceneLayout.compactHeader) {
-                            androidx.compose.material3.MaterialTheme.typography.bodySmall
-                        } else {
-                            androidx.compose.material3.MaterialTheme.typography.bodyMedium
-                        },
-                    )
-
-                    if (revealItems.isNotEmpty()) {
-                        key(packResult.drawnAt) {
-                            val pagerState = rememberPagerState(pageCount = { revealItems.size })
-                            val currentPage = pagerState.currentPage
-                            val settledPage = pagerState.settledPage
-                            val currentItem = revealItems.getOrNull(currentPage)
-                            val pagerIsFullySettled =
-                                !pagerState.isScrollInProgress &&
-                                    currentPage == settledPage &&
-                                    abs(pagerState.currentPageOffsetFraction) < 0.001f
-                            val shouldAnimateSwipeHint =
-                                cardsVisible &&
-                                    swipeHintUnlocked &&
-                                    pagerIsFullySettled &&
-                                    fullscreenPage == null &&
-                                    !dismissRequested &&
-                                    !verticalDragActive
-                            val showSwipeHintLabel =
-                                cardsVisible &&
-                                    !dismissRequested &&
-                                    showPersistentDismissHint &&
-                                    swipeHintLabelActivated
-
-                            LaunchedEffect(packResult.drawnAt, settledPage) {
-                                if (settledPage == revealItems.lastIndex && !hasReachedLastCardOnce) {
-                                    hasReachedLastCardOnce = true
-                                }
-                            }
-
-                            LaunchedEffect(packResult.drawnAt, hasReachedLastCardOnce) {
-                                if (!hasReachedLastCardOnce || swipeHintUnlocked) return@LaunchedEffect
-                                delay(2_000)
-                                swipeHintUnlocked = true
-                            }
-
-                            LaunchedEffect(
-                                packResult.drawnAt,
-                                shouldAnimateSwipeHint,
-                                settledPage,
-                            ) {
-                                swipeHintOffset.snapTo(0f)
-                                if (!shouldAnimateSwipeHint) return@LaunchedEffect
-                                delay(450)
-
-                                while (true) {
-                                    swipeHintOffset.animateTo(
-                                        targetValue = -26f,
-                                        animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
-                                    )
-                                    swipeHintOffset.animateTo(
-                                        targetValue = 0f,
-                                        animationSpec = tween(durationMillis = 360, easing = FastOutSlowInEasing),
-                                    )
-                                    delay(1_150)
-                                }
-                            }
-
-                            LaunchedEffect(
-                                packResult.drawnAt,
-                                shouldAnimateSwipeHint,
-                                showPersistentDismissHint,
-                            ) {
-                                if (!showPersistentDismissHint || !shouldAnimateSwipeHint) return@LaunchedEffect
-                                delay(450)
-                                swipeHintLabelActivated = true
-                            }
-
-                            LaunchedEffect(packResult.drawnAt) {
-                                snapshotFlow {
-                                    PagerScrollSnapshot(
-                                        isScrollInProgress = pagerState.isScrollInProgress,
-                                        currentPage = pagerState.currentPage,
-                                        offsetFraction = pagerState.currentPageOffsetFraction,
-                                    )
-                                }.collect { snapshot ->
-                                    if (
-                                        !snapshot.isScrollInProgress &&
-                                        abs(snapshot.offsetFraction) > 0.001f
-                                    ) {
-                                        pagerState.animateScrollToPage(snapshot.currentPage)
-                                    }
-                                }
-                            }
-
-                            if (!progressBelowPager) {
-                                PackOpeningProgressIndicator(
-                                    currentPage = currentPage,
-                                    total = revealItems.size,
-                                )
-                            }
-
-                            if (currentItem != null) {
-                                androidx.compose.material3.Text(
-                                    text = currentItem.id,
-                                    modifier = Modifier
-                                        .size(0.dp)
-                                        .testTag("pack-opening-current-card-id"),
-                                )
-                            }
-
-                            Box(
-                                modifier = Modifier.weight(1f),
-                            ) {
-                                HorizontalPager(
-                                    state = pagerState,
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .testTag("pack-opening-pager")
-                                        .graphicsLayer {
-                                            alpha = cardsEntranceProgress.value
-                                            translationY = (1f - cardsEntranceProgress.value) *
-                                                if (rootHeightPx > 0f) rootHeightPx else 960f
-                                        },
-                                ) { page ->
-                                    RevealCard(
-                                        item = revealItems[page],
-                                        isCurrentPage = page == currentPage,
-                                        showPreviousArrow = page == currentPage && page > 0,
-                                        showNextArrow = page == currentPage && page < revealItems.lastIndex,
-                                        cardTranslationY = if (page == currentPage) swipeHintOffset.value else 0f,
-                                        nudgeActive = page == settledPage && shouldAnimateSwipeHint,
-                                        onOpenFullscreen = {
-                                            if (revealItems[page] is AstroPackRevealUiItem) {
-                                                fullscreenPage = page
-                                            }
-                                        },
-                                    )
-                                }
-
-                                if (showSwipeHintLabel) {
-                                    androidx.compose.material3.Text(
-                                        text = "Glisse vers le haut pour revenir au menu.",
-                                        color = Color(0xFFF8D98D),
-                                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
-                                        modifier = Modifier
-                                            .align(Alignment.TopCenter)
-                                            .padding(top = sceneLayout.hintLabelTopPadding)
-                                            .testTag("pack-opening-swipe-hint-label"),
-                                    )
-                                }
-                            }
-
-                            if (progressBelowPager) {
-                                PackOpeningProgressIndicator(
-                                    currentPage = currentPage,
-                                    total = revealItems.size,
-                                )
-                            }
-                        }
-                    }
                 }
             }
-        }
+        } else {
+            BoxWithConstraints(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .dstcgContentInsetsPadding(includeBottom = true)
+                    .graphicsLayer {
+                        alpha = 1f - dismissProgress.value
+                        translationY = dismissBaseOffset + (-720f * dismissProgress.value)
+                    },
+            ) {
+                val sceneLayout = calculatePackOpeningSceneLayout(
+                    availableWidth = maxWidth,
+                    availableHeight = maxHeight,
+                )
+	                val progressBelowPager = shouldPlacePackOpeningProgressBelowPager(
+	                    availableWidth = maxWidth,
+	                    availableHeight = maxHeight,
+	                    sceneLayout = sceneLayout,
+	                )
+	                if (revealItems.isNotEmpty()) {
+	                    key(packResult.drawnAt) {
+	                        val pagerState = rememberPagerState(pageCount = { revealItems.size })
+	                        val currentPage = pagerState.currentPage
+	                        val settledPage = pagerState.settledPage
+	                        val currentItem = revealItems.getOrNull(currentPage)
+	                        val pagerIsFullySettled =
+	                            !pagerState.isScrollInProgress &&
+	                                currentPage == settledPage &&
+	                                abs(pagerState.currentPageOffsetFraction) < 0.001f
+	                        val shouldAnimateSwipeHint =
+	                            cardsVisible &&
+	                                swipeHintUnlocked &&
+	                                pagerIsFullySettled &&
+	                                fullscreenPage == null &&
+	                                !dismissRequested &&
+	                                !verticalDragActive
+	                        val showSwipeHintLabel =
+	                            cardsVisible &&
+	                                !dismissRequested &&
+	                                showPersistentDismissHint &&
+	                                swipeHintLabelActivated
+
+	                        LaunchedEffect(packResult.drawnAt, settledPage) {
+	                            if (settledPage == revealItems.lastIndex && !hasReachedLastCardOnce) {
+	                                hasReachedLastCardOnce = true
+	                            }
+	                        }
+
+	                        LaunchedEffect(packResult.drawnAt, hasReachedLastCardOnce) {
+	                            if (!hasReachedLastCardOnce || swipeHintUnlocked) return@LaunchedEffect
+	                            delay(2_000)
+	                            swipeHintUnlocked = true
+	                        }
+
+	                        LaunchedEffect(
+	                            packResult.drawnAt,
+	                            shouldAnimateSwipeHint,
+	                            settledPage,
+	                        ) {
+	                            swipeHintOffset.snapTo(0f)
+	                            if (!shouldAnimateSwipeHint) return@LaunchedEffect
+	                            delay(450)
+
+	                            while (true) {
+	                                swipeHintOffset.animateTo(
+	                                    targetValue = -26f,
+	                                    animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
+	                                )
+	                                swipeHintOffset.animateTo(
+	                                    targetValue = 0f,
+	                                    animationSpec = tween(durationMillis = 360, easing = FastOutSlowInEasing),
+	                                )
+	                                delay(1_150)
+	                            }
+	                        }
+
+	                        LaunchedEffect(
+	                            packResult.drawnAt,
+	                            shouldAnimateSwipeHint,
+	                            showPersistentDismissHint,
+	                        ) {
+	                            if (!showPersistentDismissHint || !shouldAnimateSwipeHint) return@LaunchedEffect
+	                            delay(450)
+	                            swipeHintLabelActivated = true
+	                        }
+
+	                        LaunchedEffect(packResult.drawnAt) {
+	                            snapshotFlow {
+	                                PagerScrollSnapshot(
+	                                    isScrollInProgress = pagerState.isScrollInProgress,
+	                                    currentPage = pagerState.currentPage,
+	                                    offsetFraction = pagerState.currentPageOffsetFraction,
+	                                )
+	                            }.collect { snapshot ->
+	                                if (
+	                                    !snapshot.isScrollInProgress &&
+	                                    abs(snapshot.offsetFraction) > 0.001f
+	                                ) {
+	                                    pagerState.animateScrollToPage(snapshot.currentPage)
+	                                }
+	                            }
+	                        }
+
+	                        PackOpeningRevealStageScaffold(
+	                            extensionLabel = packOpeningExtensionLabel(displayCards, packResult),
+	                            currentPage = currentPage,
+	                            totalItems = revealItems.size,
+	                            sceneLayout = sceneLayout,
+	                            progressBelowPager = progressBelowPager,
+	                        ) {
+	                            if (currentItem != null) {
+	                                androidx.compose.material3.Text(
+	                                    text = currentItem.id,
+	                                    modifier = Modifier
+	                                        .size(0.dp)
+	                                        .testTag("pack-opening-current-card-id"),
+	                                )
+	                            }
+
+	                            HorizontalPager(
+	                                state = pagerState,
+	                                modifier = Modifier
+	                                    .fillMaxSize()
+	                                    .testTag("pack-opening-pager")
+	                                    .graphicsLayer {
+	                                        alpha = cardsEntranceProgress.value
+	                                        translationY = (1f - cardsEntranceProgress.value) *
+	                                            if (rootHeightPx > 0f) rootHeightPx else 960f
+	                                    },
+	                            ) { page ->
+	                                RevealCard(
+	                                    item = revealItems[page],
+	                                    isCurrentPage = page == currentPage,
+	                                    showPreviousArrow = page == currentPage && page > 0,
+	                                    showNextArrow = page == currentPage && page < revealItems.lastIndex,
+	                                    cardTranslationY = if (page == currentPage) swipeHintOffset.value else 0f,
+	                                    nudgeActive = page == settledPage && shouldAnimateSwipeHint,
+	                                    onOpenFullscreen = {
+	                                        if (revealItems[page] is AstroPackRevealUiItem) {
+	                                            fullscreenPage = page
+	                                        }
+	                                    },
+	                                )
+	                            }
+
+	                            if (showSwipeHintLabel) {
+	                                androidx.compose.material3.Text(
+	                                    text = "Glisse vers le haut pour revenir au menu.",
+	                                    color = Color(0xFFF8D98D),
+	                                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+	                                    modifier = Modifier
+	                                        .align(Alignment.TopCenter)
+	                                        .padding(top = sceneLayout.hintLabelTopPadding)
+	                                        .testTag("pack-opening-swipe-hint-label"),
+	                                )
+	                            }
+	                        }
+	                    }
+	                }
+	            }
+	        }
 
         RarityBurstOverlay(
             rarityLabel = state.highestBurstRarity,
             hasHolographicBurst = state.hasHolographicBurst,
             progress = burstProgress.value,
-            originBounds = initialBoosterBounds,
+            originBounds = transitionBoosterBounds ?: initialBoosterBounds,
         )
 
         val fullscreenCard = fullscreenPage
@@ -421,13 +407,90 @@ fun PackOpeningScreen(
 private fun PackOpeningProgressIndicator(
     currentPage: Int,
     total: Int,
+    alpha: Float = 1f,
 ) {
     androidx.compose.material3.Text(
         text = "${currentPage + 1} / $total",
         color = Color.White.copy(alpha = 0.9f),
         style = androidx.compose.material3.MaterialTheme.typography.labelLarge,
-        modifier = Modifier.testTag("pack-opening-progress"),
+        modifier = Modifier
+            .graphicsLayer {
+                this.alpha = alpha
+            }
+            .testTag("pack-opening-progress"),
     )
+}
+
+@Composable
+private fun PackOpeningRevealStageScaffold(
+    extensionLabel: String,
+    currentPage: Int,
+    totalItems: Int,
+    sceneLayout: PackOpeningSceneLayout,
+    progressBelowPager: Boolean,
+    headerAlpha: Float = 1f,
+    modifier: Modifier = Modifier,
+    stageContent: @Composable BoxScope.() -> Unit,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(sceneLayout.sectionSpacing),
+        modifier = modifier
+            .fillMaxSize()
+            .padding(
+                horizontal = sceneLayout.horizontalContentPadding,
+                vertical = sceneLayout.verticalContentPadding,
+            ),
+    ) {
+        androidx.compose.material3.Text(
+            text = "Ouverture du pack",
+            style = if (sceneLayout.compactHeader) {
+                androidx.compose.material3.MaterialTheme.typography.titleLarge
+            } else {
+                androidx.compose.material3.MaterialTheme.typography.headlineMedium
+            },
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+            modifier = Modifier
+                .graphicsLayer {
+                    alpha = headerAlpha
+                }
+                .testTag("pack-opening-title"),
+        )
+        androidx.compose.material3.Text(
+            text = "Extension : $extensionLabel",
+            color = Color(0xFFD8E6F8),
+            style = if (sceneLayout.compactHeader) {
+                androidx.compose.material3.MaterialTheme.typography.bodySmall
+            } else {
+                androidx.compose.material3.MaterialTheme.typography.bodyMedium
+            },
+            modifier = Modifier.graphicsLayer {
+                alpha = headerAlpha
+            },
+        )
+
+        if (!progressBelowPager) {
+            PackOpeningProgressIndicator(
+                currentPage = currentPage,
+                total = totalItems,
+                alpha = headerAlpha,
+            )
+        }
+
+        Box(
+            modifier = Modifier.weight(1f),
+            content = stageContent,
+        )
+
+        if (progressBelowPager) {
+            PackOpeningProgressIndicator(
+                currentPage = currentPage,
+                total = totalItems,
+                alpha = headerAlpha,
+            )
+        }
+    }
 }
 
 private fun shouldPlacePackOpeningProgressBelowPager(

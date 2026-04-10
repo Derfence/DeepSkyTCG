@@ -2,6 +2,7 @@ package fr.aumombelli.dstcg.feature.packs.opening
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +25,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -36,6 +39,7 @@ import fr.aumombelli.dstcg.ui.component.AstroCardFullscreenCloseButton
 import fr.aumombelli.dstcg.ui.component.AstroCardPreviewSurface
 import fr.aumombelli.dstcg.ui.component.AstroCardSurfaceMode
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
+import fr.aumombelli.dstcg.ui.motion.PackRevealBounds
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
 
 @Composable
@@ -48,8 +52,84 @@ internal fun RevealCard(
     nudgeActive: Boolean,
     onOpenFullscreen: () -> Unit,
 ) {
-    BoxWithConstraints(
+    Box(
         modifier = Modifier.fillMaxSize(),
+    ) {
+        PackOpeningRevealCardFrame(
+            modifier = Modifier.fillMaxSize(),
+            cardTranslationY = cardTranslationY,
+        ) {
+            when (item) {
+                is AstroPackRevealUiItem -> {
+                    AstroCardPreviewSurface(
+                        displayCard = item.displayCard,
+                        mode = AstroCardSurfaceMode.PackReveal,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag(
+                                if (isCurrentPage) {
+                                    "pack-opening-current-card-surface"
+                                } else {
+                                    "pack-opening-card-surface"
+                                },
+                            ),
+                        onClick = onOpenFullscreen,
+                    )
+                }
+
+                is EquipmentPackRevealUiItem -> {
+                    EquipmentRevealSurface(
+                        item = item,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(TRADING_CARD_WIDTH_OVER_HEIGHT)
+                            .testTag(
+                                if (isCurrentPage) {
+                                    "pack-opening-current-card-surface"
+                                } else {
+                                    "pack-opening-card-surface"
+                                },
+                            ),
+                    )
+                }
+            }
+        }
+        if (showPreviousArrow) {
+            NavigationHintArrow(
+                direction = NavigationHintDirection.Left,
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .testTag("pack-opening-arrow-left"),
+            )
+        }
+        if (showNextArrow) {
+            NavigationHintArrow(
+                direction = NavigationHintDirection.Right,
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .testTag("pack-opening-arrow-right"),
+            )
+        }
+
+        if (nudgeActive) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .testTag("pack-opening-last-card-nudge"),
+            )
+        }
+    }
+}
+
+@Composable
+internal fun PackOpeningRevealCardFrame(
+    modifier: Modifier = Modifier,
+    cardTranslationY: Float = 0f,
+    onCardBoundsChanged: ((PackRevealBounds?) -> Unit)? = null,
+    content: @Composable BoxScope.() -> Unit,
+) {
+    BoxWithConstraints(
+        modifier = modifier,
     ) {
         val revealLayout = calculatePackOpeningRevealLayout(
             availableWidth = maxWidth,
@@ -74,68 +154,27 @@ internal fun RevealCard(
                     .width(revealLayout.cardWidth)
                     .graphicsLayer {
                         translationY = cardTranslationY
-                    },
+                    }
+                    .then(
+                        if (onCardBoundsChanged != null) {
+                            Modifier.onGloballyPositioned { coordinates ->
+                                val bounds = coordinates.boundsInRoot()
+                                onCardBoundsChanged(
+                                    PackRevealBounds(
+                                        leftPx = bounds.left,
+                                        topPx = bounds.top,
+                                        widthPx = bounds.width,
+                                        heightPx = bounds.height,
+                                    ),
+                                )
+                            }
+                        } else {
+                            Modifier
+                        },
+                    ),
             ) {
-                when (item) {
-                    is AstroPackRevealUiItem -> {
-                        AstroCardPreviewSurface(
-                            displayCard = item.displayCard,
-                            mode = AstroCardSurfaceMode.PackReveal,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .testTag(
-                                    if (isCurrentPage) {
-                                        "pack-opening-current-card-surface"
-                                    } else {
-                                        "pack-opening-card-surface"
-                                    },
-                                ),
-                            onClick = onOpenFullscreen,
-                        )
-                    }
-
-                    is EquipmentPackRevealUiItem -> {
-                        EquipmentRevealSurface(
-                            item = item,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(TRADING_CARD_WIDTH_OVER_HEIGHT)
-                                .testTag(
-                                    if (isCurrentPage) {
-                                        "pack-opening-current-card-surface"
-                                    } else {
-                                        "pack-opening-card-surface"
-                                    },
-                                ),
-                        )
-                    }
-                }
+                content()
             }
-        }
-
-        if (showPreviousArrow) {
-            NavigationHintArrow(
-                direction = NavigationHintDirection.Left,
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .testTag("pack-opening-arrow-left"),
-            )
-        }
-        if (showNextArrow) {
-            NavigationHintArrow(
-                direction = NavigationHintDirection.Right,
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .testTag("pack-opening-arrow-right"),
-            )
-        }
-
-        if (nudgeActive) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .testTag("pack-opening-last-card-nudge"),
-            )
         }
     }
 }

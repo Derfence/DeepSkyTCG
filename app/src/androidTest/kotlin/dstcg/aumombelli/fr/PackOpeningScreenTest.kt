@@ -89,13 +89,14 @@ class PackOpeningScreenTest {
             )
         }
 
-        composeRule.mainClock.advanceTimeBy(1_200)
+        composeRule.mainClock.advanceTimeBy(300)
         composeRule.runOnIdle { }
         composeRule.onNodeWithTag("pack-opening-booster").assertIsDisplayed()
         composeRule.assertApproxCardRatio("pack-opening-booster")
+        val boosterBoundsBeforeReveal = composeRule.boosterBounds()
         composeRule.onAllNodesWithText("Booster").assertCountEquals(0)
 
-        composeRule.mainClock.advanceTimeBy(4_500)
+        composeRule.mainClock.advanceTimeBy(5_400)
         composeRule.runOnIdle { }
 
         composeRule.onNodeWithTag("pack-opening-burst").assertIsDisplayed()
@@ -106,6 +107,11 @@ class PackOpeningScreenTest {
         composeRule.onAllNodesWithTag("pack-opening-arrow-right").assertCountEquals(1)
         composeRule.onAllNodesWithTag("pack-opening-card-name").assertCountEquals(0)
         composeRule.assertApproxCardRatio("pack-opening-current-card-surface")
+        composeRule.assertBoundsClose(
+            expected = boosterBoundsBeforeReveal,
+            actual = composeRule.currentCardBounds(),
+            tolerancePx = 2.5f,
+        )
         composeRule.mainClock.autoAdvance = true
         composeRule.firstNodeWithTag("pack-opening-current-card-surface").performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
@@ -917,6 +923,24 @@ class PackOpeningScreenTest {
     private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.currentCardBounds() =
         firstNodeWithTag("pack-opening-current-card-surface", useUnmergedTree = true)
             .fetchSemanticsNode().boundsInRoot
+
+    private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.boosterBounds() =
+        onNodeWithTag("pack-opening-booster", useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot
+
+    private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertBoundsClose(
+        expected: androidx.compose.ui.geometry.Rect,
+        actual: androidx.compose.ui.geometry.Rect,
+        tolerancePx: Float,
+    ) {
+        assertTrue(
+            "Expected bounds to stay aligned. Expected=$expected Actual=$actual",
+            abs(expected.left - actual.left) <= tolerancePx &&
+                abs(expected.top - actual.top) <= tolerancePx &&
+                abs(expected.width - actual.width) <= tolerancePx &&
+                abs(expected.height - actual.height) <= tolerancePx,
+        )
+    }
 
     private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.performDismissSwipeOnCurrentCard() {
         firstNodeWithTag("pack-opening-current-card-surface").performTouchInput {
