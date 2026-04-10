@@ -3,6 +3,9 @@ package fr.aumombelli.dstcg.app
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 
 internal object NewPlayerOnboardingInteractionPolicy {
+    fun showsPackOpeningDismissHint(step: NewPlayerOnboardingStep?): Boolean =
+        step == NewPlayerOnboardingStep.ViewLibrary
+
     fun isBlockingStep(step: NewPlayerOnboardingStep?): Boolean = when (step) {
         null,
         NewPlayerOnboardingStep.OpenSecondPackMenu,

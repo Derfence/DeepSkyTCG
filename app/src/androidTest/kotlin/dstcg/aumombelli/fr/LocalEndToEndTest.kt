@@ -133,6 +133,10 @@ class LocalEndToEndTest {
             composeRule.waitForIdle()
         }
 
+        composeRule.mainClock.advanceTimeBy(2_800)
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithTag("pack-opening-swipe-hint-label").assertCountEquals(0)
+
         composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeUp() }
         composeRule.waitForPackReturnToMenu()
         composeRule.waitUntilTagDisplayed("new-player-coachmark-HomeEquipment", timeoutMillis = 10_000)

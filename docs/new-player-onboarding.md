@@ -34,8 +34,10 @@ Les hints d'onboarding n'apparaissent qu'une fois les animations de transition t
 ### 2. Retour apres le premier pack
 
 - Le hint vertical existant dans `PackOpeningScreen` reste en place.
-- Quand le swipe est debloque, un libelle explicite s'affiche :
+- Quand le swipe est debloque, un petit nudge vertical recommence sur la carte courante.
+- Le libelle explicite n'apparait qu'au moment de ce premier nudge du tout premier pack ouvert, puis reste visible pendant cette navigation guidee dans `PackOpeningScreen` :
   `Glisse vers le haut pour revenir a l'accueil.`
+- Ce libelle est superpose au-dessus des cartes et ne doit jamais repousser leur layout vers le bas.
 - Au retour accueil, la priorite va a `Bibliotheque`.
 - Si un badge vient d'etre debloque, sa celebration reste memoiree mais differee tant que l'etape `ViewLibrary` n'est pas terminee.
 

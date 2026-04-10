@@ -507,8 +507,9 @@ internal fun AppSceneHost(
                     val openingUiState by openingViewModel.uiState.collectAsState()
                     val showPersistentDismissHint =
                         sceneState.onboardingHintsVisible &&
-                            onboardingCoordinator.uiState.currentStep != null &&
-                            onboardingCoordinator.uiState.currentStep != NewPlayerOnboardingStep.Completed
+                            NewPlayerOnboardingInteractionPolicy.showsPackOpeningDismissHint(
+                                onboardingCoordinator.uiState.currentStep,
+                            )
 
                     PackOpeningScreen(
                         state = openingUiState,

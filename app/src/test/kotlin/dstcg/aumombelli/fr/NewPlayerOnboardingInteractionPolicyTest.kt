@@ -58,4 +58,29 @@ class NewPlayerOnboardingInteractionPolicyTest {
         assertTrue(NewPlayerOnboardingInteractionPolicy.allowsPackSelectionExtensionSelection(step))
         assertTrue(NewPlayerOnboardingInteractionPolicy.allowsPackSelectionBoosterSelection(step))
     }
+
+    @Test
+    fun `pack opening dismiss hint is reserved for the first opened pack`() {
+        assertTrue(
+            NewPlayerOnboardingInteractionPolicy.showsPackOpeningDismissHint(
+                NewPlayerOnboardingStep.ViewLibrary,
+            ),
+        )
+        assertFalse(
+            NewPlayerOnboardingInteractionPolicy.showsPackOpeningDismissHint(
+                NewPlayerOnboardingStep.OpenSecondPackMenu,
+            ),
+        )
+        assertFalse(
+            NewPlayerOnboardingInteractionPolicy.showsPackOpeningDismissHint(
+                NewPlayerOnboardingStep.ViewEquipmentMenu,
+            ),
+        )
+        assertFalse(
+            NewPlayerOnboardingInteractionPolicy.showsPackOpeningDismissHint(
+                NewPlayerOnboardingStep.Completed,
+            ),
+        )
+        assertFalse(NewPlayerOnboardingInteractionPolicy.showsPackOpeningDismissHint(null))
+    }
 }

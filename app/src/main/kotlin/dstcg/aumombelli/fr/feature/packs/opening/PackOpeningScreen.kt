@@ -64,6 +64,7 @@ fun PackOpeningScreen(
     var dismissStartOffset by remember(packResult?.drawnAt) { mutableFloatStateOf(0f) }
     var hasReachedLastCardOnce by remember(packResult?.drawnAt) { mutableStateOf(false) }
     var swipeHintUnlocked by remember(packResult?.drawnAt) { mutableStateOf(false) }
+    var swipeHintLabelActivated by remember(packResult?.drawnAt) { mutableStateOf(false) }
     var swipeOffset by remember(packResult?.drawnAt) { mutableFloatStateOf(0f) }
     var dismissRequested by remember(packResult?.drawnAt) { mutableStateOf(false) }
     var handledDismissSignal by remember(packResult?.drawnAt) { mutableIntStateOf(dismissSignal) }
@@ -73,6 +74,7 @@ fun PackOpeningScreen(
     val burstProgress = remember(packResult?.drawnAt) { Animatable(0f) }
     val cardsEntranceProgress = remember(packResult?.drawnAt) { Animatable(0f) }
     val dismissProgress = remember(packResult?.drawnAt) { Animatable(0f) }
+    val swipeHintOffset = remember(packResult?.drawnAt) { Animatable(0f) }
 
     LaunchedEffect(packResult?.drawnAt) {
         if (packResult == null) return@LaunchedEffect
@@ -81,6 +83,7 @@ fun PackOpeningScreen(
         dismissStartOffset = 0f
         hasReachedLastCardOnce = false
         swipeHintUnlocked = false
+        swipeHintLabelActivated = false
         swipeOffset = 0f
         dismissRequested = false
         verticalDragActive = false
@@ -88,6 +91,7 @@ fun PackOpeningScreen(
         burstProgress.snapTo(0f)
         cardsEntranceProgress.snapTo(0f)
         dismissProgress.snapTo(0f)
+        swipeHintOffset.snapTo(0f)
         burstProgress.animateTo(1f, animationSpec = tween(durationMillis = 4800, easing = FastOutSlowInEasing))
         cardsVisible = true
         cardsEntranceProgress.animateTo(
@@ -197,22 +201,35 @@ fun PackOpeningScreen(
                     .graphicsLayer {
                         alpha = 1f - dismissProgress.value
                         translationY = dismissBaseOffset + (-720f * dismissProgress.value)
-                    }
-                    .padding(20.dp),
+                    },
             ) {
+                val sceneLayout = calculatePackOpeningSceneLayout(
+                    availableWidth = maxWidth,
+                    availableHeight = maxHeight,
+                )
                 val progressBelowPager = shouldPlacePackOpeningProgressBelowPager(
                     availableWidth = maxWidth,
                     availableHeight = maxHeight,
+                    sceneLayout = sceneLayout,
                 )
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(18.dp),
-                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(sceneLayout.sectionSpacing),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(
+                            horizontal = sceneLayout.horizontalContentPadding,
+                            vertical = sceneLayout.verticalContentPadding,
+                        ),
                 ) {
                     androidx.compose.material3.Text(
                         text = "Ouverture du pack",
-                        style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
+                        style = if (sceneLayout.compactHeader) {
+                            androidx.compose.material3.MaterialTheme.typography.titleLarge
+                        } else {
+                            androidx.compose.material3.MaterialTheme.typography.headlineMedium
+                        },
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         modifier = Modifier.testTag("pack-opening-title"),
@@ -220,6 +237,11 @@ fun PackOpeningScreen(
                     androidx.compose.material3.Text(
                         text = "Extension : ${packOpeningExtensionLabel(displayCards, packResult)}",
                         color = Color(0xFFD8E6F8),
+                        style = if (sceneLayout.compactHeader) {
+                            androidx.compose.material3.MaterialTheme.typography.bodySmall
+                        } else {
+                            androidx.compose.material3.MaterialTheme.typography.bodyMedium
+                        },
                     )
 
                     if (revealItems.isNotEmpty()) {
@@ -242,7 +264,8 @@ fun PackOpeningScreen(
                             val showSwipeHintLabel =
                                 cardsVisible &&
                                     !dismissRequested &&
-                                    (showPersistentDismissHint || shouldAnimateSwipeHint)
+                                    showPersistentDismissHint &&
+                                    swipeHintLabelActivated
 
                             LaunchedEffect(packResult.drawnAt, settledPage) {
                                 if (settledPage == revealItems.lastIndex && !hasReachedLastCardOnce) {
@@ -254,6 +277,38 @@ fun PackOpeningScreen(
                                 if (!hasReachedLastCardOnce || swipeHintUnlocked) return@LaunchedEffect
                                 delay(2_000)
                                 swipeHintUnlocked = true
+                            }
+
+                            LaunchedEffect(
+                                packResult.drawnAt,
+                                shouldAnimateSwipeHint,
+                                settledPage,
+                            ) {
+                                swipeHintOffset.snapTo(0f)
+                                if (!shouldAnimateSwipeHint) return@LaunchedEffect
+                                delay(450)
+
+                                while (true) {
+                                    swipeHintOffset.animateTo(
+                                        targetValue = -26f,
+                                        animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
+                                    )
+                                    swipeHintOffset.animateTo(
+                                        targetValue = 0f,
+                                        animationSpec = tween(durationMillis = 360, easing = FastOutSlowInEasing),
+                                    )
+                                    delay(1_150)
+                                }
+                            }
+
+                            LaunchedEffect(
+                                packResult.drawnAt,
+                                shouldAnimateSwipeHint,
+                                showPersistentDismissHint,
+                            ) {
+                                if (!showPersistentDismissHint || !shouldAnimateSwipeHint) return@LaunchedEffect
+                                delay(450)
+                                swipeHintLabelActivated = true
                             }
 
                             LaunchedEffect(packResult.drawnAt) {
@@ -308,7 +363,7 @@ fun PackOpeningScreen(
                                         isCurrentPage = page == currentPage,
                                         showPreviousArrow = page == currentPage && page > 0,
                                         showNextArrow = page == currentPage && page < revealItems.lastIndex,
-                                        cardTranslationY = 0f,
+                                        cardTranslationY = if (page == currentPage) swipeHintOffset.value else 0f,
                                         nudgeActive = page == settledPage && shouldAnimateSwipeHint,
                                         onOpenFullscreen = {
                                             if (revealItems[page] is AstroPackRevealUiItem) {
@@ -325,7 +380,7 @@ fun PackOpeningScreen(
                                         style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
                                         modifier = Modifier
                                             .align(Alignment.TopCenter)
-                                            .padding(top = 10.dp)
+                                            .padding(top = sceneLayout.hintLabelTopPadding)
                                             .testTag("pack-opening-swipe-hint-label"),
                                     )
                                 }
@@ -378,16 +433,26 @@ private fun PackOpeningProgressIndicator(
 private fun shouldPlacePackOpeningProgressBelowPager(
     availableWidth: Dp,
     availableHeight: Dp,
+    sceneLayout: PackOpeningSceneLayout,
 ): Boolean {
-    val estimatedCardWidth = (availableWidth - PackOpeningRevealHorizontalChrome).coerceAtLeast(0.dp)
+    val estimatedCardWidth = (
+        availableWidth -
+            (sceneLayout.horizontalContentPadding * 2f) -
+            PackOpeningRevealHorizontalChrome
+        ).coerceAtLeast(0.dp)
     val estimatedCardHeight = estimatedCardWidth / TRADING_CARD_WIDTH_OVER_HEIGHT
-    val estimatedPagerBudget = (availableHeight - PackOpeningRevealHeaderEstimate).coerceAtLeast(0.dp)
+    val estimatedPagerBudget = (
+        availableHeight -
+            (sceneLayout.verticalContentPadding * 2f) -
+            PackOpeningRevealHeaderEstimate -
+            (sceneLayout.sectionSpacing * 2f)
+        ).coerceAtLeast(0.dp)
     return estimatedCardHeight > estimatedPagerBudget - PackOpeningProgressReserve
 }
 
-private val PackOpeningRevealHorizontalChrome = 80.dp
-private val PackOpeningRevealHeaderEstimate = 112.dp
-private val PackOpeningProgressReserve = 40.dp
+private val PackOpeningRevealHorizontalChrome = 72.dp
+private val PackOpeningRevealHeaderEstimate = 96.dp
+private val PackOpeningProgressReserve = 32.dp
 
 private data class PagerScrollSnapshot(
     val isScrollInProgress: Boolean,

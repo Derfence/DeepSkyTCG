@@ -2,12 +2,14 @@ package fr.aumombelli.dstcg.feature.packs.opening
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -46,52 +48,67 @@ internal fun RevealCard(
     nudgeActive: Boolean,
     onOpenFullscreen: () -> Unit,
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(vertical = 18.dp, horizontal = 12.dp),
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxSize(),
     ) {
+        val revealLayout = calculatePackOpeningRevealLayout(
+            availableWidth = maxWidth,
+            availableHeight = maxHeight,
+        )
+
         Box(
             modifier = Modifier
-                .align(Alignment.Center)
-                .fillMaxWidth()
-                .padding(horizontal = 28.dp)
-                .graphicsLayer {
-                    translationY = cardTranslationY
-                },
+                .fillMaxSize()
+                .padding(
+                    horizontal = revealLayout.pageHorizontalPadding,
+                    vertical = revealLayout.pageVerticalPadding,
+                )
+                .padding(
+                    top = revealLayout.topOverlayReserve,
+                    bottom = revealLayout.bottomSafeInset,
+                ),
         ) {
-            when (item) {
-                is AstroPackRevealUiItem -> {
-                    AstroCardPreviewSurface(
-                        displayCard = item.displayCard,
-                        mode = AstroCardSurfaceMode.PackReveal,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag(
-                                if (isCurrentPage) {
-                                    "pack-opening-current-card-surface"
-                                } else {
-                                    "pack-opening-card-surface"
-                                },
-                            ),
-                        onClick = onOpenFullscreen,
-                    )
-                }
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .width(revealLayout.cardWidth)
+                    .graphicsLayer {
+                        translationY = cardTranslationY
+                    },
+            ) {
+                when (item) {
+                    is AstroPackRevealUiItem -> {
+                        AstroCardPreviewSurface(
+                            displayCard = item.displayCard,
+                            mode = AstroCardSurfaceMode.PackReveal,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag(
+                                    if (isCurrentPage) {
+                                        "pack-opening-current-card-surface"
+                                    } else {
+                                        "pack-opening-card-surface"
+                                    },
+                                ),
+                            onClick = onOpenFullscreen,
+                        )
+                    }
 
-                is EquipmentPackRevealUiItem -> {
-                    EquipmentRevealSurface(
-                        item = item,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(TRADING_CARD_WIDTH_OVER_HEIGHT)
-                            .testTag(
-                                if (isCurrentPage) {
-                                    "pack-opening-current-card-surface"
-                                } else {
-                                    "pack-opening-card-surface"
-                                },
-                            ),
-                    )
+                    is EquipmentPackRevealUiItem -> {
+                        EquipmentRevealSurface(
+                            item = item,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(TRADING_CARD_WIDTH_OVER_HEIGHT)
+                                .testTag(
+                                    if (isCurrentPage) {
+                                        "pack-opening-current-card-surface"
+                                    } else {
+                                        "pack-opening-card-surface"
+                                    },
+                                ),
+                        )
+                    }
                 }
             }
         }
