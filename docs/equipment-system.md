@@ -20,6 +20,7 @@ Chaque carte d'equipement est un consommable data-driven avec un niveau immuable
 4. La carte d'equipement obtenue va dans un inventaire dedie.
 5. Le joueur active plus tard une carte depuis l'ecran `Equipements`.
 6. L'activation consomme exactement une carte possedee et applique l'effet sur les prochains packs.
+7. A l'interieur d'un meme pack, le moteur ne renvoie jamais deux fois la meme carte exacte. Si une rarete planifiee n'a plus de carte libre, il choisit une autre carte encore inedite dans l'extension.
 
 ## Overrides onboarding
 

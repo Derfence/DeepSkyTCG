@@ -27,6 +27,11 @@ class LocalPackEngineTest {
                     name = "Nebuleuse d'Orion",
                     variantProfileId = "local-pack-profile",
                 ),
+                testCardDefinition(
+                    id = "ALP-002",
+                    name = "Galaxie d'Andromede",
+                    variantProfileId = "local-pack-profile",
+                ),
             )
             variantProfiles = listOf(localPackProfile())
             gameBalance = localPackBalance(cardsPerDraw = 2)
@@ -55,9 +60,48 @@ class LocalPackEngineTest {
         assertEquals("2026-03-24T12:00:00Z", response.drawnAt)
         assertEquals(9, response.rechargeState.availableDrawCount)
         assertEquals("2026-03-24T18:00:00Z", chargeStatus.nextChargeAt)
-        assertEquals(listOf("ALP-001", "ALP-001"), response.cards.map { it.cardId })
+        assertEquals(setOf("ALP-001", "ALP-002"), response.cards.map { it.cardId }.toSet())
+        assertEquals(2, response.cards.map { it.cardId }.distinct().size)
         assertEquals(listOf("Montagne", "Montagne"), response.cards.map { it.variant.skyQualityLabel })
         assertEquals(listOf("Holographique", "Holographique"), response.cards.map { it.variant.finishLabel })
+    }
+
+    @Test
+    fun `draw pack never duplicates the same astronomy card inside a pack`() = runTest {
+        val catalogGateway = FakeCatalogGateway().apply {
+            cards = listOf(
+                testCardDefinition(
+                    id = "ALP-001",
+                    rarityLabel = "Common",
+                    cardRarityMultiplier = 100.0,
+                    variantProfileId = "local-pack-profile",
+                ),
+                testCardDefinition(
+                    id = "ALP-002",
+                    rarityLabel = "Common",
+                    cardRarityMultiplier = 1.0,
+                    variantProfileId = "local-pack-profile",
+                ),
+            )
+            variantProfiles = listOf(localPackProfile())
+            gameBalance = localPackBalance(cardsPerDraw = 2)
+        }
+        val engine = LocalPackEngine(
+            catalogRepository = catalogGateway,
+            settings = testGameSettings(
+                now = fixedNow,
+                randomSeed = 0,
+            ),
+        )
+
+        val response = engine.drawPack(
+            extensionId = "astronomes-en-herbe",
+            progress = testProgress(testRechargeState()),
+            now = fixedNow,
+        )
+
+        assertEquals(2, response.cards.size)
+        assertEquals(2, response.cards.map { it.cardId }.distinct().size)
     }
 
     @Test

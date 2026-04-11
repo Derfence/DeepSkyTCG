@@ -19,6 +19,7 @@ import fr.aumombelli.dstcg.model.sortedRevealSlotsForPackReveal
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
+import kotlin.math.abs
 
 class PackCooldownException(
     val retryAt: String,
@@ -124,8 +125,11 @@ class LocalPackEngine(
             plannedRevealSlots = plannedRevealSlots,
             drawPolicy = equipmentDrawPolicy,
         )
+        val usedAstronomyCardIds = mutableSetOf<String>()
+        val usedEquipmentDefinitionIds = mutableSetOf<String>()
         val revealSlots = plannedRevealSlots.map { plannedSlot ->
             if (forcedEquipmentReward?.slotIndex == plannedSlot.slotIndex) {
+                usedEquipmentDefinitionIds += forcedEquipmentReward.definition.id
                 EquipmentPackRevealSlot(
                     slotIndex = plannedSlot.slotIndex,
                     definition = forcedEquipmentReward.definition,
@@ -136,6 +140,7 @@ class LocalPackEngine(
                         rarityLabel = plannedSlot.rarityLabel,
                         equipmentCards = equipmentCards,
                         replacementChancePercent = equipmentDrawPolicy.replacementChancePercent,
+                        excludedEquipmentDefinitionIds = usedEquipmentDefinitionIds,
                     )
 
                     EquipmentDrawPolicy.Disabled,
@@ -143,6 +148,7 @@ class LocalPackEngine(
                     -> null
                 }
                 if (equipmentReward != null) {
+                    usedEquipmentDefinitionIds += equipmentReward.id
                     EquipmentPackRevealSlot(
                         slotIndex = plannedSlot.slotIndex,
                         definition = equipmentReward,
@@ -154,6 +160,7 @@ class LocalPackEngine(
                         variantProfilesById = variantProfilesById,
                         runtimeCatalog = runtimeCatalog,
                         activeBonus = activeBonus,
+                        excludedCardIds = usedAstronomyCardIds,
                     )
                 }
             }
@@ -173,11 +180,14 @@ class LocalPackEngine(
         variantProfilesById: Map<String, fr.aumombelli.dstcg.model.VariantProfile>,
         runtimeCatalog: RuntimeCatalogBalance,
         activeBonus: ActiveEquipmentBonus,
+        excludedCardIds: MutableSet<String>,
     ): AstronomyPackRevealSlot {
-        val weightedCards = checkNotNull(extensionPlan.cardsByRarity[plannedSlot.rarityLabel]) {
-            "Aucune carte n'a ete configuree pour la rarete '${plannedSlot.rarityLabel}'."
-        }
-        val definition = pickWeighted(weightedCards) { it.weight }.card
+        val definition = pickUniqueAstronomyCardDefinition(
+            plannedSlot = plannedSlot,
+            extensionPlan = extensionPlan,
+            excludedCardIds = excludedCardIds,
+        )
+        excludedCardIds += definition.id
         val variantProfile = checkNotNull(variantProfilesById[definition.variantProfileId]) {
             "Profil de variante inconnu '${definition.variantProfileId}' pour la carte '${definition.id}'."
         }
@@ -255,6 +265,54 @@ class LocalPackEngine(
         )
     }
 
+    private fun pickUniqueAstronomyCardDefinition(
+        plannedSlot: PlannedRevealSlot,
+        extensionPlan: ExtensionDrawPlan,
+        excludedCardIds: Set<String>,
+    ) = pickWeighted(
+        findUniqueAstronomyCandidatePool(
+            plannedSlot = plannedSlot,
+            extensionPlan = extensionPlan,
+            excludedCardIds = excludedCardIds,
+        ),
+    ) { it.weight }.card
+
+    private fun findUniqueAstronomyCandidatePool(
+        plannedSlot: PlannedRevealSlot,
+        extensionPlan: ExtensionDrawPlan,
+        excludedCardIds: Set<String>,
+    ): List<WeightedCardDefinition> {
+        val targetRarityPool = checkNotNull(extensionPlan.cardsByRarity[plannedSlot.rarityLabel]) {
+            "Aucune carte n'a ete configuree pour la rarete '${plannedSlot.rarityLabel}'."
+        }.filterNot { candidate -> candidate.card.id in excludedCardIds }
+        if (targetRarityPool.isNotEmpty()) {
+            return targetRarityPool
+        }
+
+        val targetRarityPriority = raritySortPriority(plannedSlot.rarityLabel)
+        val fallbackPool = extensionPlan.cardsByRarity.keys
+            .asSequence()
+            .filterNot { rarity -> rarity == plannedSlot.rarityLabel }
+            .sortedWith(
+                compareBy<String>(
+                    { rarity -> abs(raritySortPriority(rarity) - targetRarityPriority) },
+                    { rarity -> -extensionPlan.rarityProbabilities.getValue(rarity) },
+                    ::raritySortPriority,
+                ),
+            )
+            .mapNotNull { rarity ->
+                extensionPlan.cardsByRarity
+                    .getValue(rarity)
+                    .filterNot { candidate -> candidate.card.id in excludedCardIds }
+                    .takeIf { candidates -> candidates.isNotEmpty() }
+            }
+            .firstOrNull()
+
+        return requireNotNull(fallbackPool) {
+            "Le tirage requiert plus de cartes uniques que l'extension n'en propose."
+        }
+    }
+
     private fun <T> pickWeighted(entries: List<T>, weightOf: (T) -> Int): T {
         val totalWeight = entries.sumOf(weightOf)
         require(totalWeight > 0) { "Les poids doivent etre strictement positifs." }
@@ -292,11 +350,14 @@ class LocalPackEngine(
         rarityLabel: String,
         equipmentCards: List<EquipmentCardDefinition>,
         replacementChancePercent: Double,
+        excludedEquipmentDefinitionIds: Set<String>,
     ): EquipmentCardDefinition? {
         if (rarityLabel != "Common") {
             return null
         }
-        val weightedEquipmentCards = equipmentCards.filter { it.dropWeight > 0 }
+        val weightedEquipmentCards = equipmentCards.filter { card ->
+            card.dropWeight > 0 && card.id !in excludedEquipmentDefinitionIds
+        }
         if (weightedEquipmentCards.isEmpty()) {
             return null
         }

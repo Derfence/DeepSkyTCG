@@ -318,6 +318,58 @@ class LocalPackEngineEquipmentTest {
     }
 
     @Test
+    fun `standard equipment replacement does not duplicate the same equipment inside a pack`() = runTest {
+        val rewardCard = testEquipmentCardDefinition(
+            id = "mount-beginner",
+            type = EquipmentType.Mount,
+            level = 1,
+            dropWeight = 1,
+        )
+        val catalogGateway = FakeCatalogGateway().apply {
+            cards = listOf(
+                testCardDefinition(
+                    id = "ALP-001",
+                    rarityLabel = "Common",
+                    variantProfileId = "equipment-pack-profile",
+                ),
+                testCardDefinition(
+                    id = "ALP-002",
+                    rarityLabel = "Common",
+                    variantProfileId = "equipment-pack-profile",
+                ),
+            )
+            variantProfiles = listOf(equipmentPackProfile())
+            gameBalance = testGameBalanceDefinition(
+                cardsPerDraw = 2,
+                suburbanMeanPerDay = 1.0,
+                ruralMeanPerDay = 1.0,
+                mountainMeanPerDay = 1.0,
+            )
+            equipmentCards = listOf(rewardCard)
+            equipmentSettings = EquipmentSettingsDefinition(
+                commonReplacementChancePercent = 100.0,
+            )
+        }
+        val engine = LocalPackEngine(
+            catalogRepository = catalogGateway,
+            settings = testGameSettings(now = fixedNow, randomSeed = 0),
+        )
+
+        val response = engine.drawPack(
+            extensionId = "astronomes-en-herbe",
+            progress = testProgress(
+                openedPackCount = 2,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.Completed,
+            ),
+            now = fixedNow,
+        )
+
+        assertEquals(listOf(rewardCard.id), response.equipmentCards.map { it.id })
+        assertEquals(1, response.cards.size)
+        assertEquals(1, response.cards.map { it.cardId }.distinct().size)
+    }
+
+    @Test
     fun `draw pack applies mount and telescope bonuses together`() = runTest {
         val mountCard = testEquipmentCardDefinition(
             id = "mount-master",
