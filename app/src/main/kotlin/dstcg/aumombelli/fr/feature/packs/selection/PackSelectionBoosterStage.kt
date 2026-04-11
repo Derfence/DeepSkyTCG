@@ -271,6 +271,7 @@ private fun BoosterField(
     ) {
         val introSequenceComplete = introProgress >= 0.99f
         var firstBoosterCoachmarkReady by remember(extension.id) { mutableStateOf(false) }
+        var firstBoosterBounds by remember(extension.id) { mutableStateOf<Rect?>(null) }
         val gridMetrics = calculatePackSelectionBoosterGridMetrics(
             availableWidth = maxWidth,
             availableHeight = maxHeight,
@@ -281,13 +282,13 @@ private fun BoosterField(
                 selectedBoosterIndex == null &&
                 !drawLocked &&
                 !isAwaitingPackResult
-            if (!canShowCoachmark) {
-                firstBoosterCoachmarkReady = false
-                onFirstBoosterBoundsChanged(null)
-                return@LaunchedEffect
-            }
+            firstBoosterCoachmarkReady = canShowCoachmark
+        }
 
-            firstBoosterCoachmarkReady = true
+        LaunchedEffect(firstBoosterCoachmarkReady, firstBoosterBounds) {
+            onFirstBoosterBoundsChanged(
+                if (firstBoosterCoachmarkReady) firstBoosterBounds else null,
+            )
         }
 
         repeat(4) { index ->
@@ -336,17 +337,11 @@ private fun BoosterField(
                             translationY = (1f - introReveal) * 54f
                         }
                         .size(width = currentWidth, height = currentHeight)
-                        .then(
-                            if (index == 0 && firstBoosterCoachmarkReady) {
-                                Modifier.onGloballyPositioned { coordinates ->
-                                    onFirstBoosterBoundsChanged(coordinates.boundsInRoot())
-                                }
-                            } else {
-                                Modifier
-                            },
-                        )
                         .onGloballyPositioned { coordinates ->
                             val bounds = coordinates.boundsInRoot()
+                            if (index == 0) {
+                                firstBoosterBounds = bounds
+                            }
                             onBoosterBoundsChanged(
                                 index,
                                 PackRevealBounds(

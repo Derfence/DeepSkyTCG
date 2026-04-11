@@ -257,6 +257,49 @@ class PackSelectionScreenTest {
     }
 
     @Test
+    fun first_booster_keeps_the_same_node_when_coachmark_becomes_ready() {
+        val state = mutableStateOf(
+            PackSelectionUiState(
+                isLoading = false,
+                extensions = listOf(
+                    ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                ),
+                selectedExtensionId = "astronomes-en-herbe",
+            ),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackSelectionScreen(
+                state = state.value,
+                onRefresh = {},
+                onSelectExtension = {},
+                onSelectBooster = {},
+                onOpenPack = {},
+                onPackRevealReady = {},
+                packReadySignal = 0,
+                showBackground = false,
+            )
+        }
+
+        composeRule.mainClock.advanceTimeBy(1_050)
+        composeRule.waitForIdle()
+
+        val firstNodeId = composeRule.onNodeWithTag("pack-booster-0").fetchSemanticsNode().id
+
+        composeRule.mainClock.advanceTimeBy(1_000)
+        composeRule.waitForIdle()
+
+        val secondNodeId = composeRule.onNodeWithTag("pack-booster-0").fetchSemanticsNode().id
+
+        assertEquals(
+            "Expected the first booster node to stay stable when the coachmark becomes ready.",
+            firstNodeId,
+            secondNodeId,
+        )
+    }
+
+    @Test
     fun selected_extension_hero_expands_over_header_area() {
         val state = mutableStateOf(
             PackSelectionUiState(

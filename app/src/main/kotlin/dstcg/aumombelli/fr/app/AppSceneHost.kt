@@ -457,42 +457,47 @@ internal fun AppSceneHost(
                     }
                 }
 
-                PackSelectionScreen(
-                    state = uiState,
-                    onRefresh = packViewModel::refresh,
-                    onSelectExtension = { extensionId ->
-                        if (NewPlayerOnboardingInteractionPolicy.allowsPackSelectionExtensionSelection(onboardingStep)) {
-                            packViewModel.selectExtension(extensionId)
-                            scope.launch { onboardingCoordinator.onExtensionSelected() }
-                        }
-                    },
-                    onSelectBooster = { boosterIndex ->
-                        if (NewPlayerOnboardingInteractionPolicy.allowsPackSelectionBoosterSelection(onboardingStep)) {
-                            packViewModel.selectBooster(boosterIndex)
-                        }
-                    },
-                    onOpenPack = { extensionId ->
-                        if (NewPlayerOnboardingInteractionPolicy.allowsPackSelectionBoosterSelection(onboardingStep)) {
-                            packViewModel.openPack(extensionId)
-                        }
-                    },
-                    onPackRevealReady = {
-                        packViewModel.clearExtensionSelection()
-                        sceneStateHolder.value = sceneStateHolder.value.enterPackOpening()
-                    },
-                    onSelectedBoosterBoundsChanged = { bounds ->
-                        sceneStateHolder.value = sceneStateHolder.value.withPackRevealBounds(bounds)
-                    },
-                    onCoachmarkTargetBoundsChanged = { target, bounds ->
-                        sceneStateHolder.value = sceneStateHolder.value.withCoachmarkTargetBounds(target, bounds)
-                    },
-                    packReadySignal = sceneState.packReadySignal,
-                    showBackground = false,
-                    sceneVisible = sceneState.currentScene == AppScene.PackSelection && sceneState.packSceneVisible,
-                    extensionListVisible = sceneState.currentScene == AppScene.PackSelection &&
-                        sceneState.packExtensionListVisible,
-                    interactionsEnabled = !sceneState.transitionLocked && sceneState.currentScene == AppScene.PackSelection,
-                )
+                if (sceneState.currentScene == AppScene.PackSelection || sceneState.packSceneVisible) {
+                    PackSelectionScreen(
+                        state = uiState,
+                        onRefresh = packViewModel::refresh,
+                        onSelectExtension = { extensionId ->
+                            if (NewPlayerOnboardingInteractionPolicy.allowsPackSelectionExtensionSelection(onboardingStep)) {
+                                packViewModel.selectExtension(extensionId)
+                                scope.launch { onboardingCoordinator.onExtensionSelected() }
+                            }
+                        },
+                        onSelectBooster = { boosterIndex ->
+                            if (NewPlayerOnboardingInteractionPolicy.allowsPackSelectionBoosterSelection(onboardingStep)) {
+                                packViewModel.selectBooster(boosterIndex)
+                            }
+                        },
+                        onOpenPack = { extensionId ->
+                            if (NewPlayerOnboardingInteractionPolicy.allowsPackSelectionBoosterSelection(onboardingStep)) {
+                                packViewModel.openPack(extensionId)
+                            }
+                        },
+                        onPackRevealReady = {
+                            sceneStateHolder.value = sceneStateHolder.value.enterPackOpening()
+                            scope.launch {
+                                withFrameNanos { }
+                                packViewModel.clearExtensionSelection()
+                            }
+                        },
+                        onSelectedBoosterBoundsChanged = { bounds ->
+                            sceneStateHolder.value = sceneStateHolder.value.withPackRevealBounds(bounds)
+                        },
+                        onCoachmarkTargetBoundsChanged = { target, bounds ->
+                            sceneStateHolder.value = sceneStateHolder.value.withCoachmarkTargetBounds(target, bounds)
+                        },
+                        packReadySignal = sceneState.packReadySignal,
+                        showBackground = false,
+                        sceneVisible = sceneState.currentScene == AppScene.PackSelection && sceneState.packSceneVisible,
+                        extensionListVisible = sceneState.currentScene == AppScene.PackSelection &&
+                            sceneState.packExtensionListVisible,
+                        interactionsEnabled = !sceneState.transitionLocked && sceneState.currentScene == AppScene.PackSelection,
+                    )
+                }
 
                 if (sceneState.currentScene == AppScene.PackOpening) {
                     val openingViewModel: PackOpeningViewModel = viewModel(

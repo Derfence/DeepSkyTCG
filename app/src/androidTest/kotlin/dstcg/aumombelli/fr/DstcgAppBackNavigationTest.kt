@@ -147,6 +147,22 @@ class DstcgAppBackNavigationTest {
     }
 
     @Test
+    fun pack_opening_does_not_keep_pack_selection_titles_mounted_during_transition() {
+        setAppContent(backNavigationTestAppContainer())
+        startAndReachHome()
+
+        composeRule.onNodeWithTag("home-open-pack").performClick()
+        advanceUntilTagEnabled("pack-extension-enter-astronomes-en-herbe", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").performClick()
+        advanceUntilTagEnabled("pack-booster-0", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("pack-booster-0").performClick()
+        advanceUntilTagDisplayed("pack-opening-booster", timeoutMillis = 10_000)
+
+        composeRule.onAllNodesWithTag("pack-title").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("pack-extension-title").assertCountEquals(0)
+    }
+
+    @Test
     fun second_pack_selection_entry_returns_to_extension_list_before_any_new_selection() {
         setAppContent(backNavigationTestAppContainer())
         startAndReachHome()
