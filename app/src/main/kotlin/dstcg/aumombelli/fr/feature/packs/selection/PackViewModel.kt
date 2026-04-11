@@ -40,6 +40,7 @@ data class PackSelectionUiState(
     val extensions: List<ExtensionDefinition> = emptyList(),
     val currentCollection: OwnedCollection = OwnedCollection(),
     val rechargeState: PackRechargeState = PackRechargeState(),
+    val rechargeMultiplier: Double = 1.0,
     val availableDrawCount: Int = DEFAULT_MAX_STORED_DRAWS,
     val maxStoredDraws: Int = DEFAULT_MAX_STORED_DRAWS,
     val drawCooldown: Duration = DEFAULT_DRAW_COOLDOWN,
@@ -236,6 +237,7 @@ class PackViewModel(
         )
         return copy(
             rechargeState = chargeStatus.rechargeState,
+            rechargeMultiplier = rechargeMultiplier,
             availableDrawCount = chargeStatus.availableDrawCount,
             maxStoredDraws = chargeStatus.maxStoredDraws,
             drawCooldown = drawCooldown,

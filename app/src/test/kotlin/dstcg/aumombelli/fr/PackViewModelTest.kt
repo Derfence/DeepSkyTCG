@@ -1,7 +1,10 @@
 package fr.aumombelli.dstcg
 
 import fr.aumombelli.dstcg.feature.packs.selection.PackEvent
+import fr.aumombelli.dstcg.feature.packs.selection.buildLiveChargeStatus
 import fr.aumombelli.dstcg.model.DrawPackResponse
+import fr.aumombelli.dstcg.model.ActiveEquipmentEffect
+import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.ui.viewmodel.PackViewModel
@@ -72,6 +75,51 @@ class PackViewModelTest {
         assertEquals(Duration.ofHours(6), viewModel.uiState.value.remainingDuration)
         assertEquals(false, viewModel.uiState.value.isDrawLocked)
         assertEquals(1, viewModel.uiState.value.currentCollection.cards["ALP-001"]?.totalOwned)
+    }
+
+    @Test
+    fun `refresh keeps active observatory recharge multiplier in live charge status`() = runTest {
+        val observatory = testEquipmentCardDefinition(
+            id = "observatory-master",
+            type = EquipmentType.Observatory,
+            bonusValue = 2.0,
+        )
+        val catalogGateway = FakeCatalogGateway().apply {
+            extensions = listOf(ExtensionDefinition("core-alpha", "Core Alpha", "cover"))
+            equipmentCards = listOf(observatory)
+        }
+        val progressGateway = FakeProgressGateway().apply {
+            progress = StandaloneProgress(
+                collection = ownedCollectionOf(),
+                rechargeState = testRechargeStateWithNextChargeAt(
+                    availableDrawCount = 0,
+                    nextChargeAt = "2026-03-24T18:00:00Z",
+                    now = fixedNow,
+                ),
+                activeEquipmentByType = mapOf(
+                    EquipmentType.Observatory to ActiveEquipmentEffect(
+                        equipmentCardId = observatory.id,
+                        equipmentType = EquipmentType.Observatory,
+                        packsRemaining = 3,
+                    ),
+                ),
+            )
+        }
+
+        val viewModel = PackViewModel(
+            catalogRepository = catalogGateway,
+            progressRepository = progressGateway,
+            packRepository = FakePackGateway(),
+            gameSettings = gameSettings,
+        )
+        advanceUntilIdle()
+
+        assertEquals(2.0, viewModel.uiState.value.rechargeMultiplier, 0.0001)
+        assertEquals("2026-03-24T15:00:00Z", viewModel.uiState.value.nextChargeAt)
+        assertEquals(
+            "2026-03-24T15:00:00Z",
+            viewModel.uiState.value.buildLiveChargeStatus(fixedNow).nextChargeAt,
+        )
     }
 
     @Test

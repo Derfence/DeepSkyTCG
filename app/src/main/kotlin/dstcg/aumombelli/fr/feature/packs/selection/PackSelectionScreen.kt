@@ -97,13 +97,7 @@ fun PackSelectionScreen(
             )
         }
     }
-    val liveChargeStatus = buildPackChargeUiStatus(
-        rechargeState = state.rechargeState,
-        now = now,
-        drawCooldown = state.drawCooldown,
-        maxStoredDraws = state.maxStoredDraws,
-        weatherPolicy = state.weatherPolicy,
-    )
+    val liveChargeStatus = state.buildLiveChargeStatus(now)
     val weatherForecast = remember(now, state.weatherPolicy) {
         buildWeatherForecastDayUiModels(
             now = now,
@@ -415,6 +409,15 @@ fun PackSelectionScreen(
         }
     }
 }
+
+internal fun PackSelectionUiState.buildLiveChargeStatus(now: Instant) = buildPackChargeUiStatus(
+    rechargeState = rechargeState,
+    now = now,
+    drawCooldown = drawCooldown,
+    maxStoredDraws = maxStoredDraws,
+    weatherPolicy = weatherPolicy,
+    rechargeMultiplier = rechargeMultiplier,
+)
 
 private fun computeTrustedNow(
     trustedNow: Instant,
