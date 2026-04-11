@@ -533,7 +533,7 @@ private fun EquipmentInventoryCard(
                         value = "x${card.stockCount}",
                     )
                     EquipmentMetricTile(
-                        label = "Activations",
+                        label = card.definition.type.usageCountLabel(),
                         value = "${card.activationCount}",
                     )
                 }
@@ -626,6 +626,14 @@ internal fun resolveEquipmentActivationCoachmarkVisibility(
 
 private class LayoutCoordinatesHolder {
     var value: LayoutCoordinates? = null
+}
+
+private fun EquipmentType.usageCountLabel(): String = when (this) {
+    EquipmentType.Observatory,
+    EquipmentType.Telescope,
+    -> "Utilisés"
+
+    EquipmentType.Mount -> "Utilisées"
 }
 
 @Composable

@@ -72,7 +72,7 @@ L'ecran affiche :
 
 - un resume des effets actifs ;
 - trois sections fixes `Observatoire`, `Telescope` et `Monture` ;
-- les cartes possedees par type, avec leur niveau, leur bonus, `Stock xN` et `Activations totales : N` ;
+- les cartes possedees par type, avec leur niveau, leur bonus, `Stock xN` et un compteur d'usage libelle `Utilisés` ou `Utilisées` selon la categorie ;
 - le dernier equipement utilise par type quand il existe.
 
 Une seule carte peut etre active a la fois pour un type donne. Les trois types peuvent cependant coexister.

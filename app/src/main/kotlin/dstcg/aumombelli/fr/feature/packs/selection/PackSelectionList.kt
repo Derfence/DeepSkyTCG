@@ -112,7 +112,7 @@ internal fun ExtensionList(
                             )
                             .testTag("pack-extension-enter-${extension.id}"),
                     ) {
-                        Text(if (drawLocked) "Verrouillé" else "Observer")
+                        Text(if (drawLocked) "Pas de pack disponible" else "Observer")
                     }
                 }
             }

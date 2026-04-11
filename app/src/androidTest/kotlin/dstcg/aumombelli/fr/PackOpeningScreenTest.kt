@@ -43,6 +43,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
+private const val PACK_OPENING_INITIAL_BOOSTER_ASSERTION_MS = 300L
+private const val PACK_OPENING_REVEAL_SETTLE_MS = 4_100L
+
 class PackOpeningScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
@@ -94,14 +97,16 @@ class PackOpeningScreenTest {
             )
         }
 
-        composeRule.mainClock.advanceTimeBy(300)
+        composeRule.mainClock.advanceTimeBy(PACK_OPENING_INITIAL_BOOSTER_ASSERTION_MS)
         composeRule.runOnIdle { }
         composeRule.onNodeWithTag("pack-opening-booster").assertIsDisplayed()
         composeRule.assertApproxCardRatio("pack-opening-booster")
         val boosterBoundsBeforeReveal = composeRule.boosterBounds()
         composeRule.onAllNodesWithText("Booster").assertCountEquals(0)
 
-        composeRule.mainClock.advanceTimeBy(5_400)
+        composeRule.mainClock.advanceTimeBy(
+            PACK_OPENING_REVEAL_SETTLE_MS - PACK_OPENING_INITIAL_BOOSTER_ASSERTION_MS,
+        )
         composeRule.runOnIdle { }
 
         composeRule.onNodeWithTag("pack-opening-burst").assertIsDisplayed()
@@ -990,7 +995,7 @@ class PackOpeningScreenTest {
 
     private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.advanceToRevealedCards() {
         mainClock.autoAdvance = false
-        mainClock.advanceTimeBy(5_700)
+        mainClock.advanceTimeBy(PACK_OPENING_REVEAL_SETTLE_MS)
         runOnIdle { }
     }
 

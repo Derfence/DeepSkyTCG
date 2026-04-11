@@ -47,6 +47,11 @@ import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
 import kotlin.math.abs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+
+private const val PACK_OPENING_BURST_DURATION_MS = 4_800
+private const val PACK_OPENING_REVEAL_DELAY_MS = 3_200
+private const val PACK_OPENING_CARDS_ENTRANCE_DURATION_MS = 760
 
 @Composable
 fun PackOpeningScreen(
@@ -99,11 +104,23 @@ fun PackOpeningScreen(
         cardsEntranceProgress.snapTo(0f)
         dismissProgress.snapTo(0f)
         swipeHintOffset.snapTo(0f)
-        burstProgress.animateTo(1f, animationSpec = tween(durationMillis = 4800, easing = FastOutSlowInEasing))
+        launch {
+            burstProgress.animateTo(
+                1f,
+                animationSpec = tween(
+                    durationMillis = PACK_OPENING_BURST_DURATION_MS,
+                    easing = FastOutSlowInEasing,
+                ),
+            )
+        }
+        delay(PACK_OPENING_REVEAL_DELAY_MS.toLong())
         cardsVisible = true
         cardsEntranceProgress.animateTo(
             targetValue = 1f,
-            animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
+            animationSpec = tween(
+                durationMillis = PACK_OPENING_CARDS_ENTRANCE_DURATION_MS,
+                easing = FastOutSlowInEasing,
+            ),
         )
     }
 

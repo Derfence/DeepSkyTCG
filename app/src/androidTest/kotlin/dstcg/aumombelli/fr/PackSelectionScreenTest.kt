@@ -582,6 +582,8 @@ class PackSelectionScreenTest {
             .assertTextContains("Prochaine charge dans", substring = true)
         composeRule.onNodeWithTag("pack-status-progress").assertIsDisplayed()
         composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").assertIsNotEnabled()
+        composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe")
+            .assertTextContains("Pas de pack disponible")
     }
 
     @Test
