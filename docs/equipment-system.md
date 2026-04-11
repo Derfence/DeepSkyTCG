@@ -58,6 +58,7 @@ L'ecran `Equipements` de l'accueil affiche :
 - un resume des effets actifs ;
 - une section visuelle par type, sur une ligne dediee ;
 - une icone miniature dediee a chaque categorie ;
+- un header de section simplifie avec uniquement le titre de la categorie et son libelle de bonus ;
 - le dernier equipement utilise par type quand il existe ;
 - les cartes possedees dans une rangee horizontale par categorie, avec niveau, bonus, stock, activations totales et etat actif.
 

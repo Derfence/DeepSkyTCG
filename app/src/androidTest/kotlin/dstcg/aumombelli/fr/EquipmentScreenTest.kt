@@ -159,7 +159,7 @@ class EquipmentScreenTest {
         composeRule.onNodeWithTag("equipment-active-observatory").assertIsDisplayed()
         composeRule.onNodeWithTag("equipment-icon-observatory").assertIsDisplayed()
         composeRule.onNodeWithTag("equipment-benefit-observatory").assertIsDisplayed()
-        composeRule.onNodeWithTag("equipment-section-status-observatory").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("equipment-section-status-observatory").assertCountEquals(0)
         composeRule.onNodeWithTag("equipment-last-used-observatory").assertIsDisplayed()
         composeRule.onNodeWithTag("equipment-cards-observatory").assertIsDisplayed()
         composeRule.onNodeWithTag("equipment-card-observatory-1").assertIsDisplayed()

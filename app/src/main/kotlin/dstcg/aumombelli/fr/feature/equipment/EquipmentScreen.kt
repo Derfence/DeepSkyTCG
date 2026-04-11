@@ -402,11 +402,6 @@ private fun EquipmentSectionCard(
                             modifier = Modifier.testTag("equipment-benefit-${section.type.code}"),
                         )
                     }
-                    EquipmentPill(
-                        text = section.statusLabel,
-                        palette = palette,
-                        modifier = Modifier.testTag("equipment-section-status-${section.type.code}"),
-                    )
                 }
 
                 section.lastActivatedLabel?.let { label ->
