@@ -4,8 +4,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -31,7 +31,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.width
 import fr.aumombelli.dstcg.performance.LocalAppPerformanceProfile
 import fr.aumombelli.dstcg.ui.component.ExtensionLogoMark
 import fr.aumombelli.dstcg.ui.motion.BrandLogoVariant
@@ -63,7 +62,8 @@ internal fun BadgeCoinCard(
                     onCoinPositioned(coordinates.boundsInRoot())
                 }
                 .testTag("badge-coin-${badge.id}"),
-            logoSize = (coinSize * 0.60f).coerceAtLeast(40.dp),
+            logoSize = badgeCoinLogoSize(badge = badge, coinSize = coinSize),
+            centerMarkTestTag = "badge-center-mark-${badge.id}",
             onClick = onClick,
         )
         Text(
@@ -83,6 +83,7 @@ internal fun BadgeCoinFace(
     badge: BadgeItem,
     modifier: Modifier = Modifier,
     logoSize: Dp = 56.dp,
+    centerMarkTestTag: String? = null,
     onClick: (() -> Unit)? = null,
 ) {
     val palette = badgePalette(badge)
@@ -185,6 +186,7 @@ internal fun BadgeCoinFace(
             badge = badge,
             logoSize = logoSize,
             modifier = Modifier.size(logoSize),
+            testTag = centerMarkTestTag,
         )
 
         if (!badge.isUnlocked) {
@@ -257,22 +259,36 @@ private fun BadgeCenterMark(
     badge: BadgeItem,
     logoSize: Dp,
     modifier: Modifier = Modifier,
+    testTag: String? = null,
 ) {
-    if (badge.requirementType == BadgeRequirementType.FirstPackOpened) {
-        LaunchLogoMark(
-            variant = BrandLogoVariant.Badge17,
-            emblemSize = logoSize,
-            modifier = modifier,
-        )
-    } else {
-        ExtensionLogoMark(
-            extensionId = badge.extensionId,
-            compact = false,
-            emblemSize = logoSize,
-            modifier = modifier,
-        )
+    val taggedModifier = testTag?.let { Modifier.testTag(it) } ?: Modifier
+    Box(modifier = taggedModifier) {
+        if (badge.requirementType == BadgeRequirementType.FirstPackOpened) {
+            LaunchLogoMark(
+                variant = BrandLogoVariant.Badge17,
+                emblemSize = logoSize,
+                modifier = modifier,
+            )
+        } else {
+            ExtensionLogoMark(
+                extensionId = badge.extensionId,
+                compact = false,
+                emblemSize = logoSize,
+                modifier = modifier,
+            )
+        }
     }
 }
+
+internal fun badgeCoinLogoScale(badge: BadgeItem): Float = when (badge.requirementType) {
+    BadgeRequirementType.FirstPackOpened -> 0.72f
+    else -> 0.60f
+}
+
+internal fun badgeCoinLogoSize(
+    badge: BadgeItem,
+    coinSize: Dp,
+): Dp = (coinSize * badgeCoinLogoScale(badge)).coerceAtLeast(40.dp)
 
 private fun badgeUsesTwinklingStars(badge: BadgeItem): Boolean = when (badge.requirementType) {
     BadgeRequirementType.FirstPackOpened,

@@ -11,7 +11,9 @@ import fr.aumombelli.dstcg.feature.badges.BadgeItem
 import fr.aumombelli.dstcg.feature.badges.BadgeProgress
 import fr.aumombelli.dstcg.feature.badges.BadgeRequirementType
 import fr.aumombelli.dstcg.feature.badges.BadgeSection
+import fr.aumombelli.dstcg.feature.badges.BadgeSectionType
 import fr.aumombelli.dstcg.ui.theme.DstcgTheme
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
@@ -67,5 +69,69 @@ class BadgeBookScreenTest {
             "holographique",
             substring = true,
         )
+    }
+
+    @Test
+    fun general_badge_logo_keeps_same_ratio_when_detail_coin_expands() {
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            DstcgTheme {
+                BadgeBookScreen(
+                    state = BadgeBookUiState(
+                        isLoading = false,
+                        sections = listOf(
+                            BadgeSection(
+                                extensionId = "general",
+                                extensionName = "Badges generaux",
+                                sectionType = BadgeSectionType.General,
+                                badges = listOf(
+                                    BadgeItem(
+                                        id = "general::pack::first-opened",
+                                        extensionId = "general",
+                                        extensionName = "Badges generaux",
+                                        title = "Premier pack",
+                                        description = "Ouvre ton premier pack.",
+                                        requirementType = BadgeRequirementType.FirstPackOpened,
+                                        progress = BadgeProgress(
+                                            matchedCards = 1,
+                                            totalCards = 1,
+                                            unitLabel = "packs",
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                    onRefresh = {},
+                )
+            }
+        }
+
+        composeRule.waitForIdle()
+        val gridCoinBounds = composeRule
+            .onNodeWithTag("badge-coin-general::pack::first-opened")
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val gridMarkBounds = composeRule
+            .onNodeWithTag("badge-center-mark-general::pack::first-opened", useUnmergedTree = true)
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val gridRatio = gridMarkBounds.width / gridCoinBounds.width
+
+        composeRule.onNodeWithTag("badge-coin-general::pack::first-opened").performClick()
+        composeRule.mainClock.advanceTimeBy(700)
+        composeRule.waitForIdle()
+
+        val detailCoinBounds = composeRule
+            .onNodeWithTag("badge-detail-coin")
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val detailMarkBounds = composeRule
+            .onNodeWithTag("badge-detail-center-mark", useUnmergedTree = true)
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val detailRatio = detailMarkBounds.width / detailCoinBounds.width
+
+        assertEquals(gridRatio, detailRatio, 0.02f)
     }
 }
