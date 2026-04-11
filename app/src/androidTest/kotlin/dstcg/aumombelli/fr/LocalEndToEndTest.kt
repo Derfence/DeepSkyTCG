@@ -61,9 +61,11 @@ class LocalEndToEndTest {
         composeRule.waitUntilTagEnabled("home-open-pack", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("home-open-pack").performClick()
         composeRule.waitUntilTagEnabled("pack-extension-enter-${LocalE2eConfig.extensionId}", timeoutMillis = 15_000)
+        composeRule.waitUntilTagDisplayed("pack-extension-enter-${LocalE2eConfig.extensionId}", timeoutMillis = 15_000)
         composeRule.waitUntilTagDisplayed("new-player-coachmark-PackSelectionExtension", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("pack-extension-enter-${LocalE2eConfig.extensionId}").performClick()
         composeRule.waitUntilTagEnabled("pack-booster-0", timeoutMillis = 10_000)
+        composeRule.waitUntilTagDisplayed("pack-booster-0", timeoutMillis = 10_000)
         composeRule.waitUntilTagDisplayed("new-player-coachmark-PackSelectionBooster", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("pack-booster-0").performClick()
 
@@ -123,8 +125,10 @@ class LocalEndToEndTest {
     private fun openSecondPackAndReachEquipmentMenu() {
         composeRule.onNodeWithTag("home-open-pack").performClick()
         composeRule.waitUntilTagEnabled("pack-extension-enter-${LocalE2eConfig.extensionId}", timeoutMillis = 15_000)
+        composeRule.waitUntilTagDisplayed("pack-extension-enter-${LocalE2eConfig.extensionId}", timeoutMillis = 15_000)
         composeRule.onNodeWithTag("pack-extension-enter-${LocalE2eConfig.extensionId}").performClick()
         composeRule.waitUntilTagEnabled("pack-booster-0", timeoutMillis = 10_000)
+        composeRule.waitUntilTagDisplayed("pack-booster-0", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("pack-booster-0").performClick()
         composeRule.waitUntilTagExists("pack-opening-title", timeoutMillis = 20_000)
 

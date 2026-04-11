@@ -111,6 +111,71 @@ class LocalPackEngineEquipmentTest {
     }
 
     @Test
+    fun `first onboarding draw only contains common cards`() = runTest {
+        val catalogGateway = FakeCatalogGateway().apply {
+            cards = listOf(
+                testCardDefinition(
+                    id = "ALP-COMMON-1",
+                    rarityLabel = "Common",
+                    variantProfileId = "equipment-pack-profile",
+                ),
+                testCardDefinition(
+                    id = "ALP-COMMON-2",
+                    rarityLabel = "Common",
+                    variantProfileId = "equipment-pack-profile",
+                ),
+                testCardDefinition(
+                    id = "ALP-UNCOMMON-1",
+                    rarityLabel = "Uncommon",
+                    variantProfileId = "equipment-pack-profile",
+                ),
+                testCardDefinition(
+                    id = "ALP-RARE-1",
+                    rarityLabel = "Rare",
+                    variantProfileId = "equipment-pack-profile",
+                ),
+            )
+            variantProfiles = listOf(equipmentPackProfile())
+            gameBalance = testGameBalanceDefinition(
+                cardsPerDraw = 2,
+                percentUncommonPerDay = 40.0,
+                percentRarePerDay = 40.0,
+                percentEpicPerDay = 10.0,
+                suburbanMeanPerDay = 1.0,
+                ruralMeanPerDay = 1.0,
+                mountainMeanPerDay = 1.0,
+            )
+            equipmentCards = listOf(
+                testEquipmentCardDefinition(
+                    id = "mount-beginner",
+                    type = EquipmentType.Mount,
+                    dropWeight = 1,
+                ),
+            )
+            equipmentSettings = EquipmentSettingsDefinition(
+                commonReplacementChancePercent = 100.0,
+            )
+        }
+        val engine = LocalPackEngine(
+            catalogRepository = catalogGateway,
+            settings = onboardingGameSettings(99, 99),
+        )
+
+        val response = engine.drawPack(
+            extensionId = "astronomes-en-herbe",
+            progress = testProgress(
+                openedPackCount = 0,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.SelectFirstBooster,
+            ),
+            now = fixedNow,
+        )
+
+        assertTrue(response.equipmentCards.isEmpty())
+        assertEquals(2, response.cards.size)
+        assertTrue(response.cards.all { it.rarityLabel == "Common" })
+    }
+
+    @Test
     fun `second onboarding draw forces exactly one level one equipment`() = runTest {
         val levelOneReward = testEquipmentCardDefinition(
             id = "mount-lv1",
@@ -268,7 +333,8 @@ class LocalPackEngineEquipmentTest {
         )
 
         assertEquals(listOf(rewardCard.id), response.equipmentCards.map { it.id })
-        assertEquals(listOf("ALP-RARE"), response.cards.map { it.cardId })
+        assertEquals(listOf("ALP-UNCOMMON"), response.cards.map { it.cardId })
+        assertTrue(response.cards.all { it.rarityLabel == "Uncommon" })
     }
 
     @Test

@@ -30,6 +30,7 @@ Les hints d'onboarding n'apparaissent qu'une fois les animations de transition t
 - Une fois l'extension ouverte, un coachmark cible le premier booster seulement apres la fin de l'introduction visuelle des quatre boosters.
 - Ce coachmark disparait des le clic sur un booster pour ne pas suivre l'animation de selection.
 - Chaque coachmark attend la fin du mouvement de transition avant d'apparaitre.
+- Le tout premier pack ouvert pendant ce chapitre ne contient que des cartes `Common`.
 
 ### 2. Retour apres le premier pack
 
@@ -61,6 +62,7 @@ Les hints d'onboarding n'apparaissent qu'une fois les animations de transition t
 - Le premier pack effectivement ouvert apres cette pause devient le deuxieme tirage d'onboarding.
 - Pendant ce tirage special :
   - aucun coachmark n'est ajoute dans `PackSelection` ;
+  - les cartes astronomiques sont plafonnees a `Uncommon` ;
   - les remplacements aleatoires d'equipement sont desactives ;
   - exactement un slot est remplace par une carte d'equipement `level == 1`, choisie selon `dropWeight` ;
   - un slot `Common` est privilegie ; sinon le slot de plus faible rarete finale est remplace ;

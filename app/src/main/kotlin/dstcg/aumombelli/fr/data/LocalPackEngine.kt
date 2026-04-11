@@ -109,15 +109,20 @@ class LocalPackEngine(
             equipmentCards = equipmentCards,
             equipmentSettings = equipmentSettings,
         )
+        val astronomyRarityCap = resolveAstronomyRarityCap(progress)
         val drawnAt = now.toString()
         val plannedRevealSlots = List(drawConfig.cardsPerDraw) { slotIndex ->
             val baseRarity = pickWeighted(extensionPlan.rarityWeights) { it.weight }.code
             PlannedRevealSlot(
                 slotIndex = slotIndex,
-                rarityLabel = maybePromoteRarity(
-                    baseRarity = baseRarity,
+                rarityLabel = clampAstronomyRarity(
+                    rarityLabel = maybePromoteRarity(
+                        baseRarity = baseRarity,
+                        availableRarities = extensionPlan.cardsByRarity.keys,
+                        rarityBoostPercent = activeBonus.rarityBoostPercent,
+                    ),
                     availableRarities = extensionPlan.cardsByRarity.keys,
-                    rarityBoostPercent = activeBonus.rarityBoostPercent,
+                    maxAllowedRarityLabel = astronomyRarityCap,
                 ),
             )
         }
@@ -161,6 +166,7 @@ class LocalPackEngine(
                         runtimeCatalog = runtimeCatalog,
                         activeBonus = activeBonus,
                         excludedCardIds = usedAstronomyCardIds,
+                        maxAllowedRarityLabel = astronomyRarityCap,
                     )
                 }
             }
@@ -181,11 +187,13 @@ class LocalPackEngine(
         runtimeCatalog: RuntimeCatalogBalance,
         activeBonus: ActiveEquipmentBonus,
         excludedCardIds: MutableSet<String>,
+        maxAllowedRarityLabel: String?,
     ): AstronomyPackRevealSlot {
         val definition = pickUniqueAstronomyCardDefinition(
             plannedSlot = plannedSlot,
             extensionPlan = extensionPlan,
             excludedCardIds = excludedCardIds,
+            maxAllowedRarityLabel = maxAllowedRarityLabel,
         )
         excludedCardIds += definition.id
         val variantProfile = checkNotNull(variantProfilesById[definition.variantProfileId]) {
@@ -240,6 +248,18 @@ class LocalPackEngine(
         )
     }
 
+    private fun resolveAstronomyRarityCap(progress: StandaloneProgress): String? = when {
+        progress.openedPackCount == 0 &&
+            progress.newPlayerOnboardingStep in FIRST_PACK_ONBOARDING_STEPS ->
+            "Common"
+
+        progress.openedPackCount == 1 &&
+            progress.newPlayerOnboardingStep == NewPlayerOnboardingStep.OpenSecondPackMenu ->
+            "Uncommon"
+
+        else -> null
+    }
+
     private fun resolveForcedEquipmentReward(
         plannedRevealSlots: List<PlannedRevealSlot>,
         drawPolicy: EquipmentDrawPolicy,
@@ -269,11 +289,13 @@ class LocalPackEngine(
         plannedSlot: PlannedRevealSlot,
         extensionPlan: ExtensionDrawPlan,
         excludedCardIds: Set<String>,
+        maxAllowedRarityLabel: String?,
     ) = pickWeighted(
         findUniqueAstronomyCandidatePool(
             plannedSlot = plannedSlot,
             extensionPlan = extensionPlan,
             excludedCardIds = excludedCardIds,
+            maxAllowedRarityLabel = maxAllowedRarityLabel,
         ),
     ) { it.weight }.card
 
@@ -281,6 +303,7 @@ class LocalPackEngine(
         plannedSlot: PlannedRevealSlot,
         extensionPlan: ExtensionDrawPlan,
         excludedCardIds: Set<String>,
+        maxAllowedRarityLabel: String?,
     ): List<WeightedCardDefinition> {
         val targetRarityPool = checkNotNull(extensionPlan.cardsByRarity[plannedSlot.rarityLabel]) {
             "Aucune carte n'a ete configuree pour la rarete '${plannedSlot.rarityLabel}'."
@@ -293,6 +316,10 @@ class LocalPackEngine(
         val fallbackPool = extensionPlan.cardsByRarity.keys
             .asSequence()
             .filterNot { rarity -> rarity == plannedSlot.rarityLabel }
+            .filter { rarity ->
+                maxAllowedRarityLabel == null ||
+                    raritySortPriority(rarity) <= raritySortPriority(maxAllowedRarityLabel)
+            }
             .sortedWith(
                 compareBy<String>(
                     { rarity -> abs(raritySortPriority(rarity) - targetRarityPriority) },
@@ -344,6 +371,24 @@ class LocalPackEngine(
             currentRarity = baseRarity,
             availableRarities = availableRarities,
         )
+    }
+
+    private fun clampAstronomyRarity(
+        rarityLabel: String,
+        availableRarities: Set<String>,
+        maxAllowedRarityLabel: String?,
+    ): String {
+        if (maxAllowedRarityLabel == null) {
+            return rarityLabel
+        }
+        if (raritySortPriority(rarityLabel) <= raritySortPriority(maxAllowedRarityLabel)) {
+            return rarityLabel
+        }
+        return availableRarities
+            .filter { rarity -> raritySortPriority(rarity) <= raritySortPriority(maxAllowedRarityLabel) }
+            .maxByOrNull(::raritySortPriority)
+            ?: availableRarities.minByOrNull(::raritySortPriority)
+            ?: rarityLabel
     }
 
     private fun maybeDrawEquipmentReward(
