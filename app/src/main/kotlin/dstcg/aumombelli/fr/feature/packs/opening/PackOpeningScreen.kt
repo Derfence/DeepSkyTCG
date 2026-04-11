@@ -6,11 +6,13 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
@@ -31,8 +33,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -418,6 +422,102 @@ private fun PackOpeningProgressIndicator(
                 this.alpha = alpha
             }
             .testTag("pack-opening-progress"),
+    )
+}
+
+@Composable
+internal fun PackOpeningRevealSlotProbe(
+    extensionLabel: String,
+    totalItems: Int,
+    onBoundsChanged: (PackRevealBounds?) -> Unit,
+    onCoordinatesChanged: (LayoutCoordinates?) -> Unit = {},
+    modifier: Modifier = Modifier,
+) {
+    BoxWithConstraints(
+        modifier = modifier
+            .dstcgContentInsetsPadding(includeBottom = true)
+            .clearAndSetSemantics {},
+    ) {
+        val availableWidth = maxWidth
+        val availableHeight = maxHeight
+
+        androidx.compose.foundation.layout.Box(
+            modifier = Modifier.fillMaxSize(),
+        ) {
+        val sceneLayout = calculatePackOpeningSceneLayout(
+            availableWidth = availableWidth,
+            availableHeight = availableHeight,
+        )
+        val progressBelowPager = shouldPlacePackOpeningProgressBelowPager(
+            availableWidth = availableWidth,
+            availableHeight = availableHeight,
+            sceneLayout = sceneLayout,
+        )
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(sceneLayout.sectionSpacing),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        horizontal = sceneLayout.horizontalContentPadding,
+                        vertical = sceneLayout.verticalContentPadding,
+                    ),
+            ) {
+                androidx.compose.material3.Text(
+                    text = "Ouverture du pack",
+                    style = if (sceneLayout.compactHeader) {
+                        androidx.compose.material3.MaterialTheme.typography.titleLarge
+                    } else {
+                        androidx.compose.material3.MaterialTheme.typography.headlineMedium
+                    },
+                    fontWeight = FontWeight.Bold,
+                    color = Color.Transparent,
+                )
+                androidx.compose.material3.Text(
+                    text = "Extension : $extensionLabel",
+                    color = Color.Transparent,
+                    style = if (sceneLayout.compactHeader) {
+                        androidx.compose.material3.MaterialTheme.typography.bodySmall
+                    } else {
+                        androidx.compose.material3.MaterialTheme.typography.bodyMedium
+                    },
+                )
+
+                if (!progressBelowPager) {
+                    ProbePackOpeningProgressIndicator(total = totalItems.coerceAtLeast(1))
+                }
+
+                Box(
+                    modifier = Modifier.weight(1f),
+                ) {
+                    PackOpeningRevealCardFrame(
+                        modifier = Modifier.fillMaxSize(),
+                        onCardBoundsChanged = onBoundsChanged,
+                        onCardCoordinatesChanged = onCoordinatesChanged,
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(TRADING_CARD_WIDTH_OVER_HEIGHT),
+                        )
+                    }
+                }
+
+                if (progressBelowPager) {
+                    ProbePackOpeningProgressIndicator(total = totalItems.coerceAtLeast(1))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProbePackOpeningProgressIndicator(total: Int) {
+    androidx.compose.material3.Text(
+        text = "1 / $total",
+        color = Color.Transparent,
+        style = androidx.compose.material3.MaterialTheme.typography.labelLarge,
     )
 }
 

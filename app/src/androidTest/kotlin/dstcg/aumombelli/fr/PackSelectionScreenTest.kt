@@ -19,10 +19,15 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
+import fr.aumombelli.dstcg.model.DrawPackResponse
 import fr.aumombelli.dstcg.model.ExtensionDefinition
+import fr.aumombelli.dstcg.model.toDisplayCard
+import fr.aumombelli.dstcg.model.toDisplayVariant
 import fr.aumombelli.dstcg.testsupport.androidTestRechargeStateWithNextChargeAt
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
+import fr.aumombelli.dstcg.ui.screen.PackOpeningScreen
 import fr.aumombelli.dstcg.ui.screen.PackSelectionScreen
+import fr.aumombelli.dstcg.ui.viewmodel.PackOpeningUiState
 import fr.aumombelli.dstcg.ui.viewmodel.PackSelectionUiState
 import java.time.Duration
 import java.time.Instant
@@ -361,6 +366,93 @@ class PackSelectionScreenTest {
     }
 
     @Test
+    fun selected_booster_finishes_in_the_same_slot_as_pack_opening_booster() {
+        val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
+        val packResult = DrawPackResponse.fromCards(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
+            cards = listOf(
+                testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
+            ),
+        )
+        val selectionState = mutableStateOf(
+            PackSelectionUiState(
+                isLoading = false,
+                extensions = listOf(
+                    ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                ),
+                selectedExtensionId = "astronomes-en-herbe",
+            ),
+        )
+        var showOpeningScreen by mutableStateOf(false)
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            Box(modifier = androidx.compose.ui.Modifier.size(width = 411.dp, height = 731.dp)) {
+                if (!showOpeningScreen) {
+                    PackSelectionScreen(
+                        state = selectionState.value,
+                        onRefresh = {},
+                        onSelectExtension = {},
+                        onSelectBooster = { boosterIndex ->
+                            selectionState.value = selectionState.value.copy(
+                                selectedBoosterIndex = boosterIndex,
+                                isAwaitingPackResult = true,
+                            )
+                        },
+                        onOpenPack = {},
+                        onPackRevealReady = {},
+                        packReadySignal = 0,
+                        showBackground = false,
+                    )
+                } else {
+                    PackOpeningScreen(
+                        state = PackOpeningUiState(
+                            packResult = packResult,
+                            displayCards = listOf(
+                                firstCard.toDisplayCard(
+                                    extensionName = "Astronomes en herbe",
+                                    activeVariant = packResult.cards[0].variant.toDisplayVariant(),
+                                ),
+                            ),
+                            highestBurstRarity = "Common",
+                            hasHolographicBurst = false,
+                        ),
+                        onDone = {},
+                    )
+                }
+            }
+        }
+
+        composeRule.mainClock.advanceTimeBy(1_800)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("pack-booster-0").performClick()
+        composeRule.mainClock.advanceTimeBy(700)
+        composeRule.waitForIdle()
+
+        val selectedBoosterBounds = composeRule.onNodeWithTag("pack-booster-0").fetchSemanticsNode().boundsInRoot
+
+        composeRule.runOnIdle { showOpeningScreen = true }
+
+        composeRule.mainClock.advanceTimeBy(300)
+        composeRule.waitForIdle()
+
+        val openingBoosterBounds = composeRule
+            .onNodeWithTag("pack-opening-booster", useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot
+
+        composeRule.assertBoundsClose(
+            expected = openingBoosterBounds,
+            actual = selectedBoosterBounds,
+            tolerancePx = 3f,
+        )
+    }
+
+    @Test
     fun selected_extension_returns_to_extension_list_when_selection_is_cleared() {
         val state = mutableStateOf(
             PackSelectionUiState(
@@ -487,6 +579,20 @@ class PackSelectionScreenTest {
         assertTrue(
             "Expected $tag width/height ratio near $TRADING_CARD_WIDTH_OVER_HEIGHT but was $actualRatio",
             abs(actualRatio - TRADING_CARD_WIDTH_OVER_HEIGHT) <= tolerance,
+        )
+    }
+
+    private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertBoundsClose(
+        expected: Rect,
+        actual: Rect,
+        tolerancePx: Float,
+    ) {
+        assertTrue(
+            "Expected bounds to stay aligned. Expected=$expected Actual=$actual",
+            abs(expected.left - actual.left) <= tolerancePx &&
+                abs(expected.top - actual.top) <= tolerancePx &&
+                abs(expected.width - actual.width) <= tolerancePx &&
+                abs(expected.height - actual.height) <= tolerancePx,
         )
     }
 }

@@ -17,8 +17,6 @@ internal data class PackSelectionBoosterStageChrome(
 internal data class PackSelectionBoosterGridMetrics(
     val horizontalGap: Dp,
     val verticalGap: Dp,
-    val revealWidth: Dp,
-    val revealHeight: Dp,
     val gridPackWidth: Dp,
     val gridPackHeight: Dp,
     val gridStartX: Dp,
@@ -79,21 +77,10 @@ internal fun calculatePackSelectionBoosterGridMetrics(
     } else {
         0.dp
     }
-    val revealWidth = minOf(
-        (availableWidth - horizontalGuard * 2f).coerceAtLeast(0.dp),
-        (availableHeight - verticalGuard * 2f).coerceAtLeast(0.dp) * TRADING_CARD_WIDTH_OVER_HEIGHT,
-    )
-    val revealHeight = if (revealWidth > 0.dp) {
-        revealWidth / TRADING_CARD_WIDTH_OVER_HEIGHT
-    } else {
-        0.dp
-    }
 
     return PackSelectionBoosterGridMetrics(
         horizontalGap = horizontalGap,
         verticalGap = verticalGap,
-        revealWidth = revealWidth,
-        revealHeight = revealHeight,
         gridPackWidth = gridPackWidth,
         gridPackHeight = gridPackHeight,
         gridStartX = (availableWidth - (gridPackWidth * 2f + horizontalGap)) / 2f,

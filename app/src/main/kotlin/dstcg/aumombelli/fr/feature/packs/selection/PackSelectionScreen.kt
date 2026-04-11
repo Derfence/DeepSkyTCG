@@ -41,6 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
 import fr.aumombelli.dstcg.data.buildPackChargeUiStatus
+import fr.aumombelli.dstcg.feature.packs.opening.PackOpeningRevealSlotProbe
 import fr.aumombelli.dstcg.performance.LocalAppPerformanceProfile
 import fr.aumombelli.dstcg.ui.motion.MotionCard
 import fr.aumombelli.dstcg.ui.motion.PackRevealBounds
@@ -139,6 +140,7 @@ fun PackSelectionScreen(
     val boosterIntroProgress = remember { Animatable(0f) }
     val boosterSelectionProgress = remember { Animatable(0f) }
     var screenBounds by remember { mutableStateOf<Rect?>(null) }
+    var openingRevealTargetBounds by remember(displayedExtension?.id) { mutableStateOf<PackRevealBounds?>(null) }
     var handledPackSignal by remember(displayedExtension?.id) { mutableIntStateOf(packReadySignal) }
 
     LaunchedEffect(state.extensions, drawLocked) {
@@ -242,6 +244,16 @@ fun PackSelectionScreen(
             )
             .testTag("pack-screen-root"),
     ) {
+        displayedExtension?.let { extension ->
+            PackOpeningRevealSlotProbe(
+                extensionLabel = extension.name,
+                totalItems = 1,
+                onBoundsChanged = { bounds ->
+                    openingRevealTargetBounds = bounds
+                },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
         Column(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier
@@ -363,6 +375,7 @@ fun PackSelectionScreen(
                             selectedBoosterIndex = state.selectedBoosterIndex,
                             isAwaitingPackResult = state.isAwaitingPackResult,
                             screenBounds = screenBounds,
+                            selectedBoosterTargetBounds = openingRevealTargetBounds,
                             onSelectBooster = { boosterIndex ->
                                 onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.PackSelectionBooster, null)
                                 onSelectBooster(boosterIndex)

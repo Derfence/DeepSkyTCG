@@ -1,10 +1,14 @@
 package fr.aumombelli.dstcg
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -21,6 +25,7 @@ import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.feature.packs.opening.EquipmentPackRevealUiItem
+import fr.aumombelli.dstcg.feature.packs.opening.PackOpeningRevealSlotProbe
 import fr.aumombelli.dstcg.model.CardDefinition
 import fr.aumombelli.dstcg.model.DrawPackResponse
 import fr.aumombelli.dstcg.model.EquipmentPackRevealSlot
@@ -140,6 +145,75 @@ class PackOpeningScreenTest {
         composeRule.runOnIdle { }
         composeRule.mainClock.autoAdvance = true
         assertEquals(1, doneCallCount)
+    }
+
+    @Test
+    fun reveal_slot_probe_matches_pack_opening_booster_slot() {
+        val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
+        val packResult = DrawPackResponse.fromCards(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
+            cards = listOf(
+                testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
+            ),
+        )
+        var showOpeningScreen by mutableStateOf(false)
+        var probeBounds by mutableStateOf<Rect?>(null)
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            Box(modifier = Modifier.size(width = 411.dp, height = 731.dp)) {
+                if (!showOpeningScreen) {
+                    PackOpeningRevealSlotProbe(
+                        extensionLabel = "Astronomes en herbe",
+                        totalItems = 1,
+                        onBoundsChanged = { bounds ->
+                            probeBounds = bounds?.let {
+                                Rect(
+                                    left = it.leftPx,
+                                    top = it.topPx,
+                                    right = it.leftPx + it.widthPx,
+                                    bottom = it.topPx + it.heightPx,
+                                )
+                            }
+                        },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                } else {
+                    PackOpeningScreen(
+                        state = PackOpeningUiState(
+                            packResult = packResult,
+                            displayCards = listOf(
+                                firstCard.toDisplayCard(
+                                    extensionName = "Astronomes en herbe",
+                                    activeVariant = packResult.cards[0].variant.toDisplayVariant(),
+                                ),
+                            ),
+                            highestBurstRarity = "Common",
+                            hasHolographicBurst = false,
+                        ),
+                        onDone = {},
+                    )
+                }
+            }
+        }
+
+        composeRule.waitForIdle()
+        val measuredProbeBounds = requireNotNull(probeBounds)
+
+        composeRule.runOnIdle { showOpeningScreen = true }
+        composeRule.mainClock.advanceTimeBy(300)
+        composeRule.waitForIdle()
+
+        composeRule.assertBoundsClose(
+            expected = measuredProbeBounds,
+            actual = composeRule.boosterBounds(),
+            tolerancePx = 3f,
+        )
     }
 
     @Test

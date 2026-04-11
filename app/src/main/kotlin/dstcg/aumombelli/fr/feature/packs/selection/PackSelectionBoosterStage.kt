@@ -53,6 +53,7 @@ internal fun ExtensionBoosterStage(
     selectedBoosterIndex: Int?,
     isAwaitingPackResult: Boolean,
     screenBounds: Rect? = null,
+    selectedBoosterTargetBounds: PackRevealBounds? = null,
     onSelectBooster: (Int) -> Unit,
     onSelectedBoosterBoundsChanged: (PackRevealBounds?) -> Unit,
     onFirstBoosterBoundsChanged: (Rect?) -> Unit = {},
@@ -62,7 +63,7 @@ internal fun ExtensionBoosterStage(
     var stageRightInsetPx by remember { mutableFloatStateOf(0f) }
     var stageTopInsetPx by remember { mutableFloatStateOf(0f) }
     var stageBottomInsetPx by remember { mutableFloatStateOf(0f) }
-
+    var boosterBoundsByIndex by remember(extension.id) { mutableStateOf<Map<Int, PackRevealBounds>>(emptyMap()) }
     BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
@@ -174,7 +175,15 @@ internal fun ExtensionBoosterStage(
                         drawLocked = drawLocked,
                         isAwaitingPackResult = isAwaitingPackResult,
                         onSelectBooster = onSelectBooster,
-                        onSelectedBoosterBoundsChanged = onSelectedBoosterBoundsChanged,
+                        onBoosterBoundsChanged = { index, bounds ->
+                            boosterBoundsByIndex = boosterBoundsByIndex.toMutableMap().also { current ->
+                                if (bounds == null) {
+                                    current.remove(index)
+                                } else {
+                                    current[index] = bounds
+                                }
+                            }
+                        },
                         onFirstBoosterBoundsChanged = onFirstBoosterBoundsChanged,
                         introProgress = boosterIntroProgress,
                         selectionProgress = boosterSelectionProgress,
@@ -188,6 +197,21 @@ internal fun ExtensionBoosterStage(
                                 bottom = stageChrome.fieldBottomPadding,
                             ),
                     )
+                    val selectedStartBounds = selectedBoosterIndex?.let(boosterBoundsByIndex::get)
+                    if (
+                        selectedBoosterIndex != null &&
+                        selectedStartBounds != null &&
+                        selectedBoosterTargetBounds != null
+                    ) {
+                        SelectedBoosterOverlay(
+                            extensionId = extension.id,
+                            boosterIndex = selectedBoosterIndex,
+                            startBounds = selectedStartBounds,
+                            targetBounds = selectedBoosterTargetBounds,
+                            selectionProgress = boosterSelectionProgress,
+                            onBoundsChanged = onSelectedBoosterBoundsChanged,
+                        )
+                    }
                 }
             }
         }
@@ -236,19 +260,15 @@ private fun BoosterField(
     drawLocked: Boolean,
     isAwaitingPackResult: Boolean,
     onSelectBooster: (Int) -> Unit,
-    onSelectedBoosterBoundsChanged: (PackRevealBounds?) -> Unit,
+    onBoosterBoundsChanged: (Int, PackRevealBounds?) -> Unit,
     onFirstBoosterBoundsChanged: (Rect?) -> Unit,
     introProgress: Float = 1f,
     selectionProgress: Float = 0f,
     modifier: Modifier = Modifier,
 ) {
-    LaunchedEffect(selectedBoosterIndex) {
-        if (selectedBoosterIndex == null) {
-            onSelectedBoosterBoundsChanged(null)
-        }
-    }
-
-    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+    BoxWithConstraints(
+        modifier = modifier.fillMaxSize(),
+    ) {
         val introSequenceComplete = introProgress >= 0.99f
         var firstBoosterCoachmarkReady by remember(extension.id) { mutableStateOf(false) }
         val gridMetrics = calculatePackSelectionBoosterGridMetrics(
@@ -270,9 +290,6 @@ private fun BoosterField(
             firstBoosterCoachmarkReady = true
         }
 
-        val revealCenterX = maxWidth / 2
-        val revealCenterY = maxHeight / 2
-
         repeat(4) { index ->
             val isSelected = selectedBoosterIndex == index
             val introReveal = if (selectedBoosterIndex == null) {
@@ -288,29 +305,17 @@ private fun BoosterField(
             val startCenterY = gridMetrics.gridStartY +
                 gridMetrics.gridPackHeight / 2 +
                 if (row == 1) gridMetrics.gridPackHeight + gridMetrics.verticalGap else 0.dp
-            val currentWidth = if (isSelected) {
-                lerp(gridMetrics.gridPackWidth, gridMetrics.revealWidth, selectionProgress)
-            } else {
-                gridMetrics.gridPackWidth
-            }
+            val currentWidth = gridMetrics.gridPackWidth
             val currentHeight = currentWidth / TRADING_CARD_WIDTH_OVER_HEIGHT
-            val currentCenterX = if (isSelected) {
-                lerp(startCenterX, revealCenterX, selectionProgress)
-            } else {
-                startCenterX
-            }
-            val currentCenterY = if (isSelected) {
-                lerp(startCenterY, revealCenterY, selectionProgress)
-            } else {
-                startCenterY
-            }
+            val currentCenterX = startCenterX
+            val currentCenterY = startCenterY
             val alpha = if (selectedBoosterIndex == null || isSelected) {
                 introReveal
             } else {
                 (1f - selectionProgress * 1.4f).coerceAtLeast(0f) * introReveal
             }
             val visible = alpha > 0.01f &&
-                (selectedBoosterIndex == null || isSelected || selectionProgress < 0.98f)
+                (selectedBoosterIndex == null || !isSelected || selectionProgress < 0.02f)
             if (!visible) return@repeat
             val packEnabled = !drawLocked &&
                 !isAwaitingPackResult &&
@@ -340,23 +345,18 @@ private fun BoosterField(
                                 Modifier
                             },
                         )
-                        .then(
-                            if (isSelected) {
-                                Modifier.onGloballyPositioned { coordinates ->
-                                    val bounds = coordinates.boundsInRoot()
-                                    onSelectedBoosterBoundsChanged(
-                                        PackRevealBounds(
-                                            leftPx = bounds.left,
-                                            topPx = bounds.top,
-                                            widthPx = bounds.width,
-                                            heightPx = bounds.height,
-                                        ),
-                                    )
-                                }
-                            } else {
-                                Modifier
-                            },
-                        )
+                        .onGloballyPositioned { coordinates ->
+                            val bounds = coordinates.boundsInRoot()
+                            onBoosterBoundsChanged(
+                                index,
+                                PackRevealBounds(
+                                    leftPx = bounds.left,
+                                    topPx = bounds.top,
+                                    widthPx = bounds.width,
+                                    heightPx = bounds.height,
+                                ),
+                            )
+                        }
                         .testTag("pack-booster-$index")
                         .clickable(
                             enabled = packEnabled,
@@ -369,4 +369,47 @@ private fun BoosterField(
             }
         }
     }
+}
+
+@Composable
+private fun SelectedBoosterOverlay(
+    extensionId: String,
+    boosterIndex: Int,
+    startBounds: PackRevealBounds,
+    targetBounds: PackRevealBounds,
+    selectionProgress: Float,
+    onBoundsChanged: (PackRevealBounds?) -> Unit,
+) {
+    val density = LocalDensity.current
+    val currentLeft = with(density) {
+        lerp(startBounds.leftPx.toDp(), targetBounds.leftPx.toDp(), selectionProgress)
+    }
+    val currentTop = with(density) {
+        lerp(startBounds.topPx.toDp(), targetBounds.topPx.toDp(), selectionProgress)
+    }
+    val currentWidth = with(density) {
+        lerp(startBounds.widthPx.toDp(), targetBounds.widthPx.toDp(), selectionProgress)
+    }
+    val currentHeight = currentWidth / TRADING_CARD_WIDTH_OVER_HEIGHT
+
+    AnimatedExtensionPackCard(
+        extensionId = extensionId,
+        modifier = Modifier
+            .absoluteOffset(x = currentLeft, y = currentTop)
+            .size(width = currentWidth, height = currentHeight)
+            .onGloballyPositioned { coordinates ->
+                val bounds = coordinates.boundsInRoot()
+                onBoundsChanged(
+                    PackRevealBounds(
+                        leftPx = bounds.left,
+                        topPx = bounds.top,
+                        widthPx = bounds.width,
+                        heightPx = bounds.height,
+                    ),
+                )
+            }
+            .testTag("pack-booster-$boosterIndex"),
+        animationKey = "selected-pack-overlay-$boosterIndex",
+        revealProgressOverride = 1f,
+    )
 }

@@ -23,6 +23,15 @@ internal data class PackOpeningSceneLayout(
     val compactHeader: Boolean,
 )
 
+internal data class PackOpeningRevealSlotLayout(
+    val cardWidth: Dp,
+    val cardHeight: Dp,
+    val cardStart: Dp,
+    val cardTop: Dp,
+    val cardCenterX: Dp,
+    val cardCenterY: Dp,
+)
+
 internal fun calculatePackOpeningSceneLayout(
     availableWidth: Dp,
     availableHeight: Dp,
@@ -75,6 +84,35 @@ internal fun calculatePackOpeningRevealLayout(
         cardHeight = cardHeight,
         topOverlayReserve = topOverlayReserve,
         bottomSafeInset = bottomSafeInset,
+    )
+}
+
+internal fun calculatePackOpeningRevealSlotLayout(
+    availableWidth: Dp,
+    availableHeight: Dp,
+): PackOpeningRevealSlotLayout {
+    val revealLayout = calculatePackOpeningRevealLayout(
+        availableWidth = availableWidth,
+        availableHeight = availableHeight,
+    )
+    val cardStart = ((availableWidth - revealLayout.cardWidth) / 2f).coerceAtLeast(0.dp)
+    val cardTop = (
+        revealLayout.topOverlayReserve +
+            (
+                availableHeight -
+                    revealLayout.topOverlayReserve -
+                    revealLayout.bottomSafeInset -
+                    revealLayout.cardHeight
+                ) / 2f
+        ).coerceAtLeast(0.dp)
+
+    return PackOpeningRevealSlotLayout(
+        cardWidth = revealLayout.cardWidth,
+        cardHeight = revealLayout.cardHeight,
+        cardStart = cardStart,
+        cardTop = cardTop,
+        cardCenterX = cardStart + revealLayout.cardWidth / 2f,
+        cardCenterY = cardTop + revealLayout.cardHeight / 2f,
     )
 }
 

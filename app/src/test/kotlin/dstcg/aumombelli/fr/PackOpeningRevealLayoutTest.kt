@@ -3,6 +3,7 @@ package fr.aumombelli.dstcg
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.feature.packs.opening.calculatePackOpeningSceneLayout
 import fr.aumombelli.dstcg.feature.packs.opening.calculatePackOpeningRevealLayout
+import fr.aumombelli.dstcg.feature.packs.opening.calculatePackOpeningRevealSlotLayout
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -69,5 +70,24 @@ class PackOpeningRevealLayoutTest {
         assertEquals(0.dp, roomyRevealLayout.pageVerticalPadding)
         assertTrue(compactSceneLayout.sectionSpacing < roomySceneLayout.sectionSpacing)
         assertTrue(compactRevealLayout.topOverlayReserve < roomyRevealLayout.topOverlayReserve)
+    }
+
+    @Test
+    fun reveal_slot_layout_matches_reveal_card_size_and_explicit_center() {
+        val revealLayout = calculatePackOpeningRevealLayout(
+            availableWidth = 411.dp,
+            availableHeight = 520.dp,
+        )
+        val slotLayout = calculatePackOpeningRevealSlotLayout(
+            availableWidth = 411.dp,
+            availableHeight = 520.dp,
+        )
+
+        assertEquals(revealLayout.cardWidth, slotLayout.cardWidth)
+        assertEquals(revealLayout.cardHeight, slotLayout.cardHeight)
+        assertEquals((411.dp - revealLayout.cardWidth) / 2f, slotLayout.cardStart)
+        assertEquals(slotLayout.cardStart + slotLayout.cardWidth / 2f, slotLayout.cardCenterX)
+        assertEquals(slotLayout.cardTop + slotLayout.cardHeight / 2f, slotLayout.cardCenterY)
+        assertTrue(slotLayout.cardTop >= revealLayout.topOverlayReserve / 2f)
     }
 }

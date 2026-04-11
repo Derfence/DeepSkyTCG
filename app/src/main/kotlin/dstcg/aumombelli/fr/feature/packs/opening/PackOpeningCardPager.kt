@@ -1,5 +1,6 @@
 package fr.aumombelli.dstcg.feature.packs.opening
 
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -25,6 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
@@ -126,47 +128,46 @@ internal fun PackOpeningRevealCardFrame(
     modifier: Modifier = Modifier,
     cardTranslationY: Float = 0f,
     onCardBoundsChanged: ((PackRevealBounds?) -> Unit)? = null,
+    onCardCoordinatesChanged: ((LayoutCoordinates?) -> Unit)? = null,
     content: @Composable BoxScope.() -> Unit,
 ) {
     BoxWithConstraints(
         modifier = modifier,
     ) {
-        val revealLayout = calculatePackOpeningRevealLayout(
+        val revealSlot = calculatePackOpeningRevealSlotLayout(
             availableWidth = maxWidth,
             availableHeight = maxHeight,
         )
 
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(
-                    horizontal = revealLayout.pageHorizontalPadding,
-                    vertical = revealLayout.pageVerticalPadding,
-                )
-                .padding(
-                    top = revealLayout.topOverlayReserve,
-                    bottom = revealLayout.bottomSafeInset,
-                ),
+            modifier = Modifier.fillMaxSize(),
         ) {
             Box(
                 modifier = Modifier
-                    .align(Alignment.Center)
-                    .width(revealLayout.cardWidth)
+                    .align(Alignment.TopStart)
+                    .absoluteOffset(
+                        x = revealSlot.cardStart,
+                        y = revealSlot.cardTop,
+                    )
+                    .width(revealSlot.cardWidth)
                     .graphicsLayer {
                         translationY = cardTranslationY
                     }
                     .then(
-                        if (onCardBoundsChanged != null) {
+                        if (onCardBoundsChanged != null || onCardCoordinatesChanged != null) {
                             Modifier.onGloballyPositioned { coordinates ->
-                                val bounds = coordinates.boundsInRoot()
-                                onCardBoundsChanged(
-                                    PackRevealBounds(
-                                        leftPx = bounds.left,
-                                        topPx = bounds.top,
-                                        widthPx = bounds.width,
-                                        heightPx = bounds.height,
-                                    ),
-                                )
+                                if (onCardBoundsChanged != null) {
+                                    val bounds = coordinates.boundsInRoot()
+                                    onCardBoundsChanged(
+                                        PackRevealBounds(
+                                            leftPx = bounds.left,
+                                            topPx = bounds.top,
+                                            widthPx = bounds.width,
+                                            heightPx = bounds.height,
+                                        ),
+                                    )
+                                }
+                                onCardCoordinatesChanged?.invoke(coordinates)
                             }
                         } else {
                             Modifier
