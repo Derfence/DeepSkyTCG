@@ -69,6 +69,7 @@ fun PackSelectionScreen(
     sceneVisible: Boolean = true,
     extensionListVisible: Boolean = true,
     interactionsEnabled: Boolean = true,
+    backgroundOnly: Boolean = false,
 ) {
     val performanceProfile = LocalAppPerformanceProfile.current
     val shouldTickChargeStatus = state.rechargeState.availableDrawCount < state.maxStoredDraws
@@ -244,151 +245,172 @@ fun PackSelectionScreen(
             )
             .testTag("pack-screen-root"),
     ) {
-        displayedExtension?.let { extension ->
-            PackOpeningRevealSlotProbe(
-                extensionLabel = extension.name,
-                totalItems = 1,
-                onBoundsChanged = { bounds ->
-                    openingRevealTargetBounds = bounds
-                },
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
-        Column(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            modifier = Modifier
-                .fillMaxSize()
-                .dstcgContentInsetsPadding(includeBottom = true)
-                .padding(16.dp),
-        ) {
-            Text(
-                text = "Ouvrir un pack",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
+        if (!backgroundOnly) {
+            displayedExtension?.let { extension ->
+                PackOpeningRevealSlotProbe(
+                    extensionLabel = extension.name,
+                    totalItems = 1,
+                    onBoundsChanged = { bounds ->
+                        openingRevealTargetBounds = bounds
+                    },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+            Column(
+                verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier
-                    .graphicsLayer {
-                        alpha = stageTextAlpha
-                    }
-                    .testTag("pack-title"),
-            )
+                    .fillMaxSize()
+                    .dstcgContentInsetsPadding(includeBottom = true)
+                    .padding(16.dp),
+            ) {
+                Text(
+                    text = "Ouvrir un pack",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier
+                        .graphicsLayer {
+                            alpha = stageTextAlpha
+                        }
+                        .testTag("pack-title"),
+                )
 
-            WeatherForecastCard(
-                forecast = weatherForecast,
-                utcTimeLabel = weatherForecastUtcTimeLabel,
-                modifier = Modifier
-                    .graphicsLayer {
-                        alpha = stageTextAlpha
-                    }
-                    .testTag("pack-weather-forecast"),
-            )
+                WeatherForecastCard(
+                    forecast = weatherForecast,
+                    utcTimeLabel = weatherForecastUtcTimeLabel,
+                    modifier = Modifier
+                        .graphicsLayer {
+                            alpha = stageTextAlpha
+                        }
+                        .testTag("pack-weather-forecast"),
+                )
 
-            PackChargeStatus(
-                availableDrawCount = liveChargeStatus.availableDrawCount,
-                maxStoredDraws = liveChargeStatus.maxStoredDraws,
-                rechargeProgress = liveChargeStatus.rechargeProgress,
-                remainingDurationText = remainingDurationText,
-                modifier = Modifier
-                    .graphicsLayer {
-                        alpha = stageTextAlpha
-                    }
-                    .testTag("pack-status"),
-            )
+                PackChargeStatus(
+                    availableDrawCount = liveChargeStatus.availableDrawCount,
+                    maxStoredDraws = liveChargeStatus.maxStoredDraws,
+                    rechargeProgress = liveChargeStatus.rechargeProgress,
+                    remainingDurationText = remainingDurationText,
+                    modifier = Modifier
+                        .graphicsLayer {
+                            alpha = stageTextAlpha
+                        }
+                        .testTag("pack-status"),
+                )
 
-            state.errorMessage?.let { error ->
-                MotionCard(
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                        modifier = Modifier.padding(18.dp),
+                state.errorMessage?.let { error ->
+                    MotionCard(
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.padding(18.dp),
+                        ) {
+                            Text(
+                                text = error,
+                                color = Color(0xFFFFB1B1),
+                                modifier = Modifier.testTag("pack-error"),
+                            )
+                            Button(
+                                onClick = onRefresh,
+                                enabled = interactionsEnabled,
+                                modifier = Modifier.testTag("pack-refresh"),
+                            ) {
+                                Text("Réessayer")
+                            }
+                        }
+                    }
+                }
+
+                if (state.isLoading && state.extensions.isEmpty()) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(240.dp),
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    BoxWithConstraints(
+                        modifier = Modifier.weight(1f, fill = true),
                     ) {
                         Text(
-                            text = error,
-                            color = Color(0xFFFFB1B1),
-                            modifier = Modifier.testTag("pack-error"),
+                            text = "Choisis l'extension a contempler.",
+                            color = Color(0xFFEAF4FF),
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.graphicsLayer {
+                                alpha = introTextAlpha
+                            },
                         )
-                        Button(
-                            onClick = onRefresh,
-                            enabled = interactionsEnabled,
-                            modifier = Modifier.testTag("pack-refresh"),
-                        ) {
-                            Text("Réessayer")
+                        ExtensionList(
+                            extensions = state.extensions,
+                            drawLocked = drawLocked,
+                            onSelectExtension = { extensionId ->
+                                onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.PackSelectionExtension, null)
+                                onSelectExtension(extensionId)
+                            },
+                            interactionsEnabled = interactionsEnabled && displayedExtension == null,
+                            highlightedExtensionId = displayedExtensionId,
+                            highlightProgress = heroProgress.value,
+                            badgeAnimationsEnabled = !performanceProfile.isLowRamDevice &&
+                                extensionListVisible &&
+                                displayedExtension == null,
+                            onFirstEnabledExtensionBoundsChanged = { bounds ->
+                                onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.PackSelectionExtension, bounds)
+                            },
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(top = EXTENSION_LIST_TOP_PADDING)
+                                .graphicsLayer {
+                                    alpha = extensionListAlpha * listFadeProgress
+                                    translationY = extensionListTranslationY
+                                },
+                        )
+                        displayedExtension?.let { extension ->
+                            ExtensionBoosterStage(
+                                extension = extension,
+                                extensionIndex = displayedExtensionIndex,
+                                heroProgress = heroProgress.value,
+                                boosterIntroProgress = boosterIntroProgress.value,
+                                boosterSelectionProgress = boosterSelectionProgress.value,
+                                drawLocked = drawLocked,
+                                selectedBoosterIndex = state.selectedBoosterIndex,
+                                isAwaitingPackResult = state.isAwaitingPackResult,
+                                screenBounds = screenBounds,
+                                selectedBoosterTargetBounds = openingRevealTargetBounds,
+                                onSelectBooster = { boosterIndex ->
+                                    onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.PackSelectionBooster, null)
+                                    onSelectBooster(boosterIndex)
+                                    onOpenPack(extension.id)
+                                },
+                                onSelectedBoosterBoundsChanged = onSelectedBoosterBoundsChanged,
+                                onFirstBoosterBoundsChanged = { bounds ->
+                                    onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.PackSelectionBooster, bounds)
+                                },
+                                modifier = Modifier.fillMaxSize(),
+                            )
                         }
                     }
                 }
             }
-
-            if (state.isLoading && state.extensions.isEmpty()) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(240.dp),
-                ) {
-                    CircularProgressIndicator()
-                }
-            } else {
-                BoxWithConstraints(
-                    modifier = Modifier.weight(1f, fill = true),
-                ) {
-                    Text(
-                        text = "Choisis l'extension a contempler.",
-                        color = Color(0xFFEAF4FF),
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.graphicsLayer {
-                            alpha = introTextAlpha
-                        },
-                    )
-                    ExtensionList(
-                        extensions = state.extensions,
-                        drawLocked = drawLocked,
-                        onSelectExtension = { extensionId ->
-                            onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.PackSelectionExtension, null)
-                            onSelectExtension(extensionId)
-                        },
-                        interactionsEnabled = interactionsEnabled && displayedExtension == null,
-                        highlightedExtensionId = displayedExtensionId,
-                        highlightProgress = heroProgress.value,
-                        badgeAnimationsEnabled = !performanceProfile.isLowRamDevice &&
-                            extensionListVisible &&
-                            displayedExtension == null,
-                        onFirstEnabledExtensionBoundsChanged = { bounds ->
-                            onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.PackSelectionExtension, bounds)
-                        },
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(top = EXTENSION_LIST_TOP_PADDING)
-                            .graphicsLayer {
-                                alpha = extensionListAlpha * listFadeProgress
-                                translationY = extensionListTranslationY
-                            },
-                    )
-                    displayedExtension?.let { extension ->
-                        ExtensionBoosterStage(
-                            extension = extension,
-                            extensionIndex = displayedExtensionIndex,
-                            heroProgress = heroProgress.value,
-                            boosterIntroProgress = boosterIntroProgress.value,
-                            boosterSelectionProgress = boosterSelectionProgress.value,
-                            drawLocked = drawLocked,
-                            selectedBoosterIndex = state.selectedBoosterIndex,
-                            isAwaitingPackResult = state.isAwaitingPackResult,
-                            screenBounds = screenBounds,
-                            selectedBoosterTargetBounds = openingRevealTargetBounds,
-                            onSelectBooster = { boosterIndex ->
-                                onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.PackSelectionBooster, null)
-                                onSelectBooster(boosterIndex)
-                                onOpenPack(extension.id)
-                            },
-                            onSelectedBoosterBoundsChanged = onSelectedBoosterBoundsChanged,
-                            onFirstBoosterBoundsChanged = { bounds ->
-                                onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.PackSelectionBooster, bounds)
-                            },
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
-                }
+        } else {
+            displayedExtension?.let { extension ->
+                ExtensionBoosterStage(
+                    extension = extension,
+                    extensionIndex = displayedExtensionIndex,
+                    heroProgress = heroProgress.value,
+                    boosterIntroProgress = boosterIntroProgress.value,
+                    boosterSelectionProgress = boosterSelectionProgress.value,
+                    drawLocked = drawLocked,
+                    selectedBoosterIndex = state.selectedBoosterIndex,
+                    isAwaitingPackResult = state.isAwaitingPackResult,
+                    screenBounds = screenBounds,
+                    selectedBoosterTargetBounds = null,
+                    onSelectBooster = {},
+                    onSelectedBoosterBoundsChanged = {},
+                    backgroundOnly = true,
+                    modifier = Modifier.fillMaxSize(),
+                )
             }
         }
     }

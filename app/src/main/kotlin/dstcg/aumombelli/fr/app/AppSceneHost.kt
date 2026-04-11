@@ -58,6 +58,7 @@ import fr.aumombelli.dstcg.ui.motion.brandLogoLayoutSpec
 import fr.aumombelli.dstcg.ui.motion.homeLogoVariantFor
 import fr.aumombelli.dstcg.ui.motion.randomSkyBackdropVariant
 import fr.aumombelli.dstcg.ui.viewmodel.DstcgViewModelFactory
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -480,7 +481,8 @@ internal fun AppSceneHost(
                         onPackRevealReady = {
                             sceneStateHolder.value = sceneStateHolder.value.enterPackOpening()
                             scope.launch {
-                                withFrameNanos { }
+                                delay(PackSelectionOpeningCrossfadeDurationMillis)
+                                sceneStateHolder.value = sceneStateHolder.value.hidePackSelectionScene()
                                 packViewModel.clearExtensionSelection()
                             }
                         },
@@ -496,6 +498,7 @@ internal fun AppSceneHost(
                         extensionListVisible = sceneState.currentScene == AppScene.PackSelection &&
                             sceneState.packExtensionListVisible,
                         interactionsEnabled = !sceneState.transitionLocked && sceneState.currentScene == AppScene.PackSelection,
+                        backgroundOnly = sceneState.currentScene == AppScene.PackOpening,
                     )
                 }
 
@@ -611,3 +614,5 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
     is ContextWrapper -> baseContext.findActivity()
     else -> null
 }
+
+private const val PackSelectionOpeningCrossfadeDurationMillis = 420L

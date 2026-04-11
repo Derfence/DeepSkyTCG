@@ -57,6 +57,7 @@ internal fun ExtensionBoosterStage(
     onSelectBooster: (Int) -> Unit,
     onSelectedBoosterBoundsChanged: (PackRevealBounds?) -> Unit,
     onFirstBoosterBoundsChanged: (Rect?) -> Unit = {},
+    backgroundOnly: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     var stageLeftInsetPx by remember { mutableFloatStateOf(0f) }
@@ -154,63 +155,65 @@ internal fun ExtensionBoosterStage(
                 Box(
                     modifier = Modifier.fillMaxSize(),
                 ) {
-                    androidx.compose.material3.Text(
-                        text = extension.name,
-                        style = androidx.compose.material3.MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        modifier = Modifier
-                            .align(Alignment.TopCenter)
-                            .absoluteOffset(y = stageChrome.titleTopPadding)
-                            .testTag("pack-extension-title")
-                            .graphicsLayer {
-                                alpha = (1f - boosterSelectionProgress).coerceIn(0f, 1f)
-                                translationY = (1f - heroProgress) * 112f
-                                translationX = (1f - heroProgress) * -76f
-                            },
-                    )
-                    BoosterField(
-                        extension = extension,
-                        selectedBoosterIndex = selectedBoosterIndex,
-                        drawLocked = drawLocked,
-                        isAwaitingPackResult = isAwaitingPackResult,
-                        onSelectBooster = onSelectBooster,
-                        onBoosterBoundsChanged = { index, bounds ->
-                            boosterBoundsByIndex = boosterBoundsByIndex.toMutableMap().also { current ->
-                                if (bounds == null) {
-                                    current.remove(index)
-                                } else {
-                                    current[index] = bounds
-                                }
-                            }
-                        },
-                        onFirstBoosterBoundsChanged = onFirstBoosterBoundsChanged,
-                        introProgress = boosterIntroProgress,
-                        selectionProgress = boosterSelectionProgress,
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .fillMaxSize()
-                            .padding(
-                                start = stageChrome.fieldStartPadding,
-                                top = stageChrome.fieldTopPadding,
-                                end = stageChrome.fieldEndPadding,
-                                bottom = stageChrome.fieldBottomPadding,
-                            ),
-                    )
-                    val selectedStartBounds = selectedBoosterIndex?.let(boosterBoundsByIndex::get)
-                    if (
-                        selectedBoosterIndex != null &&
-                        selectedStartBounds != null &&
-                        selectedBoosterTargetBounds != null
-                    ) {
-                        SelectedBoosterOverlay(
-                            extensionId = extension.id,
-                            boosterIndex = selectedBoosterIndex,
-                            startBounds = selectedStartBounds,
-                            targetBounds = selectedBoosterTargetBounds,
-                            selectionProgress = boosterSelectionProgress,
-                            onBoundsChanged = onSelectedBoosterBoundsChanged,
+                    if (!backgroundOnly) {
+                        androidx.compose.material3.Text(
+                            text = extension.name,
+                            style = androidx.compose.material3.MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .absoluteOffset(y = stageChrome.titleTopPadding)
+                                .testTag("pack-extension-title")
+                                .graphicsLayer {
+                                    alpha = (1f - boosterSelectionProgress).coerceIn(0f, 1f)
+                                    translationY = (1f - heroProgress) * 112f
+                                    translationX = (1f - heroProgress) * -76f
+                                },
                         )
+                        BoosterField(
+                            extension = extension,
+                            selectedBoosterIndex = selectedBoosterIndex,
+                            drawLocked = drawLocked,
+                            isAwaitingPackResult = isAwaitingPackResult,
+                            onSelectBooster = onSelectBooster,
+                            onBoosterBoundsChanged = { index, bounds ->
+                                boosterBoundsByIndex = boosterBoundsByIndex.toMutableMap().also { current ->
+                                    if (bounds == null) {
+                                        current.remove(index)
+                                    } else {
+                                        current[index] = bounds
+                                    }
+                                }
+                            },
+                            onFirstBoosterBoundsChanged = onFirstBoosterBoundsChanged,
+                            introProgress = boosterIntroProgress,
+                            selectionProgress = boosterSelectionProgress,
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .fillMaxSize()
+                                .padding(
+                                    start = stageChrome.fieldStartPadding,
+                                    top = stageChrome.fieldTopPadding,
+                                    end = stageChrome.fieldEndPadding,
+                                    bottom = stageChrome.fieldBottomPadding,
+                                ),
+                        )
+                        val selectedStartBounds = selectedBoosterIndex?.let(boosterBoundsByIndex::get)
+                        if (
+                            selectedBoosterIndex != null &&
+                            selectedStartBounds != null &&
+                            selectedBoosterTargetBounds != null
+                        ) {
+                            SelectedBoosterOverlay(
+                                extensionId = extension.id,
+                                boosterIndex = selectedBoosterIndex,
+                                startBounds = selectedStartBounds,
+                                targetBounds = selectedBoosterTargetBounds,
+                                selectionProgress = boosterSelectionProgress,
+                                onBoundsChanged = onSelectedBoosterBoundsChanged,
+                            )
+                        }
                     }
                 }
             }

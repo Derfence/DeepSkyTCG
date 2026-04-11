@@ -4,6 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -147,6 +148,24 @@ class DstcgAppBackNavigationTest {
     }
 
     @Test
+    fun pack_selection_background_crossfades_into_pack_opening() {
+        setAppContent(backNavigationTestAppContainer())
+        startAndReachHome()
+
+        composeRule.onNodeWithTag("home-open-pack").performClick()
+        advanceUntilTagEnabled("pack-extension-enter-astronomes-en-herbe", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").performClick()
+        advanceUntilTagEnabled("pack-booster-0", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("pack-booster-0").performClick()
+        advanceUntilTagDisplayed("pack-opening-booster", timeoutMillis = 10_000)
+
+        composeRule.onNodeWithTag("pack-screen-root").assertIsDisplayed()
+
+        advanceBy(700)
+        composeRule.onAllNodesWithTag("pack-screen-root").assertCountEquals(0)
+    }
+
+    @Test
     fun pack_opening_does_not_keep_pack_selection_titles_mounted_during_transition() {
         setAppContent(backNavigationTestAppContainer())
         startAndReachHome()
@@ -158,6 +177,10 @@ class DstcgAppBackNavigationTest {
         composeRule.onNodeWithTag("pack-booster-0").performClick()
         advanceUntilTagDisplayed("pack-opening-booster", timeoutMillis = 10_000)
 
+        composeRule.onNodeWithTag("pack-title").assertIsNotDisplayed()
+        composeRule.onNodeWithTag("pack-extension-title").assertIsNotDisplayed()
+
+        advanceBy(700)
         composeRule.onAllNodesWithTag("pack-title").assertCountEquals(0)
         composeRule.onAllNodesWithTag("pack-extension-title").assertCountEquals(0)
     }

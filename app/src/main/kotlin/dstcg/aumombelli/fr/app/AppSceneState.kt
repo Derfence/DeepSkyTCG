@@ -148,7 +148,7 @@ internal fun AppSceneUiState.switchPackSelectionToHome(): AppSceneUiState = copy
 
 internal fun AppSceneUiState.enterPackOpening(): AppSceneUiState = copy(
     currentScene = AppScene.PackOpening,
-    packSceneVisible = false,
+    packSceneVisible = true,
     packExtensionListVisible = false,
     packOpeningExitSignal = 0,
 )
