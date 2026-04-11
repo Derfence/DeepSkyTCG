@@ -7,9 +7,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performScrollToIndex
@@ -346,6 +348,126 @@ class EquipmentScreenTest {
 
         composeRule.waitForIdle()
         assertNull(lastReportedBounds)
+    }
+
+    @Test
+    fun equipment_activation_reports_scroll_hint_when_target_section_is_below_viewport() {
+        var activationBounds: Rect? = null
+        var scrollHintVisible by mutableStateOf(false)
+
+        composeRule.setContent {
+            Box(modifier = Modifier.size(width = 360.dp, height = 420.dp)) {
+                EquipmentScreen(
+                    state = EquipmentUiState(
+                        isLoading = false,
+                        sections = listOf(
+                            testEquipmentSection(
+                                type = EquipmentType.Observatory,
+                                statusLabel = "Aucune carte en reserve",
+                                cards = List(3) { index ->
+                                    testEquipmentInventoryCard(
+                                        definition = testEquipmentCardDefinition(
+                                            id = "observatory-${index + 1}",
+                                            type = EquipmentType.Observatory,
+                                            displayName = "Observatoire ${index + 1}",
+                                            level = index + 1,
+                                        ),
+                                    )
+                                },
+                            ),
+                            testEquipmentSection(
+                                type = EquipmentType.Telescope,
+                                statusLabel = "Aucune carte en reserve",
+                                cards = List(3) { index ->
+                                    testEquipmentInventoryCard(
+                                        definition = testEquipmentCardDefinition(
+                                            id = "telescope-${index + 1}",
+                                            type = EquipmentType.Telescope,
+                                            displayName = "Telescope ${index + 1}",
+                                            level = index + 1,
+                                        ),
+                                    )
+                                },
+                            ),
+                            testEquipmentSection(
+                                type = EquipmentType.Mount,
+                                statusLabel = "1 carte en reserve",
+                                cards = listOf(
+                                    testEquipmentInventoryCard(
+                                        definition = testEquipmentCardDefinition(
+                                            id = "mount-activate",
+                                            type = EquipmentType.Mount,
+                                            displayName = "Monture a activer",
+                                            level = 1,
+                                        ),
+                                        stockCount = 1,
+                                        activationCount = 0,
+                                        activationEnabled = true,
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                    onRefresh = {},
+                    onActivateEquipment = {},
+                    onOnboardingActivationBoundsChanged = { bounds ->
+                        activationBounds = bounds
+                    },
+                    onOnboardingActivationScrollHintChanged = { visible ->
+                        scrollHintVisible = visible
+                    },
+                )
+            }
+        }
+
+        composeRule.waitUntil(timeoutMillis = 5_000) { scrollHintVisible }
+        assertNull(activationBounds)
+    }
+
+    @Test
+    fun equipment_activation_reports_bounds_when_target_button_is_visible() {
+        var activationBounds: Rect? = null
+        var scrollHintVisible by mutableStateOf(true)
+
+        composeRule.setContent {
+            Box(modifier = Modifier.size(width = 360.dp, height = 900.dp)) {
+                EquipmentScreen(
+                    state = EquipmentUiState(
+                        isLoading = false,
+                        sections = listOf(
+                            testEquipmentSection(
+                                type = EquipmentType.Observatory,
+                                statusLabel = "1 carte en reserve",
+                                cards = listOf(
+                                    testEquipmentInventoryCard(
+                                        definition = testEquipmentCardDefinition(
+                                            id = "observatory-activate",
+                                            type = EquipmentType.Observatory,
+                                            displayName = "Observatoire a activer",
+                                            level = 1,
+                                        ),
+                                        stockCount = 1,
+                                        activationCount = 0,
+                                        activationEnabled = true,
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                    onRefresh = {},
+                    onActivateEquipment = {},
+                    onOnboardingActivationBoundsChanged = { bounds ->
+                        activationBounds = bounds
+                    },
+                    onOnboardingActivationScrollHintChanged = { visible ->
+                        scrollHintVisible = visible
+                    },
+                )
+            }
+        }
+
+        composeRule.waitUntil(timeoutMillis = 5_000) { !scrollHintVisible && activationBounds != null }
+        composeRule.onAllNodesWithTag("equipment-activate-observatory-activate").assertCountEquals(1)
     }
 
     private fun testEquipmentSection(

@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -29,8 +30,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,6 +46,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
@@ -61,21 +65,50 @@ fun EquipmentScreen(
     onActivateEquipment: (String) -> Unit,
     contentVisible: Boolean = true,
     onOnboardingActivationBoundsChanged: (Rect?) -> Unit = {},
+    onOnboardingActivationScrollHintChanged: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val onboardingActivationTargetEnabled =
         contentVisible &&
             state.activatingCardId == null &&
             state.activeEffects.isEmpty()
+    val listCoordinatesHolder = remember { LayoutCoordinatesHolder() }
+    val listState = rememberLazyListState()
     val firstActivatableCardId = state.sections.asSequence()
         .flatMap { it.cards.asSequence() }
         .firstOrNull { it.activationEnabled && onboardingActivationTargetEnabled }
         ?.definition
         ?.id
+    val firstActivatableSectionIndex = state.sections.indexOfFirst { section ->
+        section.cards.any { it.definition.id == firstActivatableCardId }
+    }.takeIf { it >= 0 }
+    val sectionListStartIndex = 1 +
+        (if (state.isLoading) 1 else 0) +
+        (if (state.errorMessage != null) 1 else 0) +
+        1
+    val firstActivatableSectionItemIndex = firstActivatableSectionIndex?.let(sectionListStartIndex::plus)
+    val maxVisibleListItemIndex = listState.layoutInfo.visibleItemsInfo.maxOfOrNull { it.index }
+    val activationTargetEnabled = firstActivatableCardId != null && onboardingActivationTargetEnabled
+    val targetSectionOffscreenBelow =
+        firstActivatableSectionItemIndex != null &&
+            maxVisibleListItemIndex != null &&
+            firstActivatableSectionItemIndex > maxVisibleListItemIndex
+    LaunchedEffect(
+        firstActivatableCardId,
+        onboardingActivationTargetEnabled,
+        firstActivatableSectionItemIndex,
+        maxVisibleListItemIndex,
+    ) {
+        when {
+            !activationTargetEnabled -> {
+                onOnboardingActivationBoundsChanged(null)
+                onOnboardingActivationScrollHintChanged(false)
+            }
 
-    LaunchedEffect(firstActivatableCardId, onboardingActivationTargetEnabled) {
-        if (firstActivatableCardId == null || !onboardingActivationTargetEnabled) {
-            onOnboardingActivationBoundsChanged(null)
+            targetSectionOffscreenBelow -> {
+                onOnboardingActivationBoundsChanged(null)
+                onOnboardingActivationScrollHintChanged(true)
+            }
         }
     }
 
@@ -101,11 +134,15 @@ fun EquipmentScreen(
             .testTag("equipment-screen"),
     ) {
         LazyColumn(
+            state = listState,
             verticalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(16.dp),
             modifier = Modifier
                 .fillMaxSize()
                 .dstcgContentInsetsPadding(includeBottom = true)
+                .onGloballyPositioned { coordinates ->
+                    listCoordinatesHolder.value = coordinates
+                }
                 .testTag("equipment-list"),
         ) {
             item(key = "equipment-header") {
@@ -149,7 +186,9 @@ fun EquipmentScreen(
                     onActivateEquipment = onActivateEquipment,
                     firstActivatableCardId = firstActivatableCardId,
                     contentVisible = contentVisible,
+                    listCoordinatesProvider = { listCoordinatesHolder.value },
                     onOnboardingActivationBoundsChanged = onOnboardingActivationBoundsChanged,
+                    onOnboardingActivationScrollHintChanged = onOnboardingActivationScrollHintChanged,
                 )
             }
         }
@@ -309,7 +348,9 @@ private fun EquipmentSectionCard(
     onActivateEquipment: (String) -> Unit,
     firstActivatableCardId: String?,
     contentVisible: Boolean,
+    listCoordinatesProvider: () -> LayoutCoordinates?,
     onOnboardingActivationBoundsChanged: (Rect?) -> Unit,
+    onOnboardingActivationScrollHintChanged: (Boolean) -> Unit,
 ) {
     val palette = equipmentPalette(section.type)
 
@@ -399,7 +440,9 @@ private fun EquipmentSectionCard(
                                 highlightOnboardingActivationTarget =
                                     card.definition.id == firstActivatableCardId,
                                 contentVisible = contentVisible,
+                                listCoordinatesProvider = listCoordinatesProvider,
                                 onOnboardingActivationBoundsChanged = onOnboardingActivationBoundsChanged,
+                                onOnboardingActivationScrollHintChanged = onOnboardingActivationScrollHintChanged,
                             )
                         }
                     }
@@ -417,8 +460,25 @@ private fun EquipmentInventoryCard(
     onActivateEquipment: (String) -> Unit,
     highlightOnboardingActivationTarget: Boolean,
     contentVisible: Boolean,
+    listCoordinatesProvider: () -> LayoutCoordinates?,
     onOnboardingActivationBoundsChanged: (Rect?) -> Unit,
+    onOnboardingActivationScrollHintChanged: (Boolean) -> Unit,
 ) {
+    val reportOnboardingTargetBounds =
+        highlightOnboardingActivationTarget &&
+            contentVisible &&
+            card.activationEnabled &&
+            !isActivating
+
+    DisposableEffect(reportOnboardingTargetBounds) {
+        onDispose {
+            if (reportOnboardingTargetBounds) {
+                onOnboardingActivationBoundsChanged(null)
+                onOnboardingActivationScrollHintChanged(false)
+            }
+        }
+    }
+
     Surface(
         shape = RoundedCornerShape(26.dp),
         color = Color.Transparent,
@@ -483,20 +543,6 @@ private fun EquipmentInventoryCard(
                     )
                 }
 
-                Text(
-                    text = if (card.isActive && card.packsRemaining != null) {
-                        "${card.packsRemaining} packs restants"
-                    } else {
-                        "Pret pour une prochaine activation"
-                    },
-                    color = if (card.isActive) {
-                        Color(0xFFF4DC99)
-                    } else {
-                        Color(0xFFC7D6E8)
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-
                 Button(
                     onClick = { onActivateEquipment(card.definition.id) },
                     enabled = card.activationEnabled && !isActivating,
@@ -510,13 +556,26 @@ private fun EquipmentInventoryCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .onGloballyPositioned { coordinates ->
-                            if (
-                                highlightOnboardingActivationTarget &&
-                                contentVisible &&
-                                card.activationEnabled &&
-                                !isActivating
-                            ) {
-                                onOnboardingActivationBoundsChanged(coordinates.boundsInRoot())
+                            if (reportOnboardingTargetBounds) {
+                                val listCoordinates = listCoordinatesProvider()
+                                val boundsInRoot = coordinates.boundsInRoot()
+                                val boundsInList = if (listCoordinates != null && listCoordinates.isAttached) {
+                                    listCoordinates.localBoundingBoxOf(
+                                        sourceCoordinates = coordinates,
+                                        clipBounds = false,
+                                    )
+                                } else {
+                                    null
+                                }
+                                val coachmarkVisibility = resolveEquipmentActivationCoachmarkVisibility(
+                                    targetEnabled = true,
+                                    buttonBoundsInRoot = boundsInRoot,
+                                    buttonBoundsInViewport = boundsInList,
+                                    viewportHeightPx = listCoordinates?.size?.height?.toFloat() ?: 0f,
+                                    targetSectionOffscreenBelow = false,
+                                )
+                                onOnboardingActivationBoundsChanged(coachmarkVisibility.visibleBounds)
+                                onOnboardingActivationScrollHintChanged(coachmarkVisibility.showScrollDownHint)
                             }
                         }
                         .testTag("equipment-activate-${card.definition.id}"),
@@ -532,6 +591,46 @@ private fun EquipmentInventoryCard(
             }
         }
     }
+}
+
+private fun Rect.isVerticallyVisibleWithin(viewportHeightPx: Float): Boolean =
+    bottom > 0f && top < viewportHeightPx
+
+internal data class EquipmentActivationCoachmarkVisibility(
+    val visibleBounds: Rect?,
+    val showScrollDownHint: Boolean,
+)
+
+internal fun resolveEquipmentActivationCoachmarkVisibility(
+    targetEnabled: Boolean,
+    buttonBoundsInRoot: Rect?,
+    buttonBoundsInViewport: Rect?,
+    viewportHeightPx: Float,
+    targetSectionOffscreenBelow: Boolean,
+): EquipmentActivationCoachmarkVisibility {
+    if (!targetEnabled) {
+        return EquipmentActivationCoachmarkVisibility(
+            visibleBounds = null,
+            showScrollDownHint = false,
+        )
+    }
+
+    if (buttonBoundsInViewport != null && viewportHeightPx > 0f) {
+        val buttonVisible = buttonBoundsInViewport.isVerticallyVisibleWithin(viewportHeightPx)
+        return EquipmentActivationCoachmarkVisibility(
+            visibleBounds = if (buttonVisible) buttonBoundsInRoot else null,
+            showScrollDownHint = !buttonVisible && buttonBoundsInViewport.top >= viewportHeightPx,
+        )
+    }
+
+    return EquipmentActivationCoachmarkVisibility(
+        visibleBounds = null,
+        showScrollDownHint = targetSectionOffscreenBelow,
+    )
+}
+
+private class LayoutCoordinatesHolder {
+    var value: LayoutCoordinates? = null
 }
 
 @Composable

@@ -29,6 +29,7 @@ internal data class AppSceneUiState(
     val pendingBadgeCelebration: List<BadgeItem> = emptyList(),
     val badgeCelebrationDeferred: Boolean = false,
     val onboardingHintsVisible: Boolean = true,
+    val equipmentActivationScrollHintVisible: Boolean = false,
     val coachmarkTargetBounds: Map<NewPlayerOnboardingTarget, Rect> = emptyMap(),
 )
 
@@ -103,7 +104,10 @@ internal fun AppSceneUiState.showOnboardingHints(): AppSceneUiState = copy(onboa
 
 internal fun AppSceneUiState.hideOnboardingHints(): AppSceneUiState = copy(onboardingHintsVisible = false)
 
-internal fun AppSceneUiState.enterHome(): AppSceneUiState = copy(currentScene = AppScene.Home)
+internal fun AppSceneUiState.enterHome(): AppSceneUiState = copy(
+    currentScene = AppScene.Home,
+    equipmentActivationScrollHintVisible = false,
+)
 
 internal fun AppSceneUiState.prepareLibraryEntry(nextLibraryRefreshSignal: Int): AppSceneUiState = copy(
     homeContentVisible = false,
@@ -117,6 +121,7 @@ internal fun AppSceneUiState.prepareEquipmentEntry(nextEquipmentRefreshSignal: I
     homeContentVisible = false,
     equipmentContentVisible = false,
     equipmentRefreshSignal = nextEquipmentRefreshSignal,
+    equipmentActivationScrollHintVisible = false,
 )
 
 internal fun AppSceneUiState.enterEquipment(): AppSceneUiState = copy(currentScene = AppScene.Equipment)
@@ -181,6 +186,10 @@ internal fun AppSceneUiState.registerPackReady(
 internal fun AppSceneUiState.requestPackOpeningExit(): AppSceneUiState = copy(
     packOpeningExitSignal = packOpeningExitSignal + 1,
 )
+
+internal fun AppSceneUiState.withEquipmentActivationScrollHintVisible(
+    visible: Boolean,
+): AppSceneUiState = copy(equipmentActivationScrollHintVisible = visible)
 
 internal fun AppSceneUiState.clearPendingBadgeCelebration(): AppSceneUiState = copy(
     pendingBadgeCelebration = emptyList(),

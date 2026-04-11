@@ -231,7 +231,10 @@ internal class NewPlayerOnboardingCoordinator(
                     sceneState.equipmentContentVisible &&
                     sceneState.onboardingHintsVisible &&
                     !sceneState.transitionLocked &&
-                    sceneState.coachmarkTargetBounds.containsKey(NewPlayerOnboardingTarget.EquipmentActivation)
+                    (
+                        sceneState.coachmarkTargetBounds.containsKey(NewPlayerOnboardingTarget.EquipmentActivation) ||
+                            sceneState.equipmentActivationScrollHintVisible
+                        )
                 ) {
                     NewPlayerCoachmarkSpec(
                         target = NewPlayerOnboardingTarget.EquipmentActivation,

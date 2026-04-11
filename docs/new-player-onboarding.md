@@ -67,6 +67,8 @@ Les hints d'onboarding n'apparaissent qu'une fois les animations de transition t
   - le premier tirage reste force sans equipement, meme si `EquipmentChancePercent` vaut `100`.
 - De retour accueil, un coachmark cible `Equipements` au moment ou le bouton devient visible avec la premiere carte obtenue.
 - Une fois le menu ouvert, un dernier coachmark cible le premier bouton `Activer` eligible.
+- Si ce bouton `Activer` est encore hors viewport vers le bas, la bulle de texte est remplacee par une fleche vers le bas.
+- Des que le bouton devient visible a l'ecran, la fleche disparait et la bulle de texte normale revient.
 - L'onboarding se termine a la premiere activation reussie.
 
 ## Persistance et reprise

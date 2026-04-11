@@ -335,6 +335,7 @@ internal fun AppSceneHost(
                             is EquipmentEvent.Activated -> {
                                 sceneStateHolder.value = sceneStateHolder.value
                                     .hideOnboardingHints()
+                                    .withEquipmentActivationScrollHintVisible(false)
                                     .withCoachmarkTargetBounds(
                                         NewPlayerOnboardingTarget.EquipmentActivation,
                                         null,
@@ -366,6 +367,10 @@ internal fun AppSceneHost(
                             NewPlayerOnboardingTarget.EquipmentActivation,
                             bounds,
                         )
+                    },
+                    onOnboardingActivationScrollHintChanged = { visible ->
+                        sceneStateHolder.value = sceneStateHolder.value
+                            .withEquipmentActivationScrollHintVisible(visible)
                     },
                 )
             }
@@ -590,10 +595,15 @@ internal fun AppSceneHost(
             sceneState = sceneState,
             badgeCelebrationVisible = badgeCelebrationVisible,
         )?.let { spec ->
-            sceneState.coachmarkTargetBounds[spec.target]?.let { targetBounds ->
+            val targetBounds = sceneState.coachmarkTargetBounds[spec.target]
+            val forceScrollDownHint =
+                spec.target == NewPlayerOnboardingTarget.EquipmentActivation &&
+                    sceneState.equipmentActivationScrollHintVisible
+            if (targetBounds != null || forceScrollDownHint) {
                 NewPlayerCoachmarkOverlay(
                     spec = spec,
                     targetBounds = targetBounds,
+                    forceScrollDownHint = forceScrollDownHint,
                     modifier = Modifier.fillMaxSize(),
                 )
             }
