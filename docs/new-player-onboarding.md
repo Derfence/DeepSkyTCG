@@ -45,6 +45,12 @@ Les hints d'onboarding n'apparaissent qu'une fois les animations de transition t
 ### 3. Bibliotheque puis badges
 
 - Au premier retour accueil apres ouverture d'un pack, le coachmark cible `Bibliotheque`.
+- La transition `Accueil -> Bibliotheque` utilise un portail-livre frontal :
+  - le livre se deplace d'abord seul ;
+  - puis la couverture avant se replie par la tranche gauche, pendant que la quatrieme de couverture reste en place ;
+  - les pages droites se revelent sous la couverture des le debut de l'ouverture ;
+  - les pages gauches n'apparaissent qu'avec l'ouverture du verso ;
+  - les pages restent legerement plus petites que les couvertures et gardent un petit decor d'etoiles imprimees.
 - Lors de la premiere visite bibliotheque, un micro-hint local s'affiche :
   `Touche une carte obtenue pour l'ouvrir.`
 - Quand le joueur revient a l'accueil, la celebration de badge differee est rejouee si elle est encore en memoire.

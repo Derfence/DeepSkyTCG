@@ -10,6 +10,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -20,9 +21,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.sin
+import kotlin.math.roundToInt
 
 @Composable
 fun BookPortalOverlay(
@@ -31,6 +30,7 @@ fun BookPortalOverlay(
     modifier: Modifier = Modifier,
 ) {
     val visibleProgress = progress.coerceIn(0f, 1f)
+    val travelProgress = calculateLibraryBookTravelProgress(visibleProgress)
     if (visibleProgress <= 0f) return
     val visibleAlpha = overlayAlpha.coerceIn(0f, 1f)
     if (visibleAlpha <= 0f) return
@@ -43,7 +43,7 @@ fun BookPortalOverlay(
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = (24 + 280 * visibleProgress).dp)
+                .padding(bottom = (24 + 280 * travelProgress).dp)
                 .graphicsLayer {
                     alpha = visibleProgress * visibleAlpha
                 }
@@ -64,7 +64,7 @@ private fun BookPortalFigure(
     progress: Float,
     modifier: Modifier = Modifier,
 ) {
-    val pose = remember(progress) { calculateBookPose(progress) }
+    val pose = remember(progress) { calculateLibraryBookPose(progress) }
 
     Canvas(modifier = modifier) {
         drawTransitionBook(pose)
@@ -86,239 +86,167 @@ private data class BookFaceQuad(
     }
 }
 
-private data class ProjectedBookFace(
-    val quad: BookFaceQuad,
-    val averageDepth: Float,
-)
-
-private data class BookPoint3(
-    val x: Float,
-    val y: Float,
-    val z: Float,
-)
-
-private data class DrawLayer(
-    val depth: Float,
-    val render: DrawScope.() -> Unit,
-)
-
 private enum class CoverSurfaceStyle {
     Outer,
     Inner,
 }
 
-private fun DrawScope.drawTransitionBook(pose: BookPose) {
-    val openness = (pose.openAngle / 142f).coerceIn(0f, 1f)
-    val bookHeight = 1.34f
-    val coverWidth = 0.94f
-    val pageWidth = 0.88f
-    val backCoverDepth = -0.12f
-    val pageBlockDepth = -0.02f
-    val frontCoverDepth = 0.09f
-    val center = Offset(
-        x = size.width * scalarLerp(0.50f, 0.54f, openness),
-        y = size.height * (0.78f - pose.lift * 0.06f),
-    )
-    val scale = size.minDimension * 0.58f / bookHeight
-    val cameraDistance = 7.4f
-    val layers = mutableListOf<DrawLayer>()
+internal data class FlatBookPortalLayout(
+    val openness: Float,
+    val closedCoverRect: Rect,
+    val backCoverRect: Rect,
+    val frontOuterCoverRect: Rect,
+    val frontInnerCoverRect: Rect,
+    val leftPageRect: Rect,
+    val rightPageRect: Rect,
+    val spineRect: Rect,
+    val shadowTopLeft: Offset,
+    val shadowSize: Size,
+    val shadowAlpha: Float,
+    val frontCoverAlpha: Float,
+    val frontInnerCoverAlpha: Float,
+    val rightPagesAlpha: Float,
+    val leftPagesAlpha: Float,
+)
 
-    val shadowWidth = size.minDimension * (0.26f + pose.lift * 0.12f + openness * 0.16f)
-    val shadowHeight = size.minDimension * (0.055f + openness * 0.024f)
+private fun DrawScope.drawTransitionBook(pose: BookPose) {
+    val layout = calculateFlatBookPortalLayout(
+        canvasSize = size,
+        pose = pose,
+    )
+    val openness = layout.openness
     val shadowCenter = Offset(
-        x = center.x + size.minDimension * scalarLerp(0.0f, 0.03f, openness),
-        y = center.y + size.minDimension * (0.085f - pose.lift * 0.018f),
+        x = layout.shadowTopLeft.x + layout.shadowSize.width / 2f,
+        y = layout.shadowTopLeft.y + layout.shadowSize.height / 2f,
     )
     drawOval(
         brush = Brush.radialGradient(
             colors = listOf(
-                Color.Black.copy(alpha = pose.shadowAlpha * 0.52f),
-                Color.Black.copy(alpha = pose.shadowAlpha * 0.16f),
+                Color.Black.copy(alpha = layout.shadowAlpha * 0.52f),
+                Color.Black.copy(alpha = layout.shadowAlpha * 0.16f),
                 Color.Transparent,
             ),
             center = shadowCenter,
-            radius = shadowWidth * 0.72f,
+            radius = layout.shadowSize.width * 0.72f,
         ),
-        topLeft = Offset(shadowCenter.x - shadowWidth / 2f, shadowCenter.y - shadowHeight / 2f),
-        size = Size(shadowWidth, shadowHeight),
+        topLeft = layout.shadowTopLeft,
+        size = layout.shadowSize,
     )
 
-    fun projectPoint(point: BookPoint3): Pair<Offset, Float> {
-        val spreadPoint = point.copy(x = point.x * pose.spreadWidth)
-        val pitched = rotateAroundX(spreadPoint, pose.pitchX)
-        val yawed = rotateAroundY(pitched, pose.yawY)
-        val perspective = cameraDistance / (cameraDistance - yawed.z).coerceAtLeast(1.4f)
-        return Offset(
-            x = center.x + yawed.x * scale * perspective,
-            y = center.y - yawed.y * scale * perspective,
-        ) to yawed.z
-    }
-
-    fun buildFace(
-        hingeX: Float,
-        outerX: Float,
-        depthZ: Float,
-        hingeRotation: Float = 0f,
-        hingePivotX: Float = hingeX,
-    ): ProjectedBookFace {
-        val outerTop = rotateAroundY(
-            point = BookPoint3(outerX, bookHeight, depthZ),
-            degrees = hingeRotation,
-            pivotX = hingePivotX,
-        )
-        val innerTop = rotateAroundY(
-            point = BookPoint3(hingeX, bookHeight, depthZ),
-            degrees = hingeRotation,
-            pivotX = hingePivotX,
-        )
-        val innerBottom = rotateAroundY(
-            point = BookPoint3(hingeX, 0f, depthZ),
-            degrees = hingeRotation,
-            pivotX = hingePivotX,
-        )
-        val outerBottom = rotateAroundY(
-            point = BookPoint3(outerX, 0f, depthZ),
-            degrees = hingeRotation,
-            pivotX = hingePivotX,
-        )
-
-        val projectedOuterTop = projectPoint(outerTop)
-        val projectedInnerTop = projectPoint(innerTop)
-        val projectedInnerBottom = projectPoint(innerBottom)
-        val projectedOuterBottom = projectPoint(outerBottom)
-
-        return ProjectedBookFace(
-            quad = BookFaceQuad(
-                outerTop = projectedOuterTop.first,
-                innerTop = projectedInnerTop.first,
-                innerBottom = projectedInnerBottom.first,
-                outerBottom = projectedOuterBottom.first,
-            ),
-            averageDepth = listOf(
-                projectedOuterTop.second,
-                projectedInnerTop.second,
-                projectedInnerBottom.second,
-                projectedOuterBottom.second,
-            ).average().toFloat(),
-        )
-    }
-
-    val backCover = buildFace(
-        hingeX = 0f,
-        outerX = coverWidth,
-        depthZ = backCoverDepth,
-    )
-    val pageBlock = buildFace(
-        hingeX = 0.035f,
-        outerX = pageWidth,
-        depthZ = pageBlockDepth,
-    )
-    val frontCover = buildFace(
-        hingeX = 0f,
-        outerX = coverWidth,
-        depthZ = frontCoverDepth,
-        hingeRotation = pose.openAngle,
-    )
-    val frontPageBlock = buildFace(
-        hingeX = 0.028f,
-        outerX = pageWidth * 0.92f,
-        depthZ = frontCoverDepth - 0.036f,
-        hingeRotation = pose.openAngle * 0.94f + pose.pageFan * 0.10f,
-        hingePivotX = 0f,
-    )
-    val frontCoverRectangularity = ((openness - 0.42f) / 0.58f).coerceIn(0f, 1f)
-    val frontCoverFace = rectangularizeFace(
-        face = frontCover.quad,
-        blend = frontCoverRectangularity * 0.72f,
-    )
-    val frontPageBlockFace = rectangularizeFace(
-        face = frontPageBlock.quad,
-        blend = frontCoverRectangularity * 0.54f,
+    drawBookCoverSlab(
+        face = layout.backCoverRect.toBookFaceQuad(),
+        surfaceStyle = CoverSurfaceStyle.Inner,
+        accentAlpha = 1f,
     )
 
-    layers += DrawLayer(backCover.averageDepth) {
+    if (layout.frontInnerCoverAlpha > 0.01f) {
         drawBookCoverSlab(
-            face = backCover.quad,
-            open = openness,
-            surfaceStyle = CoverSurfaceStyle.Outer,
-            accentAlpha = 0.72f,
-        )
-    }
-    layers += DrawLayer(pageBlock.averageDepth) {
-        drawBookPageSlab(
-            face = pageBlock.quad,
-            open = openness,
-            toneAlpha = 0.96f,
-        )
-    }
-    layers += DrawLayer(frontPageBlock.averageDepth) {
-        drawBookPageSlab(
-            face = frontPageBlockFace,
-            open = openness,
-            toneAlpha = scalarLerp(0.82f, 0.94f, openness),
+            face = layout.frontInnerCoverRect.toBookFaceQuad(),
+            surfaceStyle = CoverSurfaceStyle.Inner,
+            accentAlpha = layout.frontInnerCoverAlpha,
         )
     }
 
-    if (openness > 0.02f) {
-        val pageCount = 4
-        repeat(pageCount) { index ->
-            val fraction = index / (pageCount - 1).toFloat()
-            val pageAngle = pose.openAngle * scalarLerp(0.38f, 0.82f, fraction) - pose.pageFan * (1f - fraction) * 0.42f
-            val leaf = buildFace(
-                hingeX = 0.018f + fraction * 0.024f,
-                outerX = pageWidth * scalarLerp(0.98f, 0.82f, fraction),
-                depthZ = scalarLerp(0.005f, 0.055f, fraction),
-                hingeRotation = pageAngle,
-                hingePivotX = 0f,
+    if (layout.rightPagesAlpha > 0.01f || layout.leftPagesAlpha > 0.01f) {
+        val leftPageFace = layout.leftPageRect.toBookFaceQuad()
+        val rightPageFace = layout.rightPageRect.toBookFaceQuad()
+        if (layout.rightPagesAlpha > 0.01f) {
+            drawBookPageSlab(
+                face = rightPageFace,
+                mirroredHorizontally = true,
+                toneAlpha = 0.96f * layout.rightPagesAlpha,
             )
-            layers += DrawLayer(leaf.averageDepth) {
-                drawBookPageLeaf(
-                    face = leaf.quad,
-                    alpha = scalarLerp(0.28f, 0.7f, openness) * scalarLerp(1f, 0.72f, fraction),
-                )
+        }
+        if (layout.leftPagesAlpha > 0.01f) {
+            drawBookPageSlab(
+                face = leftPageFace,
+                toneAlpha = 0.96f * layout.leftPagesAlpha,
+            )
+        }
+
+        if (openness > 0.12f && (layout.rightPagesAlpha > 0.01f || layout.leftPagesAlpha > 0.01f)) {
+            repeat(3) { index ->
+                val fraction = index / 2f
+                val horizontalInset = scalarLerp(0.05f, 0.17f, fraction)
+                val verticalInset = scalarLerp(0.025f, 0.07f, fraction)
+                val baseLeafAlpha = scalarLerp(0.18f, 0.44f, openness) *
+                    scalarLerp(1f, 0.72f, fraction)
+                if (layout.rightPagesAlpha > 0.01f) {
+                    drawBookPageLeaf(
+                        face = insetFaceAnchoredToBottom(
+                            face = rightPageFace,
+                            horizontalInset = horizontalInset,
+                            topInset = verticalInset * 0.55f,
+                        ),
+                        mirroredHorizontally = true,
+                        alpha = baseLeafAlpha * layout.rightPagesAlpha,
+                    )
+                }
+                if (layout.leftPagesAlpha > 0.01f) {
+                    drawBookPageLeaf(
+                        face = insetFaceAnchoredToBottom(
+                            face = leftPageFace,
+                            horizontalInset = horizontalInset,
+                            topInset = verticalInset * 0.55f,
+                        ),
+                        alpha = baseLeafAlpha * layout.leftPagesAlpha,
+                    )
+                }
             }
+        }
+
+        if (layout.rightPagesAlpha > 0.01f) {
+            drawBookPageStarField(
+                outerTop = rightPageFace.innerTop,
+                innerTop = rightPageFace.outerTop,
+                innerBottom = rightPageFace.outerBottom,
+                outerBottom = rightPageFace.innerBottom,
+                rotatedHalfTurn = true,
+                toneAlpha = layout.rightPagesAlpha,
+            )
+        }
+        if (layout.leftPagesAlpha > 0.01f) {
+            drawBookPageStarField(
+                outerTop = leftPageFace.outerTop,
+                innerTop = leftPageFace.innerTop,
+                innerBottom = leftPageFace.innerBottom,
+                outerBottom = leftPageFace.outerBottom,
+                toneAlpha = layout.leftPagesAlpha,
+            )
         }
     }
 
-    val bindingTop = projectPoint(BookPoint3(0f, bookHeight, -0.018f))
-    val bindingBottom = projectPoint(BookPoint3(0f, 0f, -0.018f))
-    layers += DrawLayer((bindingTop.second + bindingBottom.second) / 2f) {
-        drawBookBinding(
-            topCenter = bindingTop.first,
-            bottomCenter = bindingBottom.first,
-            width = size.minDimension * scalarLerp(0.068f, 0.084f, openness),
-            open = openness,
-        )
-    }
+    drawBookBinding(
+        topCenter = Offset(
+            x = (layout.spineRect.left + layout.spineRect.right) / 2f,
+            y = layout.spineRect.top,
+        ),
+        bottomCenter = Offset(
+            x = (layout.spineRect.left + layout.spineRect.right) / 2f,
+            y = layout.spineRect.bottom,
+        ),
+        width = layout.spineRect.width,
+    )
 
-    layers += DrawLayer(frontCover.averageDepth + pose.frontCoverDominance * 0.1f) {
+    if (layout.frontCoverAlpha > 0.01f) {
         drawBookCoverSlab(
-            face = frontCoverFace,
-            open = openness,
-            surfaceStyle = if (pose.openAngle < 88f) {
-                CoverSurfaceStyle.Outer
-            } else {
-                CoverSurfaceStyle.Inner
-            },
-            accentAlpha = scalarLerp(1f, 0.84f, openness),
+            face = layout.frontOuterCoverRect.toBookFaceQuad(),
+            surfaceStyle = CoverSurfaceStyle.Outer,
+            accentAlpha = layout.frontCoverAlpha,
         )
     }
-
-    layers
-        .sortedBy { it.depth }
-        .forEach { layer -> layer.render(this) }
 }
 
 private fun DrawScope.drawBookPageSlab(
     face: BookFaceQuad,
-    open: Float,
+    mirroredHorizontally: Boolean = false,
     toneAlpha: Float = 1f,
 ) {
     val pagePath = face.asPath()
-    val outerTop = face.outerTop
-    val innerTop = face.innerTop
-    val innerBottom = face.innerBottom
-    val outerBottom = face.outerBottom
+    val outerTop = if (mirroredHorizontally) face.innerTop else face.outerTop
+    val innerTop = if (mirroredHorizontally) face.outerTop else face.innerTop
+    val innerBottom = if (mirroredHorizontally) face.outerBottom else face.innerBottom
+    val outerBottom = if (mirroredHorizontally) face.innerBottom else face.outerBottom
 
     drawPath(
         path = pagePath,
@@ -456,19 +384,150 @@ private fun DrawScope.drawBookPageSlab(
     )
 }
 
+private fun DrawScope.drawBookPageStarField(
+    outerTop: Offset,
+    innerTop: Offset,
+    innerBottom: Offset,
+    outerBottom: Offset,
+    rotatedHalfTurn: Boolean = false,
+    toneAlpha: Float,
+) {
+    val pointColor = Color(0xFF181411).copy(alpha = 0.74f * toneAlpha)
+    val glowColor = Color(0x66181411).copy(alpha = 0.14f * toneAlpha)
+    val dotRadius = size.minDimension * 0.0048f
+    val glowRadius = dotRadius * 2.8f
+
+    val starDots = listOf(
+        0.50f to 0.24f,
+        0.22f to 0.12f,
+        0.46f to 0.31f,
+        0.34f to 0.71f,
+        0.63f to 0.45f,
+    )
+
+    starDots.forEachIndexed { index, (horizontalFraction, verticalFraction) ->
+        val center = pointOnBookFace(
+            outerTop = outerTop,
+            innerTop = innerTop,
+            innerBottom = innerBottom,
+            outerBottom = outerBottom,
+            horizontalFraction = normalizePageHorizontalFraction(
+                horizontalFraction = horizontalFraction,
+                rotatedHalfTurn = rotatedHalfTurn,
+            ),
+            verticalFraction = normalizePageVerticalFraction(
+                verticalFraction = verticalFraction,
+                rotatedHalfTurn = rotatedHalfTurn,
+            ),
+        )
+        val radiusScale = if (index % 2 == 0) 1.2f else 0.9f
+        drawCircle(
+            color = glowColor,
+            radius = glowRadius * radiusScale,
+            center = center,
+        )
+        drawCircle(
+            color = pointColor,
+            radius = dotRadius * radiusScale,
+            center = center,
+        )
+    }
+
+    listOf(
+        0.72f to 0.27f,
+        0.38f to 0.8f,
+        0.29f to 0.80f,
+    ).forEach { (horizontalFraction, verticalFraction) ->
+        val center = pointOnBookFace(
+            outerTop = outerTop,
+            innerTop = innerTop,
+            innerBottom = innerBottom,
+            outerBottom = outerBottom,
+            horizontalFraction = normalizePageHorizontalFraction(
+                horizontalFraction = horizontalFraction,
+                rotatedHalfTurn = rotatedHalfTurn,
+            ),
+            verticalFraction = normalizePageVerticalFraction(
+                verticalFraction = verticalFraction,
+                rotatedHalfTurn = rotatedHalfTurn,
+            ),
+        )
+        drawPath(
+            path = starPath(
+                center = center,
+                points = 4,
+                outerRadius = dotRadius * 3.8f,
+                innerRadius = dotRadius * 1.05f,
+            ),
+            color = Color(0xFF181411).copy(alpha = 0.84f * toneAlpha),
+            style = Fill,
+        )
+    }
+}
+
+private fun normalizePageHorizontalFraction(
+    horizontalFraction: Float,
+    rotatedHalfTurn: Boolean,
+): Float = if (rotatedHalfTurn) 1f - horizontalFraction else horizontalFraction
+
+private fun normalizePageVerticalFraction(
+    verticalFraction: Float,
+    rotatedHalfTurn: Boolean,
+): Float = if (rotatedHalfTurn) 1f - verticalFraction else verticalFraction
+
+private fun pointOnBookFace(
+    outerTop: Offset,
+    innerTop: Offset,
+    innerBottom: Offset,
+    outerBottom: Offset,
+    horizontalFraction: Float,
+    verticalFraction: Float,
+): Offset {
+    val top = lerpOffset(outerTop, innerTop, horizontalFraction)
+    val bottom = lerpOffset(outerBottom, innerBottom, horizontalFraction)
+    return lerpOffset(top, bottom, verticalFraction)
+}
+
+internal fun calculateLibraryBookPose(progress: Float): BookPose {
+    val clampedProgress = progress.coerceIn(0f, 1f)
+    val travelProgress = calculateLibraryBookTravelProgress(clampedProgress)
+    val openingProgress = smoothLibraryBookPhase(
+        calculateLibraryBookOpeningProgress(clampedProgress),
+    )
+    return BookPose(
+        lift = travelProgress,
+        pitchX = 0f,
+        yawY = 0f,
+        openAngle = 142f * openingProgress,
+        pageFan = scalarLerp(0f, 12f, openingProgress),
+        spreadWidth = 1f,
+        shadowAlpha = scalarLerp(0.18f, 0.34f, travelProgress * 0.7f + openingProgress * 0.3f),
+        frontCoverDominance = scalarLerp(1f, 0.42f, openingProgress).coerceIn(0.3f, 1f),
+    )
+}
+
+internal fun calculateLibraryBookTravelProgress(progress: Float): Float {
+    val clampedProgress = progress.coerceIn(0f, 1f)
+    return (clampedProgress / LIBRARY_BOOK_TRAVEL_END_PROGRESS).coerceIn(0f, 1f)
+}
+
+internal fun calculateLibraryBookOpeningProgress(progress: Float): Float =
+    (
+        (progress.coerceIn(0f, 1f) - LIBRARY_BOOK_OPENING_START_PROGRESS) /
+            LIBRARY_BOOK_OPENING_DURATION_PROGRESS
+        ).coerceIn(0f, 1f)
+
 private fun DrawScope.drawBookBinding(
     topCenter: Offset,
     bottomCenter: Offset,
     width: Float,
-    open: Float,
 ) {
     val axis = bottomCenter - topCenter
     val axisLengthSquared = ((axis.x * axis.x) + (axis.y * axis.y)).coerceAtLeast(0.0001f)
     val inverseLength = 1f / kotlin.math.sqrt(axisLengthSquared)
     val axisUnit = Offset(axis.x * inverseLength, axis.y * inverseLength)
     val normal = Offset(-axisUnit.y, axisUnit.x)
-    val widthScale = scalarLerp(0.9f, 1.1f, open)
-    val halfWidth = width * widthScale / 2f
+    val halfWidth = width / 2f
     val outerTop = topCenter + normal * halfWidth
     val innerTop = topCenter - normal * halfWidth
     val innerBottom = bottomCenter - normal * halfWidth
@@ -553,7 +612,6 @@ private fun DrawScope.drawBookBinding(
 
 private fun DrawScope.drawBookCoverSlab(
     face: BookFaceQuad,
-    open: Float,
     surfaceStyle: CoverSurfaceStyle,
     accentAlpha: Float = 1f,
 ) {
@@ -701,7 +759,7 @@ private fun DrawScope.drawBookCoverSlab(
     val midTop = lerpOffset(inset.outerTop, inset.innerTop, 0.5f)
     val midBottom = lerpOffset(inset.outerBottom, inset.innerBottom, 0.5f)
     val emblemCenter = lerpOffset(midTop, midBottom, 0.54f)
-    val emblemRadius = size.minDimension * scalarLerp(0.014f, 0.019f, open)
+    val emblemRadius = size.minDimension * 0.016f
     drawCircle(
         color = if (surfaceStyle == CoverSurfaceStyle.Outer) {
             Color(0x18F1D6A0)
@@ -838,9 +896,12 @@ private fun DrawScope.drawBookCoverSlab(
 
 private fun DrawScope.drawBookPageLeaf(
     face: BookFaceQuad,
+    mirroredHorizontally: Boolean = false,
     alpha: Float,
 ) {
     val leafPath = face.asPath()
+    val outerTop = if (mirroredHorizontally) face.innerTop else face.outerTop
+    val innerBottom = if (mirroredHorizontally) face.outerBottom else face.innerBottom
     drawPath(
         path = leafPath,
         brush = Brush.linearGradient(
@@ -849,8 +910,8 @@ private fun DrawScope.drawBookPageLeaf(
                 Color(0xFFF3E8CC).copy(alpha = alpha),
                 Color(0xFFE1CFA0).copy(alpha = alpha * 0.9f),
             ),
-            start = face.outerTop,
-            end = face.innerBottom,
+            start = outerTop,
+            end = innerBottom,
         ),
         style = Fill,
     )
@@ -871,29 +932,117 @@ private fun DrawScope.drawBookPageLeaf(
     )
 }
 
-private fun rectangularizeFace(
-    face: BookFaceQuad,
-    blend: Float,
-): BookFaceQuad {
-    val clampedBlend = blend.coerceIn(0f, 1f)
-    if (clampedBlend <= 0f) return face
-
-    val averagedSpan = Offset(
-        x = ((face.outerTop.x - face.innerTop.x) + (face.outerBottom.x - face.innerBottom.x)) / 2f,
-        y = ((face.outerTop.y - face.innerTop.y) + (face.outerBottom.y - face.innerBottom.y)) / 2f,
+internal fun calculateFlatBookPortalLayout(
+    canvasSize: Size,
+    pose: BookPose,
+): FlatBookPortalLayout {
+    val openness = (pose.openAngle / 142f).coerceIn(0f, 1f)
+    val coverMotionProgress = openness
+    val coverAspectRatio = 0.94f / 1.34f
+    val spineWidth = (canvasSize.minDimension * 0.046f).coerceAtLeast(4f)
+    val maxSpreadWidth = canvasSize.width * 0.84f
+    val maxCoverHeight = canvasSize.height * 0.62f
+    val coverWidth = minOf(
+        maxCoverHeight * coverAspectRatio,
+        ((maxSpreadWidth - spineWidth) / 2f).coerceAtLeast(1f),
     )
-    val rectangularTarget = BookFaceQuad(
-        outerTop = face.innerTop + averagedSpan,
-        innerTop = face.innerTop,
-        innerBottom = face.innerBottom,
-        outerBottom = face.innerBottom + averagedSpan,
+    val coverHeight = coverWidth / coverAspectRatio
+    val pageWidth = coverWidth * 0.94f
+    val pageHeight = coverHeight * 0.94f
+    val closedCoverRight = canvasSize.width * 0.92f
+    val closedCoverLeft = closedCoverRight - coverWidth
+    val centerY = canvasSize.height * (0.78f - pose.lift * 0.05f)
+    val top = centerY - coverHeight / 2f
+    val bottom = centerY + coverHeight / 2f
+    val closedCoverRect = snapRectToPixel(
+        left = closedCoverLeft,
+        top = top,
+        right = closedCoverRight,
+        bottom = bottom,
     )
-
-    return BookFaceQuad(
-        outerTop = lerpOffset(face.outerTop, rectangularTarget.outerTop, clampedBlend),
-        innerTop = face.innerTop,
-        innerBottom = face.innerBottom,
-        outerBottom = lerpOffset(face.outerBottom, rectangularTarget.outerBottom, clampedBlend),
+    val pageBottomInset = coverHeight * 0.015f
+    val pageBottom = closedCoverRect.bottom - pageBottomInset
+    val pageTop = pageBottom - pageHeight
+    val spineRect = snapRectToPixel(
+        left = closedCoverRect.left - spineWidth,
+        top = closedCoverRect.top,
+        right = closedCoverRect.left,
+        bottom = closedCoverRect.bottom,
+    )
+    val finalLeftPageRect = snapRectToPixel(
+        left = spineRect.left - pageWidth,
+        top = pageTop,
+        right = spineRect.left,
+        bottom = pageBottom,
+    )
+    val rightPageRect = snapRectToPixel(
+        left = spineRect.right,
+        top = pageTop,
+        right = spineRect.right + pageWidth,
+        bottom = pageBottom,
+    )
+    val backCoverRect = snapRectToPixel(
+        left = spineRect.right,
+        top = closedCoverRect.top,
+        right = spineRect.right + coverWidth,
+        bottom = closedCoverRect.bottom,
+    )
+    val rectoCollapseProgress = (coverMotionProgress / 0.5f).coerceIn(0f, 1f)
+    val versoExpandProgress = ((coverMotionProgress - 0.5f) / 0.5f).coerceIn(0f, 1f)
+    val pageOpenProgress = versoExpandProgress
+    val leftPageRect = snapRectToPixel(
+        left = scalarLerp(spineRect.left, finalLeftPageRect.left, pageOpenProgress),
+        top = pageTop,
+        right = scalarLerp(spineRect.left, finalLeftPageRect.right, pageOpenProgress),
+        bottom = pageBottom,
+    )
+    val frontOuterLeft = scalarLerp(closedCoverRect.left, spineRect.left, rectoCollapseProgress)
+    val frontOuterWidth = coverWidth * (1f - rectoCollapseProgress)
+    val frontOuterCoverRect = snapRectToPixel(
+        left = frontOuterLeft,
+        top = closedCoverRect.top,
+        right = frontOuterLeft + frontOuterWidth,
+        bottom = closedCoverRect.bottom,
+    )
+    val frontInnerWidth = coverWidth * versoExpandProgress
+    val frontInnerCoverRect = snapRectToPixel(
+        left = spineRect.left - frontInnerWidth,
+        top = closedCoverRect.top,
+        right = spineRect.left,
+        bottom = closedCoverRect.bottom,
+    )
+    val shadowWidth =
+        scalarLerp(
+            (coverWidth + spineWidth) * 1.06f,
+            (coverWidth * 2f + spineWidth) * 1.06f,
+            coverMotionProgress,
+        )
+    val shadowHeight = canvasSize.minDimension * scalarLerp(0.06f, 0.09f, openness)
+    val bookLeft = minOf(frontOuterCoverRect.left, frontInnerCoverRect.left, spineRect.left)
+    val bookRight = maxOf(backCoverRect.right, frontOuterCoverRect.right, frontInnerCoverRect.right)
+    val shadowCenter = Offset(
+        x = (bookLeft + bookRight) / 2f,
+        y = bottom + canvasSize.minDimension * (0.065f - pose.lift * 0.014f),
+    )
+    return FlatBookPortalLayout(
+        openness = openness,
+        closedCoverRect = closedCoverRect,
+        backCoverRect = backCoverRect,
+        frontOuterCoverRect = frontOuterCoverRect,
+        frontInnerCoverRect = frontInnerCoverRect,
+        leftPageRect = leftPageRect,
+        rightPageRect = rightPageRect,
+        spineRect = spineRect,
+        shadowTopLeft = Offset(
+            x = shadowCenter.x - shadowWidth / 2f,
+            y = shadowCenter.y - shadowHeight / 2f,
+        ),
+        shadowSize = Size(shadowWidth, shadowHeight),
+        shadowAlpha = pose.shadowAlpha,
+        frontCoverAlpha = if (frontOuterWidth > 0.5f) 1f else 0f,
+        frontInnerCoverAlpha = if (frontInnerWidth > 0.5f) 1f else 0f,
+        rightPagesAlpha = 1f,
+        leftPagesAlpha = (pageOpenProgress * 1.15f).coerceIn(0f, 1f),
     )
 }
 
@@ -924,34 +1073,50 @@ private fun insetFace(
     ),
 )
 
-private fun rotateAroundX(
-    point: BookPoint3,
-    degrees: Float,
-): BookPoint3 {
-    val radians = degrees / 180f * PI.toFloat()
-    val cosine = cos(radians)
-    val sine = sin(radians)
-    return BookPoint3(
-        x = point.x,
-        y = point.y * cosine - point.z * sine,
-        z = point.y * sine + point.z * cosine,
-    )
+private fun insetFaceAnchoredToBottom(
+    face: BookFaceQuad,
+    horizontalInset: Float,
+    topInset: Float,
+): BookFaceQuad = BookFaceQuad(
+    outerTop = lerpOffset(
+        lerpOffset(face.outerTop, face.innerTop, horizontalInset),
+        face.outerBottom,
+        topInset,
+    ),
+    innerTop = lerpOffset(
+        lerpOffset(face.innerTop, face.outerTop, horizontalInset),
+        face.innerBottom,
+        topInset,
+    ),
+    innerBottom = lerpOffset(face.innerBottom, face.outerBottom, horizontalInset),
+    outerBottom = lerpOffset(face.outerBottom, face.innerBottom, horizontalInset),
+)
+
+private fun Rect.toBookFaceQuad(): BookFaceQuad = BookFaceQuad(
+    outerTop = Offset(left, top),
+    innerTop = Offset(right, top),
+    innerBottom = Offset(right, bottom),
+    outerBottom = Offset(left, bottom),
+)
+
+private fun smoothLibraryBookPhase(progress: Float): Float {
+    val clampedProgress = progress.coerceIn(0f, 1f)
+    return clampedProgress * clampedProgress * (3f - 2f * clampedProgress)
 }
 
-private fun rotateAroundY(
-    point: BookPoint3,
-    degrees: Float,
-    pivotX: Float = 0f,
-): BookPoint3 {
-    val translatedX = point.x - pivotX
-    val radians = degrees / 180f * PI.toFloat()
-    val cosine = cos(radians)
-    val sine = sin(radians)
-    val rotatedX = translatedX * cosine + point.z * sine
-    val rotatedZ = -translatedX * sine + point.z * cosine
-    return BookPoint3(
-        x = rotatedX + pivotX,
-        y = point.y,
-        z = rotatedZ,
-    )
-}
+private fun snapRectToPixel(
+    left: Float,
+    top: Float,
+    right: Float,
+    bottom: Float,
+): Rect = Rect(
+    left = left.roundToInt().toFloat(),
+    top = top.roundToInt().toFloat(),
+    right = right.roundToInt().toFloat(),
+    bottom = bottom.roundToInt().toFloat(),
+)
+
+private const val LIBRARY_BOOK_OPENING_START_PROGRESS = 1f / 3f
+private const val LIBRARY_BOOK_TRAVEL_END_PROGRESS = 2f / 3f
+private const val LIBRARY_BOOK_OPENING_DURATION_PROGRESS =
+    1f - LIBRARY_BOOK_OPENING_START_PROGRESS
