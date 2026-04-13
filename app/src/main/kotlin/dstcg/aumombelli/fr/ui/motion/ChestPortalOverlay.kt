@@ -33,6 +33,7 @@ fun ChestPortalOverlay(
     modifier: Modifier = Modifier,
 ) {
     val visibleProgress = progress.coerceIn(0f, 1f)
+    val travelProgress = calculateBadgeChestTravelProgress(visibleProgress)
     if (visibleProgress <= 0f) return
     val visibleAlpha = overlayAlpha.coerceIn(0f, 1f)
     if (visibleAlpha <= 0f) return
@@ -45,7 +46,7 @@ fun ChestPortalOverlay(
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = (24 + 280 * visibleProgress).dp)
+                .padding(bottom = (24 + 280 * travelProgress).dp)
                 .graphicsLayer {
                     alpha = visibleProgress * visibleAlpha
                 }
@@ -68,7 +69,7 @@ private fun ChestPortalFigure(
     progress: Float,
     modifier: Modifier = Modifier,
 ) {
-    val pose = remember(progress) { calculateBookPose(progress) }
+    val pose = remember(progress) { calculateBadgeChestPose(progress) }
 
     Canvas(modifier = modifier) {
         drawTransitionChest(pose)
@@ -291,3 +292,78 @@ private fun DrawScope.drawStraps(
         style = Stroke(width = rect.height * 0.03f),
     )
 }
+
+internal fun calculateBadgeChestPose(progress: Float): BookPose {
+    val clampedProgress = progress.coerceIn(0f, 1f)
+    val travelProgress = calculateBadgeChestTravelProgress(clampedProgress)
+    val openingProgress = smoothBadgeChestPhase(
+        calculateBadgeChestOpeningProgress(clampedProgress),
+    )
+
+    return BookPose(
+        lift = travelProgress,
+        pitchX = scalarLerp(12f, 10f, openingProgress),
+        yawY = scalarLerp(-14f, -8f, openingProgress),
+        openAngle = 142f * openingProgress,
+        pageFan = scalarLerp(0f, 12f, openingProgress),
+        spreadWidth = scalarLerp(0.78f, 1.18f, openingProgress),
+        shadowAlpha = scalarLerp(0.18f, 0.34f, travelProgress * 0.7f + openingProgress * 0.3f),
+        frontCoverDominance = scalarLerp(1f, 0.42f, openingProgress).coerceIn(0.3f, 1f),
+    )
+}
+
+internal fun calculateBadgeChestTravelProgress(progress: Float): Float {
+    val clampedProgress = progress.coerceIn(0f, 1f)
+    return when {
+        clampedProgress <= BADGE_CHEST_TRAVEL_HALF_PROGRESS -> {
+            0.5f * smoothBadgeChestPhase(
+                clampedProgress / BADGE_CHEST_TRAVEL_HALF_PROGRESS,
+            )
+        }
+
+        clampedProgress <= BADGE_CHEST_TRAVEL_END_PROGRESS -> {
+            0.5f + 0.5f * smoothBadgeChestPhase(
+                (
+                    (clampedProgress - BADGE_CHEST_TRAVEL_HALF_PROGRESS) /
+                        (BADGE_CHEST_TRAVEL_END_PROGRESS - BADGE_CHEST_TRAVEL_HALF_PROGRESS)
+                    ).coerceIn(0f, 1f),
+            )
+        }
+
+        else -> 1f
+    }
+}
+
+internal fun calculateBadgeChestOpeningProgress(progress: Float): Float {
+    val clampedProgress = progress.coerceIn(0f, 1f)
+    return when {
+        clampedProgress <= BADGE_CHEST_OPENING_START_PROGRESS -> 0f
+
+        clampedProgress <= BADGE_CHEST_TRAVEL_END_PROGRESS -> {
+            0.5f * smoothBadgeChestPhase(
+                (
+                    (clampedProgress - BADGE_CHEST_OPENING_START_PROGRESS) /
+                        (BADGE_CHEST_TRAVEL_END_PROGRESS - BADGE_CHEST_OPENING_START_PROGRESS)
+                    ).coerceIn(0f, 1f),
+            )
+        }
+
+        else -> {
+            0.5f + 0.5f * smoothBadgeChestPhase(
+                (
+                    (clampedProgress - BADGE_CHEST_TRAVEL_END_PROGRESS) /
+                        (1f - BADGE_CHEST_TRAVEL_END_PROGRESS)
+                    ).coerceIn(0f, 1f),
+            )
+        }
+    }
+}
+
+private fun smoothBadgeChestPhase(progress: Float): Float {
+    val clampedProgress = progress.coerceIn(0f, 1f)
+    return clampedProgress * clampedProgress * (3f - 2f * clampedProgress)
+}
+
+private const val BADGE_CHEST_TRAVEL_HALF_PROGRESS = 1f / 3f
+private const val BADGE_CHEST_OPENING_START_PROGRESS = BADGE_CHEST_TRAVEL_HALF_PROGRESS
+private const val BADGE_CHEST_TRAVEL_END_PROGRESS = 2f / 3f
