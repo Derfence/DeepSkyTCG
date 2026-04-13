@@ -46,6 +46,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -747,10 +748,10 @@ private fun EquipmentCategoryBadge(
                     )
                     drawLine(
                         color = strokeColor,
-                        start = Offset(size.width * 0.5f, size.height * 0.28f),
-                        end = Offset(size.width * 0.5f, size.height * 0.58f),
-                        strokeWidth = strokeWidth,
-                        cap = StrokeCap.Round,
+                        start = Offset(size.width * 0.75f, size.height * 0.2f),
+                        end = Offset(size.width * 0.7f, size.height * 0.25f),
+                        strokeWidth = strokeWidth * 1.5f,
+                        cap = StrokeCap.Square,
                     )
                     drawCircle(
                         color = strokeColor,
@@ -760,94 +761,171 @@ private fun EquipmentCategoryBadge(
                 }
 
                 EquipmentCategoryIconUi.Telescope -> {
-                    drawCircle(
-                        color = strokeColor,
-                        radius = strokeWidth * 0.55f,
-                        center = Offset(size.width * 0.23f, size.height * 0.50f),
-                    )
-                    drawLine(
-                        color = strokeColor,
-                        start = Offset(size.width * 0.28f, size.height * 0.48f),
-                        end = Offset(size.width * 0.62f, size.height * 0.36f),
-                        strokeWidth = strokeWidth * 1.2f,
-                        cap = StrokeCap.Round,
-                    )
-                    drawLine(
-                        color = strokeColor,
-                        start = Offset(size.width * 0.58f, size.height * 0.38f),
-                        end = Offset(size.width * 0.72f, size.height * 0.34f),
-                        strokeWidth = strokeWidth * 1.35f,
-                        cap = StrokeCap.Round,
-                    )
-                    drawLine(
-                        color = strokeColor,
-                        start = Offset(size.width * 0.46f, size.height * 0.44f),
-                        end = Offset(size.width * 0.38f, size.height * 0.80f),
-                        strokeWidth = strokeWidth,
-                        cap = StrokeCap.Round,
-                    )
-                    drawLine(
-                        color = strokeColor,
-                        start = Offset(size.width * 0.46f, size.height * 0.44f),
-                        end = Offset(size.width * 0.50f, size.height * 0.82f),
-                        strokeWidth = strokeWidth,
-                        cap = StrokeCap.Round,
-                    )
-                    drawLine(
-                        color = strokeColor,
-                        start = Offset(size.width * 0.46f, size.height * 0.44f),
-                        end = Offset(size.width * 0.64f, size.height * 0.80f),
-                        strokeWidth = strokeWidth,
-                        cap = StrokeCap.Round,
-                    )
+                    val bodyCenter = Offset(size.width * 0.48f, size.height * 0.46f)
+                    rotate(
+                        degrees = -45f,
+                        pivot = bodyCenter,
+                    ) {
+                        val bodyWidth = size.width
+                        val bodyHeight = size.height * 0.42f
+                        val bodyTopLeft = Offset(
+                            bodyCenter.x - bodyWidth / 2f,
+                            bodyCenter.y - bodyHeight / 2f,
+                        )
+                        val bodyCorner = CornerRadius(bodyHeight * 0.48f, bodyHeight * 0.48f)
+                        drawRoundRect(
+                            color = strokeColor,
+                            topLeft = bodyTopLeft,
+                            size = Size(bodyWidth, bodyHeight),
+                            cornerRadius = bodyCorner,
+                        )
+                        val apertureWidth = bodyWidth * 0.22f
+                        val apertureHeight = bodyHeight * 0.72f
+                        val apertureTopLeft = Offset(
+                            bodyTopLeft.x + bodyWidth - apertureWidth - bodyWidth * 0.05f,
+                            bodyTopLeft.y + (bodyHeight - apertureHeight) / 2f,
+                        )
+                        drawOval(
+                            color = Color.Black.copy(alpha = 0.34f),
+                            topLeft = apertureTopLeft,
+                            size = Size(apertureWidth, apertureHeight),
+                        )
+                        val spiderCenter = Offset(
+                            apertureTopLeft.x + apertureWidth/2,
+                            bodyCenter.y,
+                        )
+                        val spiderStroke = strokeWidth * 0.55f
+                        val spiderHorizontalStart = Offset(spiderCenter.x - apertureWidth/2, spiderCenter.y)
+                        val spiderHorizontalEnd = Offset(spiderCenter.x + apertureWidth/2, spiderCenter.y)
+                        val spiderVerticalStart = Offset(spiderCenter.x, spiderCenter.y - apertureHeight/2)
+                        val spiderVerticalEnd = Offset(spiderCenter.x, spiderCenter.y + apertureHeight/2)
+                        drawLine(
+                            color = strokeColor,
+                            start = spiderHorizontalStart,
+                            end = spiderHorizontalEnd,
+                            strokeWidth = spiderStroke,
+                            cap = StrokeCap.Round,
+                        )
+                        drawLine(
+                            color = strokeColor,
+                            start = spiderVerticalStart,
+                            end = spiderVerticalEnd,
+                            strokeWidth = spiderStroke,
+                            cap = StrokeCap.Round,
+                        )
+                        val secondaryWidth = bodyHeight * 0.16f
+                        val secondaryHeight = bodyHeight * 0.11f
+                        val secondaryTopLeft = Offset(
+                            spiderCenter.x - secondaryWidth / 2f,
+                            spiderCenter.y - secondaryHeight / 2f,
+                        )
+                        drawOval(
+                            color = strokeColor,
+                            topLeft = secondaryTopLeft,
+                            size = Size(secondaryWidth, secondaryHeight),
+                        )
+                        val focuserWidth = bodyWidth * 0.10f
+                        val focuserHeight = bodyHeight * 0.22f
+                        val focuserTopLeft = Offset(
+                            spiderCenter.x - bodyWidth * 0.14f,
+                            bodyTopLeft.y - focuserHeight * 0.55f,
+                        )
+                        val focuserCorner = CornerRadius(focuserWidth * 0.25f, focuserWidth * 0.25f)
+                        drawRoundRect(
+                            color = strokeColor,
+                            topLeft = focuserTopLeft,
+                            size = Size(focuserWidth, focuserHeight),
+                            cornerRadius = focuserCorner,
+                        )
+                    }
                 }
 
                 EquipmentCategoryIconUi.Mount -> {
+                    val centerBase = Offset(size.width * 0.58f, size.height * 0.65f)
+                    val headSize = strokeWidth * 2
+                    val headTopLeft = Offset(centerBase.x - headSize / 2, centerBase.y - headSize)
+                    drawRect(
+                        color = strokeColor,
+                        topLeft = headTopLeft,
+                        size = Size(headSize, headSize),
+                    )
+                    val circleRadius = headSize/2
+                    val circleCenter = Offset(
+                        headTopLeft.x + circleRadius,
+                        headTopLeft.y,
+                    )
                     drawCircle(
                         color = strokeColor,
-                        radius = minOf(size.width, size.height) * 0.16f,
-                        center = Offset(size.width * 0.48f, size.height * 0.40f),
-                        style = Stroke(width = strokeWidth),
+                        radius = circleRadius,
+                        center = circleCenter,
                     )
+                    val diamondCenter = Offset(
+                        circleCenter.x - circleRadius,
+                        circleCenter.y - circleRadius,
+                    )
+                    val telescopeLength = headSize * 5f
+                    val telescopeWidth = strokeWidth * 1.5f
+                    rotate(
+                        degrees = 45f,
+                        pivot = diamondCenter,
+                    ) {
+                        drawRect(
+                            color = strokeColor,
+                            topLeft = Offset(
+                                diamondCenter.x - headSize / 2f,
+                                diamondCenter.y - headSize / 2f,
+                            ),
+                            size = Size(headSize, headSize),
+                        )
+                        drawRect(
+                            color = strokeColor,
+                            topLeft = Offset(
+                                diamondCenter.x - headSize / 4f,
+                                diamondCenter.y - headSize,
+                            ),
+                            size = Size(headSize / 2f, headSize / 2f),
+                        )
+                        drawLine(
+                            color = strokeColor,
+                            start = Offset(
+                                diamondCenter.x - telescopeLength / 2f,
+                                diamondCenter.y - 3f * headSize / 2f + telescopeWidth / 2f),
+                            end = Offset(
+                                diamondCenter.x + telescopeLength / 2f,
+                                diamondCenter.y - 3f * headSize / 2f + telescopeWidth / 2f),
+                            strokeWidth = telescopeWidth,
+                            cap = StrokeCap.Round,
+                        )
+                        drawLine(
+                            color = strokeColor,
+                            start = diamondCenter,
+                            end = Offset(diamondCenter.x, diamondCenter.y + size.width * 0.3f),
+                            strokeWidth = strokeWidth,
+                        )
+                        drawCircle(
+                            color = strokeColor,
+                            center = Offset(diamondCenter.x, diamondCenter.y + size.width * 0.2f),
+                            radius = strokeWidth,
+                        )
+                    }
                     drawLine(
                         color = strokeColor,
-                        start = Offset(size.width * 0.48f, size.height * 0.40f),
-                        end = Offset(size.width * 0.68f, size.height * 0.28f),
+                        start = Offset(centerBase.x - strokeWidth/2, centerBase.y),
+                        end = Offset(centerBase.x - size.width * 0.14f, centerBase.y + size.width * 0.26f),
                         strokeWidth = strokeWidth,
                         cap = StrokeCap.Round,
                     )
                     drawLine(
                         color = strokeColor,
-                        start = Offset(size.width * 0.48f, size.height * 0.40f),
-                        end = Offset(size.width * 0.32f, size.height * 0.58f),
+                        start = centerBase,
+                        end = Offset(centerBase.x, centerBase.y + size.width * 0.28f),
                         strokeWidth = strokeWidth,
                         cap = StrokeCap.Round,
                     )
                     drawLine(
                         color = strokeColor,
-                        start = Offset(size.width * 0.28f, size.height * 0.58f),
-                        end = Offset(size.width * 0.70f, size.height * 0.58f),
-                        strokeWidth = strokeWidth,
-                        cap = StrokeCap.Round,
-                    )
-                    drawLine(
-                        color = strokeColor,
-                        start = Offset(size.width * 0.48f, size.height * 0.56f),
-                        end = Offset(size.width * 0.34f, size.height * 0.82f),
-                        strokeWidth = strokeWidth,
-                        cap = StrokeCap.Round,
-                    )
-                    drawLine(
-                        color = strokeColor,
-                        start = Offset(size.width * 0.48f, size.height * 0.56f),
-                        end = Offset(size.width * 0.48f, size.height * 0.84f),
-                        strokeWidth = strokeWidth,
-                        cap = StrokeCap.Round,
-                    )
-                    drawLine(
-                        color = strokeColor,
-                        start = Offset(size.width * 0.48f, size.height * 0.56f),
-                        end = Offset(size.width * 0.64f, size.height * 0.82f),
+                        start = Offset(centerBase.x + strokeWidth/2, centerBase.y),
+                        end = Offset(centerBase.x + size.width * 0.14f, centerBase.y + size.width * 0.26f),
                         strokeWidth = strokeWidth,
                         cap = StrokeCap.Round,
                     )
