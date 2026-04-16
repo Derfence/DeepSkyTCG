@@ -2,13 +2,13 @@
   {
     "id": "aeh-albireo",
     "extensionId": "astronomes-en-herbe",
-    "name": "Albireo",
+    "name": "Albiréo",
     "rarityLabel": "Common",
     "cardRarityMultiplier": 1,
     "imageRef": "albireo",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Albireo",
+      "commonName": "Albiréo",
       "primaryCatalogName": "Bayer",
       "catalogNumber": "Beta Cygni",
       "objectFamily": "star",
@@ -20,7 +20,7 @@
         "declination": { "sign": "+", "degrees": 27, "arcMinutes": 58, "arcSeconds": 0, "label": "+27° 58′ 00″" },
         "label": "AD 19h 30m 43,0s ; Dec +27° 58′ 00″"
       },
-      "shortDescription": "Belle étoile double aux couleurs contrastées, très appréciée au télescope.",
+      "shortDescription": "Belle étoile double bleu et jaune, formant la tête de la constellation du Cygne.",
       "details": {
         "detailType": "star",
         "distance": { "lightYears": 420.0, "label": "420 annees-lumiere" },
@@ -50,7 +50,7 @@
         "declination": { "sign": "+", "degrees": 40, "arcMinutes": 57, "arcSeconds": 20, "label": "+40° 57′ 20″" },
         "label": "AD 03h 08m 10,0s ; Dec +40° 57′ 20″"
       },
-      "shortDescription": "Étoile variable célèbre car son éclat baisse régulièrement, facile à suivre au fil des nuits.",
+      "shortDescription": "Étoile variable célèbre car sa période est de 3 jours. Ses changements de luminosités sont donc faciles à suivre au fil des nuits.",
       "details": {
         "detailType": "star",
         "distance": { "lightYears": 93.0, "label": "93 annees-lumiere" },
@@ -80,7 +80,7 @@
         "declination": { "sign": "+", "degrees": 42, "arcMinutes": 19, "arcSeconds": 47, "label": "+42° 19′ 47″" },
         "label": "AD 02h 03m 54,0s ; Dec +42° 19′ 47″"
       },
-      "shortDescription": "Étoile double colorée très connue, magnifique au télescope avec ses teintes contrastées.",
+      "shortDescription": "Étoile double colorée très connue car la deuxième étoile du système est également une étoile double !",
       "details": {
         "detailType": "star",
         "distance": { "lightYears": 350.0, "label": "350 annees-lumiere" },
@@ -92,13 +92,13 @@
   {
     "id": "aeh-altair",
     "extensionId": "astronomes-en-herbe",
-    "name": "Altair",
+    "name": "Altaïr",
     "rarityLabel": "Common",
     "cardRarityMultiplier": 1,
     "imageRef": "altair",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Altair",
+      "commonName": "Altaïr",
       "primaryCatalogName": "Bayer",
       "catalogNumber": "Alpha Aquilae",
       "objectFamily": "star",
@@ -110,7 +110,7 @@
         "declination": { "sign": "+", "degrees": 8, "arcMinutes": 52, "arcSeconds": 6, "label": "+08° 52′ 06″" },
         "label": "AD 19h 50m 47,0s ; Dec +08° 52′ 06″"
       },
-      "shortDescription": "Étoile brillante du Triangle d'été, très facile à trouver en saison estivale.",
+      "shortDescription": "Étoile brillante du Triangle d'été, au centre de la tête de « l’Aigle Volant ».",
       "details": {
         "detailType": "star",
         "distance": { "lightYears": 16.7, "label": "16,7 annees-lumiere" },
@@ -122,13 +122,13 @@
   {
     "id": "aeh-andromede-constellation",
     "extensionId": "astronomes-en-herbe",
-    "name": "Andromede",
+    "name": "Andromède",
     "rarityLabel": "Common",
     "cardRarityMultiplier": 1,
     "imageRef": "andromeda_constellation",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Andromede",
+      "commonName": "Andromède",
       "primaryCatalogName": "IAU",
       "catalogNumber": "AND",
       "objectFamily": "constellation",
@@ -140,7 +140,7 @@
         "declination": { "sign": "+", "degrees": 38, "arcMinutes": 0, "arcSeconds": 0, "label": "+38° 00′ 00″" },
         "label": "AD 01h 00m 00,0s ; Dec +38° 00′ 00″"
       },
-      "shortDescription": "Constellation utile pour retrouver M31, connue comme la région de la galaxie d'Andromède.",
+      "shortDescription": "Constellation formant les pates arrières de Pégase, connue pour habriter la galaxie d'Andromède.",
       "details": {
         "detailType": "constellation",
         "visualSize": {
@@ -174,7 +174,7 @@
         "declination": { "sign": "+", "degrees": 19, "arcMinutes": 10, "arcSeconds": 57, "label": "+19° 10′ 57″" },
         "label": "AD 14h 15m 39,7s ; Dec +19° 10′ 57″"
       },
-      "shortDescription": "Géante orange très brillante, célèbre au printemps et facile à repérer.",
+      "shortDescription": "Géante rouge qui proviendrait d'une petite galaxie qui serait entrée en collision et aurait fusionné avec la Voie lactée il y a 5 à 8 milliards d'années.",
       "details": {
         "detailType": "star",
         "distance": { "lightYears": 36.7, "label": "36,7 annees-lumiere" },
@@ -186,13 +186,13 @@
   {
     "id": "aeh-aurora-borealis",
     "extensionId": "astronomes-en-herbe",
-    "name": "Aurore boreale",
+    "name": "Aurore boréale",
     "rarityLabel": "Epic",
     "cardRarityMultiplier": 1,
     "imageRef": "aurora_borealis",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Aurore boreale",
+      "commonName": "Aurore boréale",
       "primaryCatalogName": "Geophysique",
       "catalogNumber": "AUR-N",
       "objectFamily": "sky_event",
@@ -220,13 +220,13 @@
   {
     "id": "aeh-betelgeuse",
     "extensionId": "astronomes-en-herbe",
-    "name": "Betelgeuse",
+    "name": "Bételgeuse",
     "rarityLabel": "Common",
     "cardRarityMultiplier": 1,
     "imageRef": "betelgeuse",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Betelgeuse",
+      "commonName": "Bételgeuse",
       "primaryCatalogName": "Bayer",
       "catalogNumber": "Alpha Orionis",
       "objectFamily": "star",
@@ -238,7 +238,7 @@
         "declination": { "sign": "+", "degrees": 7, "arcMinutes": 24, "arcSeconds": 25, "label": "+07° 24′ 25″" },
         "label": "AD 05h 55m 10,3s ; Dec +07° 24′ 25″"
       },
-      "shortDescription": "Supergéante rouge célèbre par sa couleur orange, facile à remarquer dans Orion.",
+      "shortDescription": "Supergéante rouge célèbre par sa luminosité et sa couleur orange, facile à remarquer à l'œil nu dans la constellation d'Orion.",
       "details": {
         "detailType": "star",
         "distance": { "lightYears": 548.0, "label": "548 annees-lumiere" },
@@ -268,7 +268,7 @@
         "declination": { "sign": "+", "degrees": 45, "arcMinutes": 59, "arcSeconds": 53, "label": "+45° 59′ 53″" },
         "label": "AD 05h 16m 41,0s ; Dec +45° 59′ 53″"
       },
-      "shortDescription": "Étoile très brillante du Cocher, facile à voir et à reconnaitre en hiver.",
+      "shortDescription": "De la constellation du Cocher, c'est la quatrième étoile la plus brillante du ciel du Nord après Sirius, Arcturus et Véga.",
       "details": {
         "detailType": "star",
         "distance": { "lightYears": 42.9, "label": "42,9 annees-lumiere" },
@@ -280,13 +280,13 @@
   {
     "id": "aeh-cassiopeia",
     "extensionId": "astronomes-en-herbe",
-    "name": "Cassiopee",
+    "name": "Cassiopée",
     "rarityLabel": "Common",
     "cardRarityMultiplier": 1,
     "imageRef": "cassiopeia_constellation",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Cassiopee",
+      "commonName": "Cassiopée",
       "primaryCatalogName": "IAU",
       "catalogNumber": "CAS",
       "objectFamily": "constellation",
@@ -298,7 +298,7 @@
         "declination": { "sign": "+", "degrees": 60, "arcMinutes": 0, "arcSeconds": 0, "label": "+60° 00′ 00″" },
         "label": "AD 01h 00m 00,0s ; Dec +60° 00′ 00″"
       },
-      "shortDescription": "Constellation en forme de W, très facile à reconnaitre dans le ciel du nord.",
+      "shortDescription": "Constellation en forme de W, elle fait partie des \"circumpolaires\" : les constellations qui ne se couchent jamais.",
       "details": {
         "detailType": "constellation",
         "visualSize": {
@@ -351,13 +351,13 @@
   {
     "id": "aeh-comet-neowise",
     "extensionId": "astronomes-en-herbe",
-    "name": "Comete C/2020 F3 NEOWISE",
+    "name": "Comète C/2020 F3 NEOWISE",
     "rarityLabel": "Epic",
     "cardRarityMultiplier": 1,
     "imageRef": "comet_neowise",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Comete C/2020 F3 NEOWISE",
+      "commonName": "Comète C/2020 F3 NEOWISE",
       "primaryCatalogName": "Comet",
       "catalogNumber": "C/2020 F3",
       "objectFamily": "sky_event",
@@ -410,13 +410,13 @@
   {
     "id": "aeh-double-cluster",
     "extensionId": "astronomes-en-herbe",
-    "name": "Double Amas de Persee",
+    "name": "Double Amas de Persée",
     "rarityLabel": "Common",
     "cardRarityMultiplier": 1,
     "imageRef": "double_cluster",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Double Amas de Persee",
+      "commonName": "Double Amas de Persée",
       "primaryCatalogName": "Caldwell",
       "catalogNumber": "C14",
       "objectFamily": "deep_sky",
@@ -428,7 +428,7 @@
         "declination": { "sign": "+", "degrees": 57, "arcMinutes": 8, "arcSeconds": 0, "label": "+57° 08′ 00″" },
         "label": "AD 02h 21m 00,0s ; Dec +57° 08′ 00″"
       },
-      "shortDescription": "Deux amas ouverts serrés l'un contre l'autre, célèbres pour leur beau rendu aux jumelles.",
+      "shortDescription": "Deux amas d'étoiles serrés l'un contre l'autre, célèbres pour leur beau rendu aux jumelles.",
       "details": {
         "detailType": "deep_sky",
         "distance": { "lightYears": 7500.0, "label": "7 500 annees-lumiere" },
@@ -447,13 +447,13 @@
   {
     "id": "aeh-gemeaux",
     "extensionId": "astronomes-en-herbe",
-    "name": "Gemeaux",
+    "name": "Gémeaux",
     "rarityLabel": "Common",
     "cardRarityMultiplier": 1,
     "imageRef": "gemini_constellation",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Gemeaux",
+      "commonName": "Gémeaux",
       "primaryCatalogName": "IAU",
       "catalogNumber": "GEM",
       "objectFamily": "constellation",
@@ -481,13 +481,13 @@
   {
     "id": "aeh-geminids",
     "extensionId": "astronomes-en-herbe",
-    "name": "Geminides",
+    "name": "Géminides",
     "rarityLabel": "Uncommon",
     "cardRarityMultiplier": 1,
     "imageRef": "geminids_meteor_shower",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Geminides",
+      "commonName": "Géminides",
       "primaryCatalogName": "IMO",
       "catalogNumber": "GEM",
       "objectFamily": "sky_event",
@@ -515,13 +515,13 @@
   {
     "id": "aeh-comet-halley",
     "extensionId": "astronomes-en-herbe",
-    "name": "Comete de Halley",
+    "name": "Comète de Halley",
     "rarityLabel": "Epic",
     "cardRarityMultiplier": 1,
     "imageRef": "halley_comet",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Comete de Halley",
+      "commonName": "Comète de Halley",
       "primaryCatalogName": "Periodic Comet",
       "catalogNumber": "1P/Halley",
       "objectFamily": "sky_event",
@@ -558,7 +558,7 @@
         "declination": { "sign": "+", "degrees": 16, "arcMinutes": 0, "arcSeconds": 0, "label": "+16° 00′ 00″" },
         "label": "AD 04h 27m 00,0s ; Dec +16° 00′ 00″"
       },
-      "shortDescription": "Grand amas du Taureau formant un V, très facile à voir à l'oeil nu.",
+      "shortDescription": "Nymphes des pluies dans la mythologie grec, c'est un grand amas d'étoiles  dans la constellation du Taureau formant un V, très facile à voir à l'oeil nu.",
       "details": {
         "detailType": "deep_sky",
         "distance": { "lightYears": 153.0, "label": "153 annees-lumiere" },
@@ -577,13 +577,13 @@
   {
     "id": "aeh-leonids",
     "extensionId": "astronomes-en-herbe",
-    "name": "Leonides",
+    "name": "Léonides",
     "rarityLabel": "Uncommon",
     "cardRarityMultiplier": 1,
     "imageRef": "leonids_meteor_shower",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Leonides",
+      "commonName": "Léonides",
       "primaryCatalogName": "IMO",
       "catalogNumber": "LEO",
       "objectFamily": "sky_event",
@@ -595,7 +595,7 @@
         "declination": { "sign": "+", "degrees": 22, "arcMinutes": 0, "arcSeconds": 0, "label": "+22° 00′ 00″" },
         "label": "AD 10h 08m 00,0s ; Dec +22° 00′ 00″"
       },
-      "shortDescription": "Pluie d'étoiles filantes célèbre pour ses possibles sursauts d'activité en novembre.",
+      "shortDescription": "Pluie d'étoiles filantes de novembre dont le radiant se trouve dans la constellation du Lion.",
       "details": {
         "detailType": "sky_event",
         "visualSize": {
@@ -663,7 +663,7 @@
         "declination": { "sign": "-", "degrees": 6, "arcMinutes": 16, "arcSeconds": 0, "label": "-06° 16′ 00″" },
         "label": "AD 18h 51m 06,0s ; Dec -06° 16′ 00″"
       },
-      "shortDescription": "Amas ouvert très dense, célèbre pour son aspect compact dans les petits télescopes.",
+      "shortDescription": "Amas ouvert très dense, célèbre pour son aspect compact dans des jumelles.",
       "details": {
         "detailType": "deep_sky",
         "distance": { "lightYears": 6120.0, "label": "6 120 annees-lumiere" },
@@ -719,13 +719,13 @@
   {
     "id": "aeh-m16-eagle",
     "extensionId": "astronomes-en-herbe",
-    "name": "Nebuleuse de l'Aigle",
+    "name": "Nébuleuse de l'Aigle",
     "rarityLabel": "Rare",
     "cardRarityMultiplier": 1,
     "imageRef": "m16_eagle_nebula",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Nebuleuse de l'Aigle",
+      "commonName": "Nébuleuse de l'Aigle",
       "primaryCatalogName": "Messier",
       "catalogNumber": "M16",
       "objectFamily": "deep_sky",
@@ -737,7 +737,7 @@
         "declination": { "sign": "-", "degrees": 13, "arcMinutes": 49, "arcSeconds": 0, "label": "-13° 49′ 00″" },
         "label": "AD 18h 18m 48,0s ; Dec -13° 49′ 00″"
       },
-      "shortDescription": "Amas et nébuleuse célèbres pour les Piliers de la Création, faciles à situer dans la Voie lactée d'été.",
+      "shortDescription": "Amas d'étoiles et nébuleuse au centre de laquelle se trouve les Piliers de la Création.",
       "details": {
         "detailType": "deep_sky",
         "distance": { "lightYears": 5700.0, "label": "5 700 annees-lumiere" },
@@ -756,13 +756,13 @@
   {
     "id": "aeh-m17-swan",
     "extensionId": "astronomes-en-herbe",
-    "name": "Nebuleuse du Cygne",
+    "name": "Nébuleuse Oméga",
     "rarityLabel": "Rare",
     "cardRarityMultiplier": 1,
     "imageRef": "m17_swan_nebula",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Nebuleuse du Cygne",
+      "commonName": "Nébuleuse Oméga",
       "primaryCatalogName": "Messier",
       "catalogNumber": "M17",
       "objectFamily": "deep_sky",
@@ -774,7 +774,7 @@
         "declination": { "sign": "-", "degrees": 16, "arcMinutes": 11, "arcSeconds": 0, "label": "-16° 11′ 00″" },
         "label": "AD 18h 20m 47,0s ; Dec -16° 11′ 00″"
       },
-      "shortDescription": "Nébuleuse brillante de la Voie lactée d'été, connue pour sa forme de cygne ou de crochet.",
+      "shortDescription": "Nébuleuse brillante de la Voie lactée d'été dont la forme se rapproche de la lettre grec Ω ou d'un fer à cheval.",
       "details": {
         "detailType": "deep_sky",
         "distance": { "lightYears": 5500.0, "label": "5 500 annees-lumiere" },
@@ -811,7 +811,7 @@
         "declination": { "sign": "-", "degrees": 23, "arcMinutes": 54, "arcSeconds": 0, "label": "-23° 54′ 00″" },
         "label": "AD 18h 36m 24,0s ; Dec -23° 54′ 00″"
       },
-      "shortDescription": "Un des plus beaux amas globulaires du ciel, brillant et facile en été.",
+      "shortDescription": "Un des plus beaux amas globulaires du ciel, brillant et facile à trouver.",
       "details": {
         "detailType": "deep_sky",
         "distance": { "lightYears": 10600.0, "label": "10 600 annees-lumiere" },
@@ -836,7 +836,7 @@
     "imageRef": "m24_star_cloud",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Nuage stellaire du Sagittaire",
+      "commonName": "Nuage Stellaire du Sagittaire",
       "primaryCatalogName": "Messier",
       "catalogNumber": "M24",
       "objectFamily": "deep_sky",
@@ -848,7 +848,7 @@
         "declination": { "sign": "-", "degrees": 18, "arcMinutes": 29, "arcSeconds": 0, "label": "-18° 29′ 00″" },
         "label": "AD 18h 16m 48,0s ; Dec -18° 29′ 00″"
       },
-      "shortDescription": "Zone très riche de la Voie lactée, spectaculaire aux jumelles en été.",
+      "shortDescription": "Zone très riche de la Voie lactée, ce n'est pas un véritablement un amas d'étoiles et est souvent considéré comme une erreur du Catalogue de Messier.",
       "details": {
         "detailType": "deep_sky",
         "distance": { "lightYears": 10000.0, "label": "10 000 annees-lumiere" },
@@ -866,13 +866,13 @@
   {
     "id": "aeh-m27-dumbbell",
     "extensionId": "astronomes-en-herbe",
-    "name": "Nebuleuse Dumbbell",
+    "name": "Nébuleuse de l'Haltère",
     "rarityLabel": "Uncommon",
     "cardRarityMultiplier": 1,
     "imageRef": "m27_dumbbell",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Nebuleuse Dumbbell",
+      "commonName": "Nébuleuse de l'Haltère",
       "primaryCatalogName": "Messier",
       "catalogNumber": "M27",
       "objectFamily": "deep_sky",
@@ -903,13 +903,13 @@
   {
     "id": "aeh-m31-andromeda",
     "extensionId": "astronomes-en-herbe",
-    "name": "Galaxie d'Andromede",
+    "name": "Galaxie d'Andromède",
     "rarityLabel": "Common",
     "cardRarityMultiplier": 1,
     "imageRef": "m31_andromeda",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Galaxie d'Andromede",
+      "commonName": "Galaxie d'Andromède",
       "primaryCatalogName": "Messier",
       "catalogNumber": "M31",
       "objectFamily": "deep_sky",
@@ -921,7 +921,7 @@
         "declination": { "sign": "+", "degrees": 41, "arcMinutes": 16, "arcSeconds": 9, "label": "+41° 16′ 09″" },
         "label": "AD 00h 42m 44,3s ; Dec +41° 16′ 09″"
       },
-      "shortDescription": "Grande galaxie voisine de la Voie lactée, connue parce qu'elle est visible à l'oeil nu sous un bon ciel.",
+      "shortDescription": "Grande galaxie voisine de la Voie lactée, c'est l'objet le plus lointain qui est visible à l'oeil nu sous un bon ciel.",
       "details": {
         "detailType": "deep_sky",
         "distance": { "lightYears": 2540000.0, "label": "2 540 000 annees-lumiere" },
@@ -958,7 +958,7 @@
         "declination": { "sign": "+", "degrees": 30, "arcMinutes": 39, "arcSeconds": 37, "label": "+30° 39′ 37″" },
         "label": "AD 01h 33m 51,0s ; Dec +30° 39′ 37″"
       },
-      "shortDescription": "Grande galaxie voisine du Groupe local, célèbre mais demandant un ciel bien noir.",
+      "shortDescription": "Grande galaxie voisine du Groupe local, célèbre mais plus difficile à voir que M31 (galaxie d'Andromède).",
       "details": {
         "detailType": "deep_sky",
         "distance": { "lightYears": 2730000.0, "label": "2 730 000 annees-lumiere" },
@@ -995,7 +995,7 @@
         "declination": { "sign": "+", "degrees": 32, "arcMinutes": 33, "arcSeconds": 0, "label": "+32° 33′ 00″" },
         "label": "AD 05h 52m 18,0s ; Dec +32° 33′ 00″"
       },
-      "shortDescription": "Amas ouvert riche et serré, souvent considéré comme le plus beau trio du Cocher.",
+      "shortDescription": "Amas d'étoiles ouvert riche et serré, souvent considéré comme le plus beau trio du Cocher.",
       "details": {
         "detailType": "deep_sky",
         "distance": { "lightYears": 4500.0, "label": "4 500 annees-lumiere" },
@@ -1032,7 +1032,7 @@
         "declination": { "sign": "+", "degrees": 35, "arcMinutes": 51, "arcSeconds": 0, "label": "+35° 51′ 00″" },
         "label": "AD 05h 28m 42,0s ; Dec +35° 51′ 00″"
       },
-      "shortDescription": "Amas ouvert large du Cocher, facile à compléter avec M36 et M37.",
+      "shortDescription": "Amas d'étoiles ouvert large du Cocher, facile à compléter avec M36 et M37.",
       "details": {
         "detailType": "deep_sky",
         "distance": { "lightYears": 4200.0, "label": "4 200 annees-lumiere" },
@@ -1069,7 +1069,7 @@
         "declination": { "sign": "+", "degrees": 48, "arcMinutes": 26, "arcSeconds": 0, "label": "+48° 26′ 00″" },
         "label": "AD 21h 31m 48,0s ; Dec +48° 26′ 00″"
       },
-      "shortDescription": "Amas ouvert large et détendu, facile aux jumelles dans le Cygne.",
+      "shortDescription": "Amas d'étoiles ouvert large et détendu, facile aux jumelles dans le Cygne.",
       "details": {
         "detailType": "deep_sky",
         "distance": { "lightYears": 1010.0, "label": "1 010 annees-lumiere" },
@@ -1125,13 +1125,13 @@
   {
     "id": "aeh-m42-orion-nebula",
     "extensionId": "astronomes-en-herbe",
-    "name": "Nebuleuse d'Orion",
+    "name": "Nébuleuse d'Orion",
     "rarityLabel": "Common",
     "cardRarityMultiplier": 1,
     "imageRef": "m42_orion_nebula",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Nebuleuse d'Orion",
+      "commonName": "Nébuleuse d'Orion",
       "primaryCatalogName": "Messier",
       "catalogNumber": "M42",
       "objectFamily": "deep_sky",
@@ -1143,7 +1143,7 @@
         "declination": { "sign": "-", "degrees": 5, "arcMinutes": 23, "arcSeconds": 28, "label": "-05° 23′ 28″" },
         "label": "AD 05h 35m 17,3s ; Dec -05° 23′ 28″"
       },
-      "shortDescription": "Nébuleuse très célèbre sous la ceinture d'Orion, facile à repérer et magnifique aux jumelles.",
+      "shortDescription": "Nébuleuse très célèbre sous la ceinture d'Orion et visible à l'œil nu. Elle est une cible privilégiée pour les astronomes débutants.",
       "details": {
         "detailType": "deep_sky",
         "distance": { "lightYears": 1344.0, "label": "1 344 annees-lumiere" },
@@ -1162,13 +1162,13 @@
   {
     "id": "aeh-m45-pleiades",
     "extensionId": "astronomes-en-herbe",
-    "name": "Pleiades",
+    "name": "Pléïades",
     "rarityLabel": "Common",
     "cardRarityMultiplier": 1,
     "imageRef": "m45_pleiades",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Pleiades",
+      "commonName": "Pléïades",
       "primaryCatalogName": "Messier",
       "catalogNumber": "M45",
       "objectFamily": "deep_sky",
@@ -1180,7 +1180,7 @@
         "declination": { "sign": "+", "degrees": 24, "arcMinutes": 7, "arcSeconds": 0, "label": "+24° 07′ 00″" },
         "label": "AD 03h 47m 24,0s ; Dec +24° 07′ 00″"
       },
-      "shortDescription": "Petit groupe d'étoiles bleutées très connu, facile à voir à l'oeil nu en hiver.",
+      "shortDescription": "Aussi appelé \"Sept Sœurs\" par les anglophones, on dit que cet amas d'étoiles ouvert servait de test d'acuité visuel dans l'Antiquité.",
       "details": {
         "detailType": "deep_sky",
         "distance": { "lightYears": 444.0, "label": "444 annees-lumiere" },
@@ -1217,7 +1217,7 @@
         "declination": { "sign": "-", "degrees": 14, "arcMinutes": 49, "arcSeconds": 0, "label": "-14° 49′ 00″" },
         "label": "AD 07h 41m 46,0s ; Dec -14° 49′ 00″"
       },
-      "shortDescription": "Amas ouvert riche et élégant, connu pour partager le même champ que M47.",
+      "shortDescription": "Amas d'étoiles ouvert partageant le ciel avec un nébuleuse planétaire. Elles ne sont cependant pas physiquement au même endroit.",
       "details": {
         "detailType": "deep_sky",
         "distance": { "lightYears": 4900.0, "label": "4 900 annees-lumiere" },
@@ -1236,13 +1236,13 @@
   {
     "id": "aeh-m57-ring",
     "extensionId": "astronomes-en-herbe",
-    "name": "Nebuleuse de la Lyre",
+    "name": "Nébuleuse de la Lyre",
     "rarityLabel": "Rare",
     "cardRarityMultiplier": 1,
     "imageRef": "m57_ring",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Nebuleuse de la Lyre",
+      "commonName": "Nébuleuse de la Lyre",
       "primaryCatalogName": "Messier",
       "catalogNumber": "M57",
       "objectFamily": "deep_sky",
@@ -1291,7 +1291,7 @@
         "declination": { "sign": "-", "degrees": 32, "arcMinutes": 13, "arcSeconds": 0, "label": "-32° 13′ 00″" },
         "label": "AD 17h 40m 12,0s ; Dec -32° 13′ 00″"
       },
-      "shortDescription": "Amas ouvert célèbre pour sa forme de papillon, facile en été sous un ciel dégagé.",
+      "shortDescription": "Amas ouvert célèbre pour sa forme de papillon.",
       "details": {
         "detailType": "deep_sky",
         "distance": { "lightYears": 1600.0, "label": "1 600 annees-lumiere" },
@@ -1316,7 +1316,7 @@
     "imageRef": "m8_lagoon_nebula",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Nebuleuse de la Lagune",
+      "commonName": "Nébuleuse de la Lagune",
       "primaryCatalogName": "Messier",
       "catalogNumber": "M8",
       "objectFamily": "deep_sky",
@@ -1469,7 +1469,7 @@
         "declination": { "sign": "+", "degrees": 54, "arcMinutes": 56, "arcSeconds": 0, "label": "+54° 56′ 00″" },
         "label": "AD 13h 24m 00,0s ; Dec +54° 56′ 00″"
       },
-      "shortDescription": "Couple d'étoiles célèbre à l'oeil nu, souvent utilisé pour tester la vue.",
+      "shortDescription": "Couple d'étoiles célèbre, visible à l'oeil nu, longtemps utilisé pour tester la vue.",
       "details": {
         "detailType": "star",
         "distance": { "lightYears": 83.0, "label": "83 annees-lumiere" },
@@ -1481,13 +1481,13 @@
   {
     "id": "aeh-ngc7000",
     "extensionId": "astronomes-en-herbe",
-    "name": "Nebuleuse de l'Amerique du Nord",
+    "name": "Nébuleuse de l'Amerique du Nord",
     "rarityLabel": "Rare",
     "cardRarityMultiplier": 1,
     "imageRef": "ngc7000_north_america",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Nebuleuse de l'Amerique du Nord",
+      "commonName": "Nébuleuse de l'Amerique du Nord",
       "primaryCatalogName": "NGC",
       "catalogNumber": "NGC 7000",
       "objectFamily": "deep_sky",
@@ -1499,7 +1499,7 @@
         "declination": { "sign": "+", "degrees": 44, "arcMinutes": 20, "arcSeconds": 0, "label": "+44° 20′ 00″" },
         "label": "AD 20h 58m 54,0s ; Dec +44° 20′ 00″"
       },
-      "shortDescription": "Grande nébuleuse connue pour sa forme rappelant l'Amérique du Nord, surtout belle en photo ou avec filtres.",
+      "shortDescription": "Grande nébuleuse connue pour sa forme rappelant l'Amérique du Nord, surtout belle en photo.",
       "details": {
         "detailType": "deep_sky",
         "distance": { "lightYears": 2200.0, "label": "2 200 annees-lumiere" },
@@ -1552,13 +1552,13 @@
   {
     "id": "aeh-perseids",
     "extensionId": "astronomes-en-herbe",
-    "name": "Perseides",
+    "name": "Perséïdes",
     "rarityLabel": "Common",
     "cardRarityMultiplier": 1,
     "imageRef": "perseids_meteor_shower",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Perseides",
+      "commonName": "Perséïdes",
       "primaryCatalogName": "IMO",
       "catalogNumber": "PER",
       "objectFamily": "sky_event",
@@ -1570,7 +1570,7 @@
         "declination": { "sign": "+", "degrees": 58, "arcMinutes": 0, "arcSeconds": 0, "label": "+58° 00′ 00″" },
         "label": "AD 03h 04m 00,0s ; Dec +58° 00′ 00″"
       },
-      "shortDescription": "Pluie d'étoiles filantes très populaire d'aout, facile à observer sans instrument.",
+      "shortDescription": "Pluie d'étoiles filantes très populaire d'août.",
       "details": {
         "detailType": "sky_event",
         "visualSize": {
@@ -1586,13 +1586,13 @@
   {
     "id": "aeh-persee-constellation",
     "extensionId": "astronomes-en-herbe",
-    "name": "Persee",
+    "name": "Persée",
     "rarityLabel": "Common",
     "cardRarityMultiplier": 1,
     "imageRef": "perseus_constellation",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Persee",
+      "commonName": "Persée",
       "primaryCatalogName": "IAU",
       "catalogNumber": "PER",
       "objectFamily": "constellation",
@@ -1620,13 +1620,13 @@
   {
     "id": "aeh-polaris",
     "extensionId": "astronomes-en-herbe",
-    "name": "Etoile Polaire",
+    "name": "Étoile Polaire",
     "rarityLabel": "Common",
     "cardRarityMultiplier": 1,
     "imageRef": "polaris",
     "variantProfileId": "observation-default",
     "astronomy": {
-      "commonName": "Etoile Polaire",
+      "commonName": "Étoile Polaire",
       "primaryCatalogName": "Bayer",
       "catalogNumber": "Alpha Ursae Minoris",
       "objectFamily": "star",
@@ -1638,7 +1638,7 @@
         "declination": { "sign": "+", "degrees": 89, "arcMinutes": 15, "arcSeconds": 51, "label": "+89° 15′ 51″" },
         "label": "AD 02h 31m 49,0s ; Dec +89° 15′ 51″"
       },
-      "shortDescription": "Étoile proche du pôle nord céleste, connue car elle indique presque le nord.",
+      "shortDescription": "Étoile proche du pôle nord céleste, connue car elle indique le nord.",
       "details": {
         "detailType": "star",
         "distance": { "lightYears": 433.0, "label": "433 annees-lumiere" },

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import importlib.util
 import json
 import sys
@@ -105,6 +106,29 @@ class CatalogSyncTest(unittest.TestCase):
             )
         ]
 
+    def build_result_sheet(
+        self,
+        extensions,
+        cards,
+        variant_profiles,
+        balance_data,
+        equipment_cards,
+    ):
+        raw_rows = self.catalog_sync.build_results_sheet_rows(
+            extensions=extensions,
+            cards=cards,
+            variant_profiles=variant_profiles,
+            balance_data=balance_data,
+            equipment_cards=equipment_cards,
+        )
+        return self.catalog_sync.Sheet(
+            self.catalog_sync.RESULTS_SHEET_NAME,
+            [
+                ["" if value is None else str(value) for value in row]
+                for row in raw_rows
+            ],
+        )
+
     def test_export_then_apply_preserves_raw_catalog_and_balance(self):
         temp_dir, catalog_dir = self.create_temp_catalog_dir()
         workbook_path = temp_dir / "catalogue.xlsx"
@@ -135,6 +159,26 @@ class CatalogSyncTest(unittest.TestCase):
             {"Catalogue", "Donnees", "Equipements", "Resultats"},
             set(self.read_sheets(workbook_path).keys()),
         )
+
+    def test_apply_does_not_rewrite_workbook(self):
+        temp_dir, catalog_dir = self.create_temp_catalog_dir()
+        workbook_path = temp_dir / "catalogue.xlsx"
+        self.export_workbook(workbook_path, catalog_dir)
+
+        sheets = self.read_sheets(workbook_path)
+        data_sheet = sheets[self.catalog_sync.DATA_SHEET_NAME]
+        self.set_cell(data_sheet, 19, 1, "EquipmentChancePercent")
+        self.set_cell(data_sheet, 19, 2, "7.5")
+        self.write_sheets(workbook_path, sheets)
+
+        workbook_bytes_before_apply = workbook_path.read_bytes()
+        self.catalog_sync.apply_workbook(workbook_path, catalog_dir)
+
+        self.assertEqual(workbook_bytes_before_apply, workbook_path.read_bytes())
+
+    def test_export_command_is_read_only_error(self):
+        with self.assertRaisesRegex(self.catalog_sync.CatalogSheetError, "read-only"):
+            self.catalog_sync.handle_export(argparse.Namespace(sheet=Path("catalogue.xlsx")))
 
     def test_apply_rejects_non_positive_city_probability(self):
         temp_dir, catalog_dir = self.create_temp_catalog_dir()
@@ -190,8 +234,17 @@ class CatalogSyncTest(unittest.TestCase):
         self.set_catalogue_value(catalogue, "aeh-m42-orion-nebula", "cardRarityMultiplier", "1")
         self.write_sheets(workbook_path, sheets)
 
-        self.catalog_sync.apply_workbook(workbook_path, catalog_dir)
-        result_sheet = self.read_sheets(workbook_path)[self.catalog_sync.RESULTS_SHEET_NAME]
+        extensions, cards, variant_profiles, balance_data, equipment_cards, _ = self.catalog_sync.apply_workbook(
+            workbook_path,
+            catalog_dir,
+        )
+        result_sheet = self.build_result_sheet(
+            extensions=extensions,
+            cards=cards,
+            variant_profiles=variant_profiles,
+            balance_data=balance_data,
+            equipment_cards=equipment_cards,
+        )
         rows = self.section_rows(result_sheet, "Cards")
         probabilities_by_id = {
             row["cardId"]: float(row["finalProbability"])
@@ -263,8 +316,17 @@ class CatalogSyncTest(unittest.TestCase):
         catalogue.rows.append([epic_card.get(column, "") for column in header])
         self.write_sheets(workbook_path, sheets)
 
-        self.catalog_sync.apply_workbook(workbook_path, catalog_dir)
-        result_sheet = self.read_sheets(workbook_path)[self.catalog_sync.RESULTS_SHEET_NAME]
+        extensions, cards, variant_profiles, balance_data, equipment_cards, _ = self.catalog_sync.apply_workbook(
+            workbook_path,
+            catalog_dir,
+        )
+        result_sheet = self.build_result_sheet(
+            extensions=extensions,
+            cards=cards,
+            variant_profiles=variant_profiles,
+            balance_data=balance_data,
+            equipment_cards=equipment_cards,
+        )
         rarity_rows = [
             row for row in self.section_rows(result_sheet, "RaritySummary")
             if row["extensionId"] == "rare-et-epic"
@@ -292,7 +354,7 @@ class CatalogSyncTest(unittest.TestCase):
         with self.assertRaisesRegex(self.catalog_sync.CatalogSheetError, "must use bonusUnit"):
             self.catalog_sync.apply_workbook(workbook_path, catalog_dir)
 
-    def test_apply_persists_equipment_settings_and_results_section(self):
+    def test_apply_persists_equipment_settings_and_builds_equipment_diagnostics(self):
         temp_dir, catalog_dir = self.create_temp_catalog_dir()
         workbook_path = temp_dir / "catalogue.xlsx"
         self.export_workbook(workbook_path, catalog_dir)
@@ -303,13 +365,26 @@ class CatalogSyncTest(unittest.TestCase):
         self.set_cell(data_sheet, 19, 2, "7.5")
         self.write_sheets(workbook_path, sheets)
 
-        _, _, _, _, _, applied_equipment_settings = self.catalog_sync.apply_workbook(workbook_path, catalog_dir)
+        (
+            extensions,
+            cards,
+            variant_profiles,
+            balance_data,
+            equipment_cards,
+            applied_equipment_settings,
+        ) = self.catalog_sync.apply_workbook(workbook_path, catalog_dir)
         self.assertEqual(
             {"commonReplacementChancePercent": 7.5},
             self.catalog_sync.equipment_settings_to_json(applied_equipment_settings),
         )
 
-        result_sheet = self.read_sheets(workbook_path)[self.catalog_sync.RESULTS_SHEET_NAME]
+        result_sheet = self.build_result_sheet(
+            extensions=extensions,
+            cards=cards,
+            variant_profiles=variant_profiles,
+            balance_data=balance_data,
+            equipment_cards=equipment_cards,
+        )
         equipment_rows = self.section_rows(result_sheet, self.catalog_sync.RESULTS_EQUIPMENT_SECTION)
         self.assertTrue(equipment_rows)
         self.assertEqual(

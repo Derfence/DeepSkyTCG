@@ -73,7 +73,7 @@ Feuilles et sections :
 
 - `Equipements` : definitions data-driven des cartes d'equipement
 - `Donnees` / `EquipmentChancePercent` en `A19/B19` : regle globale de remplacement des slots `Common`
-- `Resultats` / `EquipmentCards` : sortie diagnostique regeneree
+- `Resultats` / `EquipmentCards` : sortie diagnostique legacy eventuellement presente dans le classeur, mais ignoree par la synchronisation
 
 Colonnes de `Equipements` :
 
@@ -94,3 +94,5 @@ Le pipeline `scripts/catalog_sync.py apply --sheet catalogue_astronomie.xlsx` re
 
 - `app/src/main/assets/catalog/equipment_cards.json`
 - `app/src/main/assets/catalog/equipment_settings.json`
+
+Le script lit le classeur en lecture seule et ne reecrit jamais `catalogue_astronomie.xlsx`.

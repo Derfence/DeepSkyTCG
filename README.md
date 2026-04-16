@@ -190,18 +190,17 @@ Le classeur contient :
 - `Catalogue` : les extensions, les cartes et le multiplicateur `cardRarityMultiplier` ;
 - `Donnees` : les donnees brutes de balance synchronisees vers l'application, avec la ligne `EquipmentChancePercent` en `A19/B19` ;
 - `Equipements` : les cartes d'equipement data-driven ;
-- `Resultats` : une feuille diagnostique regeneree a chaque `export` ou `apply`.
+- `Resultats` : une feuille diagnostique optionnelle, ignoree par la synchronisation et jamais reecrite par le script.
 
-Exporter ou recharger le classeur :
+Synchroniser l'application depuis le classeur :
 
 ```bash
-python3 scripts/catalog_sync.py export --sheet catalogue_astronomie.xlsx
 python3 scripts/catalog_sync.py apply --sheet catalogue_astronomie.xlsx
 ```
 
 Le script n'a pas besoin de dependance Python externe : le support XLSX est embarque dans `scripts/simple_xlsx.py`.
 
-`python3 scripts/catalog_sync.py apply` lit `Catalogue`, `Donnees` et `Equipements`, ecrit `extensions.json`, `cards.json`, `variant_profiles.json`, `game_balance.json`, `equipment_cards.json` et `equipment_settings.json`, puis regenere `Resultats`. Les probabilites de cartes ne sont plus transferees depuis le classeur : elles sont recalculees dans l'application a partir des donnees brutes et des multiplicateurs de rarete.
+`python3 scripts/catalog_sync.py apply` lit `Catalogue`, `Donnees` et `Equipements`, ecrit `extensions.json`, `cards.json`, `variant_profiles.json`, `game_balance.json`, `equipment_cards.json` et `equipment_settings.json`, puis laisse le classeur strictement intact. Les probabilites de cartes ne sont plus transferees depuis le classeur : elles sont recalculees dans l'application a partir des donnees brutes et des multiplicateurs de rarete.
 
 Les tests du pipeline catalogue peuvent etre lances avec :
 

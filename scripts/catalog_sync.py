@@ -226,19 +226,19 @@ def main() -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Export or apply the astronomy catalog workbook.",
+        description="Synchronize the standalone catalog from the astronomy workbook.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     export_parser = subparsers.add_parser(
         "export",
-        help="Create or refresh the root XLSX workbook from the current standalone catalog.",
+        help="Legacy command kept for compatibility. The workbook is now treated as read-only.",
     )
     export_parser.add_argument(
         "--sheet",
         type=Path,
         default=DEFAULT_SHEET,
-        help=f"Workbook path to write (default: {DEFAULT_SHEET.name}).",
+        help=f"Workbook path to read (default: {DEFAULT_SHEET.name}).",
     )
     export_parser.set_defaults(handler=handle_export)
 
@@ -258,23 +258,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def handle_export(args: argparse.Namespace) -> None:
-    sheet_path = args.sheet.resolve()
-    extensions = load_json(CATALOG_DIR / "extensions.json")
-    cards = load_json(CATALOG_DIR / "cards.json")
-    variant_profiles = load_json(CATALOG_DIR / "variant_profiles.json")
-    balance_data = load_balance_data(BALANCE_PATH)
-    equipment_cards = load_equipment_cards_data(EQUIPMENT_CARDS_PATH)
-    equipment_settings = load_equipment_settings_data(EQUIPMENT_SETTINGS_PATH)
-    export_workbook(
-        sheet_path=sheet_path,
-        extensions=extensions,
-        cards=cards,
-        variant_profiles=variant_profiles,
-        balance_data=balance_data,
-        equipment_cards=equipment_cards,
-        equipment_settings=equipment_settings,
+    raise CatalogSheetError(
+        "The export command is no longer supported: catalog_sync now treats the workbook as read-only. "
+        "Use 'apply' to read the XLSX and refresh the application assets.",
     )
-    print(f"Workbook exported to {sheet_path}")
 
 
 def handle_apply(args: argparse.Namespace) -> None:
@@ -355,26 +342,6 @@ def apply_workbook(
     write_json(catalog_dir / "game_balance.json", balance_data_to_json(balance_data))
     write_json(catalog_dir / "equipment_cards.json", equipment_cards)
     write_json(catalog_dir / "equipment_settings.json", equipment_settings_to_json(equipment_settings))
-
-    refreshed_catalogue_rows = build_catalogue_sheet_rows_from_input(extensions, cards)
-    refreshed_data_rows = build_data_sheet_rows(balance_data, equipment_settings)
-    refreshed_equipment_rows = build_equipment_sheet_rows(equipment_cards)
-    refreshed_result_rows = build_results_sheet_rows(
-        extensions=extensions,
-        cards=cards,
-        variant_profiles=variant_profile_templates,
-        balance_data=balance_data,
-        equipment_cards=equipment_cards,
-    )
-    write_workbook(
-        sheet_path,
-        [
-            Sheet(CATALOGUE_SHEET_NAME, refreshed_catalogue_rows),
-            Sheet(DATA_SHEET_NAME, refreshed_data_rows),
-            Sheet(EQUIPMENT_SHEET_NAME, refreshed_equipment_rows),
-            Sheet(RESULTS_SHEET_NAME, refreshed_result_rows),
-        ],
-    )
 
     return extensions, cards, variant_profile_templates, balance_data, equipment_cards, equipment_settings
 
