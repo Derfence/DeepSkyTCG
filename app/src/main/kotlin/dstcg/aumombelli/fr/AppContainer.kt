@@ -8,6 +8,7 @@ import fr.aumombelli.dstcg.data.CollectionRepository
 import fr.aumombelli.dstcg.data.EquipmentGateway
 import fr.aumombelli.dstcg.data.EquipmentRepository
 import fr.aumombelli.dstcg.data.GameCatalogRepository
+import fr.aumombelli.dstcg.data.HomeMenuNoveltyEvaluator
 import fr.aumombelli.dstcg.data.LocalPackEngine
 import fr.aumombelli.dstcg.data.PackGateway
 import fr.aumombelli.dstcg.data.PackRepository
@@ -47,6 +48,9 @@ class AppContainer(
                 localPackEngine = LocalPackEngine(
                     catalogRepository = catalogRepository,
                     settings = gameSettings,
+                ),
+                homeMenuNoveltyEvaluator = HomeMenuNoveltyEvaluator(
+                    catalogRepository = catalogRepository,
                 ),
             )
 

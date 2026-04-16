@@ -28,4 +28,6 @@ data class StandaloneProgress(
     val equipmentInventory: OwnedEquipmentInventory = OwnedEquipmentInventory(),
     val activeEquipmentByType: Map<EquipmentType, ActiveEquipmentEffect> = emptyMap(),
     val lastActivatedCardIdByType: Map<EquipmentType, String> = emptyMap(),
+    val homeMenuNoveltyState: HomeMenuNoveltyState = HomeMenuNoveltyState(),
+    val libraryCardNoveltyState: LibraryCardNoveltyState = LibraryCardNoveltyState(),
 )

@@ -229,6 +229,7 @@ internal fun AppSceneHost(
                             !sceneState.transitionLocked &&
                             NewPlayerOnboardingInteractionPolicy.allowsHomeLibrary(onboardingStep)
                         ) {
+                            homeViewModel.markLibrarySeen()
                             scope.launch {
                                 val shouldResumeBadgeCelebration = onboardingCoordinator.onLibraryOpened()
                                 if (shouldResumeBadgeCelebration) {
@@ -243,6 +244,7 @@ internal fun AppSceneHost(
                             !sceneState.transitionLocked &&
                             NewPlayerOnboardingInteractionPolicy.allowsHomeEquipment(onboardingStep)
                         ) {
+                            homeViewModel.markEquipmentSeen()
                             scope.launch {
                                 onboardingCoordinator.onEquipmentOpened()
                                 transitions.animateHomeToEquipment()
@@ -254,6 +256,7 @@ internal fun AppSceneHost(
                             !sceneState.transitionLocked &&
                             NewPlayerOnboardingInteractionPolicy.allowsHomeBadgeBook(onboardingStep)
                         ) {
+                            homeViewModel.markBadgeBookSeen()
                             scope.launch {
                                 onboardingCoordinator.onBadgeBookOpened()
                                 transitions.animateHomeToBadgeBook()
@@ -286,6 +289,7 @@ internal fun AppSceneHost(
                         LibraryViewModel(
                             catalogRepository = appContainer.catalogRepository,
                             collectionRepository = appContainer.collectionRepository,
+                            progressRepository = appContainer.progressRepository,
                         )
                     },
                 )

@@ -266,9 +266,13 @@ internal class NewPlayerOnboardingCoordinator(
             return
         }
 
-        progressRepository.saveProgress(
-            loadedProgress.copy(newPlayerOnboardingStep = nextStep),
-        )
+        progressRepository.updateProgress { currentProgress ->
+            if (currentProgress.newPlayerOnboardingStep.ordinal >= nextStep.ordinal) {
+                currentProgress
+            } else {
+                currentProgress.copy(newPlayerOnboardingStep = nextStep)
+            }
+        }
         uiState = uiState.copy(currentStep = nextStep)
     }
 }

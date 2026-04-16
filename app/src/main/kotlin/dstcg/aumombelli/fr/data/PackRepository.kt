@@ -1,8 +1,14 @@
 package fr.aumombelli.dstcg.data
 
 import fr.aumombelli.dstcg.model.DrawPackResponse
+import fr.aumombelli.dstcg.model.HomeMenuNoveltyState
+import fr.aumombelli.dstcg.model.LibraryCardNoveltyState
 import fr.aumombelli.dstcg.model.addRewards
+import fr.aumombelli.dstcg.model.buildNewLibraryCardIds
 import fr.aumombelli.dstcg.model.consumeEquipmentEffectsAfterPackOpen
+import fr.aumombelli.dstcg.model.hasEquipmentStockCrossedZero
+import fr.aumombelli.dstcg.model.hasNewLibraryCard
+import fr.aumombelli.dstcg.model.or
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,6 +19,7 @@ class PackRepository(
     private val progressRepository: ProgressGateway,
     private val collectionRepository: CollectionGateway,
     private val localPackEngine: LocalPackEngine,
+    private val homeMenuNoveltyEvaluator: HomeMenuNoveltyEvaluator,
 ) : PackGateway {
     private val currentPackResult = MutableStateFlow<DrawPackResponse?>(null)
     private val openPackMutex = Mutex()
@@ -33,13 +40,38 @@ class PackRepository(
         )
         val mergedCollection = collectionRepository.mergeCards(progress.collection, packResponse.cards)
         val mergedEquipmentInventory = progress.equipmentInventory.addRewards(packResponse.equipmentCards)
+        val afterProgress = progress.copy(
+            collection = mergedCollection,
+            equipmentInventory = mergedEquipmentInventory,
+            rechargeState = packResponse.rechargeState,
+            openedPackCount = progress.openedPackCount + 1,
+        )
+            .consumeEquipmentEffectsAfterPackOpen()
+        val newLibraryCardIds = progress.libraryCardNoveltyState.newCardIds + buildNewLibraryCardIds(
+            beforeProgress = progress,
+            afterProgress = afterProgress,
+        )
+        val noveltyState = progress.homeMenuNoveltyState.or(
+            other = HomeMenuNoveltyState(
+                library = hasNewLibraryCard(
+                    beforeProgress = progress,
+                    afterProgress = afterProgress,
+                ),
+                equipment = hasEquipmentStockCrossedZero(
+                    beforeProgress = progress,
+                    afterProgress = afterProgress,
+                ),
+                badgeBook = homeMenuNoveltyEvaluator.hasNewBadgeUnlock(
+                    beforeProgress = progress,
+                    afterProgress = afterProgress,
+                ),
+            ),
+        )
         progressRepository.saveProgress(
-            progress.copy(
-                collection = mergedCollection,
-                equipmentInventory = mergedEquipmentInventory,
-                rechargeState = packResponse.rechargeState,
-                openedPackCount = progress.openedPackCount + 1,
-            ).consumeEquipmentEffectsAfterPackOpen(),
+            afterProgress.copy(
+                homeMenuNoveltyState = noveltyState,
+                libraryCardNoveltyState = LibraryCardNoveltyState(newCardIds = newLibraryCardIds),
+            ),
         )
         currentPackResult.value = packResponse
         packResponse

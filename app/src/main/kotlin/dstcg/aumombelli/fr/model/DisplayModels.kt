@@ -4,6 +4,7 @@ data class LibraryCardItem(
     val definition: CardDefinition,
     val extensionName: String,
     val ownedCount: Int,
+    val showNewIndicator: Boolean = false,
     val availableVariants: List<DisplayCardVariant> = emptyList(),
 )
 

@@ -11,6 +11,8 @@ import fr.aumombelli.dstcg.data.StandaloneGameSettings
 import fr.aumombelli.dstcg.data.buildPackChargeUiStatus
 import fr.aumombelli.dstcg.data.drawCooldownDuration
 import fr.aumombelli.dstcg.data.requireUsableProgress
+import fr.aumombelli.dstcg.model.HomeMenuNoveltyState
+import fr.aumombelli.dstcg.model.LibraryCardNoveltyState
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.OwnedCardEntry
 import fr.aumombelli.dstcg.model.OwnedCollection
@@ -57,6 +59,13 @@ class ProgressRepositoryTest {
                 nextChargeAt = "2026-03-25T00:00:00Z",
             ),
             openedPackCount = 3,
+            homeMenuNoveltyState = HomeMenuNoveltyState(
+                library = true,
+                badgeBook = true,
+            ),
+            libraryCardNoveltyState = LibraryCardNoveltyState(
+                newCardIds = setOf("ALP-001"),
+            ),
         )
 
         fixture.repository.saveProgress(progress)
@@ -91,6 +100,8 @@ class ProgressRepositoryTest {
         assertEquals(0, reloaded.openedPackCount)
         assertEquals(OwnedCollection(), reloaded.collection)
         assertEquals(10, reloaded.rechargeState.availableDrawCount)
+        assertEquals(HomeMenuNoveltyState(), reloaded.homeMenuNoveltyState)
+        assertEquals(LibraryCardNoveltyState(), reloaded.libraryCardNoveltyState)
     }
 
     @Test
@@ -249,27 +260,47 @@ class ProgressRepositoryTest {
     }
 
     @Test
-    fun `load progress migrates schema version 3 to version 4 without losing collection or recharge`() = runTest {
+    fun `load progress migrates schema version 4 to version 6 without losing collection or recharge`() = runTest {
         val fixture = newFixture()
-        writeSecureSnapshot(
-            fixture = fixture,
-            snapshot = ProgressSnapshot(
-                installId = "install-1",
-                schemaVersion = 3,
-                collection = ownedCollectionOf("ALP-001" to 2),
-                rechargeState = testRechargeStateWithNextChargeAt(
-                    availableDrawCount = 4,
-                    nextChargeAt = "2026-03-24T18:00:00Z",
-                    now = fixedNow,
-                ),
-                openedPackCount = 2,
-                newPlayerOnboardingStep = NewPlayerOnboardingStep.Completed,
-                lastTrustedWallClockUtc = fixedNow.toString(),
-                lastTrustedElapsedRealtimeMs = 1_000L,
-                lastObservedBootMarker = "test-boot",
-                tamperFlag = false,
-            ),
+        val legacyRechargeState = testRechargeStateWithNextChargeAt(
+            availableDrawCount = 4,
+            nextChargeAt = "2026-03-24T18:00:00Z",
+            now = fixedNow,
         )
+        val legacySnapshotJson = """
+            {
+              "installId":"install-1",
+              "schemaVersion":4,
+              "collection":{
+                "cards":{
+                  "ALP-001":{
+                    "totalOwned":2,
+                    "variants":[
+                      {"skyQuality":"city","finish":"standard","count":2}
+                    ]
+                  }
+                }
+              },
+              "rechargeState":{
+                "availableDrawCount":${legacyRechargeState.availableDrawCount},
+                "accumulatedChargeUnits":${legacyRechargeState.accumulatedChargeUnits},
+                "lastChargeEvaluationAt":"${legacyRechargeState.lastChargeEvaluationAt}"
+              },
+              "openedPackCount":2,
+              "newPlayerOnboardingStep":"Completed",
+              "equipmentInventory":{"cards":{}},
+              "activeEquipmentByType":{},
+              "lastActivatedCardIdByType":{},
+              "lastTrustedWallClockUtc":"${fixedNow}",
+              "lastTrustedElapsedRealtimeMs":1000,
+              "lastObservedBootMarker":"test-boot",
+              "tamperFlag":false
+            }
+        """.trimIndent()
+        val payload = fixture.cipher.encrypt(legacySnapshotJson.encodeToByteArray())
+        fixture.secureDataStore.updateData {
+            EncryptedProgressEnvelope.fromPayload(payload)
+        }
 
         val result = fixture.repository.loadProgress()
 
@@ -281,6 +312,8 @@ class ProgressRepositoryTest {
         assertTrue(loaded.equipmentInventory.cards.isEmpty())
         assertTrue(loaded.activeEquipmentByType.isEmpty())
         assertTrue(loaded.lastActivatedCardIdByType.isEmpty())
+        assertEquals(HomeMenuNoveltyState(), loaded.homeMenuNoveltyState)
+        assertEquals(LibraryCardNoveltyState(), loaded.libraryCardNoveltyState)
     }
 
     private fun newFixture(

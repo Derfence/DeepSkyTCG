@@ -85,6 +85,36 @@ class HomeScreenStateTest {
     }
 
     @Test
+    fun novelty_indicators_are_hidden_by_default() {
+        setHomeScreenContent(
+            HomeUiState(
+                isLoading = false,
+            ),
+        )
+
+        composeRule.onAllNodesWithTag("home-library-new-indicator", useUnmergedTree = true).assertCountEquals(0)
+        composeRule.onAllNodesWithTag("home-equipment-new-indicator", useUnmergedTree = true).assertCountEquals(0)
+        composeRule.onAllNodesWithTag("home-badges-new-indicator", useUnmergedTree = true).assertCountEquals(0)
+    }
+
+    @Test
+    fun novelty_indicators_are_shown_only_for_matching_buttons() {
+        setHomeScreenContent(
+            HomeUiState(
+                isLoading = false,
+                isEquipmentMenuVisible = true,
+                showLibraryNewIndicator = true,
+                showEquipmentNewIndicator = true,
+                showBadgeBookNewIndicator = true,
+            ),
+        )
+
+        composeRule.onNodeWithTag("home-library-new-indicator", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("home-equipment-new-indicator", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("home-badges-new-indicator", useUnmergedTree = true).assertIsDisplayed()
+    }
+
+    @Test
     fun settings_menu_is_visible_and_can_open_about_sheet() {
         setHomeScreenContent(
             HomeUiState(

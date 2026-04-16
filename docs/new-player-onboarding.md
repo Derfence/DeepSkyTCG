@@ -53,6 +53,8 @@ Les hints d'onboarding n'apparaissent qu'une fois les animations de transition t
   - les pages restent legerement plus petites que les couvertures et gardent un petit decor d'etoiles imprimees.
 - Lors de la premiere visite bibliotheque, un micro-hint local s'affiche :
   `Touche une carte obtenue pour l'ouvrir.`
+- Si cette visite suit l'obtention de nouvelles cartes, leurs vignettes affichent aussi l'indicateur de nouveaute a trois etoiles pendant cette ouverture de la bibliotheque.
+- Cet indicateur local disparait apres cette visite, meme si le joueur referme aussitot l'ecran.
 - Quand le joueur revient a l'accueil, la celebration de badge differee est rejouee si elle est encore en memoire.
 - Cette celebration demarre au centre de l'ecran, avec son libelle immediatement au-dessus du badge a l'apparition ; le libelle reste fixe pendant que le badge vient ensuite se ranger juste au-dessus du bouton `Badges` de l'accueil.
 - Apres cette celebration, un coachmark cible `Badges` tant que le carnet n'a pas ete ouvert.
@@ -124,8 +126,11 @@ La couverture ajoutee ou mise a jour comprend :
 - `NewPlayerOnboardingCoordinatorTest`
 - `LocalPackEngineEquipmentTest`
 - `PackRepositoryTest`
+- `LibraryViewModelTest`
 - `LocalEndToEndTest`
+- `AstroCardThumbnailTest`
 - `LibraryScreenTest`
+- `HomeMenuNoveltyIntegrationTest`
 - `PackOpeningScreenTest`
 - `NewPlayerOnboardingInteractionPolicyTest`
 

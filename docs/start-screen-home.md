@@ -12,6 +12,26 @@ Elle conserve :
 - une icone `Badges` en bas a droite ;
 - un bouton `Parametres` en haut a droite.
 
+## Indicateurs De Nouveaute
+
+Les boutons `Bibliotheque`, `Equipements` et `Badges` peuvent afficher un indicateur de nouveaute dans leur coin.
+
+Le rendu retenu est :
+
+- un seul groupe de `trois petites etoiles` ;
+- plus visible que l'ancien accent decoratif fixe ;
+- anime legerement, sans changer la surface cliquable du bouton.
+
+Le comportement attendu est :
+
+- `Bibliotheque` s'allume quand au moins une nouvelle carte est obtenue ;
+- `Equipements` s'allume quand une carte d'equipement passe de `0` a `1` en stock ;
+- `Badges` s'allume quand un nouveau badge est debloque ;
+- chaque indicateur disparait des que le menu correspondant est ouvert depuis l'accueil.
+
+Quand `Bibliotheque` est marquee comme nouvelle, les cartes nouvellement obtenues affichent aussi ce meme indicateur sur leur vignette pendant la premiere ouverture de la bibliotheque.
+Cet indicateur de carte disparait apres cette visite, meme si le joueur referme aussitot l'ecran.
+
 ## Layout Responsive
 
 La mise en page verticale de `Home` repose maintenant sur une geometrie partagee entre l'ecran d'accueil et l'animation de lancement.
@@ -62,7 +82,9 @@ La non regression de cette geometrie est couverte par :
 
 - `app/src/test/kotlin/dstcg/aumombelli/fr/HomeResponsiveLayoutTest.kt` pour les calculs purs ;
 - `app/src/androidTest/kotlin/dstcg/aumombelli/fr/HomeScreenResponsiveLaunchTest.kt` pour la position finale apres la transition de lancement ;
-- `app/src/androidTest/kotlin/dstcg/aumombelli/fr/HomeScreenStateTest.kt` pour l'adaptation de taille de la carte selon le viewport.
+- `app/src/androidTest/kotlin/dstcg/aumombelli/fr/HomeScreenStateTest.kt` pour l'adaptation de taille de la carte selon le viewport et les indicateurs de nouveaute ;
+- `app/src/androidTest/kotlin/dstcg/aumombelli/fr/HomeMenuNoveltyIntegrationTest.kt` pour la consommation des indicateurs du home ;
+- `app/src/androidTest/kotlin/dstcg/aumombelli/fr/AstroCardThumbnailTest.kt` pour l'indicateur sur les cartes nouvelles de la bibliotheque.
 
 ## Equipements
 

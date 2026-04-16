@@ -1,14 +1,18 @@
 package fr.aumombelli.dstcg
 
-import fr.aumombelli.dstcg.model.CardDefinition
+import fr.aumombelli.dstcg.model.HomeMenuNoveltyState
+import fr.aumombelli.dstcg.model.LibraryCardNoveltyState
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.OwnedVariantCount
+import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.ui.viewmodel.LibraryViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -67,5 +71,47 @@ class LibraryViewModelTest {
 
         assertEquals("Catalog unavailable", viewModel.uiState.value.errorMessage)
         assertEquals(false, viewModel.uiState.value.isLoading)
+    }
+
+    @Test
+    fun `refresh marks new library cards and clears presented novelty`() = runTest {
+        val catalogGateway = FakeCatalogGateway().apply {
+            extensions = listOf(
+                ExtensionDefinition("moon-dawn", "Moon Dawn", "cover"),
+            )
+            cards = listOf(
+                testCardDefinition("MON-001", extensionId = "moon-dawn", name = "M31", imageRef = "hare"),
+                testCardDefinition("MON-050", extensionId = "moon-dawn", name = "M57", rarityLabel = "Epic", imageRef = "ring"),
+            )
+        }
+        val progressGateway = FakeProgressGateway().apply {
+            progress = StandaloneProgress(
+                collection = ownedCollectionOf(
+                    "MON-001" to 1,
+                    "MON-050" to 1,
+                ),
+                rechargeState = testRechargeState(),
+                homeMenuNoveltyState = HomeMenuNoveltyState(library = true),
+                libraryCardNoveltyState = LibraryCardNoveltyState(
+                    newCardIds = setOf("MON-050"),
+                ),
+            )
+        }
+
+        val viewModel = LibraryViewModel(
+            catalogRepository = catalogGateway,
+            collectionRepository = FakeCollectionGateway(),
+            progressRepository = progressGateway,
+        )
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        val regularCard = state.sections.single().cards.first { it.definition.id == "MON-001" }
+        val newCard = state.sections.single().cards.first { it.definition.id == "MON-050" }
+
+        assertFalse(regularCard.showNewIndicator)
+        assertTrue(newCard.showNewIndicator)
+        assertFalse(progressGateway.progress.homeMenuNoveltyState.library)
+        assertTrue(progressGateway.progress.libraryCardNoveltyState.newCardIds.isEmpty())
     }
 }

@@ -12,11 +12,12 @@ internal fun buildNewlyUnlockedBadges(
     beforeProgress: StandaloneProgress,
     afterProgress: StandaloneProgress,
 ): List<BadgeItem> {
-    val beforeUnlockedIds = buildUnlockedBadgeIds(
+    val newlyUnlockedIds = buildNewlyUnlockedBadgeIds(
         extensions = extensions,
         cards = cards,
         variantProfiles = variantProfiles,
-        progress = beforeProgress,
+        beforeProgress = beforeProgress,
+        afterProgress = afterProgress,
     )
 
     return sortBadgeCelebrationItems(
@@ -25,8 +26,30 @@ internal fun buildNewlyUnlockedBadges(
             cards = cards,
             variantProfiles = variantProfiles,
             progress = afterProgress,
-        ).filter { badge -> badge.id !in beforeUnlockedIds },
+        ).filter { badge -> badge.id in newlyUnlockedIds },
     )
+}
+
+internal fun buildNewlyUnlockedBadgeIds(
+    extensions: List<ExtensionDefinition>,
+    cards: List<CardDefinition>,
+    variantProfiles: List<VariantProfile>,
+    beforeProgress: StandaloneProgress,
+    afterProgress: StandaloneProgress,
+): Set<String> {
+    val beforeUnlockedIds = buildUnlockedBadgeIds(
+        extensions = extensions,
+        cards = cards,
+        variantProfiles = variantProfiles,
+        progress = beforeProgress,
+    )
+
+    return buildUnlockedBadgeIds(
+        extensions = extensions,
+        cards = cards,
+        variantProfiles = variantProfiles,
+        progress = afterProgress,
+    ).filterNotTo(mutableSetOf()) { badgeId -> badgeId in beforeUnlockedIds }
 }
 
 internal fun sortBadgeCelebrationItems(badges: List<BadgeItem>): List<BadgeItem> = badges.sortedWith(

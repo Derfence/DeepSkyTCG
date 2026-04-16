@@ -42,6 +42,15 @@ fun AstroCardThumbnail(
                     .testTag("library-card-surface-${item.definition.id}"),
                 onClick = if (owned) onClick else null,
             )
+            if (item.showNewIndicator) {
+                NewContentIndicator(
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(8.dp)
+                        .testTag("library-card-new-indicator-${item.definition.id}"),
+                    iconSize = 14.dp,
+                )
+            }
             QuantityPill(
                 text = if (owned) "×${item.ownedCount}" else "0",
                 modifier = Modifier

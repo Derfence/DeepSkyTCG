@@ -1,8 +1,15 @@
 package fr.aumombelli.dstcg
 
+import fr.aumombelli.dstcg.app.NewPlayerOnboardingCoordinator
+import fr.aumombelli.dstcg.data.ProgressGateway
+import fr.aumombelli.dstcg.data.ProgressLoadResult
 import fr.aumombelli.dstcg.feature.home.HomeViewModel
+import fr.aumombelli.dstcg.model.HomeMenuNoveltyState
+import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
+import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.model.OwnedEquipmentCardEntry
 import fr.aumombelli.dstcg.model.OwnedEquipmentInventory
+import java.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -90,6 +97,116 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `init exposes persisted home menu novelty flags`() = runTest {
+        val progressGateway = FakeProgressGateway().apply {
+            progress = progress.copy(
+                homeMenuNoveltyState = HomeMenuNoveltyState(
+                    library = true,
+                    equipment = true,
+                    badgeBook = true,
+                ),
+                equipmentInventory = OwnedEquipmentInventory(
+                    cards = mapOf(
+                        "observatory-1" to OwnedEquipmentCardEntry(countOwned = 1),
+                    ),
+                ),
+            )
+        }
+
+        val viewModel = HomeViewModel(progressGateway)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.showLibraryNewIndicator)
+        assertTrue(viewModel.uiState.value.showEquipmentNewIndicator)
+        assertTrue(viewModel.uiState.value.showBadgeBookNewIndicator)
+    }
+
+    @Test
+    fun `mark library seen only clears library novelty`() = runTest {
+        val progressGateway = FakeProgressGateway().apply {
+            progress = progress.copy(
+                homeMenuNoveltyState = HomeMenuNoveltyState(
+                    library = true,
+                    equipment = true,
+                    badgeBook = true,
+                ),
+                equipmentInventory = OwnedEquipmentInventory(
+                    cards = mapOf(
+                        "observatory-1" to OwnedEquipmentCardEntry(countOwned = 1),
+                    ),
+                ),
+            )
+        }
+
+        val viewModel = HomeViewModel(progressGateway)
+        advanceUntilIdle()
+
+        viewModel.markLibrarySeen()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.showLibraryNewIndicator)
+        assertTrue(viewModel.uiState.value.showEquipmentNewIndicator)
+        assertTrue(viewModel.uiState.value.showBadgeBookNewIndicator)
+        assertEquals(
+            HomeMenuNoveltyState(
+                library = false,
+                equipment = true,
+                badgeBook = true,
+            ),
+            progressGateway.progress.homeMenuNoveltyState,
+        )
+    }
+
+    @Test
+    fun `mark seen is idempotent when the indicator is already false`() = runTest {
+        val progressGateway = FakeProgressGateway().apply {
+            progress = progress.copy(
+                homeMenuNoveltyState = HomeMenuNoveltyState(
+                    equipment = true,
+                ),
+            )
+        }
+
+        val viewModel = HomeViewModel(progressGateway)
+        advanceUntilIdle()
+
+        viewModel.markLibrarySeen()
+        advanceUntilIdle()
+
+        assertEquals(0, progressGateway.savedProgress.size)
+        assertFalse(viewModel.uiState.value.showLibraryNewIndicator)
+        assertTrue(viewModel.uiState.value.showEquipmentNewIndicator)
+    }
+
+    @Test
+    fun `opening badge book keeps the second pack onboarding step while consuming novelty`() = runTest {
+        val progressGateway = AtomicProgressGateway(
+            initialProgress = StandaloneProgress(
+                collection = ownedCollectionOf("ALP-001" to 1),
+                rechargeState = testRechargeState(availableDrawCount = 9),
+                openedPackCount = 1,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.ViewBadges,
+                homeMenuNoveltyState = HomeMenuNoveltyState(
+                    badgeBook = true,
+                ),
+            ),
+        )
+        val viewModel = HomeViewModel(progressGateway)
+        val coordinator = NewPlayerOnboardingCoordinator(progressGateway)
+
+        advanceUntilIdle()
+        coordinator.syncFromProgress()
+
+        viewModel.markBadgeBookSeen()
+        coordinator.onBadgeBookOpened()
+        advanceUntilIdle()
+
+        assertEquals(NewPlayerOnboardingStep.OpenSecondPackMenu, progressGateway.progress.newPlayerOnboardingStep)
+        assertFalse(progressGateway.progress.homeMenuNoveltyState.badgeBook)
+        assertFalse(viewModel.uiState.value.showBadgeBookNewIndicator)
+    }
+
+    @Test
     fun `reset is allowed even when an error is present`() = runTest {
         val progressGateway = FakeProgressGateway().apply {
             loadFailure = IllegalStateException("Saved progression could not be read.")
@@ -136,5 +253,32 @@ class HomeViewModelTest {
 
         assertEquals(1, progressGateway.resetCallCount.get())
         assertNull(viewModel.uiState.value.errorMessage)
+    }
+
+    private class AtomicProgressGateway(
+        initialProgress: StandaloneProgress,
+    ) : ProgressGateway {
+        var progress: StandaloneProgress = initialProgress
+        private val trustedNow: Instant = Instant.parse("2026-03-24T12:00:00Z")
+
+        override suspend fun loadProgress(): ProgressLoadResult = ProgressLoadResult.Ok(
+            progress = progress,
+            trustedNow = trustedNow,
+        )
+
+        override suspend fun saveProgress(progress: StandaloneProgress) {
+            error("This regression test requires atomic progress updates.")
+        }
+
+        override suspend fun updateProgress(transform: (StandaloneProgress) -> StandaloneProgress) {
+            progress = transform(progress)
+        }
+
+        override suspend fun resetProgress() {
+            progress = StandaloneProgress(
+                collection = ownedCollectionOf(),
+                rechargeState = testRechargeState(),
+            )
+        }
     }
 }

@@ -106,6 +106,28 @@ class AstroCardThumbnailTest {
     }
 
     @Test
+    fun thumbnail_shows_new_indicator_when_card_is_marked_as_new() {
+        val item = LibraryCardItem(
+            definition = testCardDefinition("M42", name = "Nebuleuse d'Orion"),
+            extensionName = "Astronomes en herbe",
+            ownedCount = 1,
+            showNewIndicator = true,
+            availableVariants = listOf(
+                DisplayCardVariant("city", "Ville", "standard", "Standard", false, 1),
+            ),
+        )
+
+        composeRule.setContent {
+            AstroCardThumbnail(
+                item = item,
+                onClick = {},
+            )
+        }
+
+        composeRule.onNodeWithTag("library-card-new-indicator-M42", useUnmergedTree = true).assertIsDisplayed()
+    }
+
+    @Test
     fun thumbnails_keep_constant_surface_size_when_title_wraps() {
         val shortName = LibraryCardItem(
             definition = testCardDefinition("M42", name = "M42"),

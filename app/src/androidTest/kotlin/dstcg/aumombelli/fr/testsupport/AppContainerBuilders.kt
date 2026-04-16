@@ -11,6 +11,7 @@ import fr.aumombelli.dstcg.data.CollectionRepository
 import fr.aumombelli.dstcg.data.EncryptedProgressEnvelopeSerializer
 import fr.aumombelli.dstcg.data.EquipmentRepository
 import fr.aumombelli.dstcg.data.GameCatalogRepository
+import fr.aumombelli.dstcg.data.HomeMenuNoveltyEvaluator
 import fr.aumombelli.dstcg.data.LocalPackEngine
 import fr.aumombelli.dstcg.data.PackGateway
 import fr.aumombelli.dstcg.data.PackRepository
@@ -26,6 +27,8 @@ import fr.aumombelli.dstcg.model.EquipmentCardDefinition
 import fr.aumombelli.dstcg.model.EquipmentSettingsDefinition
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.GameBalanceDefinition
+import fr.aumombelli.dstcg.model.HomeMenuNoveltyState
+import fr.aumombelli.dstcg.model.LibraryCardNoveltyState
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.OwnedEquipmentCardEntry
@@ -87,6 +90,9 @@ internal fun offlineMainActivityTestAppContainer(
             catalogRepository = catalogRepository,
             settings = gameSettings,
         ),
+        homeMenuNoveltyEvaluator = HomeMenuNoveltyEvaluator(
+            catalogRepository = catalogRepository,
+        ),
     )
 
     return AppContainer(
@@ -125,9 +131,39 @@ internal fun badgeCelebrationBackNavigationTestAppContainer(): AppContainer {
     )
 }
 
+internal fun homeMenuNoveltyTestAppContainer(): AppContainer {
+    return navigationTestAppContainer(
+        initialCollection = OwnedCollection(
+            cards = mapOf(
+                "ALP-001" to fr.aumombelli.dstcg.model.OwnedCardEntry(
+                    totalOwned = 1,
+                    variants = listOf(
+                        OwnedVariantCount(
+                            skyQuality = "city",
+                            finish = "standard",
+                            count = 1,
+                        ),
+                    ),
+                ),
+            ),
+        ),
+        unlockEquipmentMenu = true,
+        homeMenuNoveltyState = HomeMenuNoveltyState(
+            library = true,
+            equipment = true,
+            badgeBook = true,
+        ),
+        libraryCardNoveltyState = LibraryCardNoveltyState(
+            newCardIds = setOf("ALP-001"),
+        ),
+    )
+}
+
 private fun navigationTestAppContainer(
     initialCollection: OwnedCollection,
     unlockEquipmentMenu: Boolean = false,
+    homeMenuNoveltyState: HomeMenuNoveltyState = HomeMenuNoveltyState(),
+    libraryCardNoveltyState: LibraryCardNoveltyState = LibraryCardNoveltyState(),
 ): AppContainer {
     val extension = ExtensionDefinition(
         id = "astronomes-en-herbe",
@@ -153,6 +189,8 @@ private fun navigationTestAppContainer(
             } else {
                 OwnedEquipmentInventory()
             },
+            homeMenuNoveltyState = homeMenuNoveltyState,
+            libraryCardNoveltyState = libraryCardNoveltyState,
         ),
     )
     val collectionRepository = NavigationCollectionGateway(progressRepository)
@@ -206,6 +244,10 @@ private class MutableProgressGateway(
 
     override suspend fun saveProgress(progress: StandaloneProgress) {
         this.progress = progress
+    }
+
+    override suspend fun updateProgress(transform: (StandaloneProgress) -> StandaloneProgress) {
+        progress = transform(progress)
     }
 
     override suspend fun resetProgress() {

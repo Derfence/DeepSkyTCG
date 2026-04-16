@@ -61,6 +61,10 @@ class FakeProgressGateway : ProgressGateway {
         this.progress = progress
     }
 
+    override suspend fun updateProgress(transform: (StandaloneProgress) -> StandaloneProgress) {
+        saveProgress(transform(progress))
+    }
+
     override suspend fun resetProgress() {
         resetCallCount.incrementAndGet()
         compromisedMessage = null

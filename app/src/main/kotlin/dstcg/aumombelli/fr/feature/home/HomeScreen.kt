@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
+import fr.aumombelli.dstcg.ui.component.NewContentIndicator
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.motion.MotionCard
 import fr.aumombelli.dstcg.ui.motion.BrandLogoVariant
@@ -278,6 +279,8 @@ fun HomeScreen(
                         enabled = navigationEnabled,
                         onClick = onOpenLibrary,
                         buttonSize = homeLayout.menuButtonSize,
+                        showNewIndicator = state.showLibraryNewIndicator,
+                        newIndicatorTestTag = "home-library-new-indicator",
                         modifier = Modifier
                             .align(Alignment.BottomStart)
                             .onGloballyPositioned { coordinates ->
@@ -298,6 +301,8 @@ fun HomeScreen(
                             enabled = navigationEnabled,
                             onClick = onOpenEquipment,
                             buttonSize = homeLayout.menuButtonSize,
+                            showNewIndicator = state.showEquipmentNewIndicator,
+                            newIndicatorTestTag = "home-equipment-new-indicator",
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
                                 .onGloballyPositioned { coordinates ->
@@ -318,6 +323,8 @@ fun HomeScreen(
                         enabled = navigationEnabled,
                         onClick = onOpenBadgeBook,
                         buttonSize = homeLayout.menuButtonSize,
+                        showNewIndicator = state.showBadgeBookNewIndicator,
+                        newIndicatorTestTag = "home-badges-new-indicator",
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .onGloballyPositioned { coordinates ->
@@ -372,11 +379,13 @@ private fun HomeCornerActionButton(
     enabled: Boolean,
     onClick: () -> Unit,
     buttonSize: Dp,
+    showNewIndicator: Boolean,
+    newIndicatorTestTag: String,
     modifier: Modifier = Modifier,
 ) {
     val mainIconSize = buttonSize * 0.36f
-    val accentIconSize = buttonSize * 0.19f
-    val accentPadding = buttonSize * 0.14f
+    val indicatorSize = buttonSize * 0.36f
+    val indicatorPadding = buttonSize * 0.10f
 
     Surface(
         onClick = onClick,
@@ -398,15 +407,25 @@ private fun HomeCornerActionButton(
                 modifier = Modifier
                     .size(mainIconSize),
             )
-            Icon(
-                imageVector = Icons.Filled.AutoAwesome,
-                contentDescription = null,
-                tint = Color(0x55F7D58C),
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(accentPadding)
-                    .size(accentIconSize),
-            )
+            if (showNewIndicator) {
+                HomeMenuNewIndicator(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(indicatorPadding)
+                        .size(indicatorSize)
+                        .testTag(newIndicatorTestTag),
+                )
+            }
         }
     }
+}
+
+@Composable
+private fun HomeMenuNewIndicator(
+    modifier: Modifier = Modifier,
+) {
+    NewContentIndicator(
+        modifier = modifier,
+        iconSize = 16.dp,
+    )
 }
