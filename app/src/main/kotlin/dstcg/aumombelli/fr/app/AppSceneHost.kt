@@ -53,6 +53,7 @@ import fr.aumombelli.dstcg.ui.motion.AppSkyBackdrop
 import fr.aumombelli.dstcg.ui.motion.BrandLogoVariant
 import fr.aumombelli.dstcg.ui.motion.BookPortalOverlay
 import fr.aumombelli.dstcg.ui.motion.ChestPortalOverlay
+import fr.aumombelli.dstcg.ui.motion.EquipmentPortalOverlay
 import fr.aumombelli.dstcg.ui.motion.LaunchLogoMark
 import fr.aumombelli.dstcg.ui.motion.brandLogoLayoutSpec
 import fr.aumombelli.dstcg.ui.motion.homeLogoVariantFor
@@ -86,6 +87,8 @@ internal fun AppSceneHost(
     val bookOverlayAlpha = remember { Animatable(1f) }
     val chestProgress = remember { Animatable(0f) }
     val chestOverlayAlpha = remember { Animatable(1f) }
+    val equipmentProgress = remember { Animatable(0f) }
+    val equipmentOverlayAlpha = remember { Animatable(1f) }
 
     val transitions = remember(appContainer, skyVariant) {
         AppSceneTransitionController(
@@ -98,6 +101,8 @@ internal fun AppSceneHost(
             bookOverlayAlpha = bookOverlayAlpha,
             chestProgress = chestProgress,
             chestOverlayAlpha = chestOverlayAlpha,
+            equipmentProgress = equipmentProgress,
+            equipmentOverlayAlpha = equipmentOverlayAlpha,
             readState = { sceneStateHolder.value },
             writeState = { sceneStateHolder.value = it },
             awaitNextFrame = { withFrameNanos { } },
@@ -177,6 +182,9 @@ internal fun AppSceneHost(
                 sceneStateHolder.value = sceneStateHolder.value.withRootHeight(size.height.toFloat())
             },
     ) {
+        BackHandler(enabled = sceneState.transitionLocked) {
+        }
+
         AppSkyBackdrop(
             variant = skyVariant,
             cameraTiltProgress = cameraTilt.value,
@@ -584,6 +592,11 @@ internal fun AppSceneHost(
         ChestPortalOverlay(
             progress = chestProgress.value,
             overlayAlpha = chestOverlayAlpha.value,
+        )
+
+        EquipmentPortalOverlay(
+            progress = equipmentProgress.value,
+            overlayAlpha = equipmentOverlayAlpha.value,
         )
 
         val badgeCelebrationTargetBounds =

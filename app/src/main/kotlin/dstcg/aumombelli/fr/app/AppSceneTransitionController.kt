@@ -20,6 +20,8 @@ internal class AppSceneTransitionController(
     private val bookOverlayAlpha: Animatable<Float, AnimationVector1D>,
     private val chestProgress: Animatable<Float, AnimationVector1D>,
     private val chestOverlayAlpha: Animatable<Float, AnimationVector1D>,
+    private val equipmentProgress: Animatable<Float, AnimationVector1D>,
+    private val equipmentOverlayAlpha: Animatable<Float, AnimationVector1D>,
     private val readState: () -> AppSceneUiState,
     private val writeState: (AppSceneUiState) -> Unit,
     private val awaitNextFrame: suspend () -> Unit,
@@ -120,14 +122,33 @@ internal class AppSceneTransitionController(
 
         writeState(
             state.lockTransitions()
-                .hideHomeContent()
                 .hideLaunchLogo()
-                .hideEquipmentContent(),
+                .hideHomeContent()
+                .hideEquipmentContent()
+                .prepareEquipmentEntry(nextEquipmentRefreshSignal = state.equipmentRefreshSignal + 1),
         )
-        delay(520)
-        writeState(readState().prepareEquipmentEntry(nextEquipmentRefreshSignal = state.equipmentRefreshSignal + 1))
+        equipmentProgress.snapTo(0f)
+        equipmentOverlayAlpha.snapTo(1f)
+        equipmentProgress.animateTo(
+            1f,
+            animationSpec = tween(
+                durationMillis = EquipmentPortalTravelDurationMillis,
+                easing = FastOutSlowInEasing,
+            ),
+        )
         awaitNextFrame()
-        writeState(readState().enterEquipment().showEquipmentContent())
+        writeState(readState().enterEquipment())
+        awaitNextFrame()
+        writeState(readState().showEquipmentContent())
+        equipmentOverlayAlpha.animateTo(
+            0f,
+            animationSpec = tween(
+                durationMillis = EquipmentPortalFadeDurationMillis,
+                easing = FastOutSlowInEasing,
+            ),
+        )
+        equipmentProgress.snapTo(0f)
+        equipmentOverlayAlpha.snapTo(1f)
         unlockTransitionsAndRevealOnboardingHints()
     }
 
@@ -235,7 +256,31 @@ internal class AppSceneTransitionController(
             state.lockTransitions()
                 .hideEquipmentContent(),
         )
-        delay(420)
+        equipmentProgress.snapTo(1f)
+        equipmentOverlayAlpha.snapTo(0f)
+        writeState(readState().enterHome())
+        coroutineScope {
+            launch {
+                equipmentOverlayAlpha.animateTo(
+                    1f,
+                    animationSpec = tween(
+                        durationMillis = EquipmentPortalFadeDurationMillis,
+                        easing = FastOutSlowInEasing,
+                    ),
+                )
+            }
+            launch {
+                equipmentProgress.animateTo(
+                    0f,
+                    animationSpec = tween(
+                        durationMillis = EquipmentPortalTravelDurationMillis,
+                        easing = FastOutSlowInEasing,
+                    ),
+                )
+            }
+        }
+        equipmentProgress.snapTo(0f)
+        equipmentOverlayAlpha.snapTo(1f)
         writeState(readState().enterHome())
         val nextState = readState().showHomeContent()
         writeState(
@@ -312,5 +357,7 @@ internal class AppSceneTransitionController(
 
     private companion object {
         const val OnboardingHintRevealDelayMillis: Long = 220L
+        const val EquipmentPortalTravelDurationMillis: Int = 720
+        const val EquipmentPortalFadeDurationMillis: Int = 160
     }
 }

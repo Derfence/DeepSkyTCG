@@ -76,13 +76,13 @@ class DstcgAppBackNavigationTest {
         startAndReachHome()
 
         composeRule.onNodeWithTag("home-equipment").performClick()
-        advanceBy(900)
+        advanceUntilTagDisplayed("equipment-screen", timeoutMillis = 10_000)
+        advanceUntilTagGone("app-transition-equipment", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("equipment-screen").assertIsDisplayed()
         composeRule.onNodeWithTag("equipment-section-observatory").assertIsDisplayed()
 
         pressAndroidBack()
-        advanceBy(900)
-        composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
+        advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
     }
 
     @Test
