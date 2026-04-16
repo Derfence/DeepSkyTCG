@@ -14,6 +14,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.unit.dp
@@ -239,6 +240,43 @@ class EquipmentScreenTest {
         composeRule.onNodeWithTag("equipment-card-observatory-1").assertIsDisplayed()
         composeRule.onNodeWithTag("equipment-cards-observatory").performScrollToIndex(2)
         composeRule.onNodeWithTag("equipment-card-observatory-3").assertIsDisplayed()
+    }
+
+    @Test
+    fun equipment_card_opens_detail_directly_and_returns_to_equipment() {
+        composeRule.setContent {
+            EquipmentScreen(
+                state = EquipmentUiState(
+                    isLoading = false,
+                    sections = listOf(
+                        testEquipmentSection(
+                            type = EquipmentType.Observatory,
+                            statusLabel = "1 carte en reserve",
+                            cards = listOf(
+                                testEquipmentInventoryCard(
+                                    definition = testEquipmentCardDefinition(
+                                        id = "observatory-1",
+                                        type = EquipmentType.Observatory,
+                                        displayName = "Observatoire debutant",
+                                        level = 1,
+                                    ),
+                                    stockCount = 1,
+                                    activationCount = 2,
+                                    activationEnabled = true,
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+                onRefresh = {},
+                onActivateEquipment = {},
+            )
+        }
+
+        composeRule.onNodeWithTag("equipment-card-observatory-1").performClick()
+        composeRule.onNodeWithTag("equipment-card-fullscreen").assertIsDisplayed()
+        composeRule.onNodeWithTag("equipment-card-fullscreen-close").performClick()
+        composeRule.onAllNodesWithTag("equipment-card-fullscreen").assertCountEquals(0)
     }
 
     @Test

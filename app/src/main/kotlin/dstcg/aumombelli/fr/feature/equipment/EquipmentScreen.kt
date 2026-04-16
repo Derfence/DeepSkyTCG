@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,9 +24,15 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -33,7 +40,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,6 +64,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.model.bonusLabel
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
@@ -69,6 +80,17 @@ fun EquipmentScreen(
     onOnboardingActivationScrollHintChanged: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    val cardsById = remember(state.sections) {
+        state.sections
+            .flatMap { it.cards }
+            .associateBy { it.definition.id }
+    }
+    var openedCardId by remember(state.sections) { mutableStateOf<String?>(null) }
+    val openedCard = openedCardId?.let(cardsById::get)
+    val closeOpenedCard = {
+        openedCardId = null
+    }
+
     val onboardingActivationTargetEnabled =
         contentVisible &&
             state.activatingCardId == null &&
@@ -184,6 +206,9 @@ fun EquipmentScreen(
                 EquipmentSectionCard(
                     section = section,
                     activatingCardId = state.activatingCardId,
+                    onPreviewEquipment = { equipmentCardId ->
+                        openedCardId = equipmentCardId
+                    },
                     onActivateEquipment = onActivateEquipment,
                     firstActivatableCardId = firstActivatableCardId,
                     contentVisible = contentVisible,
@@ -192,6 +217,13 @@ fun EquipmentScreen(
                     onOnboardingActivationScrollHintChanged = onOnboardingActivationScrollHintChanged,
                 )
             }
+        }
+
+        if (openedCard != null) {
+            EquipmentCardFullscreenDialog(
+                card = openedCard,
+                onDismiss = closeOpenedCard,
+            )
         }
     }
 }
@@ -346,6 +378,7 @@ private fun EquipmentActiveEffectChip(
 private fun EquipmentSectionCard(
     section: EquipmentSectionUi,
     activatingCardId: String?,
+    onPreviewEquipment: (String) -> Unit,
     onActivateEquipment: (String) -> Unit,
     firstActivatableCardId: String?,
     contentVisible: Boolean,
@@ -432,6 +465,7 @@ private fun EquipmentSectionCard(
                                 card = card,
                                 palette = palette,
                                 isActivating = activatingCardId == card.definition.id,
+                                onPreviewEquipment = onPreviewEquipment,
                                 onActivateEquipment = onActivateEquipment,
                                 highlightOnboardingActivationTarget =
                                     card.definition.id == firstActivatableCardId,
@@ -453,6 +487,7 @@ private fun EquipmentInventoryCard(
     card: EquipmentInventoryCardUi,
     palette: EquipmentCategoryPalette,
     isActivating: Boolean,
+    onPreviewEquipment: (String) -> Unit,
     onActivateEquipment: (String) -> Unit,
     highlightOnboardingActivationTarget: Boolean,
     contentVisible: Boolean,
@@ -487,6 +522,7 @@ private fun EquipmentInventoryCard(
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(26.dp))
                 .background(palette.cardBrush)
+                .clickable { onPreviewEquipment(card.definition.id) }
                 .padding(16.dp),
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -586,6 +622,169 @@ private fun EquipmentInventoryCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun EquipmentCardFullscreenDialog(
+    card: EquipmentInventoryCardUi,
+    onDismiss: () -> Unit,
+) {
+    val palette = equipmentPalette(card.definition.type)
+    val visual = card.definition.type.toCategoryVisualUi()
+
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(
+            dismissOnClickOutside = true,
+            usePlatformDefaultWidth = false,
+        ),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xE608101A))
+                .dstcgContentInsetsPadding(includeBottom = true)
+                .padding(14.dp)
+                .testTag("equipment-card-fullscreen"),
+        ) {
+            Surface(
+                shape = RoundedCornerShape(30.dp),
+                color = Color.Transparent,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 42.dp),
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(18.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(30.dp))
+                        .background(palette.panelBrush)
+                        .verticalScroll(rememberScrollState())
+                        .padding(22.dp),
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        EquipmentCategoryBadge(
+                            type = card.definition.type,
+                            icon = visual.icon,
+                            badgeSize = 72.dp,
+                        )
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            Text(
+                                text = card.definition.type.displayName,
+                                color = palette.accentText,
+                                style = MaterialTheme.typography.labelLarge,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Text(
+                                text = card.definition.displayName,
+                                color = Color.White,
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Text(
+                                text = previewStatusLabel(card),
+                                color = Color(0xFFD3E4F8),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                    }
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        EquipmentLevelPill(
+                            text = "Niveau ${card.definition.level}",
+                            palette = palette,
+                        )
+                        EquipmentPill(
+                            text = card.definition.type.toCategoryVisualUi().benefitLabel,
+                            palette = palette,
+                        )
+                    }
+
+                    Text(
+                        text = card.definition.bonusLabel(),
+                        color = palette.accentText,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        EquipmentMetricTile(
+                            label = "Stock",
+                            value = "x${card.stockCount}",
+                        )
+                        EquipmentMetricTile(
+                            label = card.definition.type.usageCountLabel(),
+                            value = "${card.activationCount}",
+                        )
+                        EquipmentMetricTile(
+                            label = "Duree",
+                            value = "${card.definition.packsAffected} packs",
+                        )
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(22.dp),
+                        color = Color.White.copy(alpha = 0.06f),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.padding(16.dp),
+                        ) {
+                            Text(
+                                text = "Description",
+                                color = Color.White,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            Text(
+                                text = card.definition.description,
+                                color = Color(0xFFE8F2FF),
+                                style = MaterialTheme.typography.bodyLarge,
+                            )
+                        }
+                    }
+                }
+            }
+
+            EquipmentFullscreenCloseButton(onClick = onDismiss)
+        }
+    }
+}
+
+private fun previewStatusLabel(card: EquipmentInventoryCardUi): String = when {
+    card.isActive && card.packsRemaining != null -> "${card.packsRemaining} packs restants"
+    card.stockCount > 0 -> "Disponible"
+    else -> "Pas encore obtenue"
+}
+
+@Composable
+private fun EquipmentFullscreenCloseButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = modifier
+            .size(42.dp)
+            .clip(CircleShape)
+            .background(Color.Black.copy(alpha = 0.34f))
+            .testTag("equipment-card-fullscreen-close"),
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Close,
+            contentDescription = "Fermer",
+            tint = Color.White,
+        )
     }
 }
 

@@ -208,7 +208,7 @@ private fun buildEquipmentSection(
     )
 }
 
-private fun EquipmentType.toCategoryVisualUi(): EquipmentCategoryVisualUi = when (this) {
+internal fun EquipmentType.toCategoryVisualUi(): EquipmentCategoryVisualUi = when (this) {
     EquipmentType.Observatory -> EquipmentCategoryVisualUi(
         icon = EquipmentCategoryIconUi.Observatory,
         benefitLabel = "Recharge des packs",
