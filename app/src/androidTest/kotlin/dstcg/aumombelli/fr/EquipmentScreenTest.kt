@@ -14,6 +14,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performScrollToIndex
@@ -259,6 +260,7 @@ class EquipmentScreenTest {
                                         type = EquipmentType.Observatory,
                                         displayName = "Observatoire debutant",
                                         level = 1,
+                                        imageRef = "equipment_observatory_1",
                                     ),
                                     stockCount = 1,
                                     activationCount = 2,
@@ -273,10 +275,63 @@ class EquipmentScreenTest {
             )
         }
 
+        composeRule.onAllNodesWithTag(
+            "equipment-card-art-observatory-1",
+            useUnmergedTree = true,
+        ).assertCountEquals(1)
         composeRule.onNodeWithTag("equipment-card-observatory-1").performClick()
         composeRule.onNodeWithTag("equipment-card-fullscreen").assertIsDisplayed()
+        composeRule.onAllNodesWithTag(
+            "equipment-card-fullscreen-art-observatory-1",
+            useUnmergedTree = true,
+        ).assertCountEquals(1)
+        composeRule.onNodeWithTag("equipment-card-fullscreen-icon-observatory-1").assertIsDisplayed()
         composeRule.onNodeWithTag("equipment-card-fullscreen-close").performClick()
         composeRule.onAllNodesWithTag("equipment-card-fullscreen").assertCountEquals(0)
+    }
+
+    @Test
+    fun equipment_card_uses_fallback_when_art_asset_is_missing() {
+        composeRule.setContent {
+            EquipmentScreen(
+                state = EquipmentUiState(
+                    isLoading = false,
+                    sections = listOf(
+                        testEquipmentSection(
+                            type = EquipmentType.Telescope,
+                            statusLabel = "1 carte en reserve",
+                            cards = listOf(
+                                testEquipmentInventoryCard(
+                                    definition = testEquipmentCardDefinition(
+                                        id = "telescope-missing-art",
+                                        type = EquipmentType.Telescope,
+                                        displayName = "Telescope sans image",
+                                        level = 1,
+                                        imageRef = "equipment_missing_art",
+                                    ),
+                                    stockCount = 1,
+                                    activationCount = 0,
+                                    activationEnabled = true,
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+                onRefresh = {},
+                onActivateEquipment = {},
+            )
+        }
+
+        composeRule.onAllNodesWithTag(
+            "equipment-card-art-fallback-telescope-missing-art",
+            useUnmergedTree = true,
+        ).assertCountEquals(1)
+        composeRule.onNodeWithTag("equipment-card-telescope-missing-art").performClick()
+        composeRule.onAllNodesWithTag(
+            "equipment-card-fullscreen-art-fallback-telescope-missing-art",
+            useUnmergedTree = true,
+        ).assertCountEquals(1)
+        composeRule.onNodeWithTag("equipment-card-fullscreen-icon-telescope-missing-art").assertIsDisplayed()
     }
 
     @Test

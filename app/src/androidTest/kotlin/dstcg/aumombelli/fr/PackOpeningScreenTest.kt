@@ -275,6 +275,7 @@ class PackOpeningScreenTest {
             type = EquipmentType.Mount,
             displayName = "Monture Niveau 2",
             level = 2,
+            imageRef = "equipment_mount_2",
             packsAffected = 4,
             bonusValue = 18.0,
             description = "Augmente nettement la chance de promotion de rarete.",
@@ -309,6 +310,14 @@ class PackOpeningScreenTest {
 
         composeRule.onNodeWithTag("pack-opening-current-card-surface").assertIsDisplayed()
         assertEquals(definition.id, composeRule.readCurrentPackOpeningCardId())
+        composeRule.onAllNodesWithTag(
+            "pack-opening-equipment-art-mount-advanced",
+            useUnmergedTree = true,
+        ).assertCountEquals(1)
+        composeRule.onAllNodesWithTag(
+            "pack-opening-equipment-icon-mount-advanced",
+            useUnmergedTree = true,
+        ).assertCountEquals(1)
         composeRule.onNodeWithText("Monture").assertIsDisplayed()
         composeRule.onNodeWithText("Monture Niveau 2").assertIsDisplayed()
         composeRule.onNodeWithText("Actif pendant 4 packs").assertIsDisplayed()

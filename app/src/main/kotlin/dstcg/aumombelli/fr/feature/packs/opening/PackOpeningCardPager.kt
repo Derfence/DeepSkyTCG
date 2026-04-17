@@ -2,6 +2,7 @@ package fr.aumombelli.dstcg.feature.packs.opening
 
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
@@ -34,12 +36,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import fr.aumombelli.dstcg.feature.equipment.EquipmentCategoryBadge
+import fr.aumombelli.dstcg.feature.equipment.toCategoryVisualUi
 import fr.aumombelli.dstcg.model.DisplayCard
 import fr.aumombelli.dstcg.model.bonusLabel
 import fr.aumombelli.dstcg.ui.component.AstroCardDetailsSurface
 import fr.aumombelli.dstcg.ui.component.AstroCardFullscreenCloseButton
 import fr.aumombelli.dstcg.ui.component.AstroCardPreviewSurface
 import fr.aumombelli.dstcg.ui.component.AstroCardSurfaceMode
+import fr.aumombelli.dstcg.ui.component.EquipmentArtBackground
+import fr.aumombelli.dstcg.ui.component.EquipmentArtMode
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.motion.PackRevealBounds
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
@@ -191,8 +197,7 @@ private fun EquipmentRevealSurface(
         color = Color(0xFF132032),
         modifier = modifier.clip(androidx.compose.foundation.shape.RoundedCornerShape(28.dp)),
     ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
@@ -203,41 +208,75 @@ private fun EquipmentRevealSurface(
                         ),
                     ),
                 )
-                .padding(20.dp),
         ) {
-            Text(
-                text = item.definition.type.displayName,
-                color = Color(0xFFF0D995),
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
+            EquipmentArtBackground(
+                definition = item.definition,
+                mode = EquipmentArtMode.PackReveal,
+                modifier = Modifier.fillMaxSize(),
+                artTestTag = "pack-opening-equipment-art-${item.definition.id}",
+                fallbackTestTag = "pack-opening-equipment-art-fallback-${item.definition.id}",
             )
-            Text(
-                text = item.definition.displayName,
-                color = Color.White,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = "Niveau ${item.definition.level}",
-                color = Color(0xFFD7E8FF),
-                style = MaterialTheme.typography.titleMedium,
-            )
-            Text(
-                text = item.definition.bonusLabel(),
-                color = Color(0xFF9EE7FF),
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = FontWeight.Medium,
-            )
-            Text(
-                text = "Actif pendant ${item.definition.packsAffected} packs",
-                color = Color(0xFFE6EEF9),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            Text(
-                text = item.definition.description,
-                color = Color(0xFFC7D6E8),
-                style = MaterialTheme.typography.bodyMedium,
-            )
+
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp),
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    EquipmentCategoryBadge(
+                        type = item.definition.type,
+                        icon = item.definition.type.toCategoryVisualUi().icon,
+                        badgeSize = 46.dp,
+                        modifier = Modifier.testTag("pack-opening-equipment-icon-${item.definition.id}"),
+                    )
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
+                        Text(
+                            text = item.definition.type.displayName,
+                            color = Color(0xFFF0D995),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            text = item.definition.displayName,
+                            color = Color.White,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.weight(1f))
+
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "Niveau ${item.definition.level}",
+                        color = Color(0xFFD7E8FF),
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                    Text(
+                        text = item.definition.bonusLabel(),
+                        color = Color(0xFF9EE7FF),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    Text(
+                        text = "Actif pendant ${item.definition.packsAffected} packs",
+                        color = Color(0xFFE6EEF9),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Text(
+                        text = item.definition.description,
+                        color = Color(0xFFC7D6E8),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
         }
     }
 }

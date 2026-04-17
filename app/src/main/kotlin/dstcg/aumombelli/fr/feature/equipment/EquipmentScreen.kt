@@ -7,6 +7,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -68,6 +69,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.model.bonusLabel
+import fr.aumombelli.dstcg.ui.component.EquipmentArtBackground
+import fr.aumombelli.dstcg.ui.component.EquipmentArtMode
+import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
 
 @Composable
@@ -500,6 +504,7 @@ private fun EquipmentInventoryCard(
             contentVisible &&
             card.activationEnabled &&
             !isActivating
+    val visual = card.definition.type.toCategoryVisualUi()
 
     DisposableEffect(reportOnboardingTargetBounds) {
         onDispose {
@@ -515,17 +520,38 @@ private fun EquipmentInventoryCard(
         color = Color.Transparent,
         modifier = Modifier
             .width(236.dp)
+            .aspectRatio(TRADING_CARD_WIDTH_OVER_HEIGHT)
             .testTag("equipment-card-${card.definition.id}"),
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .clip(RoundedCornerShape(26.dp))
                 .background(palette.cardBrush)
-                .clickable { onPreviewEquipment(card.definition.id) }
-                .padding(16.dp),
+                .clickable { onPreviewEquipment(card.definition.id) },
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            EquipmentArtBackground(
+                definition = card.definition,
+                mode = EquipmentArtMode.Inventory,
+                modifier = Modifier.fillMaxSize(),
+                artTestTag = "equipment-card-art-${card.definition.id}",
+                fallbackTestTag = "equipment-card-art-fallback-${card.definition.id}",
+            )
+            EquipmentCategoryBadge(
+                type = card.definition.type,
+                icon = visual.icon,
+                badgeSize = 42.dp,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(14.dp)
+                    .testTag("equipment-card-icon-${card.definition.id}"),
+            )
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+            ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -564,61 +590,65 @@ private fun EquipmentInventoryCard(
                     style = MaterialTheme.typography.bodyMedium,
                 )
 
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    EquipmentMetricTile(
-                        label = "Stock",
-                        value = "x${card.stockCount}",
-                    )
-                    EquipmentMetricTile(
-                        label = card.definition.type.usageCountLabel(),
-                        value = "${card.activationCount}",
-                    )
-                }
+                Spacer(modifier = Modifier.weight(1f))
 
-                Button(
-                    onClick = { onActivateEquipment(card.definition.id) },
-                    enabled = card.activationEnabled && !isActivating,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = palette.accent,
-                        contentColor = Color(0xFF06101D),
-                        disabledContainerColor = Color.White.copy(alpha = 0.10f),
-                        disabledContentColor = Color(0xFF8FA4BC),
-                    ),
-                    shape = RoundedCornerShape(18.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .onGloballyPositioned { coordinates ->
-                            if (reportOnboardingTargetBounds) {
-                                val listCoordinates = listCoordinatesProvider()
-                                val boundsInRoot = coordinates.boundsInRoot()
-                                val boundsInList = if (listCoordinates != null && listCoordinates.isAttached) {
-                                    listCoordinates.localBoundingBoxOf(
-                                        sourceCoordinates = coordinates,
-                                        clipBounds = false,
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        EquipmentMetricTile(
+                            label = "Stock",
+                            value = "x${card.stockCount}",
+                        )
+                        EquipmentMetricTile(
+                            label = card.definition.type.usageCountLabel(),
+                            value = "${card.activationCount}",
+                        )
+                    }
+
+                    Button(
+                        onClick = { onActivateEquipment(card.definition.id) },
+                        enabled = card.activationEnabled && !isActivating,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = palette.accent,
+                            contentColor = Color(0xFF06101D),
+                            disabledContainerColor = Color.White.copy(alpha = 0.10f),
+                            disabledContentColor = Color(0xFF8FA4BC),
+                        ),
+                        shape = RoundedCornerShape(18.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onGloballyPositioned { coordinates ->
+                                if (reportOnboardingTargetBounds) {
+                                    val listCoordinates = listCoordinatesProvider()
+                                    val boundsInRoot = coordinates.boundsInRoot()
+                                    val boundsInList = if (listCoordinates != null && listCoordinates.isAttached) {
+                                        listCoordinates.localBoundingBoxOf(
+                                            sourceCoordinates = coordinates,
+                                            clipBounds = false,
+                                        )
+                                    } else {
+                                        null
+                                    }
+                                    val coachmarkVisibility = resolveEquipmentActivationCoachmarkVisibility(
+                                        targetEnabled = true,
+                                        buttonBoundsInRoot = boundsInRoot,
+                                        buttonBoundsInViewport = boundsInList,
+                                        viewportHeightPx = listCoordinates?.size?.height?.toFloat() ?: 0f,
+                                        targetSectionOffscreenBelow = false,
                                     )
-                                } else {
-                                    null
+                                    onOnboardingActivationBoundsChanged(coachmarkVisibility.visibleBounds)
+                                    onOnboardingActivationScrollHintChanged(coachmarkVisibility.showScrollDownHint)
                                 }
-                                val coachmarkVisibility = resolveEquipmentActivationCoachmarkVisibility(
-                                    targetEnabled = true,
-                                    buttonBoundsInRoot = boundsInRoot,
-                                    buttonBoundsInViewport = boundsInList,
-                                    viewportHeightPx = listCoordinates?.size?.height?.toFloat() ?: 0f,
-                                    targetSectionOffscreenBelow = false,
-                                )
-                                onOnboardingActivationBoundsChanged(coachmarkVisibility.visibleBounds)
-                                onOnboardingActivationScrollHintChanged(coachmarkVisibility.showScrollDownHint)
                             }
-                        }
-                        .testTag("equipment-activate-${card.definition.id}"),
-                ) {
-                    Text(
-                        when {
-                            isActivating -> "Activation..."
-                            card.isActive -> "Actif"
-                            else -> "Activer"
-                        },
-                    )
+                            .testTag("equipment-activate-${card.definition.id}"),
+                    ) {
+                        Text(
+                            when {
+                                isActivating -> "Activation..."
+                                card.isActive -> "Actif"
+                                else -> "Activer"
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -653,7 +683,7 @@ private fun EquipmentCardFullscreenDialog(
                 color = Color.Transparent,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = 42.dp),
+                    .padding(top = 56.dp, bottom = 8.dp),
             ) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(18.dp),
@@ -662,8 +692,34 @@ private fun EquipmentCardFullscreenDialog(
                         .clip(RoundedCornerShape(30.dp))
                         .background(palette.panelBrush)
                         .verticalScroll(rememberScrollState())
-                        .padding(22.dp),
+                        .padding(start = 22.dp, top = 22.dp, end = 22.dp, bottom = 34.dp),
                 ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(TRADING_CARD_WIDTH_OVER_HEIGHT)
+                            .clip(RoundedCornerShape(24.dp))
+                            .background(palette.cardBrush)
+                            .testTag("equipment-card-fullscreen-hero"),
+                    ) {
+                        EquipmentArtBackground(
+                            definition = card.definition,
+                            mode = EquipmentArtMode.Detail,
+                            modifier = Modifier.fillMaxSize(),
+                            artTestTag = "equipment-card-fullscreen-art-${card.definition.id}",
+                            fallbackTestTag = "equipment-card-fullscreen-art-fallback-${card.definition.id}",
+                        )
+                        EquipmentCategoryBadge(
+                            type = card.definition.type,
+                            icon = visual.icon,
+                            badgeSize = 62.dp,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(14.dp)
+                                .testTag("equipment-card-fullscreen-icon-${card.definition.id}"),
+                        )
+                    }
+
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(14.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -906,7 +962,7 @@ private fun EquipmentLevelPill(
 }
 
 @Composable
-private fun EquipmentCategoryBadge(
+internal fun EquipmentCategoryBadge(
     type: EquipmentType,
     icon: EquipmentCategoryIconUi,
     badgeSize: Dp,

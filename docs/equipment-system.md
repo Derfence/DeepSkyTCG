@@ -63,8 +63,9 @@ L'ecran `Equipements` de l'accueil affiche :
 - une icone miniature dediee a chaque categorie ;
 - un header de section simplifie avec uniquement le titre de la categorie et son libelle de bonus ;
 - le dernier equipement utilise par type quand il existe ;
-- les cartes possedees dans une rangee horizontale par categorie, avec niveau, bonus, stock, compteur d'usage libelle `Utilisés` ou `Utilisées` selon la categorie, et etat actif ;
+- les cartes possedees dans une rangee horizontale par categorie, avec illustration chargee depuis `imageRef`, niveau, bonus, stock, compteur d'usage libelle `Utilisés` ou `Utilisées` selon la categorie, et etat actif ;
 - un clic sur une carte ouvre directement sa fiche detaillee dans une modale plein ecran, sans seconde etape intermediaire.
+- les recompenses d'equipement affichees pendant l'ouverture d'un pack reutilisent la meme illustration et conservent l'icone de categorie comme repere secondaire.
 
 ## Catalogue
 
@@ -97,3 +98,10 @@ Le pipeline `scripts/catalog_sync.py apply --sheet catalogue_astronomie.xlsx` re
 - `app/src/main/assets/catalog/equipment_settings.json`
 
 Le script lit le classeur en lecture seule et ne reecrit jamais `catalogue_astronomie.xlsx`.
+
+Les illustrations d'equipement suivent la convention :
+
+- source editable : `artwork/card_art/raw/equipements/<imageRef>.<ext>`
+- asset runtime : `app/src/main/assets/card_art/equipements/<imageRef>.webp`
+
+Si l'asset runtime est absent, l'application retombe automatiquement sur le fond de palette et l'icone vectorielle de la categorie.

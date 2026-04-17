@@ -107,7 +107,7 @@ Le standalone conserve :
 - le masquage volontaire des illustrations des cartes non obtenues dans la grille de bibliotheque ;
 - le stock disponible et la recharge visible dans l'interface ;
 - un bouton `Equipements` entre `Bibliotheque` et `Badges` sur l'accueil, visible apres la premiere carte d'equipement obtenue ;
-- l'inventaire d'equipements, leurs activations totales et le dernier equipement utilise par type ;
+- l'inventaire d'equipements, leurs activations totales, le dernier equipement utilise par type et leurs illustrations runtime ;
 - un module de prevision meteo UTC sur 7 jours dans l'ecran des packs, avec icones et multiplicateurs.
 
 La simplification fonctionnelle voulue au demarrage reste l'absence complete de login, avec un accueil entierement offline centre sur l'ouverture de packs.
@@ -201,6 +201,11 @@ python3 scripts/catalog_sync.py apply --sheet catalogue_astronomie.xlsx
 Le script n'a pas besoin de dependance Python externe : le support XLSX est embarque dans `scripts/simple_xlsx.py`.
 
 `python3 scripts/catalog_sync.py apply` lit `Catalogue`, `Donnees` et `Equipements`, ecrit `extensions.json`, `cards.json`, `variant_profiles.json`, `game_balance.json`, `equipment_cards.json` et `equipment_settings.json`, puis laisse le classeur strictement intact. Les probabilites de cartes ne sont plus transferees depuis le classeur : elles sont recalculees dans l'application a partir des donnees brutes et des multiplicateurs de rarete.
+
+Les illustrations de cartes d'equipement doivent etre preparees separement dans :
+
+- `artwork/card_art/raw/equipements/` pour les sources ;
+- `app/src/main/assets/card_art/equipements/` pour les assets `.webp` utilises par l'application, indexes par `imageRef`.
 
 Les tests du pipeline catalogue peuvent etre lances avec :
 
