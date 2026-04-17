@@ -16,12 +16,20 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.inset
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.lerp
+import fr.aumombelli.dstcg.ui.component.EquipmentMountGlyphColors
+import fr.aumombelli.dstcg.ui.component.drawEquipmentMountGlyph
+import fr.aumombelli.dstcg.model.EquipmentType
+import fr.aumombelli.dstcg.ui.component.equipmentCategoryColorTokens
+import kotlin.math.sqrt
 
 @Composable
 fun EquipmentPortalOverlay(
@@ -47,15 +55,15 @@ fun EquipmentPortalOverlay(
                 .graphicsLayer {
                     alpha = visibleProgress * visibleAlpha
                 }
-                .width(244.dp)
-                .height(220.dp),
+                .width(264.dp)
+                .height(372.dp),
         ) {
             EquipmentPortalFigure(
                 progress = visibleProgress,
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .width(196.dp)
-                    .height(168.dp),
+                    .width(220.dp)
+                    .height(324.dp),
             )
         }
     }
@@ -75,7 +83,8 @@ private fun EquipmentPortalFigure(
 
 internal data class EquipmentPortalPose(
     val lift: Float,
-    val opening: Float,
+    val roofOpening: Float,
+    val instrumentReveal: Float,
     val shadowAlpha: Float,
     val glowAlpha: Float,
 )
@@ -83,48 +92,42 @@ internal data class EquipmentPortalPose(
 private fun DrawScope.drawTransitionEquipmentPanel(
     pose: EquipmentPortalPose,
 ) {
-    val opening = pose.opening
-    val panelCenter = Offset(
+    val observatoryColors = equipmentCategoryColorTokens(EquipmentType.Observatory)
+    val telescopeColors = equipmentCategoryColorTokens(EquipmentType.Telescope)
+    val mountColors = equipmentCategoryColorTokens(EquipmentType.Mount)
+    val houseCenter = Offset(
         x = size.width * 0.5f,
-        y = size.height * scalarLerp(0.70f, 0.50f, pose.lift),
+        y = size.height * scalarLerp(0.84f, 0.80f, pose.lift),
     )
-    val panelWidth = size.width * scalarLerp(0.28f, 0.9f, opening)
-    val panelHeight = size.height * scalarLerp(0.18f, 0.66f, opening)
-    val panelRect = Rect(
-        left = panelCenter.x - panelWidth / 2f,
-        top = panelCenter.y - panelHeight / 2f,
-        right = panelCenter.x + panelWidth / 2f,
-        bottom = panelCenter.y + panelHeight / 2f,
+    val bodyWidth = size.width * scalarLerp(0.34f, 0.56f, pose.lift)
+    val bodyHeight = size.height * scalarLerp(0.24f, 0.40f, pose.lift)
+    val bodyRect = Rect(
+        left = houseCenter.x - bodyWidth / 2f,
+        top = houseCenter.y - bodyHeight * 0.56f,
+        right = houseCenter.x + bodyWidth / 2f,
+        bottom = houseCenter.y + bodyHeight * 0.44f,
     )
-    val shadowWidth = panelWidth * scalarLerp(0.92f, 1.12f, opening)
-    val shadowHeight = panelHeight * scalarLerp(0.30f, 0.16f, opening)
+    val roofThickness = bodyHeight * 0.18f
+    val roofOverhang = bodyWidth * 0.09f
+    val roofHingeY = bodyRect.top + roofThickness * 0.18f
+    val closedRoofHeight = bodyHeight * 0.386f
+    val leftRoofHinge = Offset(
+        x = bodyRect.left - roofOverhang,
+        y = roofHingeY,
+    )
+    val rightRoofHinge = Offset(
+        x = bodyRect.right + roofOverhang,
+        y = roofHingeY,
+    )
+    val roofRidge = Offset(
+        x = bodyRect.center.x,
+        y = roofHingeY - closedRoofHeight,
+    )
+    val shadowWidth = bodyWidth * scalarLerp(1.16f, 1.42f, pose.lift)
+    val shadowHeight = bodyHeight * scalarLerp(0.28f, 0.18f, pose.roofOpening)
     val shadowCenter = Offset(
-        x = panelCenter.x,
-        y = panelRect.bottom + panelHeight * 0.15f,
-    )
-    val innerInset = panelWidth * scalarLerp(0.06f, 0.08f, opening)
-    val innerRect = Rect(
-        left = panelRect.left + innerInset,
-        top = panelRect.top + panelHeight * 0.14f,
-        right = panelRect.right - innerInset,
-        bottom = panelRect.bottom - panelHeight * 0.12f,
-    )
-    val moduleGap = innerRect.width * 0.05f
-    val fullModuleWidth = ((innerRect.width - moduleGap * 4f) / 3f).coerceAtLeast(0f)
-    val visibleModuleWidth = fullModuleWidth * opening
-    val moduleHeight = innerRect.height * 0.44f
-    val moduleTop = innerRect.top + innerRect.height * 0.34f
-    val headerWidth = innerRect.width * scalarLerp(0.16f, 0.62f, opening)
-    val headerHeight = innerRect.height * 0.09f
-    val headerLeft = panelCenter.x - headerWidth / 2f
-    val accentLineWidth = innerRect.width * scalarLerp(0f, 0.38f, opening)
-    val accentLineHeight = innerRect.height * 0.05f
-    val accentLineLeft = panelCenter.x - accentLineWidth / 2f
-    val indicatorRadius = innerRect.height * 0.055f * opening
-    val moduleAccentColors = listOf(
-        Color(0xFF63E0D7),
-        Color(0xFFF0CC6A),
-        Color(0xFFFF9B7A),
+        x = bodyRect.center.x,
+        y = bodyRect.bottom + bodyHeight * 0.18f,
     )
 
     drawOval(
@@ -144,119 +147,169 @@ private fun DrawScope.drawTransitionEquipmentPanel(
         size = Size(shadowWidth, shadowHeight),
     )
 
+    if (pose.roofOpening > 0f || pose.instrumentReveal > 0f) {
+        val openingGlowCenter = Offset(
+            x = bodyRect.center.x,
+            y = bodyRect.top - bodyHeight * 0.06f,
+        )
+        val openingGlowRadius = bodyWidth * scalarLerp(
+            0.22f,
+            0.72f,
+            pose.roofOpening * 0.55f + pose.instrumentReveal * 0.45f,
+        )
+        drawCircle(
+            brush = Brush.radialGradient(
+                colors = listOf(
+                    telescopeColors.accent.copy(alpha = pose.glowAlpha * 0.28f),
+                    observatoryColors.accent.copy(alpha = pose.glowAlpha * 0.20f),
+                    Color.Transparent,
+                ),
+                center = openingGlowCenter,
+                radius = openingGlowRadius,
+            ),
+            radius = openingGlowRadius,
+            center = openingGlowCenter,
+        )
+    }
+
+    drawInstrumentBehindHouse(
+        pose = pose,
+        bodyRect = bodyRect,
+    )
+
     drawRoundRect(
         brush = Brush.verticalGradient(
             colors = listOf(
-                Color(0xFF203245),
-                Color(0xFF132130),
-                Color(0xFF0C1724),
+                Color(0xFF325B73),
+                Color(0xFF22475D),
+                Color(0xFF132B3E),
             ),
         ),
-        topLeft = panelRect.topLeft,
-        size = panelRect.size,
-        cornerRadius = CornerRadius(panelHeight * 0.16f),
+        topLeft = bodyRect.topLeft,
+        size = bodyRect.size,
+        cornerRadius = CornerRadius(bodyWidth * 0.11f),
     )
     drawRoundRect(
-        color = Color(0xFF9AD4FF).copy(alpha = 0.12f + pose.glowAlpha * 0.08f),
-        topLeft = panelRect.topLeft,
-        size = Size(panelRect.width, panelRect.height * 0.16f),
-        cornerRadius = CornerRadius(panelHeight * 0.16f),
-        style = Fill,
+        color = observatoryColors.accentText.copy(alpha = 0.07f + pose.glowAlpha * 0.05f),
+        topLeft = bodyRect.topLeft,
+        size = Size(bodyRect.width, bodyRect.height * 0.22f),
+        cornerRadius = CornerRadius(bodyWidth * 0.11f),
     )
     drawRoundRect(
-        color = Color(0xFF08111A).copy(alpha = 0.82f),
-        topLeft = innerRect.topLeft,
-        size = innerRect.size,
-        cornerRadius = CornerRadius(panelHeight * 0.11f),
-    )
-    drawRoundRect(
-        color = Color(0xFFEAF6FF).copy(alpha = 0.16f + pose.glowAlpha * 0.10f),
-        topLeft = panelRect.topLeft,
-        size = panelRect.size,
-        cornerRadius = CornerRadius(panelHeight * 0.16f),
-        style = Stroke(width = panelHeight * 0.028f),
+        color = observatoryColors.iconStroke.copy(alpha = 0.14f + pose.glowAlpha * 0.10f),
+        topLeft = bodyRect.topLeft,
+        size = bodyRect.size,
+        cornerRadius = CornerRadius(bodyWidth * 0.11f),
+        style = Stroke(width = bodyHeight * 0.05f),
     )
 
+    val atticWidth = bodyWidth * 0.52f
+    val atticHeight = bodyHeight * 0.15f
     drawRoundRect(
-        color = Color(0xFFBCE5FF).copy(alpha = 0.22f + opening * 0.28f),
-        topLeft = Offset(headerLeft, innerRect.top + innerRect.height * 0.10f),
-        size = Size(headerWidth, headerHeight),
-        cornerRadius = CornerRadius(headerHeight * 0.6f),
-    )
-    drawRoundRect(
-        color = Color(0xFFF0F7FF).copy(alpha = 0.16f + opening * 0.22f),
-        topLeft = Offset(accentLineLeft, innerRect.top + innerRect.height * 0.22f),
-        size = Size(accentLineWidth, accentLineHeight),
-        cornerRadius = CornerRadius(accentLineHeight * 0.6f),
+        color = Color(0xFF102635).copy(alpha = 0.18f + pose.roofOpening * 0.28f),
+        topLeft = Offset(
+            x = bodyRect.center.x - atticWidth / 2f,
+            y = bodyRect.top + bodyHeight * 0.04f,
+        ),
+        size = Size(atticWidth, atticHeight),
+        cornerRadius = CornerRadius(atticHeight * 0.45f),
     )
 
-    moduleAccentColors.forEachIndexed { index, accent ->
-        val fullLeft = innerRect.left + moduleGap + index * (fullModuleWidth + moduleGap)
-        val moduleLeft = fullLeft + (fullModuleWidth - visibleModuleWidth) / 2f
-        val moduleRect = Rect(
-            left = moduleLeft,
-            top = moduleTop,
-            right = moduleLeft + visibleModuleWidth,
-            bottom = moduleTop + moduleHeight,
-        )
-        if (moduleRect.width <= 0f) return@forEachIndexed
+    val windowWidth = bodyWidth * 0.16f
+    val windowHeight = bodyHeight * 0.20f
+    val windowTop = bodyRect.top + bodyHeight * 0.24f
+    val leftWindowLeft = bodyRect.left + bodyWidth * 0.17f
+    val rightWindowLeft = bodyRect.right - bodyWidth * 0.17f - windowWidth
+    val windowColor = telescopeColors.accent.copy(alpha = 0.72f + pose.glowAlpha * 0.16f)
+    drawRoundRect(
+        color = windowColor,
+        topLeft = Offset(leftWindowLeft, windowTop),
+        size = Size(windowWidth, windowHeight),
+        cornerRadius = CornerRadius(windowWidth * 0.18f),
+    )
+    drawRoundRect(
+        color = windowColor,
+        topLeft = Offset(rightWindowLeft, windowTop),
+        size = Size(windowWidth, windowHeight),
+        cornerRadius = CornerRadius(windowWidth * 0.18f),
+    )
 
-        drawRoundRect(
-            brush = Brush.verticalGradient(
-                colors = listOf(
-                    accent.copy(alpha = 0.28f + opening * 0.16f),
-                    accent.copy(alpha = 0.12f + opening * 0.10f),
-                ),
+    val doorWidth = bodyWidth * 0.20f
+    val doorHeight = bodyHeight * 0.46f
+    val doorRect = Rect(
+        left = bodyRect.center.x - doorWidth / 2f,
+        top = bodyRect.bottom - doorHeight,
+        right = bodyRect.center.x + doorWidth / 2f,
+        bottom = bodyRect.bottom,
+    )
+    drawRoundRect(
+        brush = Brush.verticalGradient(
+            colors = listOf(
+                Color(0xFF17394D),
+                Color(0xFF0D2231),
             ),
-            topLeft = moduleRect.topLeft,
-            size = moduleRect.size,
-            cornerRadius = CornerRadius(moduleHeight * 0.24f),
-        )
-        drawRoundRect(
-            color = accent.copy(alpha = 0.52f + opening * 0.18f),
-            topLeft = Offset(
-                moduleRect.left + moduleRect.width * 0.16f,
-                moduleRect.top + moduleRect.height * 0.22f,
-            ),
-            size = Size(
-                moduleRect.width * 0.68f,
-                moduleRect.height * 0.10f,
-            ),
-            cornerRadius = CornerRadius(moduleHeight * 0.07f),
-        )
-        drawRoundRect(
-            color = Color.White.copy(alpha = 0.10f + opening * 0.14f),
-            topLeft = Offset(
-                moduleRect.left + moduleRect.width * 0.16f,
-                moduleRect.top + moduleRect.height * 0.42f,
-            ),
-            size = Size(
-                moduleRect.width * 0.42f,
-                moduleRect.height * 0.08f,
-            ),
-            cornerRadius = CornerRadius(moduleHeight * 0.05f),
-        )
-        drawCircle(
-            color = accent.copy(alpha = 0.78f),
-            radius = indicatorRadius,
-            center = Offset(
-                x = moduleRect.center.x,
-                y = moduleRect.top - innerRect.height * 0.06f,
-            ),
-        )
-    }
+        ),
+        topLeft = doorRect.topLeft,
+        size = doorRect.size,
+        cornerRadius = CornerRadius(doorWidth * 0.22f),
+    )
+    drawCircle(
+        color = telescopeColors.accentText.copy(alpha = 0.84f),
+        radius = doorWidth * 0.06f,
+        center = Offset(
+            x = doorRect.right - doorWidth * 0.20f,
+            y = doorRect.center.y,
+        ),
+    )
+
+    drawRoofPanel(
+        hinge = leftRoofHinge,
+        ridge = roofRidge,
+        thickness = roofThickness,
+        openingProgress = pose.roofOpening,
+        rotationDegrees = -70f * pose.roofOpening,
+        startColor = Color(0xFF8B5428).copy(alpha = 0.96f),
+        endColor = Color(0xFF5A3216).copy(alpha = 0.92f),
+        outlineColor = Color(0xFFE3C598).copy(alpha = 0.22f),
+    )
+    drawRoofPanel(
+        hinge = rightRoofHinge,
+        ridge = roofRidge,
+        thickness = roofThickness,
+        openingProgress = pose.roofOpening,
+        rotationDegrees = 70f * pose.roofOpening,
+        startColor = Color(0xFF8B5428).copy(alpha = 0.96f),
+        endColor = Color(0xFF5A3216).copy(alpha = 0.92f),
+        outlineColor = Color(0xFFE3C598).copy(alpha = 0.22f),
+    )
+    drawCircle(
+        color = telescopeColors.accent.copy(alpha = 0.88f),
+        radius = roofThickness * 0.16f,
+        center = leftRoofHinge,
+    )
+    drawCircle(
+        color = telescopeColors.accent.copy(alpha = 0.88f),
+        radius = roofThickness * 0.16f,
+        center = rightRoofHinge,
+    )
 }
 
 internal fun calculateEquipmentPortalPose(progress: Float): EquipmentPortalPose {
     val clampedProgress = progress.coerceIn(0f, 1f)
     val travelProgress = calculateEquipmentPortalTravelProgress(clampedProgress)
     val openingProgress = calculateEquipmentPortalOpeningProgress(clampedProgress)
+    val instrumentProgress = calculateEquipmentPortalInstrumentRevealProgress(clampedProgress)
 
     return EquipmentPortalPose(
         lift = travelProgress,
-        opening = openingProgress,
-        shadowAlpha = scalarLerp(0.16f, 0.34f, travelProgress * 0.65f + openingProgress * 0.35f),
-        glowAlpha = scalarLerp(0f, 1f, openingProgress),
+        roofOpening = openingProgress,
+        instrumentReveal = instrumentProgress,
+        shadowAlpha = scalarLerp(
+            0.16f,
+            0.34f,
+            travelProgress * 0.55f + openingProgress * 0.25f + instrumentProgress * 0.20f,
+        ),
+        glowAlpha = (openingProgress * 0.35f + instrumentProgress * 0.65f).coerceIn(0f, 1f),
     )
 }
 
@@ -287,26 +340,151 @@ internal fun calculateEquipmentPortalOpeningProgress(progress: Float): Float {
     return when {
         clampedProgress <= EQUIPMENT_PORTAL_OPENING_START_PROGRESS -> 0f
 
-        clampedProgress <= EQUIPMENT_PORTAL_TRAVEL_END_PROGRESS -> {
-            0.5f * easeInOutBurst(
-                (
-                    (clampedProgress - EQUIPMENT_PORTAL_OPENING_START_PROGRESS) /
-                        (EQUIPMENT_PORTAL_TRAVEL_END_PROGRESS - EQUIPMENT_PORTAL_OPENING_START_PROGRESS)
-                    ).coerceIn(0f, 1f),
-            )
-        }
+        clampedProgress <= EQUIPMENT_PORTAL_OPENING_END_PROGRESS -> easeInOutBurst(
+            (
+                (clampedProgress - EQUIPMENT_PORTAL_OPENING_START_PROGRESS) /
+                    (EQUIPMENT_PORTAL_OPENING_END_PROGRESS - EQUIPMENT_PORTAL_OPENING_START_PROGRESS)
+                ).coerceIn(0f, 1f),
+        )
 
-        else -> {
-            0.5f + 0.5f * easeInOutBurst(
-                (
-                    (clampedProgress - EQUIPMENT_PORTAL_TRAVEL_END_PROGRESS) /
-                        (1f - EQUIPMENT_PORTAL_TRAVEL_END_PROGRESS)
-                    ).coerceIn(0f, 1f),
-            )
-        }
+        else -> 1f
+    }
+}
+
+internal fun calculateEquipmentPortalInstrumentRevealProgress(progress: Float): Float {
+    val clampedProgress = progress.coerceIn(0f, 1f)
+    return when {
+        clampedProgress <= EQUIPMENT_PORTAL_INSTRUMENT_REVEAL_START_PROGRESS -> 0f
+        else -> easeInOutBurst(
+            (
+                (clampedProgress - EQUIPMENT_PORTAL_INSTRUMENT_REVEAL_START_PROGRESS) /
+                    (1f - EQUIPMENT_PORTAL_INSTRUMENT_REVEAL_START_PROGRESS)
+                ).coerceIn(0f, 1f),
+        )
+    }
+}
+
+private fun DrawScope.drawInstrumentBehindHouse(
+    pose: EquipmentPortalPose,
+    bodyRect: Rect,
+) {
+    if (pose.instrumentReveal <= 0f) return
+
+    val instrumentWidth = bodyRect.width * 0.84f
+    val instrumentHeight = size.height * 0.30f
+    val hiddenTop = bodyRect.top + instrumentHeight * 0.32f
+    val revealTravel = instrumentHeight * 2.05f
+    val instrumentLeft = bodyRect.center.x - instrumentWidth * 0.56f
+    val instrumentTop = hiddenTop - revealTravel * pose.instrumentReveal
+    val instrumentRight = instrumentLeft + instrumentWidth
+    val instrumentBottom = instrumentTop + instrumentHeight
+    val glyphAlpha = 0.20f + pose.instrumentReveal * 0.80f
+    val telescopeColors = equipmentCategoryColorTokens(EquipmentType.Telescope)
+    val mountColors = equipmentCategoryColorTokens(EquipmentType.Mount)
+    val observatoryColors = equipmentCategoryColorTokens(EquipmentType.Observatory)
+    val glyphColors = EquipmentMountGlyphColors(
+        headColor = mountColors.accent.copy(alpha = glyphAlpha),
+        bodyColor = mountColors.accent.copy(alpha = glyphAlpha),
+        telescopeColor = telescopeColors.accent.copy(alpha = glyphAlpha),
+        legColor = mountColors.accent.copy(alpha = glyphAlpha),
+    )
+
+    drawCircle(
+        brush = Brush.radialGradient(
+            colors = listOf(
+                telescopeColors.accent.copy(alpha = pose.glowAlpha * 0.22f),
+                observatoryColors.accent.copy(alpha = pose.glowAlpha * 0.14f),
+                Color.Transparent,
+            ),
+            center = Offset(bodyRect.center.x, bodyRect.top + bodyRect.height * 0.08f),
+            radius = instrumentWidth * 0.96f,
+        ),
+        radius = instrumentWidth * 0.96f,
+        center = Offset(bodyRect.center.x, bodyRect.top + bodyRect.height * 0.08f),
+    )
+
+    inset(
+        left = instrumentLeft,
+        top = instrumentTop,
+        right = size.width - instrumentRight,
+        bottom = size.height - instrumentBottom,
+    ) {
+        drawEquipmentMountGlyph(
+            colors = glyphColors,
+            strokeWidth = minOf(size.width, size.height) * 0.08f,
+        )
+    }
+}
+
+private fun DrawScope.drawRoofPanel(
+    hinge: Offset,
+    ridge: Offset,
+    thickness: Float,
+    openingProgress: Float,
+    rotationDegrees: Float,
+    startColor: Color,
+    endColor: Color,
+    outlineColor: Color,
+) {
+    val roofColor = lerp(
+        start = startColor,
+        stop = endColor,
+        fraction = (openingProgress * 0.82f).coerceIn(0f, 1f),
+    )
+    val roofOutline = outlineColor.copy(alpha = 0.16f + openingProgress * 0.08f)
+    withTransform({
+        rotate(
+            degrees = rotationDegrees,
+            pivot = hinge,
+        )
+    }) {
+        val roofPath = roofPanelPath(
+            start = hinge,
+            end = ridge,
+            thickness = thickness,
+        )
+        drawPath(
+            path = roofPath,
+            brush = Brush.linearGradient(
+                colors = listOf(
+                    roofColor,
+                    roofColor.copy(alpha = 0.90f),
+                    roofColor.copy(alpha = 0.84f),
+                ),
+                start = hinge,
+                end = ridge,
+            ),
+        )
+        drawPath(
+            path = roofPath,
+            color = roofOutline,
+            style = Stroke(width = thickness * 0.10f),
+        )
+    }
+}
+
+private fun roofPanelPath(
+    start: Offset,
+    end: Offset,
+    thickness: Float,
+): Path {
+    val dx = end.x - start.x
+    val dy = end.y - start.y
+    val length = sqrt(dx * dx + dy * dy).coerceAtLeast(0.0001f)
+    val offsetX = -dy / length * thickness / 2f
+    val offsetY = dx / length * thickness / 2f
+
+    return Path().apply {
+        moveTo(start.x + offsetX, start.y + offsetY)
+        lineTo(end.x + offsetX, end.y + offsetY)
+        lineTo(end.x - offsetX, end.y - offsetY)
+        lineTo(start.x - offsetX, start.y - offsetY)
+        close()
     }
 }
 
 private const val EQUIPMENT_PORTAL_TRAVEL_HALF_PROGRESS = 1f / 3f
 private const val EQUIPMENT_PORTAL_OPENING_START_PROGRESS = EQUIPMENT_PORTAL_TRAVEL_HALF_PROGRESS
+private const val EQUIPMENT_PORTAL_OPENING_END_PROGRESS = 2f / 3f
 private const val EQUIPMENT_PORTAL_TRAVEL_END_PROGRESS = 2f / 3f
+private const val EQUIPMENT_PORTAL_INSTRUMENT_REVEAL_START_PROGRESS = EQUIPMENT_PORTAL_TRAVEL_END_PROGRESS

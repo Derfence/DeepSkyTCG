@@ -357,7 +357,7 @@ internal class AppSceneTransitionController(
 
     private companion object {
         const val OnboardingHintRevealDelayMillis: Long = 220L
-        const val EquipmentPortalTravelDurationMillis: Int = 720
-        const val EquipmentPortalFadeDurationMillis: Int = 160
+        const val EquipmentPortalTravelDurationMillis: Int = 1440
+        const val EquipmentPortalFadeDurationMillis: Int = 320
     }
 }

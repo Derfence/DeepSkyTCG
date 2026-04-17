@@ -55,8 +55,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -72,6 +70,10 @@ import fr.aumombelli.dstcg.model.bonusLabel
 import fr.aumombelli.dstcg.ui.component.EquipmentArtBackground
 import fr.aumombelli.dstcg.ui.component.EquipmentArtMode
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
+import fr.aumombelli.dstcg.ui.component.equipmentCategoryColorTokens
+import fr.aumombelli.dstcg.ui.component.drawEquipmentMountGlyph
+import fr.aumombelli.dstcg.ui.component.drawEquipmentObservatoryGlyph
+import fr.aumombelli.dstcg.ui.component.drawEquipmentTelescopeGlyph
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
 
 @Composable
@@ -985,206 +987,20 @@ internal fun EquipmentCategoryBadge(
             val strokeWidth = minOf(size.width, size.height) * 0.075f
             val strokeColor = palette.iconStroke
             when (icon) {
-                EquipmentCategoryIconUi.Observatory -> {
-                    drawRoundRect(
-                        color = strokeColor,
-                        topLeft = Offset(size.width * 0.2f, size.height * 0.62f),
-                        size = Size(size.width * 0.6f, size.height * 0.14f),
-                        cornerRadius = CornerRadius(size.width * 0.08f, size.width * 0.08f),
-                    )
-                    drawArc(
-                        color = strokeColor,
-                        startAngle = 180f,
-                        sweepAngle = 180f,
-                        useCenter = false,
-                        topLeft = Offset(size.width * 0.2f, size.height * 0.26f),
-                        size = Size(size.width * 0.6f, size.height * 0.52f),
-                        style = Stroke(width = strokeWidth),
-                    )
-                    drawLine(
-                        color = strokeColor,
-                        start = Offset(size.width * 0.75f, size.height * 0.2f),
-                        end = Offset(size.width * 0.7f, size.height * 0.25f),
-                        strokeWidth = strokeWidth * 1.5f,
-                        cap = StrokeCap.Square,
-                    )
-                    drawCircle(
-                        color = strokeColor,
-                        radius = strokeWidth * 0.55f,
-                        center = Offset(size.width * 0.74f, size.height * 0.22f),
-                    )
-                }
+                EquipmentCategoryIconUi.Observatory -> drawEquipmentObservatoryGlyph(
+                    strokeColor = strokeColor,
+                    strokeWidth = strokeWidth,
+                )
 
-                EquipmentCategoryIconUi.Telescope -> {
-                    val bodyCenter = Offset(size.width * 0.48f, size.height * 0.46f)
-                    rotate(
-                        degrees = -45f,
-                        pivot = bodyCenter,
-                    ) {
-                        val bodyWidth = size.width
-                        val bodyHeight = size.height * 0.42f
-                        val bodyTopLeft = Offset(
-                            bodyCenter.x - bodyWidth / 2f,
-                            bodyCenter.y - bodyHeight / 2f,
-                        )
-                        val bodyCorner = CornerRadius(bodyHeight * 0.48f, bodyHeight * 0.48f)
-                        drawRoundRect(
-                            color = strokeColor,
-                            topLeft = bodyTopLeft,
-                            size = Size(bodyWidth, bodyHeight),
-                            cornerRadius = bodyCorner,
-                        )
-                        val apertureWidth = bodyWidth * 0.22f
-                        val apertureHeight = bodyHeight * 0.72f
-                        val apertureTopLeft = Offset(
-                            bodyTopLeft.x + bodyWidth - apertureWidth - bodyWidth * 0.05f,
-                            bodyTopLeft.y + (bodyHeight - apertureHeight) / 2f,
-                        )
-                        drawOval(
-                            color = Color.Black.copy(alpha = 0.34f),
-                            topLeft = apertureTopLeft,
-                            size = Size(apertureWidth, apertureHeight),
-                        )
-                        val spiderCenter = Offset(
-                            apertureTopLeft.x + apertureWidth/2,
-                            bodyCenter.y,
-                        )
-                        val spiderStroke = strokeWidth * 0.55f
-                        val spiderHorizontalStart = Offset(spiderCenter.x - apertureWidth/2, spiderCenter.y)
-                        val spiderHorizontalEnd = Offset(spiderCenter.x + apertureWidth/2, spiderCenter.y)
-                        val spiderVerticalStart = Offset(spiderCenter.x, spiderCenter.y - apertureHeight/2)
-                        val spiderVerticalEnd = Offset(spiderCenter.x, spiderCenter.y + apertureHeight/2)
-                        drawLine(
-                            color = strokeColor,
-                            start = spiderHorizontalStart,
-                            end = spiderHorizontalEnd,
-                            strokeWidth = spiderStroke,
-                            cap = StrokeCap.Round,
-                        )
-                        drawLine(
-                            color = strokeColor,
-                            start = spiderVerticalStart,
-                            end = spiderVerticalEnd,
-                            strokeWidth = spiderStroke,
-                            cap = StrokeCap.Round,
-                        )
-                        val secondaryWidth = bodyHeight * 0.16f
-                        val secondaryHeight = bodyHeight * 0.11f
-                        val secondaryTopLeft = Offset(
-                            spiderCenter.x - secondaryWidth / 2f,
-                            spiderCenter.y - secondaryHeight / 2f,
-                        )
-                        drawOval(
-                            color = strokeColor,
-                            topLeft = secondaryTopLeft,
-                            size = Size(secondaryWidth, secondaryHeight),
-                        )
-                        val focuserWidth = bodyWidth * 0.10f
-                        val focuserHeight = bodyHeight * 0.22f
-                        val focuserTopLeft = Offset(
-                            spiderCenter.x - bodyWidth * 0.14f,
-                            bodyTopLeft.y - focuserHeight * 0.55f,
-                        )
-                        val focuserCorner = CornerRadius(focuserWidth * 0.25f, focuserWidth * 0.25f)
-                        drawRoundRect(
-                            color = strokeColor,
-                            topLeft = focuserTopLeft,
-                            size = Size(focuserWidth, focuserHeight),
-                            cornerRadius = focuserCorner,
-                        )
-                    }
-                }
+                EquipmentCategoryIconUi.Telescope -> drawEquipmentTelescopeGlyph(
+                    strokeColor = strokeColor,
+                    strokeWidth = strokeWidth,
+                )
 
-                EquipmentCategoryIconUi.Mount -> {
-                    val centerBase = Offset(size.width * 0.58f, size.height * 0.65f)
-                    val headSize = strokeWidth * 2
-                    val headTopLeft = Offset(centerBase.x - headSize / 2, centerBase.y - headSize)
-                    drawRect(
-                        color = strokeColor,
-                        topLeft = headTopLeft,
-                        size = Size(headSize, headSize),
-                    )
-                    val circleRadius = headSize/2
-                    val circleCenter = Offset(
-                        headTopLeft.x + circleRadius,
-                        headTopLeft.y,
-                    )
-                    drawCircle(
-                        color = strokeColor,
-                        radius = circleRadius,
-                        center = circleCenter,
-                    )
-                    val diamondCenter = Offset(
-                        circleCenter.x - circleRadius,
-                        circleCenter.y - circleRadius,
-                    )
-                    val telescopeLength = headSize * 5f
-                    val telescopeWidth = strokeWidth * 1.5f
-                    rotate(
-                        degrees = 45f,
-                        pivot = diamondCenter,
-                    ) {
-                        drawRect(
-                            color = strokeColor,
-                            topLeft = Offset(
-                                diamondCenter.x - headSize / 2f,
-                                diamondCenter.y - headSize / 2f,
-                            ),
-                            size = Size(headSize, headSize),
-                        )
-                        drawRect(
-                            color = strokeColor,
-                            topLeft = Offset(
-                                diamondCenter.x - headSize / 4f,
-                                diamondCenter.y - headSize,
-                            ),
-                            size = Size(headSize / 2f, headSize / 2f),
-                        )
-                        drawLine(
-                            color = strokeColor,
-                            start = Offset(
-                                diamondCenter.x - telescopeLength / 2f,
-                                diamondCenter.y - 3f * headSize / 2f + telescopeWidth / 2f),
-                            end = Offset(
-                                diamondCenter.x + telescopeLength / 2f,
-                                diamondCenter.y - 3f * headSize / 2f + telescopeWidth / 2f),
-                            strokeWidth = telescopeWidth,
-                            cap = StrokeCap.Round,
-                        )
-                        drawLine(
-                            color = strokeColor,
-                            start = diamondCenter,
-                            end = Offset(diamondCenter.x, diamondCenter.y + size.width * 0.3f),
-                            strokeWidth = strokeWidth,
-                        )
-                        drawCircle(
-                            color = strokeColor,
-                            center = Offset(diamondCenter.x, diamondCenter.y + size.width * 0.2f),
-                            radius = strokeWidth,
-                        )
-                    }
-                    drawLine(
-                        color = strokeColor,
-                        start = Offset(centerBase.x - strokeWidth/2, centerBase.y),
-                        end = Offset(centerBase.x - size.width * 0.14f, centerBase.y + size.width * 0.26f),
-                        strokeWidth = strokeWidth,
-                        cap = StrokeCap.Round,
-                    )
-                    drawLine(
-                        color = strokeColor,
-                        start = centerBase,
-                        end = Offset(centerBase.x, centerBase.y + size.width * 0.28f),
-                        strokeWidth = strokeWidth,
-                        cap = StrokeCap.Round,
-                    )
-                    drawLine(
-                        color = strokeColor,
-                        start = Offset(centerBase.x + strokeWidth/2, centerBase.y),
-                        end = Offset(centerBase.x + size.width * 0.14f, centerBase.y + size.width * 0.26f),
-                        strokeWidth = strokeWidth,
-                        cap = StrokeCap.Round,
-                    )
-                }
+                EquipmentCategoryIconUi.Mount -> drawEquipmentMountGlyph(
+                    strokeColor = strokeColor,
+                    strokeWidth = strokeWidth,
+                )
             }
         }
     }
@@ -1200,79 +1016,30 @@ private data class EquipmentCategoryPalette(
     val chipColor: Color,
 )
 
-private fun equipmentPalette(type: EquipmentType): EquipmentCategoryPalette = when (type) {
-    EquipmentType.Observatory -> EquipmentCategoryPalette(
+private fun equipmentPalette(type: EquipmentType): EquipmentCategoryPalette {
+    val tokens = equipmentCategoryColorTokens(type)
+    return EquipmentCategoryPalette(
         panelBrush = Brush.linearGradient(
             colors = listOf(
-                Color(0x66204154),
-                Color(0x44253E62),
+                tokens.panelStart,
+                tokens.panelEnd,
             ),
         ),
         cardBrush = Brush.verticalGradient(
             colors = listOf(
-                Color(0xAA173043),
-                Color(0x88111F32),
+                tokens.cardStart,
+                tokens.cardEnd,
             ),
         ),
         iconBrush = Brush.radialGradient(
             colors = listOf(
-                Color(0xAA5BE7E0),
-                Color(0x4444AFC6),
+                tokens.iconStart,
+                tokens.iconEnd,
             ),
         ),
-        accent = Color(0xFF63E0D7),
-        accentText = Color(0xFFABF7F0),
-        iconStroke = Color(0xFFE6FFFE),
-        chipColor = Color(0x263AD0C6),
-    )
-
-    EquipmentType.Telescope -> EquipmentCategoryPalette(
-        panelBrush = Brush.linearGradient(
-            colors = listOf(
-                Color(0x66533E22),
-                Color(0x44483826),
-            ),
-        ),
-        cardBrush = Brush.verticalGradient(
-            colors = listOf(
-                Color(0xAA3A2B16),
-                Color(0x88261E12),
-            ),
-        ),
-        iconBrush = Brush.radialGradient(
-            colors = listOf(
-                Color(0xAAF4D277),
-                Color(0x44D29F42),
-            ),
-        ),
-        accent = Color(0xFFF0CC6A),
-        accentText = Color(0xFFFFE7A6),
-        iconStroke = Color(0xFFFFF7E0),
-        chipColor = Color(0x26F0CC6A),
-    )
-
-    EquipmentType.Mount -> EquipmentCategoryPalette(
-        panelBrush = Brush.linearGradient(
-            colors = listOf(
-                Color(0x66553A34),
-                Color(0x44473439),
-            ),
-        ),
-        cardBrush = Brush.verticalGradient(
-            colors = listOf(
-                Color(0xAA38211F),
-                Color(0x8825151A),
-            ),
-        ),
-        iconBrush = Brush.radialGradient(
-            colors = listOf(
-                Color(0xAAFF9478),
-                Color(0x44D86474),
-            ),
-        ),
-        accent = Color(0xFFFF9B7A),
-        accentText = Color(0xFFFFD2C2),
-        iconStroke = Color(0xFFFFF1EB),
-        chipColor = Color(0x26FF9B7A),
+        accent = tokens.accent,
+        accentText = tokens.accentText,
+        iconStroke = tokens.iconStroke,
+        chipColor = tokens.chipColor,
     )
 }
