@@ -59,6 +59,7 @@ class EquipmentArtTest {
         enableAnimatedBackdrop = true,
         backdropStarDensityMultiplier = 1f,
         enableAnimatedThumbnailTwinkles = true,
+        enableInteractiveHolographicEffects = true,
         enableAnimatedBadgeCoins = true,
     )
 }

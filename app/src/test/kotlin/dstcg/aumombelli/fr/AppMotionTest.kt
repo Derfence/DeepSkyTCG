@@ -4,12 +4,17 @@ import fr.aumombelli.dstcg.ui.motion.BurstParticleMotion
 import fr.aumombelli.dstcg.ui.motion.BrandLogoVariant
 import fr.aumombelli.dstcg.ui.motion.ExtensionAnimationStyle
 import fr.aumombelli.dstcg.ui.motion.SkyBackdropVariant
+import fr.aumombelli.dstcg.ui.motion.autoplayHolographicMotion
 import fr.aumombelli.dstcg.ui.motion.buildBurstParticleSpecs
 import fr.aumombelli.dstcg.ui.motion.burstRarityLabelsUpTo
 import fr.aumombelli.dstcg.ui.motion.calculateBookPose
 import fr.aumombelli.dstcg.ui.motion.extensionAnimationSpec
 import fr.aumombelli.dstcg.ui.motion.extensionPointReveal
 import fr.aumombelli.dstcg.ui.motion.homeLogoVariantFor
+import fr.aumombelli.dstcg.ui.motion.packOpeningBurstOrbitOrigin
+import fr.aumombelli.dstcg.ui.motion.packOpeningBurstOrigin
+import fr.aumombelli.dstcg.ui.motion.packOpeningHolographicMotion
+import fr.aumombelli.dstcg.ui.motion.PackRevealBounds
 import fr.aumombelli.dstcg.ui.motion.pickSkyBackdropVariant
 import fr.aumombelli.dstcg.ui.motion.projectExtensionPattern
 import fr.aumombelli.dstcg.ui.motion.summarizePackOpening
@@ -262,5 +267,133 @@ class AppMotionTest {
 
         assertFalse(nonHoloSpecs.any { it.motion == BurstParticleMotion.Falling })
         assertTrue(holoSpecs.any { it.motion == BurstParticleMotion.Falling })
+        assertFalse(nonHoloSpecs.any { it.motion == BurstParticleMotion.Orbital })
+        assertTrue(holoSpecs.any { it.motion == BurstParticleMotion.Orbital })
+        assertTrue(holoSpecs.size > nonHoloSpecs.size)
+    }
+
+    @Test
+    fun `radial burst particles spread horizontal drift on both sides`() {
+        val radialSpecs = buildBurstParticleSpecs(
+            highestRarityLabel = "Epic",
+            hasHolographicBurst = true,
+        ).filter { it.motion == BurstParticleMotion.Radial }
+
+        assertTrue(radialSpecs.any { it.horizontalDrift < 0f })
+        assertTrue(radialSpecs.any { it.horizontalDrift > 0f })
+    }
+
+    @Test
+    fun `pack opening burst origin stays centered for standard pack openings`() {
+        val origin = packOpeningBurstOrigin(
+            originBounds = PackRevealBounds(
+                leftPx = 120f,
+                topPx = 240f,
+                widthPx = 300f,
+                heightPx = 420f,
+            ),
+            canvasWidth = 1080f,
+            canvasHeight = 1920f,
+            hasHolographicBurst = false,
+        )
+
+        assertEquals(270f, origin.x, 0.001f)
+        assertEquals(450f, origin.y, 0.001f)
+    }
+
+    @Test
+    fun `pack opening holo burst origin is slightly lifted toward the visual center`() {
+        val origin = packOpeningBurstOrigin(
+            originBounds = PackRevealBounds(
+                leftPx = 120f,
+                topPx = 240f,
+                widthPx = 300f,
+                heightPx = 420f,
+            ),
+            canvasWidth = 1080f,
+            canvasHeight = 1920f,
+            hasHolographicBurst = true,
+        )
+
+        assertEquals(270f, origin.x, 0.001f)
+        assertEquals(435.3f, origin.y, 0.001f)
+    }
+
+    @Test
+    fun `screen centered holo burst origin can be pushed well below center`() {
+        val origin = packOpeningBurstOrigin(
+            originBounds = null,
+            canvasWidth = 1080f,
+            canvasHeight = 1920f,
+            hasHolographicBurst = true,
+        )
+
+        assertEquals(540f, origin.x, 0.001f)
+        assertEquals(1344f, origin.y, 0.001f)
+    }
+
+    @Test
+    fun `screen centered holo burst orbit origin can be brought back above the lower offset`() {
+        val origin = packOpeningBurstOrbitOrigin(
+            originBounds = null,
+            canvasWidth = 1080f,
+            canvasHeight = 1920f,
+            hasHolographicBurst = true,
+        )
+
+        assertEquals(540f, origin.x, 0.001f)
+        assertEquals(1344f, origin.y, 0.001f)
+    }
+
+    @Test
+    fun `pack opening holographic motion clamps tilt and boosts cue highlight`() {
+        val restingMotion = packOpeningHolographicMotion(
+            relativePageOffset = 0f,
+            settleCueProgress = 0f,
+            interactiveEffectsEnabled = true,
+        )
+        val swipedMotion = packOpeningHolographicMotion(
+            relativePageOffset = -0.9f,
+            settleCueProgress = 0.75f,
+            interactiveEffectsEnabled = true,
+        )
+
+        assertEquals(0f, restingMotion.rotationYDeg, 0.001f)
+        assertTrue(swipedMotion.rotationYDeg > 0f)
+        assertTrue(kotlin.math.abs(swipedMotion.rotationYDeg) <= 7.5f)
+        assertTrue(swipedMotion.highlightAlpha > restingMotion.highlightAlpha)
+        assertTrue(swipedMotion.sparkleBoost > restingMotion.sparkleBoost)
+        assertTrue(swipedMotion.sweepFraction > 0.5f)
+    }
+
+    @Test
+    fun `pack opening holographic motion disables tilt and sparkles in low effect mode`() {
+        val motion = packOpeningHolographicMotion(
+            relativePageOffset = 0.8f,
+            settleCueProgress = 1f,
+            interactiveEffectsEnabled = false,
+        )
+
+        assertEquals(0f, motion.rotationYDeg, 0.001f)
+        assertEquals(0f, motion.sparkleBoost, 0.001f)
+        assertTrue(motion.highlightAlpha > 0f)
+        assertTrue(motion.edgeGlowAlpha > 0f)
+    }
+
+    @Test
+    fun `autoplay holographic motion stays within the fullscreen sweep bounds`() {
+        val start = autoplayHolographicMotion(
+            loopProgress = 0f,
+            interactiveEffectsEnabled = true,
+        )
+        val middle = autoplayHolographicMotion(
+            loopProgress = 0.5f,
+            interactiveEffectsEnabled = true,
+        )
+
+        assertTrue(start.sweepFraction in 0.18f..0.82f)
+        assertTrue(middle.sweepFraction in 0.18f..0.82f)
+        assertTrue(start.highlightAlpha in 0.22f..0.4f)
+        assertTrue(middle.highlightAlpha in 0.22f..0.4f)
     }
 }

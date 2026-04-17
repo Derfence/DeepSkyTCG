@@ -34,14 +34,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import fr.aumombelli.dstcg.performance.LocalAppPerformanceProfile
 import fr.aumombelli.dstcg.ui.motion.PackRevealBounds
 import fr.aumombelli.dstcg.ui.motion.RarityBurstOverlay
+import fr.aumombelli.dstcg.ui.motion.HolographicArrivalCelebrationOverlay
+import fr.aumombelli.dstcg.ui.motion.packOpeningHolographicMotion
+import fr.aumombelli.dstcg.ui.motion.relativeTo
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
 import kotlin.math.abs
@@ -64,6 +70,7 @@ fun PackOpeningScreen(
 ) {
     val packResult = state.packResult
     val displayCards = state.displayCards
+    val performanceProfile = LocalAppPerformanceProfile.current
     val revealItems = if (state.revealItems.isNotEmpty()) {
         state.revealItems
     } else {
@@ -81,11 +88,17 @@ fun PackOpeningScreen(
     var verticalDragActive by remember(packResult?.drawnAt) { mutableStateOf(false) }
     var rootHeightPx by remember(packResult?.drawnAt) { mutableFloatStateOf(0f) }
     var transitionBoosterBounds by remember(packResult?.drawnAt) { mutableStateOf<PackRevealBounds?>(null) }
+    var currentRevealCardBounds by remember(packResult?.drawnAt) { mutableStateOf<PackRevealBounds?>(null) }
+    var revealCelebrationLayerBounds by remember(packResult?.drawnAt) { mutableStateOf<PackRevealBounds?>(null) }
+    var playedHolographicCuePages by remember(packResult?.drawnAt) { mutableStateOf(setOf<Int>()) }
+    var lastSettledPage by remember(packResult?.drawnAt) { mutableIntStateOf(0) }
+    var activeHolographicCuePage by remember(packResult?.drawnAt) { mutableStateOf<Int?>(null) }
     val scale = remember(packResult?.drawnAt) { Animatable(1f) }
     val burstProgress = remember(packResult?.drawnAt) { Animatable(0f) }
     val cardsEntranceProgress = remember(packResult?.drawnAt) { Animatable(0f) }
     val dismissProgress = remember(packResult?.drawnAt) { Animatable(0f) }
     val swipeHintOffset = remember(packResult?.drawnAt) { Animatable(0f) }
+    val holographicCueProgress = remember(packResult?.drawnAt) { Animatable(0f) }
 
     LaunchedEffect(packResult?.drawnAt) {
         if (packResult == null) return@LaunchedEffect
@@ -99,11 +112,17 @@ fun PackOpeningScreen(
         dismissRequested = false
         verticalDragActive = false
         transitionBoosterBounds = null
+        currentRevealCardBounds = null
+        revealCelebrationLayerBounds = null
+        playedHolographicCuePages = emptySet()
+        lastSettledPage = 0
+        activeHolographicCuePage = null
         scale.snapTo(1f)
         burstProgress.snapTo(0f)
         cardsEntranceProgress.snapTo(0f)
         dismissProgress.snapTo(0f)
         swipeHintOffset.snapTo(0f)
+        holographicCueProgress.snapTo(0f)
         launch {
             burstProgress.animateTo(
                 1f,
@@ -257,159 +276,251 @@ fun PackOpeningScreen(
                     availableWidth = maxWidth,
                     availableHeight = maxHeight,
                 )
-	                val progressBelowPager = shouldPlacePackOpeningProgressBelowPager(
-	                    availableWidth = maxWidth,
-	                    availableHeight = maxHeight,
-	                    sceneLayout = sceneLayout,
-	                )
-	                if (revealItems.isNotEmpty()) {
-	                    key(packResult.drawnAt) {
-	                        val pagerState = rememberPagerState(pageCount = { revealItems.size })
-	                        val currentPage = pagerState.currentPage
-	                        val settledPage = pagerState.settledPage
-	                        val currentItem = revealItems.getOrNull(currentPage)
-	                        val pagerIsFullySettled =
-	                            !pagerState.isScrollInProgress &&
-	                                currentPage == settledPage &&
-	                                abs(pagerState.currentPageOffsetFraction) < 0.001f
-	                        val shouldAnimateSwipeHint =
-	                            cardsVisible &&
-	                                swipeHintUnlocked &&
-	                                pagerIsFullySettled &&
-	                                fullscreenPage == null &&
-	                                !dismissRequested &&
-	                                !verticalDragActive
-	                        val showSwipeHintLabel =
-	                            cardsVisible &&
-	                                !dismissRequested &&
-	                                showPersistentDismissHint &&
-	                                swipeHintLabelActivated
+                val progressBelowPager = shouldPlacePackOpeningProgressBelowPager(
+                    availableWidth = maxWidth,
+                    availableHeight = maxHeight,
+                    sceneLayout = sceneLayout,
+                )
+                if (revealItems.isNotEmpty()) {
+                    key(packResult.drawnAt) {
+                        val pagerState = rememberPagerState(pageCount = { revealItems.size })
+                        val currentPage = pagerState.currentPage
+                        val settledPage = pagerState.settledPage
+                        val currentItem = revealItems.getOrNull(currentPage)
+                        val pagerIsFullySettled =
+                            !pagerState.isScrollInProgress &&
+                                currentPage == settledPage &&
+                                abs(pagerState.currentPageOffsetFraction) < 0.001f
+                        val shouldAnimateSwipeHint =
+                            cardsVisible &&
+                                swipeHintUnlocked &&
+                                pagerIsFullySettled &&
+                                fullscreenPage == null &&
+                                !dismissRequested &&
+                                !verticalDragActive
+                        val showSwipeHintLabel =
+                            cardsVisible &&
+                                !dismissRequested &&
+                                showPersistentDismissHint &&
+                                swipeHintLabelActivated
+                        val holographicCelebrationProgress = if (activeHolographicCuePage != null) {
+                            1f - holographicCueProgress.value
+                        } else {
+                            0f
+                        }
 
-	                        LaunchedEffect(packResult.drawnAt, settledPage) {
-	                            if (settledPage == revealItems.lastIndex && !hasReachedLastCardOnce) {
-	                                hasReachedLastCardOnce = true
-	                            }
-	                        }
+                        LaunchedEffect(packResult.drawnAt, settledPage) {
+                            if (settledPage == revealItems.lastIndex && !hasReachedLastCardOnce) {
+                                hasReachedLastCardOnce = true
+                            }
+                        }
 
-	                        LaunchedEffect(packResult.drawnAt, hasReachedLastCardOnce) {
-	                            if (!hasReachedLastCardOnce || swipeHintUnlocked) return@LaunchedEffect
-	                            delay(2_000)
-	                            swipeHintUnlocked = true
-	                        }
+                        LaunchedEffect(packResult.drawnAt, settledPage, cardsVisible) {
+                            val settledAstroItem = revealItems
+                                .getOrNull(settledPage) as? AstroPackRevealUiItem
+                            val shouldTriggerCue = shouldTriggerPackOpeningHolographicCue(
+                                cardsVisible = cardsVisible,
+                                settledPage = settledPage,
+                                lastSettledPage = lastSettledPage,
+                                isHolographic = settledAstroItem
+                                    ?.displayCard
+                                    ?.activeVariant
+                                    ?.isHolographic == true,
+                                alreadyPlayed = settledPage in playedHolographicCuePages,
+                            )
+                            if (settledPage != lastSettledPage) {
+                                lastSettledPage = settledPage
+                            }
+                            if (!shouldTriggerCue) return@LaunchedEffect
 
-	                        LaunchedEffect(
-	                            packResult.drawnAt,
-	                            shouldAnimateSwipeHint,
-	                            settledPage,
-	                        ) {
-	                            swipeHintOffset.snapTo(0f)
-	                            if (!shouldAnimateSwipeHint) return@LaunchedEffect
-	                            delay(450)
+                            playedHolographicCuePages = playedHolographicCuePages + settledPage
+                            activeHolographicCuePage = settledPage
+                            holographicCueProgress.snapTo(1f)
+                            holographicCueProgress.animateTo(
+                                targetValue = 0f,
+                                animationSpec = tween(durationMillis = 1_450, easing = FastOutSlowInEasing),
+                            )
+                            if (activeHolographicCuePage == settledPage) {
+                                activeHolographicCuePage = null
+                            }
+                        }
 
-	                            while (true) {
-	                                swipeHintOffset.animateTo(
-	                                    targetValue = -26f,
-	                                    animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
-	                                )
-	                                swipeHintOffset.animateTo(
-	                                    targetValue = 0f,
-	                                    animationSpec = tween(durationMillis = 360, easing = FastOutSlowInEasing),
-	                                )
-	                                delay(1_150)
-	                            }
-	                        }
+                        LaunchedEffect(packResult.drawnAt, hasReachedLastCardOnce) {
+                            if (!hasReachedLastCardOnce || swipeHintUnlocked) return@LaunchedEffect
+                            delay(2_000)
+                            swipeHintUnlocked = true
+                        }
 
-	                        LaunchedEffect(
-	                            packResult.drawnAt,
-	                            shouldAnimateSwipeHint,
-	                            showPersistentDismissHint,
-	                        ) {
-	                            if (!showPersistentDismissHint || !shouldAnimateSwipeHint) return@LaunchedEffect
-	                            delay(450)
-	                            swipeHintLabelActivated = true
-	                        }
+                        LaunchedEffect(
+                            packResult.drawnAt,
+                            shouldAnimateSwipeHint,
+                            settledPage,
+                        ) {
+                            swipeHintOffset.snapTo(0f)
+                            if (!shouldAnimateSwipeHint) return@LaunchedEffect
+                            delay(450)
 
-	                        LaunchedEffect(packResult.drawnAt) {
-	                            snapshotFlow {
-	                                PagerScrollSnapshot(
-	                                    isScrollInProgress = pagerState.isScrollInProgress,
-	                                    currentPage = pagerState.currentPage,
-	                                    offsetFraction = pagerState.currentPageOffsetFraction,
-	                                )
-	                            }.collect { snapshot ->
-	                                if (
-	                                    !snapshot.isScrollInProgress &&
-	                                    abs(snapshot.offsetFraction) > 0.001f
-	                                ) {
-	                                    pagerState.animateScrollToPage(snapshot.currentPage)
-	                                }
-	                            }
-	                        }
+                            while (true) {
+                                swipeHintOffset.animateTo(
+                                    targetValue = -26f,
+                                    animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
+                                )
+                                swipeHintOffset.animateTo(
+                                    targetValue = 0f,
+                                    animationSpec = tween(durationMillis = 360, easing = FastOutSlowInEasing),
+                                )
+                                delay(1_150)
+                            }
+                        }
 
-	                        PackOpeningRevealStageScaffold(
-	                            extensionLabel = packOpeningExtensionLabel(displayCards, packResult),
-	                            currentPage = currentPage,
-	                            totalItems = revealItems.size,
-	                            sceneLayout = sceneLayout,
-	                            progressBelowPager = progressBelowPager,
-	                        ) {
-	                            if (currentItem != null) {
-	                                androidx.compose.material3.Text(
-	                                    text = currentItem.id,
-	                                    modifier = Modifier
-	                                        .size(0.dp)
-	                                        .testTag("pack-opening-current-card-id"),
-	                                )
-	                            }
+                        LaunchedEffect(
+                            packResult.drawnAt,
+                            shouldAnimateSwipeHint,
+                            showPersistentDismissHint,
+                        ) {
+                            if (!showPersistentDismissHint || !shouldAnimateSwipeHint) return@LaunchedEffect
+                            delay(450)
+                            swipeHintLabelActivated = true
+                        }
 
-	                            HorizontalPager(
-	                                state = pagerState,
-	                                modifier = Modifier
-	                                    .fillMaxSize()
-	                                    .testTag("pack-opening-pager")
-	                                    .graphicsLayer {
-	                                        alpha = cardsEntranceProgress.value
-	                                        translationY = (1f - cardsEntranceProgress.value) *
-	                                            if (rootHeightPx > 0f) rootHeightPx else 960f
-	                                    },
-	                            ) { page ->
-	                                RevealCard(
-	                                    item = revealItems[page],
-	                                    isCurrentPage = page == currentPage,
-	                                    showPreviousArrow = page == currentPage && page > 0,
-	                                    showNextArrow = page == currentPage && page < revealItems.lastIndex,
-	                                    cardTranslationY = if (page == currentPage) swipeHintOffset.value else 0f,
-	                                    nudgeActive = page == settledPage && shouldAnimateSwipeHint,
-	                                    onOpenFullscreen = {
-	                                        if (revealItems[page] is AstroPackRevealUiItem) {
-	                                            fullscreenPage = page
-	                                        }
-	                                    },
-	                                )
-	                            }
+                        LaunchedEffect(packResult.drawnAt) {
+                            snapshotFlow {
+                                PagerScrollSnapshot(
+                                    isScrollInProgress = pagerState.isScrollInProgress,
+                                    currentPage = pagerState.currentPage,
+                                    offsetFraction = pagerState.currentPageOffsetFraction,
+                                )
+                            }.collect { snapshot ->
+                                if (
+                                    !snapshot.isScrollInProgress &&
+                                    abs(snapshot.offsetFraction) > 0.001f
+                                ) {
+                                    pagerState.animateScrollToPage(snapshot.currentPage)
+                                }
+                            }
+                        }
 
-	                            if (showSwipeHintLabel) {
-	                                androidx.compose.material3.Text(
-	                                    text = "Glisse vers le haut pour revenir au menu.",
-	                                    color = Color(0xFFF8D98D),
-	                                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
-	                                    modifier = Modifier
-	                                        .align(Alignment.TopCenter)
-	                                        .padding(top = sceneLayout.hintLabelTopPadding)
-	                                        .testTag("pack-opening-swipe-hint-label"),
-	                                )
-	                            }
-	                        }
-	                    }
-	                }
-	            }
-	        }
+                        PackOpeningRevealStageScaffold(
+                            extensionLabel = packOpeningExtensionLabel(displayCards, packResult),
+                            currentPage = currentPage,
+                            totalItems = revealItems.size,
+                            sceneLayout = sceneLayout,
+                            progressBelowPager = progressBelowPager,
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .onGloballyPositioned { coordinates ->
+                                        val bounds = coordinates.boundsInRoot()
+                                        revealCelebrationLayerBounds = PackRevealBounds(
+                                            leftPx = bounds.left,
+                                            topPx = bounds.top,
+                                            widthPx = bounds.width,
+                                            heightPx = bounds.height,
+                                        )
+                                    },
+                            ) {
+                                if (currentItem != null) {
+                                    androidx.compose.material3.Text(
+                                        text = currentItem.id,
+                                        modifier = Modifier
+                                            .size(0.dp)
+                                            .testTag("pack-opening-current-card-id"),
+                                    )
+                                }
+
+                                HorizontalPager(
+                                    state = pagerState,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .testTag("pack-opening-pager")
+                                        .graphicsLayer {
+                                            alpha = cardsEntranceProgress.value
+                                            translationY = (1f - cardsEntranceProgress.value) *
+                                                if (rootHeightPx > 0f) rootHeightPx else 960f
+                                        },
+                                ) { page ->
+                                    val relativePageOffset = (page - currentPage) + pagerState.currentPageOffsetFraction
+                                    val settleCueProgress = if (page == activeHolographicCuePage) {
+                                        holographicCueProgress.value
+                                    } else {
+                                        0f
+                                    }
+                                    val arrivalCueProgress = if (page == activeHolographicCuePage) {
+                                        1f - holographicCueProgress.value
+                                    } else {
+                                        0f
+                                    }
+                                    val holographicMotion = if (
+                                        revealItems[page] is AstroPackRevealUiItem &&
+                                        (revealItems[page] as AstroPackRevealUiItem)
+                                            .displayCard.activeVariant.isHolographic
+                                    ) {
+                                        packOpeningHolographicMotion(
+                                            relativePageOffset = relativePageOffset,
+                                            settleCueProgress = settleCueProgress,
+                                            interactiveEffectsEnabled =
+                                                performanceProfile.enableInteractiveHolographicEffects,
+                                        )
+                                    } else {
+                                        null
+                                    }
+
+                                    RevealCard(
+                                        item = revealItems[page],
+                                        isCurrentPage = page == currentPage,
+                                        showPreviousArrow = page == currentPage && page > 0,
+                                        showNextArrow = page == currentPage && page < revealItems.lastIndex,
+                                        cardTranslationY = if (page == currentPage) swipeHintOffset.value else 0f,
+                                        nudgeActive = page == settledPage && shouldAnimateSwipeHint,
+                                        holographicArrivalProgress = arrivalCueProgress,
+                                        holographicMotion = holographicMotion,
+                                        onCardBoundsChanged = if (page == currentPage) {
+                                            { bounds -> currentRevealCardBounds = bounds }
+                                        } else {
+                                            null
+                                        },
+                                        onOpenFullscreen = {
+                                            if (revealItems[page] is AstroPackRevealUiItem) {
+                                                fullscreenPage = page
+                                            }
+                                        },
+                                    )
+                                }
+
+                                if (holographicCelebrationProgress > 0f) {
+                                    HolographicArrivalCelebrationOverlay(
+                                        progress = holographicCelebrationProgress,
+                                        originBounds = currentRevealCardBounds
+                                            ?.takeIf { revealCelebrationLayerBounds != null }
+                                            ?.relativeTo(revealCelebrationLayerBounds!!),
+                                        modifier = Modifier.fillMaxSize(),
+                                    )
+                                }
+
+                                if (showSwipeHintLabel) {
+                                    androidx.compose.material3.Text(
+                                        text = "Glisse vers le haut pour revenir au menu.",
+                                        color = Color(0xFFF8D98D),
+                                        style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier
+                                            .align(Alignment.TopCenter)
+                                            .padding(top = sceneLayout.hintLabelTopPadding)
+                                            .testTag("pack-opening-swipe-hint-label"),
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         RarityBurstOverlay(
             rarityLabel = state.highestBurstRarity,
             hasHolographicBurst = state.hasHolographicBurst,
             progress = burstProgress.value,
-            originBounds = transitionBoosterBounds ?: initialBoosterBounds,
+            originBounds = null,
         )
 
         val fullscreenCard = fullscreenPage
@@ -639,3 +750,14 @@ private data class PagerScrollSnapshot(
     val currentPage: Int,
     val offsetFraction: Float,
 )
+
+internal fun shouldTriggerPackOpeningHolographicCue(
+    cardsVisible: Boolean,
+    settledPage: Int,
+    lastSettledPage: Int,
+    isHolographic: Boolean,
+    alreadyPlayed: Boolean,
+): Boolean = cardsVisible &&
+    settledPage != lastSettledPage &&
+    isHolographic &&
+    !alreadyPlayed

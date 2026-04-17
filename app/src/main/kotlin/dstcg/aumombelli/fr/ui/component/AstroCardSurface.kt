@@ -13,9 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.model.DisplayCard
 import fr.aumombelli.dstcg.performance.LocalAppPerformanceProfile
+import fr.aumombelli.dstcg.ui.motion.HolographicCardMotion
 import fr.aumombelli.dstcg.ui.theme.skyQualityPalette
 
 const val TRADING_CARD_WIDTH_OVER_HEIGHT = 1f / 1.754f
@@ -37,6 +40,7 @@ internal fun AstroCardPreviewSurface(
     modifier: Modifier = Modifier,
     mode: AstroCardSurfaceMode = AstroCardSurfaceMode.Preview,
     artVisibility: CardArtVisibility = CardArtVisibility.Visible,
+    holographicMotion: HolographicCardMotion? = null,
     onClick: (() -> Unit)? = null,
 ) {
     val palette = skyQualityPalette(displayCard.activeVariant.skyQuality)
@@ -44,12 +48,19 @@ internal fun AstroCardPreviewSurface(
     val compact = mode == AstroCardSurfaceMode.Thumbnail
     val shape = RoundedCornerShape(if (compact) 24.dp else 30.dp)
     val artInset = cardArtInset(mode)
+    val interactiveHoloMotion = holographicMotion
+        ?.takeIf { displayCard.activeVariant.isHolographic }
     val clickableModifier = if (onClick == null) {
         modifier
     } else {
         modifier.clickable(onClick = onClick)
     }
-    val cardModifier = clickableModifier.aspectRatio(TRADING_CARD_WIDTH_OVER_HEIGHT)
+    val cardModifier = clickableModifier
+        .aspectRatio(TRADING_CARD_WIDTH_OVER_HEIGHT)
+        .graphicsLayer {
+            rotationY = interactiveHoloMotion?.rotationYDeg ?: 0f
+            cameraDistance = 16f * density * 72f
+        }
 
     Card(
         shape = shape,
@@ -79,10 +90,44 @@ internal fun AstroCardPreviewSurface(
             HeroAtmosphere(palette = palette)
             CardFaceScrim(modifier = Modifier.fillMaxSize())
             if (displayCard.activeVariant.isHolographic) {
+                if (interactiveHoloMotion != null) {
+                    HolographicFoilOverlay(
+                        motion = interactiveHoloMotion,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .testTag("astro-card-holo-foil"),
+                    )
+                    HolographicGlareOverlay(
+                        motion = interactiveHoloMotion,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .testTag("astro-card-holo-glare"),
+                    )
+                    HolographicRimLightOverlay(
+                        motion = interactiveHoloMotion,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
                 TwinklingStarsOverlay(
                     animated = mode != AstroCardSurfaceMode.Thumbnail ||
                         performanceProfile.enableAnimatedThumbnailTwinkles,
-                    modifier = Modifier.fillMaxSize(),
+                    sparkleBoost = if (performanceProfile.enableInteractiveHolographicEffects) {
+                        interactiveHoloMotion?.sparkleBoost ?: 0f
+                    } else {
+                        0f
+                    },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .then(
+                            if (
+                                interactiveHoloMotion != null &&
+                                performanceProfile.enableInteractiveHolographicEffects
+                            ) {
+                                Modifier.testTag("astro-card-holo-sparkles")
+                            } else {
+                                Modifier
+                            },
+                        ),
                 )
             }
             CardFaceContent(

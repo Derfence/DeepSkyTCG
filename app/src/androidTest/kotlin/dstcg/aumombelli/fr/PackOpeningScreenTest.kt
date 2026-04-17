@@ -116,6 +116,9 @@ class PackOpeningScreenTest {
         composeRule.onAllNodesWithTag("pack-opening-arrow-left").assertCountEquals(0)
         composeRule.onAllNodesWithTag("pack-opening-arrow-right").assertCountEquals(1)
         composeRule.onAllNodesWithTag("pack-opening-card-name").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("astro-card-holo-foil", useUnmergedTree = true).assertCountEquals(0)
+        composeRule.onAllNodesWithTag("astro-card-holo-glare", useUnmergedTree = true).assertCountEquals(0)
+        composeRule.onAllNodesWithTag("astro-card-holo-sparkles", useUnmergedTree = true).assertCountEquals(0)
         composeRule.assertApproxCardRatio("pack-opening-current-card-surface")
         composeRule.assertBoundsClose(
             expected = boosterBoundsBeforeReveal,
@@ -266,6 +269,200 @@ class PackOpeningScreenTest {
 
         composeRule.onNodeWithTag("pack-opening-burst").assertIsDisplayed()
         composeRule.onNodeWithTag("pack-opening-burst-rain").assertIsDisplayed()
+        composeRule.onNodeWithTag("pack-opening-burst-orbit").assertIsDisplayed()
+    }
+
+    @Test
+    fun pack_opening_swiping_onto_holographic_card_triggers_arrival_animation() {
+        val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
+        val holoCard = testCardDefinition("ALP-777", name = "Comete", rarityLabel = "Epic")
+        val packResult = DrawPackResponse.fromCards(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
+            cards = listOf(
+                testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
+                testPackCard(
+                    "ALP-777",
+                    "Comete",
+                    "Epic",
+                    "comet",
+                    finish = "holographic",
+                    finishLabel = "Holographique",
+                    isHolographic = true,
+                ),
+            ),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackOpeningScreen(
+                state = PackOpeningUiState(
+                    packResult = packResult,
+                    displayCards = listOf(
+                        firstCard.toDisplayCard(
+                            extensionName = "Astronomes en herbe",
+                            activeVariant = packResult.cards[0].variant.toDisplayVariant(),
+                        ),
+                        holoCard.toDisplayCard(
+                            extensionName = "Astronomes en herbe",
+                            activeVariant = packResult.cards[1].variant.toDisplayVariant(),
+                        ),
+                    ),
+                    highestBurstRarity = "Epic",
+                    hasHolographicBurst = true,
+                ),
+                onDone = {},
+            )
+        }
+
+        composeRule.advanceToRevealedCards()
+        composeRule.onAllNodesWithTag("pack-opening-holo-arrival", useUnmergedTree = true).assertCountEquals(0)
+        composeRule.onAllNodesWithTag("pack-opening-holo-celebration", useUnmergedTree = true).assertCountEquals(0)
+
+        composeRule.mainClock.autoAdvance = true
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeLeft() }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.safeReadCurrentPackOpeningCardId() == "ALP-777"
+        }
+        composeRule.onNodeWithTag("pack-opening-holo-arrival", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("pack-opening-holo-celebration", useUnmergedTree = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun pack_opening_holographic_arrival_animation_only_plays_once_per_card() {
+        val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
+        val holoCard = testCardDefinition("ALP-777", name = "Comete", rarityLabel = "Epic")
+        val packResult = DrawPackResponse.fromCards(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
+            cards = listOf(
+                testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
+                testPackCard(
+                    "ALP-777",
+                    "Comete",
+                    "Epic",
+                    "comet",
+                    finish = "holographic",
+                    finishLabel = "Holographique",
+                    isHolographic = true,
+                ),
+            ),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackOpeningScreen(
+                state = PackOpeningUiState(
+                    packResult = packResult,
+                    displayCards = listOf(
+                        firstCard.toDisplayCard(
+                            extensionName = "Astronomes en herbe",
+                            activeVariant = packResult.cards[0].variant.toDisplayVariant(),
+                        ),
+                        holoCard.toDisplayCard(
+                            extensionName = "Astronomes en herbe",
+                            activeVariant = packResult.cards[1].variant.toDisplayVariant(),
+                        ),
+                    ),
+                    highestBurstRarity = "Epic",
+                    hasHolographicBurst = true,
+                ),
+                onDone = {},
+            )
+        }
+
+        composeRule.advanceToRevealedCards()
+
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeLeft() }
+        composeRule.mainClock.advanceTimeBy(700)
+        composeRule.runOnIdle { }
+        assertEquals("ALP-777", composeRule.readCurrentPackOpeningCardId())
+        composeRule.onNodeWithTag("pack-opening-holo-arrival", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("pack-opening-holo-celebration", useUnmergedTree = true).assertIsDisplayed()
+
+        composeRule.mainClock.advanceTimeBy(1_800)
+        composeRule.runOnIdle { }
+        composeRule.onAllNodesWithTag("pack-opening-holo-arrival", useUnmergedTree = true).assertCountEquals(0)
+        composeRule.onAllNodesWithTag("pack-opening-holo-celebration", useUnmergedTree = true).assertCountEquals(0)
+
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeRight() }
+        composeRule.mainClock.advanceTimeBy(700)
+        composeRule.runOnIdle { }
+        assertEquals("ALP-001", composeRule.readCurrentPackOpeningCardId())
+
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeLeft() }
+        composeRule.mainClock.advanceTimeBy(700)
+        composeRule.runOnIdle { }
+        assertEquals("ALP-777", composeRule.readCurrentPackOpeningCardId())
+        composeRule.onAllNodesWithTag("pack-opening-holo-arrival", useUnmergedTree = true).assertCountEquals(0)
+        composeRule.onAllNodesWithTag("pack-opening-holo-celebration", useUnmergedTree = true).assertCountEquals(0)
+    }
+
+    @Test
+    fun pack_opening_holographic_cards_render_foil_layers_in_pack_and_fullscreen() {
+        val holoCard = testCardDefinition("ALP-777", rarityLabel = "Epic")
+        val packResult = DrawPackResponse.fromCards(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
+            cards = listOf(
+                testPackCard(
+                    "ALP-777",
+                    "Comete",
+                    "Epic",
+                    "comet",
+                    finish = "holographic",
+                    finishLabel = "Holographique",
+                    isHolographic = true,
+                ),
+            ),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackOpeningScreen(
+                state = PackOpeningUiState(
+                    packResult = packResult,
+                    displayCards = listOf(
+                        holoCard.toDisplayCard(
+                            extensionName = "Astronomes en herbe",
+                            activeVariant = packResult.cards[0].variant.toDisplayVariant(),
+                        ),
+                    ),
+                    highestBurstRarity = "Epic",
+                    hasHolographicBurst = true,
+                ),
+                onDone = {},
+            )
+        }
+
+        composeRule.advanceToRevealedCards()
+
+        composeRule.onNodeWithTag("astro-card-holo-foil", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("astro-card-holo-glare", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("astro-card-holo-sparkles", useUnmergedTree = true).assertIsDisplayed()
+
+        composeRule.mainClock.autoAdvance = true
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("astro-card-holo-foil", useUnmergedTree = true)
+                .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                .size >= 2
+        }
+        composeRule.onNodeWithTag("astro-card-fullscreen-close").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("astro-card-holo-glare", useUnmergedTree = true)
+            .assertCountEquals(2)
     }
 
     @Test

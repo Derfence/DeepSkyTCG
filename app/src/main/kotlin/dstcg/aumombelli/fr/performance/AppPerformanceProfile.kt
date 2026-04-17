@@ -19,6 +19,7 @@ internal data class AppPerformanceProfile(
     val enableAnimatedBackdrop: Boolean,
     val backdropStarDensityMultiplier: Float,
     val enableAnimatedThumbnailTwinkles: Boolean,
+    val enableInteractiveHolographicEffects: Boolean,
     val enableAnimatedBadgeCoins: Boolean,
 )
 
@@ -49,6 +50,7 @@ private fun resolveAppPerformanceProfile(context: Context): AppPerformanceProfil
             enableAnimatedBackdrop = false,
             backdropStarDensityMultiplier = 0.5f,
             enableAnimatedThumbnailTwinkles = false,
+            enableInteractiveHolographicEffects = false,
             enableAnimatedBadgeCoins = false,
         )
     } else {
@@ -62,6 +64,7 @@ private fun resolveAppPerformanceProfile(context: Context): AppPerformanceProfil
             enableAnimatedBackdrop = true,
             backdropStarDensityMultiplier = 1f,
             enableAnimatedThumbnailTwinkles = true,
+            enableInteractiveHolographicEffects = true,
             enableAnimatedBadgeCoins = true,
         )
     }
@@ -77,5 +80,6 @@ private fun defaultAppPerformanceProfile(): AppPerformanceProfile = AppPerforman
     enableAnimatedBackdrop = true,
     backdropStarDensityMultiplier = 1f,
     enableAnimatedThumbnailTwinkles = true,
+    enableInteractiveHolographicEffects = true,
     enableAnimatedBadgeCoins = true,
 )

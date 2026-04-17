@@ -17,7 +17,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -25,6 +27,7 @@ import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import fr.aumombelli.dstcg.ui.motion.HolographicCardMotion
 import fr.aumombelli.dstcg.ui.theme.SkyQualityPalette
 import fr.aumombelli.dstcg.ui.theme.rarityBadgeStyle
 import kotlin.math.PI
@@ -125,6 +128,7 @@ internal fun RarityStarBadge(
 @Composable
 internal fun TwinklingStarsOverlay(
     animated: Boolean = true,
+    sparkleBoost: Float = 0f,
     modifier: Modifier = Modifier,
 ) {
     val progress = if (animated) {
@@ -144,24 +148,159 @@ internal fun TwinklingStarsOverlay(
     }
 
     Canvas(modifier = modifier) {
+        val clampedBoost = sparkleBoost.coerceIn(0f, 1f)
         TwinkleStars.forEach { star ->
-            val alpha = 0.18f + 0.82f * ((sin((progress + star.phase) * PI * 2).toFloat() + 1f) / 2f)
+            val twinkle = ((sin((progress + star.phase) * PI * 2).toFloat() + 1f) / 2f)
+            val alpha = (
+                0.18f +
+                    0.82f * twinkle +
+                    clampedBoost * (0.12f + twinkle * 0.14f)
+                ).coerceIn(0f, 1f)
             val center = Offset(size.width * star.x, size.height * star.y)
+            val starRadius = size.minDimension * star.radius * (1f + clampedBoost * 0.24f)
             drawPath(
                 path = starPath(
                     center = center,
                     points = 4,
-                    outerRadius = size.minDimension * star.radius,
-                    innerRadius = size.minDimension * star.radius * 0.42f,
+                    outerRadius = starRadius,
+                    innerRadius = starRadius * 0.42f,
                 ),
                 color = Color.White.copy(alpha = alpha),
             )
             drawCircle(
                 color = Color(0xFFFFF8D6).copy(alpha = alpha * 0.7f),
-                radius = size.minDimension * star.radius * 0.12f,
+                radius = starRadius * 0.12f,
                 center = center,
             )
         }
+
+        if (clampedBoost > 0.05f) {
+            BoostedTwinkleStars.forEach { star ->
+                val twinkle = ((sin((progress * 1.35f + star.phase) * PI * 2).toFloat() + 1f) / 2f)
+                val alpha = (clampedBoost * (0.24f + 0.76f * twinkle)).coerceIn(0f, 1f)
+                val center = Offset(size.width * star.x, size.height * star.y)
+                val starRadius = size.minDimension * star.radius * (1f + clampedBoost * 0.32f)
+                drawPath(
+                    path = starPath(
+                        center = center,
+                        points = 4,
+                        outerRadius = starRadius,
+                        innerRadius = starRadius * 0.4f,
+                    ),
+                    color = Color(0xFFFFF6DA).copy(alpha = alpha),
+                )
+                drawCircle(
+                    color = Color.White.copy(alpha = alpha * 0.58f),
+                    radius = starRadius * 0.1f,
+                    center = center,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+internal fun HolographicFoilOverlay(
+    motion: HolographicCardMotion,
+    modifier: Modifier = Modifier,
+) {
+    Canvas(modifier = modifier) {
+        val sweepCenter = size.width * motion.sweepFraction.coerceIn(0f, 1f)
+        val highlightAlpha = motion.highlightAlpha.coerceIn(0f, 1f)
+        val outerStroke = size.minDimension * 0.028f
+        val innerInset = outerStroke * 0.62f
+        val innerStroke = size.minDimension * 0.011f
+        val cornerRadius = size.minDimension * 0.12f
+        val iridescentBrush = Brush.linearGradient(
+            colors = listOf(
+                Color(0xFF78F1FF).copy(alpha = 0.16f + highlightAlpha * 0.28f),
+                Color(0xFFFF84E0).copy(alpha = 0.14f + highlightAlpha * 0.22f),
+                Color(0xFFFFE38C).copy(alpha = 0.18f + highlightAlpha * 0.26f),
+                Color(0xFF8DD8FF).copy(alpha = 0.15f + highlightAlpha * 0.22f),
+            ),
+            start = Offset(sweepCenter - size.width * 0.82f, size.height * 0.06f),
+            end = Offset(sweepCenter + size.width * 0.42f, size.height * 0.96f),
+        )
+        drawRoundRect(
+            brush = iridescentBrush,
+            cornerRadius = CornerRadius(cornerRadius),
+            style = Stroke(width = outerStroke),
+        )
+        drawRoundRect(
+            brush = Brush.linearGradient(
+                colors = listOf(
+                    Color(0xFFA5F6FF).copy(alpha = 0.1f + highlightAlpha * 0.18f),
+                    Color(0xFFFFD2F3).copy(alpha = 0.08f + highlightAlpha * 0.14f),
+                    Color(0xFFFFF1BA).copy(alpha = 0.11f + highlightAlpha * 0.18f),
+                    Color(0xFFA9D6FF).copy(alpha = 0.08f + highlightAlpha * 0.14f),
+                ),
+                start = Offset(sweepCenter - size.width * 0.54f, size.height * 0.02f),
+                end = Offset(sweepCenter + size.width * 0.18f, size.height * 0.98f),
+            ),
+            topLeft = Offset(innerInset, innerInset),
+            size = Size(
+                width = (size.width - innerInset * 2f).coerceAtLeast(0f),
+                height = (size.height - innerInset * 2f).coerceAtLeast(0f),
+            ),
+            cornerRadius = CornerRadius((cornerRadius - innerInset).coerceAtLeast(0f)),
+            style = Stroke(width = innerStroke),
+        )
+    }
+}
+
+@Composable
+internal fun HolographicGlareOverlay(
+    motion: HolographicCardMotion,
+    modifier: Modifier = Modifier,
+) {
+    Canvas(modifier = modifier) {
+        val sweepCenter = size.width * motion.sweepFraction.coerceIn(0f, 1f)
+        val glareAlpha = (0.14f + motion.highlightAlpha * 0.58f).coerceIn(0f, 0.9f)
+        val glareInset = size.minDimension * 0.012f
+        drawRoundRect(
+            brush = Brush.linearGradient(
+                colors = listOf(
+                    Color.White.copy(alpha = glareAlpha * 0.12f),
+                    Color.White.copy(alpha = glareAlpha * 0.48f),
+                    Color.White.copy(alpha = glareAlpha),
+                    Color.White.copy(alpha = glareAlpha * 0.34f),
+                    Color.White.copy(alpha = glareAlpha * 0.1f),
+                ),
+                start = Offset(sweepCenter - size.width * 0.34f, size.height * 0.02f),
+                end = Offset(sweepCenter + size.width * 0.04f, size.height * 0.98f),
+            ),
+            topLeft = Offset(glareInset, glareInset),
+            size = Size(
+                width = (size.width - glareInset * 2f).coerceAtLeast(0f),
+                height = (size.height - glareInset * 2f).coerceAtLeast(0f),
+            ),
+            cornerRadius = CornerRadius((size.minDimension * 0.12f - glareInset).coerceAtLeast(0f)),
+            style = Stroke(width = size.minDimension * 0.0105f),
+        )
+    }
+}
+
+@Composable
+internal fun HolographicRimLightOverlay(
+    motion: HolographicCardMotion,
+    modifier: Modifier = Modifier,
+) {
+    Canvas(modifier = modifier) {
+        val edgeAlpha = motion.edgeGlowAlpha.coerceIn(0f, 1f)
+        drawRoundRect(
+            brush = Brush.linearGradient(
+                colors = listOf(
+                    Color(0xFF99E9FF).copy(alpha = edgeAlpha * 0.8f),
+                    Color(0xFFFFB4EA).copy(alpha = edgeAlpha * 0.62f),
+                    Color(0xFFFFE38C).copy(alpha = edgeAlpha * 0.76f),
+                    Color(0xFF9ED3FF).copy(alpha = edgeAlpha * 0.66f),
+                ),
+                start = Offset.Zero,
+                end = Offset(size.width, size.height),
+            ),
+            cornerRadius = CornerRadius(size.minDimension * 0.12f),
+            style = Stroke(width = size.minDimension * 0.0145f),
+        )
     }
 }
 
@@ -205,4 +344,15 @@ private val TwinkleStars = listOf(
     TwinkleStar(0.14f, 0.72f, 0.02f, 0.88f),
     TwinkleStar(0.52f, 0.78f, 0.014f, 0.28f),
     TwinkleStar(0.72f, 0.86f, 0.022f, 0.49f),
+)
+
+private val BoostedTwinkleStars = listOf(
+    TwinkleStar(0.11f, 0.22f, 0.012f, 0.08f),
+    TwinkleStar(0.34f, 0.18f, 0.011f, 0.42f),
+    TwinkleStar(0.59f, 0.24f, 0.01f, 0.71f),
+    TwinkleStar(0.86f, 0.29f, 0.012f, 0.13f),
+    TwinkleStar(0.23f, 0.61f, 0.011f, 0.54f),
+    TwinkleStar(0.47f, 0.67f, 0.01f, 0.33f),
+    TwinkleStar(0.68f, 0.73f, 0.012f, 0.82f),
+    TwinkleStar(0.82f, 0.49f, 0.011f, 0.26f),
 )

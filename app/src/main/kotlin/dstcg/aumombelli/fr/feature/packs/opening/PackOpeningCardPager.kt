@@ -47,8 +47,13 @@ import fr.aumombelli.dstcg.ui.component.AstroCardSurfaceMode
 import fr.aumombelli.dstcg.ui.component.EquipmentArtBackground
 import fr.aumombelli.dstcg.ui.component.EquipmentArtMode
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
+import fr.aumombelli.dstcg.ui.motion.HolographicCardMotion
+import fr.aumombelli.dstcg.ui.motion.HolographicArrivalOverlay
 import fr.aumombelli.dstcg.ui.motion.PackRevealBounds
+import fr.aumombelli.dstcg.ui.motion.easeInOutBurst
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
+import kotlin.math.PI
+import kotlin.math.sin
 
 @Composable
 internal fun RevealCard(
@@ -58,20 +63,55 @@ internal fun RevealCard(
     showNextArrow: Boolean,
     cardTranslationY: Float,
     nudgeActive: Boolean,
+    holographicArrivalProgress: Float = 0f,
+    holographicMotion: HolographicCardMotion? = null,
+    onCardBoundsChanged: ((PackRevealBounds?) -> Unit)? = null,
     onOpenFullscreen: () -> Unit,
 ) {
-    Box(
+    BoxWithConstraints(
         modifier = Modifier.fillMaxSize(),
     ) {
+        val revealSlot = calculatePackOpeningRevealSlotLayout(
+            availableWidth = maxWidth,
+            availableHeight = maxHeight,
+        )
+        val arrivalProgress = holographicArrivalProgress.coerceIn(0f, 1f)
+        val arrivalScale = holographicArrivalScale(arrivalProgress)
+        val arrivalLiftPx = holographicArrivalLiftPx(arrivalProgress)
+        val arrivalRotationZ = holographicArrivalRotationZ(arrivalProgress)
+        val arrivalCenterXFraction = if (maxWidth.value > 0f) {
+            revealSlot.cardCenterX.value / maxWidth.value
+        } else {
+            0.5f
+        }
+        val arrivalCenterYFraction = if (maxHeight.value > 0f) {
+            revealSlot.cardCenterY.value / maxHeight.value
+        } else {
+            0.56f
+        }
+
+        if (arrivalProgress > 0f) {
+            HolographicArrivalOverlay(
+                progress = arrivalProgress,
+                centerXFraction = arrivalCenterXFraction,
+                centerYFraction = arrivalCenterYFraction,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
         PackOpeningRevealCardFrame(
             modifier = Modifier.fillMaxSize(),
-            cardTranslationY = cardTranslationY,
+            cardTranslationY = cardTranslationY + arrivalLiftPx,
+            cardScale = arrivalScale,
+            cardRotationZ = arrivalRotationZ,
+            onCardBoundsChanged = onCardBoundsChanged,
         ) {
             when (item) {
                 is AstroPackRevealUiItem -> {
                     AstroCardPreviewSurface(
                         displayCard = item.displayCard,
                         mode = AstroCardSurfaceMode.PackReveal,
+                        holographicMotion = holographicMotion,
                         modifier = Modifier
                             .fillMaxWidth()
                             .testTag(
@@ -133,6 +173,8 @@ internal fun RevealCard(
 internal fun PackOpeningRevealCardFrame(
     modifier: Modifier = Modifier,
     cardTranslationY: Float = 0f,
+    cardScale: Float = 1f,
+    cardRotationZ: Float = 0f,
     onCardBoundsChanged: ((PackRevealBounds?) -> Unit)? = null,
     onCardCoordinatesChanged: ((LayoutCoordinates?) -> Unit)? = null,
     content: @Composable BoxScope.() -> Unit,
@@ -158,6 +200,9 @@ internal fun PackOpeningRevealCardFrame(
                     .width(revealSlot.cardWidth)
                     .graphicsLayer {
                         translationY = cardTranslationY
+                        scaleX = cardScale
+                        scaleY = cardScale
+                        rotationZ = cardRotationZ
                     }
                     .then(
                         if (onCardBoundsChanged != null || onCardCoordinatesChanged != null) {
@@ -185,6 +230,38 @@ internal fun PackOpeningRevealCardFrame(
         }
     }
 }
+
+internal fun holographicArrivalScale(progress: Float): Float {
+    val clamped = progress.coerceIn(0f, 1f)
+    val punch = easeInOutBurst((clamped / 0.16f).coerceIn(0f, 1f))
+    val settleEnvelope = holographicArrivalSettleEnvelope(
+        progress = clamped,
+        settleStart = 0.18f,
+    )
+    return 1f + 0.18f * punch * settleEnvelope
+}
+
+internal fun holographicArrivalLiftPx(progress: Float): Float {
+    val clamped = progress.coerceIn(0f, 1f)
+    val rise = easeInOutBurst((clamped / 0.13f).coerceIn(0f, 1f))
+    val settleEnvelope = holographicArrivalSettleEnvelope(
+        progress = clamped,
+        settleStart = 0.14f,
+    )
+    return -68f * rise * settleEnvelope
+}
+
+private fun holographicArrivalRotationZ(progress: Float): Float {
+    val clamped = progress.coerceIn(0f, 1f)
+    return sin(clamped * PI * 5.5f).toFloat() * 3.4f * (1f - clamped)
+}
+
+private fun holographicArrivalSettleEnvelope(
+    progress: Float,
+    settleStart: Float,
+): Float = 1f - easeInOutBurst(
+    ((progress - settleStart) / (1f - settleStart)).coerceIn(0f, 1f),
+)
 
 @Composable
 private fun EquipmentRevealSurface(

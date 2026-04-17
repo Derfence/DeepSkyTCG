@@ -1,5 +1,6 @@
 package fr.aumombelli.dstcg.ui.motion
 
+import androidx.compose.runtime.Immutable
 import fr.aumombelli.dstcg.model.DisplayCard
 import fr.aumombelli.dstcg.model.raritySortPriority
 import kotlin.math.PI
@@ -88,11 +89,88 @@ data class PackRevealBounds(
     val heightPx: Float,
 )
 
+data class PixelPoint(
+    val x: Float,
+    val y: Float,
+)
+
+fun PackRevealBounds.relativeTo(containerBounds: PackRevealBounds): PackRevealBounds = PackRevealBounds(
+    leftPx = leftPx - containerBounds.leftPx,
+    topPx = topPx - containerBounds.topPx,
+    widthPx = widthPx,
+    heightPx = heightPx,
+)
+
+fun packOpeningBurstOrigin(
+    originBounds: PackRevealBounds?,
+    canvasWidth: Float,
+    canvasHeight: Float,
+    hasHolographicBurst: Boolean,
+): PixelPoint {
+    val baseCenter = if (originBounds != null) {
+        PixelPoint(
+            x = originBounds.leftPx + originBounds.widthPx / 2f,
+            y = originBounds.topPx + originBounds.heightPx / 2f,
+        )
+    } else {
+        PixelPoint(
+            x = canvasWidth / 2f,
+            y = canvasHeight / 2f,
+        )
+    }
+    val holographicVerticalBias = if (hasHolographicBurst) {
+        if (originBounds != null) {
+            originBounds.heightPx * 0.035f
+        } else {
+            -canvasHeight * 0.20f
+        }
+    } else {
+        0f
+    }
+    return PixelPoint(
+        x = baseCenter.x,
+        y = baseCenter.y - holographicVerticalBias,
+    )
+}
+
+fun packOpeningBurstOrbitOrigin(
+    originBounds: PackRevealBounds?,
+    canvasWidth: Float,
+    canvasHeight: Float,
+    hasHolographicBurst: Boolean,
+): PixelPoint {
+    val baseOrigin = packOpeningBurstOrigin(
+        originBounds = originBounds,
+        canvasWidth = canvasWidth,
+        canvasHeight = canvasHeight,
+        hasHolographicBurst = hasHolographicBurst,
+    )
+    val screenCenteredOrbitOffset = if (hasHolographicBurst && originBounds == null) {
+        0f
+    } else {
+        0f
+    }
+    return PixelPoint(
+        x = baseOrigin.x,
+        y = baseOrigin.y + screenCenteredOrbitOffset,
+    )
+}
+
+@Immutable
+data class HolographicCardMotion(
+    val rotationYDeg: Float = 0f,
+    val sweepFraction: Float = 0.5f,
+    val highlightAlpha: Float = 0.18f,
+    val edgeGlowAlpha: Float = 0.24f,
+    val sparkleBoost: Float = 0f,
+)
+
 const val PACK_REVEAL_WIDTH_FRACTION: Float = 0.82f
 
 enum class BurstParticleMotion {
     Radial,
     Falling,
+    Orbital,
 }
 
 data class BurstParticleSpec(
@@ -106,6 +184,7 @@ data class BurstParticleSpec(
     val xFraction: Float = 0.5f,
     val horizontalDrift: Float = 0f,
     val startYFraction: Float = -0.18f,
+    val spinTurns: Float = 0f,
 )
 
 internal data class BookPose(
@@ -167,6 +246,59 @@ internal fun calculateBookPose(progress: Float): BookPose {
         spreadWidth = spreadWidth,
         shadowAlpha = scalarLerp(0.18f, 0.34f, lifted * 0.7f + opened * 0.3f),
         frontCoverDominance = scalarLerp(1f, 0.42f, opened).coerceIn(0.3f, 1f),
+    )
+}
+
+fun packOpeningHolographicMotion(
+    relativePageOffset: Float,
+    settleCueProgress: Float,
+    interactiveEffectsEnabled: Boolean,
+): HolographicCardMotion {
+    val clampedOffset = relativePageOffset.coerceIn(-1f, 1f)
+    val proximity = (1f - kotlin.math.abs(clampedOffset)).coerceIn(0f, 1f)
+    val interactionAmount = (1f - proximity).coerceIn(0f, 1f)
+    val cueBoost = settleCueProgress.coerceIn(0f, 1f)
+
+    return HolographicCardMotion(
+        rotationYDeg = if (interactiveEffectsEnabled) {
+            (-clampedOffset * (2.8f + interactionAmount * 4.2f + cueBoost * 1.1f)).coerceIn(-7.5f, 7.5f)
+        } else {
+            0f
+        },
+        sweepFraction = (0.5f - clampedOffset * 0.38f + cueBoost * 0.22f).coerceIn(0.06f, 0.94f),
+        highlightAlpha = (0.22f + interactionAmount * 0.28f + cueBoost * 0.42f).coerceIn(0.16f, 0.86f),
+        edgeGlowAlpha = (0.24f + proximity * 0.16f + cueBoost * 0.28f).coerceIn(0.2f, 0.78f),
+        sparkleBoost = if (interactiveEffectsEnabled) {
+            (0.14f + interactionAmount * 0.58f + cueBoost * 0.48f).coerceIn(0f, 1f)
+        } else {
+            0f
+        },
+    )
+}
+
+fun autoplayHolographicMotion(
+    loopProgress: Float,
+    interactiveEffectsEnabled: Boolean,
+): HolographicCardMotion {
+    val primaryWave = sin(loopProgress * PI * 2).toFloat()
+    val secondaryWave = sin(loopProgress * PI * 4).toFloat()
+    val primaryNormalized = (primaryWave + 1f) / 2f
+    val secondaryNormalized = (secondaryWave + 1f) / 2f
+
+    return HolographicCardMotion(
+        rotationYDeg = if (interactiveEffectsEnabled) {
+            scalarLerp(-1.8f, 1.8f, primaryNormalized)
+        } else {
+            0f
+        },
+        sweepFraction = scalarLerp(0.18f, 0.82f, primaryNormalized),
+        highlightAlpha = scalarLerp(0.22f, 0.4f, secondaryNormalized),
+        edgeGlowAlpha = scalarLerp(0.24f, 0.42f, primaryNormalized),
+        sparkleBoost = if (interactiveEffectsEnabled) {
+            scalarLerp(0.18f, 0.46f, secondaryNormalized)
+        } else {
+            0f
+        },
     )
 }
 
@@ -302,38 +434,83 @@ fun buildBurstParticleSpecs(
         seed = ((highestRarityLabel?.hashCode() ?: 0) * 31) + if (hasHolographicBurst) 1 else 0,
     )
 
-    var radialCount = 100 + allowedRarities.size * 30
-    if (hasHolographicBurst) radialCount += 50
-    val radialParticles = List(radialCount) { index ->
+    var radialCount = 92 + allowedRarities.size * 28
+    if (hasHolographicBurst) radialCount += 72
+    val radialParticles = List(radialCount) {
         val rarityLabel = allowedRarities[random.nextInt(allowedRarities.size)]
+        val driftMagnitude = if (hasHolographicBurst) {
+            0.032f + random.nextFloat() * 0.062f
+        } else {
+            0.008f + random.nextFloat() * 0.016f
+        }
         BurstParticleSpec(
             rarityLabel = rarityLabel,
             motion = BurstParticleMotion.Radial,
             delayFraction = 0.04f + random.nextFloat() * 0.8f,
-            travelFactor = 4.4f + random.nextFloat() * 04.8f,
-            radius = 0.0175f + random.nextFloat() * 0.0200f,
-            alpha = 0.42f + random.nextFloat() * 0.34f,
-            angle = (-PI / 2f) + (random.nextFloat() - 0.5f) * 0.42f,
+            travelFactor = if (hasHolographicBurst) {
+                5.2f + random.nextFloat() * 5.4f
+            } else {
+                4.4f + random.nextFloat() * 4.8f
+            },
+            radius = if (hasHolographicBurst) {
+                0.0185f + random.nextFloat() * 0.0225f
+            } else {
+                0.0175f + random.nextFloat() * 0.0200f
+            },
+            alpha = if (hasHolographicBurst) {
+                0.5f + random.nextFloat() * 0.34f
+            } else {
+                0.42f + random.nextFloat() * 0.34f
+            },
+            angle = (-PI / 2f) + (random.nextFloat() - 0.5f) * if (hasHolographicBurst) 0.62f else 0.42f,
+            horizontalDrift = if (random.nextBoolean()) {
+                driftMagnitude
+            } else {
+                -driftMagnitude
+            },
+            spinTurns = if (hasHolographicBurst) {
+                1.35f + random.nextFloat() * 1.45f
+            } else {
+                0.45f + random.nextFloat() * 0.45f
+            },
         )
     }
 
     if (!hasHolographicBurst) return radialParticles
 
-    val fallingCount = 40
-    val fallingParticles = List(fallingCount) { index ->
+    val fallingCount = 56
+    val fallingParticles = List(fallingCount) {
         BurstParticleSpec(
             rarityLabel = allowedRarities[random.nextInt(allowedRarities.size)],
             motion = BurstParticleMotion.Falling,
-            delayFraction = 0.22f + random.nextFloat() * 0.64f,
-            travelFactor = 1.18f + random.nextFloat() * 0.44f,
-            radius = 0.0175f + random.nextFloat() * 0.0200f,
-            alpha = 0.4f + random.nextFloat() * 0.26f,
+            delayFraction = 0.16f + random.nextFloat() * 0.66f,
+            travelFactor = 1.3f + random.nextFloat() * 0.7f,
+            radius = 0.0185f + random.nextFloat() * 0.0215f,
+            alpha = 0.46f + random.nextFloat() * 0.28f,
             xFraction = 0.06f + random.nextFloat() * 0.88f,
-            horizontalDrift = -0.08f + random.nextFloat() * 0.16f,
-            startYFraction = -0.16f - random.nextFloat() * 0.18f,
+            horizontalDrift = -0.14f + random.nextFloat() * 0.28f,
+            startYFraction = -0.18f - random.nextFloat() * 0.2f,
+            angle = random.nextFloat().toDouble() * PI * 2,
+            spinTurns = 1.1f + random.nextFloat() * 1.9f,
         )
     }
-    return radialParticles + fallingParticles
+
+    val orbitalCount = 24
+    val orbitalParticles = List(orbitalCount) {
+        BurstParticleSpec(
+            rarityLabel = allowedRarities[random.nextInt(allowedRarities.size)],
+            motion = BurstParticleMotion.Orbital,
+            delayFraction = 0.08f + random.nextFloat() * 0.44f,
+            travelFactor = 0.56f + random.nextFloat() * 0.88f,
+            radius = 0.0200f + random.nextFloat() * 0.0240f,
+            alpha = 0.54f + random.nextFloat() * 0.24f,
+            angle = random.nextFloat().toDouble() * PI * 2,
+            horizontalDrift = 0.22f + random.nextFloat() * 0.16f,
+            startYFraction = -0.08f + random.nextFloat() * 0.16f,
+            spinTurns = 0.95f + random.nextFloat() * 1.8f,
+        )
+    }
+    return radialParticles + fallingParticles + orbitalParticles
 }
 
 private fun normalizedPhase(
