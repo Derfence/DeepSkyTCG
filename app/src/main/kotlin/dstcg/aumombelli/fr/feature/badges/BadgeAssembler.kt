@@ -49,9 +49,9 @@ internal fun buildBadgeBookSections(
                             )
                         }
 
-                        if (supportsHolographicBadges(profiles)) {
+                        if (supportsStampedBadges(profiles)) {
                             add(
-                                buildHolographicBadge(
+                                buildStampedBadge(
                                     extension = extension,
                                     cards = extensionCards,
                                     collection = collection,
@@ -60,9 +60,9 @@ internal fun buildBadgeBookSections(
                             )
                         }
 
-                        if (supportsMountainHolographicBadges(profiles)) {
+                        if (supportsHolographicStampedBadges(profiles)) {
                             add(
-                                buildMountainHolographicBadge(
+                                buildHolographicStampedBadge(
                                     extension = extension,
                                     cards = extensionCards,
                                     collection = collection,
@@ -144,7 +144,7 @@ private fun buildSkyQualityBadge(
     )
 }
 
-private fun buildHolographicBadge(
+private fun buildStampedBadge(
     extension: ExtensionDefinition,
     cards: List<CardDefinition>,
     collection: OwnedCollection,
@@ -154,24 +154,24 @@ private fun buildHolographicBadge(
         matchedCards = cards.count { card ->
             val profile = checkNotNull(profilesByCardId[card.id])
             cardMatches(collection = collection, card = card, profile = profile) { ownedVariant ->
-                profile.isHolographicFinish(ownedVariant.finish)
+                profile.isStampedFinish(ownedVariant.finish)
             }
         },
         totalCards = cards.size,
     )
 
     return BadgeItem(
-        id = "${extension.id}::finish::holographic",
+        id = "${extension.id}::finish::stamped",
         extensionId = extension.id,
         extensionName = extension.name,
-        title = "Holographique",
-        description = "Obtiens chaque carte de ${extension.name} en holographique, quelle que soit la qualite du ciel.",
-        requirementType = BadgeRequirementType.Holographic,
+        title = "Tamponnee",
+        description = "Obtiens chaque carte de ${extension.name} en version tamponnee, quelle que soit la qualite du ciel.",
+        requirementType = BadgeRequirementType.Stamped,
         progress = progress,
     )
 }
 
-private fun buildMountainHolographicBadge(
+private fun buildHolographicStampedBadge(
     extension: ExtensionDefinition,
     cards: List<CardDefinition>,
     collection: OwnedCollection,
@@ -181,10 +181,10 @@ private fun buildMountainHolographicBadge(
         matchedCards = cards.count { card ->
             val profile = checkNotNull(profilesByCardId[card.id])
             cardMatches(collection = collection, card = card, profile = profile) { ownedVariant ->
-                profile.isHolographicFinish(ownedVariant.finish) &&
+                profile.isStampedFinish(ownedVariant.finish) &&
                     profile.isAtLeastSkyQuality(
                         candidateCode = ownedVariant.skyQuality,
-                        thresholdCode = "mountain",
+                        thresholdCode = "holographic",
                     )
             }
         },
@@ -192,14 +192,14 @@ private fun buildMountainHolographicBadge(
     )
 
     return BadgeItem(
-        id = "${extension.id}::finish::mountain-holographic",
+        id = "${extension.id}::finish::holographic-stamped",
         extensionId = extension.id,
         extensionName = extension.name,
-        title = "Montagne holo",
-        description = "Obtiens chaque carte de ${extension.name} en holographique avec une qualite du ciel Montagne.",
-        requirementType = BadgeRequirementType.MountainHolographic,
+        title = "Holo tamponnee",
+        description = "Obtiens chaque carte de ${extension.name} en qualite holographique et en finition tamponnee.",
+        requirementType = BadgeRequirementType.HolographicStamped,
         progress = progress,
-        skyQualityCode = "mountain",
+        skyQualityCode = "holographic",
     )
 }
 
@@ -226,7 +226,7 @@ private fun buildPerfectCollectionBadge(
         extensionId = extension.id,
         extensionName = extension.name,
         title = "Collection parfaite",
-        description = "Obtiens les huit variations de chaque carte de ${extension.name} : les quatre qualites du ciel en standard et en holographique.",
+        description = "Obtiens les dix variations de chaque carte de ${extension.name} : les cinq qualites du ciel en standard et en tamponnee.",
         requirementType = BadgeRequirementType.PerfectCollection,
         progress = progress,
     )
@@ -278,27 +278,27 @@ private fun commonSkyQualities(profiles: List<VariantProfile>): List<SkyQualityD
     }
 }
 
-private fun supportsHolographicBadges(profiles: List<VariantProfile>): Boolean =
+private fun supportsStampedBadges(profiles: List<VariantProfile>): Boolean =
     profiles.isNotEmpty() && profiles.all { profile ->
-        profile.finishes.any { it.isHolographic }
+        profile.finishes.any { it.isStamped }
     }
 
-private fun supportsMountainHolographicBadges(profiles: List<VariantProfile>): Boolean =
-    supportsHolographicBadges(profiles) && profiles.all { profile ->
-        profile.skyQualities.any { it.code == "mountain" }
+private fun supportsHolographicStampedBadges(profiles: List<VariantProfile>): Boolean =
+    supportsStampedBadges(profiles) && profiles.all { profile ->
+        profile.skyQualities.any { it.code == "holographic" }
     }
 
 private fun supportsPerfectCollectionBadge(profiles: List<VariantProfile>): Boolean =
     profiles.isNotEmpty() && profiles.all { profile ->
-        profile.skyQualities.size * profile.finishes.size == 8
+        profile.skyQualities.size * profile.finishes.size == 10
     }
 
 private fun VariantProfile.supportsVariant(variant: OwnedVariantCount): Boolean =
     skyQualities.any { it.code == variant.skyQuality } &&
         finishes.any { it.code == variant.finish }
 
-private fun VariantProfile.isHolographicFinish(finishCode: String): Boolean =
-    finishes.firstOrNull { it.code == finishCode }?.isHolographic == true
+private fun VariantProfile.isStampedFinish(finishCode: String): Boolean =
+    finishes.firstOrNull { it.code == finishCode }?.isStamped == true
 
 private fun VariantProfile.isAtLeastSkyQuality(
     candidateCode: String,

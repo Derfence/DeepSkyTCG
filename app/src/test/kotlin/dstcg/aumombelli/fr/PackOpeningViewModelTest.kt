@@ -41,10 +41,8 @@ class PackOpeningViewModelTest {
                         name = "Nebuleuse d'Orion",
                         rarityLabel = "Common",
                         imageRef = "m42",
-                        skyQuality = "rural",
-                        skyQualityLabel = "Campagne",
-                        finish = "holographic",
-                        finishLabel = "Holographique",
+                        skyQuality = "holographic",
+                        skyQualityLabel = "Holographique",
                         isHolographic = true,
                     ),
                 ),
@@ -62,7 +60,7 @@ class PackOpeningViewModelTest {
         val state = viewModel.uiState.value
         assertEquals(1, state.displayCards.size)
         assertEquals("Astronomes en herbe", state.displayCards.first().extensionName)
-        assertEquals("Campagne", state.displayCards.first().activeVariant.skyQualityLabel)
+        assertEquals("Holographique", state.displayCards.first().activeVariant.skyQualityLabel)
         assertEquals(true, state.displayCards.first().activeVariant.isHolographic)
     }
 }

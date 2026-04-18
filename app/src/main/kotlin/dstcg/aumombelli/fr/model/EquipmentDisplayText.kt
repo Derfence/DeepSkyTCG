@@ -2,7 +2,7 @@ package fr.aumombelli.dstcg.model
 
 fun EquipmentCardDefinition.bonusLabel(): String = when (bonusUnit) {
     EquipmentBonusUnit.RarityBoost -> "+${formatEquipmentNumber(bonusValue)}% de promotion de rarete"
-    EquipmentBonusUnit.HolographicPercent -> "+${formatEquipmentNumber(bonusValue)}% holographique"
+    EquipmentBonusUnit.HolographicQualityPercent -> "+${formatEquipmentNumber(bonusValue)}% de qualite holo"
     EquipmentBonusUnit.RechargeMultiplier -> "Recharge x${formatEquipmentNumber(bonusValue)}"
 }
 

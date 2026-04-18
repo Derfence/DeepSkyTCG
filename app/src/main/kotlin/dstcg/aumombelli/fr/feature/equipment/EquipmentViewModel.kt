@@ -216,7 +216,7 @@ internal fun EquipmentType.toCategoryVisualUi(): EquipmentCategoryVisualUi = whe
 
     EquipmentType.Telescope -> EquipmentCategoryVisualUi(
         icon = EquipmentCategoryIconUi.Telescope,
-        benefitLabel = "Chance holographique",
+        benefitLabel = "Chance holo",
     )
 
     EquipmentType.Mount -> EquipmentCategoryVisualUi(

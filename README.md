@@ -88,7 +88,7 @@ La collection locale ne porte plus de version de catalogue. Au premier lancement
 - chaque slot `Common` peut etre remplace par une carte d'equipement selon `equipment_settings.json`
 - un seul equipement actif par type ; des types differents peuvent coexister
 - `Monture` ajoute une chance de promotion de rarete sur un palier
-- `Telescope` ajoute une chance additive de finition holographique
+- `Telescope` ajoute une chance additive de qualite holo
 - `Observatoire` multiplie la vitesse de recharge apres application de la meteo
 - tirage de `skyQuality` et `finish` derive au runtime a partir de `Donnees`
 

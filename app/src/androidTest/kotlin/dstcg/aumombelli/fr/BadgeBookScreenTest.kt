@@ -35,12 +35,12 @@ class BadgeBookScreenTest {
                                 extensionName = "Astronomes en herbe",
                                 badges = listOf(
                                     BadgeItem(
-                                        id = "astronomes-en-herbe::finish::holographic",
+                                        id = "astronomes-en-herbe::finish::stamped",
                                         extensionId = "astronomes-en-herbe",
                                         extensionName = "Astronomes en herbe",
-                                        title = "Holographique",
-                                        description = "Obtiens chaque carte de Astronomes en herbe en holographique, quelle que soit la qualite du ciel.",
-                                        requirementType = BadgeRequirementType.Holographic,
+                                        title = "Tamponnee",
+                                        description = "Obtiens chaque carte de Astronomes en herbe en finition tamponnee, quelle que soit la qualite du ciel.",
+                                        requirementType = BadgeRequirementType.Stamped,
                                         progress = BadgeProgress(
                                             matchedCards = 1,
                                             totalCards = 3,
@@ -56,7 +56,7 @@ class BadgeBookScreenTest {
         }
 
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("badge-coin-astronomes-en-herbe::finish::holographic").performClick()
+        composeRule.onNodeWithTag("badge-coin-astronomes-en-herbe::finish::stamped").performClick()
         composeRule.mainClock.advanceTimeBy(700)
         composeRule.waitForIdle()
 
@@ -66,7 +66,7 @@ class BadgeBookScreenTest {
             substring = true,
         )
         composeRule.onNodeWithTag("badge-detail-description").assertTextContains(
-            "holographique",
+            "tamponnee",
             substring = true,
         )
     }

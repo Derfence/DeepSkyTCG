@@ -274,10 +274,10 @@ class PackRepositoryTest {
     private fun localPackProfile(): VariantProfile = VariantProfile(
         id = "local-pack-profile",
         skyQualities = listOf(
-            SkyQualityDefinition("mountain", "Montagne"),
+            SkyQualityDefinition("holographic", "Holographique", isHolographic = true),
         ),
         finishes = listOf(
-            CardFinishDefinition("holographic", "Holographique", isHolographic = true),
+            CardFinishDefinition("stamped", "Tamponnee", isStamped = true),
         ),
     )
 }

@@ -69,8 +69,8 @@ class CollectionRepositoryTest {
                     name = "Sirius",
                     rarityLabel = "Epic",
                     imageRef = "sirius",
-                    finish = "holographic",
-                    finishLabel = "Holographique",
+                    skyQuality = "holographic",
+                    skyQualityLabel = "Holographique",
                     isHolographic = true,
                 ),
             ),
@@ -79,6 +79,6 @@ class CollectionRepositoryTest {
         assertEquals(2, merged.cards["ALP-001"]?.totalOwned)
         assertEquals(1, merged.cards["MON-006"]?.totalOwned)
         assertEquals(2, merged.cards["ALP-001"]?.variants?.size)
-        assertEquals("holographic", merged.cards["MON-006"]?.variants?.single()?.finish)
+        assertEquals("holographic", merged.cards["MON-006"]?.variants?.single()?.skyQuality)
     }
 }

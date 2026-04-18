@@ -511,10 +511,11 @@ class LocalPackEngineEquipmentTest {
             SkyQualityDefinition("suburban", "Periurbain"),
             SkyQualityDefinition("rural", "Campagne"),
             SkyQualityDefinition("mountain", "Montagne"),
+            SkyQualityDefinition("holographic", "Holographique", isHolographic = true),
         ),
         finishes = listOf(
             CardFinishDefinition("standard", "Standard"),
-            CardFinishDefinition("holographic", "Holographique", isHolographic = true),
+            CardFinishDefinition("stamped", "Tamponnee", isStamped = true),
         ),
     )
 

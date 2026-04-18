@@ -20,13 +20,14 @@ data class VariantProfile(
 data class SkyQualityDefinition(
     val code: String,
     val label: String,
+    val isHolographic: Boolean = false,
 )
 
 @Serializable
 data class CardFinishDefinition(
     val code: String,
     val label: String,
-    val isHolographic: Boolean = false,
+    val isStamped: Boolean = false,
 )
 
 @Serializable
@@ -57,5 +58,6 @@ data class GameBalanceDefinition(
     val suburbanMeanPerDay: Double,
     val ruralMeanPerDay: Double,
     val mountainMeanPerDay: Double,
-    val percentHoloMeanPerDay: Double,
+    val holographicSkyMeanPerDay: Double,
+    val percentStampedPerDay: Double,
 )

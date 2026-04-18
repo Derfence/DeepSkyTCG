@@ -39,8 +39,8 @@ enum class EquipmentBonusUnit {
     @SerialName("rarityBoost")
     RarityBoost,
 
-    @SerialName("holographicPercent")
-    HolographicPercent,
+    @SerialName("holographicSkyPercent")
+    HolographicQualityPercent,
 
     @SerialName("rechargeMultiplier")
     RechargeMultiplier,
@@ -49,7 +49,7 @@ enum class EquipmentBonusUnit {
     val code: String
         get() = when (this) {
             RarityBoost -> "rarityBoost"
-            HolographicPercent -> "holographicPercent"
+            HolographicQualityPercent -> "holographicSkyPercent"
             RechargeMultiplier -> "rechargeMultiplier"
         }
 

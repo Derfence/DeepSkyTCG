@@ -39,7 +39,7 @@ class LibraryViewModelTest {
             collection = ownedCollectionWithVariants(
                 "MON-050",
                 OwnedVariantCount("city", "standard", 1),
-                OwnedVariantCount("mountain", "holographic", 1),
+                OwnedVariantCount("holographic", "stamped", 1),
             )
         }
 
@@ -55,7 +55,7 @@ class LibraryViewModelTest {
         assertEquals(2, ownedCard.ownedCount)
         assertEquals("Moon Dawn", ownedCard.extensionName)
         assertEquals(
-            listOf("mountain::holographic", "city::standard"),
+            listOf("holographic::stamped", "city::standard"),
             ownedCard.availableVariants.map { it.key },
         )
     }

@@ -20,13 +20,13 @@ class BadgeCoinTest {
             coinSize = coinSize,
         )
         val regularLogoSize = badgeCoinLogoSize(
-            badge = sampleBadge(requirementType = BadgeRequirementType.Holographic),
+            badge = sampleBadge(requirementType = BadgeRequirementType.Stamped),
             coinSize = coinSize,
         )
 
         assertTrue(generalLogoSize > regularLogoSize)
         assertEquals(0.72f, badgeCoinLogoScale(sampleBadge(BadgeRequirementType.FirstPackOpened)), 0.0001f)
-        assertEquals(0.60f, badgeCoinLogoScale(sampleBadge(BadgeRequirementType.Holographic)), 0.0001f)
+        assertEquals(0.60f, badgeCoinLogoScale(sampleBadge(BadgeRequirementType.Stamped)), 0.0001f)
     }
 
     @Test

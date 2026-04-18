@@ -39,11 +39,11 @@ RESULTS_CARDS_SECTION = "Cards"
 RESULTS_EQUIPMENT_SECTION = "EquipmentCards"
 
 RARITY_ORDER = ["Common", "Uncommon", "Rare", "Epic"]
-SUPPORTED_SKY_CODES = ["city", "suburban", "rural", "mountain"]
-SUPPORTED_FINISH_CODES = ["standard", "holographic"]
+SUPPORTED_SKY_CODES = ["city", "suburban", "rural", "mountain", "holographic"]
+SUPPORTED_FINISH_CODES = ["standard", "stamped"]
 WEIGHT_SCALE = Decimal("1000000")
 SUPPORTED_EQUIPMENT_TYPES = ["observatory", "telescope", "mount"]
-SUPPORTED_EQUIPMENT_BONUS_UNITS = ["rarityBoost", "holographicPercent", "rechargeMultiplier"]
+SUPPORTED_EQUIPMENT_BONUS_UNITS = ["rarityBoost", "holographicSkyPercent", "rechargeMultiplier"]
 
 CATALOGUE_FIELDS = [
     "rowType",
@@ -118,7 +118,7 @@ VARIANT_PROFILE_FIELDS = [
     "suburbanMeanDays",
     "ruralMeanDays",
     "mountainMeanDays",
-    "holographicMeanDays",
+    "holographicSkyMeanDays",
 ]
 
 EXTENSION_BALANCE_FIELDS = [
@@ -153,7 +153,8 @@ class GameBalanceData:
     suburban_mean_per_day: Decimal
     rural_mean_per_day: Decimal
     mountain_mean_per_day: Decimal
-    percent_holo_mean_per_day: Decimal
+    holographic_sky_mean_per_day: Decimal
+    percent_stamped_per_day: Decimal
 
     @property
     def settings(self) -> GlobalSettings:
@@ -186,7 +187,8 @@ class GameBalanceData:
         suburban = Fraction(self.suburban_mean_per_day) / self.cards_per_day
         rural = Fraction(self.rural_mean_per_day) / self.cards_per_day
         mountain = Fraction(self.mountain_mean_per_day) / self.cards_per_day
-        city = Fraction(1, 1) - suburban - rural - mountain
+        holographic = Fraction(self.holographic_sky_mean_per_day) / self.cards_per_day
+        city = Fraction(1, 1) - suburban - rural - mountain - holographic
         if city <= 0:
             raise CatalogSheetError("Donnees: derived city probability must stay strictly positive.")
         return {
@@ -194,17 +196,18 @@ class GameBalanceData:
             "suburban": suburban,
             "rural": rural,
             "mountain": mountain,
+            "holographic": holographic,
         }
 
     @property
     def finish_probabilities(self) -> dict[str, Fraction]:
-        holographic = percent_to_probability(self.percent_holo_mean_per_day)
-        standard = Fraction(1, 1) - holographic
+        stamped = percent_to_probability(self.percent_stamped_per_day)
+        standard = Fraction(1, 1) - stamped
         if standard <= 0:
             raise CatalogSheetError("Donnees: derived standard probability must stay strictly positive.")
         return {
             "standard": standard,
-            "holographic": holographic,
+            "stamped": stamped,
         }
 
 
@@ -382,7 +385,8 @@ def game_balance_data_from_json(payload: dict[str, Any]) -> GameBalanceData:
         suburban_mean_per_day=Decimal(str(payload["suburbanMeanPerDay"])),
         rural_mean_per_day=Decimal(str(payload["ruralMeanPerDay"])),
         mountain_mean_per_day=Decimal(str(payload["mountainMeanPerDay"])),
-        percent_holo_mean_per_day=Decimal(str(payload["percentHoloMeanPerDay"])),
+        holographic_sky_mean_per_day=Decimal(str(payload["holographicSkyMeanPerDay"])),
+        percent_stamped_per_day=Decimal(str(payload["percentStampedPerDay"])),
     )
     validate_balance_data(balance_data, context="game_balance.json")
     return balance_data
@@ -398,7 +402,8 @@ def balance_data_to_json(balance_data: GameBalanceData) -> dict[str, Any]:
         "suburbanMeanPerDay": float(balance_data.suburban_mean_per_day),
         "ruralMeanPerDay": float(balance_data.rural_mean_per_day),
         "mountainMeanPerDay": float(balance_data.mountain_mean_per_day),
-        "percentHoloMeanPerDay": float(balance_data.percent_holo_mean_per_day),
+        "holographicSkyMeanPerDay": float(balance_data.holographic_sky_mean_per_day),
+        "percentStampedPerDay": float(balance_data.percent_stamped_per_day),
     }
 
 
@@ -525,6 +530,8 @@ def validate_equipment_card_payload(
         raise CatalogSheetError(f"{context}: 'bonusValue' must be strictly positive.")
 
     bonus_unit = str(payload.get("bonusUnit", "")).strip()
+    if bonus_unit == "holographicPercent":
+        bonus_unit = "holographicSkyPercent"
     if bonus_unit not in SUPPORTED_EQUIPMENT_BONUS_UNITS:
         raise CatalogSheetError(
             f"{context}: 'bonusUnit' must be one of {', '.join(SUPPORTED_EQUIPMENT_BONUS_UNITS)}.",
@@ -532,7 +539,7 @@ def validate_equipment_card_payload(
 
     expected_bonus_unit = {
         "observatory": "rechargeMultiplier",
-        "telescope": "holographicPercent",
+        "telescope": "holographicSkyPercent",
         "mount": "rarityBoost",
     }[equipment_type]
     if bonus_unit != expected_bonus_unit:
@@ -542,7 +549,7 @@ def validate_equipment_card_payload(
 
     if bonus_unit == "rechargeMultiplier" and bonus_value < 1:
         raise CatalogSheetError(f"{context}: 'bonusValue' must be at least 1 for rechargeMultiplier.")
-    if bonus_unit in {"holographicPercent", "rarityBoost"} and bonus_value > 100:
+    if bonus_unit in {"holographicSkyPercent", "rarityBoost"} and bonus_value > 100:
         raise CatalogSheetError(f"{context}: 'bonusValue' must stay between 0 and 100 for percentage bonuses.")
 
     return {
@@ -639,7 +646,8 @@ def parse_data_sheet(rows: list[list[str]]) -> tuple[GameBalanceData, EquipmentS
         suburban_mean_per_day=parse_decimal_value(sheet_cell(rows, 7, 2), "B7", DATA_SHEET_NAME),
         rural_mean_per_day=parse_decimal_value(sheet_cell(rows, 8, 2), "B8", DATA_SHEET_NAME),
         mountain_mean_per_day=parse_decimal_value(sheet_cell(rows, 9, 2), "B9", DATA_SHEET_NAME),
-        percent_holo_mean_per_day=parse_decimal_value(sheet_cell(rows, 11, 4), "D11", DATA_SHEET_NAME),
+        holographic_sky_mean_per_day=parse_decimal_value(sheet_cell(rows, 10, 2), "B10", DATA_SHEET_NAME),
+        percent_stamped_per_day=parse_decimal_value(sheet_cell(rows, 11, 4), "D11", DATA_SHEET_NAME),
     )
     validate_balance_data(balance_data, context=DATA_SHEET_NAME)
     equipment_settings = parse_equipment_settings_from_data_sheet(rows)
@@ -659,7 +667,8 @@ def validate_balance_data(balance_data: GameBalanceData, context: str) -> None:
         ("suburbanMeanPerDay", balance_data.suburban_mean_per_day),
         ("ruralMeanPerDay", balance_data.rural_mean_per_day),
         ("mountainMeanPerDay", balance_data.mountain_mean_per_day),
-        ("percentHoloMeanPerDay", balance_data.percent_holo_mean_per_day),
+        ("holographicSkyMeanPerDay", balance_data.holographic_sky_mean_per_day),
+        ("percentStampedPerDay", balance_data.percent_stamped_per_day),
     ]:
         if value <= 0:
             raise CatalogSheetError(f"{context}: '{field_name}' must be strictly positive.")
@@ -693,14 +702,14 @@ def build_data_sheet_rows(
         ["suburbanMeanPerDay", balance_data.suburban_mean_per_day],
         ["ruralMeanPerDay", balance_data.rural_mean_per_day],
         ["mountainMeanPerDay", balance_data.mountain_mean_per_day],
-        ["", "", "", "percentHoloMeanPerDay"],
+        ["holoMeanPerDay", balance_data.holographic_sky_mean_per_day, "", "percentStampMeanPerDay"],
         [
-            "unholoMeanPerDay",
+            "unstampMeanPerDay",
             decimal_cell(balance_data.finish_probabilities["standard"] * balance_data.cards_per_day, 15),
             "",
-            balance_data.percent_holo_mean_per_day,
+            balance_data.percent_stamped_per_day,
         ],
-        ["holographicMeanPerDay", decimal_cell(balance_data.finish_probabilities["holographic"] * balance_data.cards_per_day, 15)],
+        ["stampMeanPerDay", decimal_cell(balance_data.finish_probabilities["stamped"] * balance_data.cards_per_day, 15)],
         [],
         [
             "commonPerDay",
@@ -1214,9 +1223,9 @@ def parse_probabilities_sheet(
                     row_number,
                     PROBABILITIES_SHEET_NAME,
                 ),
-                "holographicMeanDays": require_positive_decimal(
+                "holographicSkyMeanDays": require_positive_decimal(
                     row,
-                    "holographicMeanDays",
+                    "holographicSkyMeanDays",
                     row_number,
                     PROBABILITIES_SHEET_NAME,
                 ),
@@ -1477,6 +1486,7 @@ def compute_variant_profiles(
             "suburban": probability_from_mean_days(settings, input_row["suburbanMeanDays"]),
             "rural": probability_from_mean_days(settings, input_row["ruralMeanDays"]),
             "mountain": probability_from_mean_days(settings, input_row["mountainMeanDays"]),
+            "holographic": probability_from_mean_days(settings, input_row["holographicSkyMeanDays"]),
         }
         target_sky_probabilities["city"] = Fraction(1, 1) - sum(
             target_sky_probabilities.values(),
@@ -1488,9 +1498,9 @@ def compute_variant_profiles(
             )
 
         target_finish_probabilities: dict[str, Fraction] = {
-            "holographic": probability_from_mean_days(settings, input_row["holographicMeanDays"]),
+            "stamped": default_game_balance_data().finish_probabilities["stamped"],
         }
-        target_finish_probabilities["standard"] = Fraction(1, 1) - target_finish_probabilities["holographic"]
+        target_finish_probabilities["standard"] = Fraction(1, 1) - target_finish_probabilities["stamped"]
         if target_finish_probabilities["standard"] <= 0:
             raise CatalogSheetError(
                 f"Variant profile '{profile_id}': derived standard probability must stay strictly positive.",
@@ -1615,10 +1625,10 @@ def compute_cards(
                 extension_input["rarestComboMeanDays"],
             )
             rarest_sky_probability = metrics["actualSkyProbabilities"][metrics["rarestSkyCode"]]
-            holographic_probability = metrics["actualFinishProbabilities"]["holographic"]
-            if rarest_sky_probability <= 0 or holographic_probability <= 0:
+            stamped_probability = metrics["actualFinishProbabilities"]["stamped"]
+            if rarest_sky_probability <= 0 or stamped_probability <= 0:
                 raise CatalogSheetError(
-                    f"Extension '{extension_id}': the rarest sky quality and holographic finish "
+                    f"Extension '{extension_id}': the rarest sky quality and stamped finish "
                     "must both keep a strictly positive probability.",
                 )
             target_rarity_probabilities[highest_rarity] = (
@@ -1626,7 +1636,7 @@ def compute_cards(
                 * rarity_inverse_sums[highest_rarity]
                 * rarest_card_multiplier
                 / rarest_sky_probability
-                / holographic_probability
+                / stamped_probability
             )
 
         remaining_common_probability = Fraction(1, 1) - sum(
@@ -1770,7 +1780,7 @@ def build_probability_sheet_rows(
                 row["suburbanMeanDays"],
                 row["ruralMeanDays"],
                 row["mountainMeanDays"],
-                row["holographicMeanDays"],
+                row["holographicSkyMeanDays"],
                 "Ville et Standard sont derives automatiquement.",
             ],
         )
@@ -2039,11 +2049,11 @@ def build_results_sheet_rows(
         )
         profile = profile_rows_by_id[rarest_card["variantProfileId"]]
         rarest_sky = rarest_weighted_code(profile["skyQualityWeights"])
-        holographic = weighted_code_lookup(profile["finishWeights"], "holographic")
+        stamped = weighted_code_lookup(profile["finishWeights"], "stamped")
         combo_probability = (
             rarest_card["finalProbability"]
             * Fraction(rarest_sky["weight"], total_weight_of_codes(profile["skyQualityWeights"]))
-            * Fraction(holographic["weight"], total_weight_of_codes(profile["finishWeights"]))
+            * Fraction(stamped["weight"], total_weight_of_codes(profile["finishWeights"]))
         )
         rows.append(
             [
@@ -2155,7 +2165,7 @@ def build_export_variant_inputs(
                 "suburbanMeanDays": decimal_cell(mean_days(sky_probabilities["suburban"], settings), 15),
                 "ruralMeanDays": decimal_cell(mean_days(sky_probabilities["rural"], settings), 15),
                 "mountainMeanDays": decimal_cell(mean_days(sky_probabilities["mountain"], settings), 15),
-                "holographicMeanDays": decimal_cell(mean_days(finish_probabilities["holographic"], settings), 15),
+                "holographicSkyMeanDays": decimal_cell(mean_days(sky_probabilities["holographic"], settings), 15),
             },
         )
     return inputs
@@ -2183,7 +2193,7 @@ def build_export_extension_inputs(
 
         variant_profile = variant_profiles_by_id[extension_variant_profiles[extension_id]]
         rarest_sky = rarest_weighted_code(variant_profile["skyQualityWeights"])
-        holographic = weighted_code_lookup(variant_profile["finishWeights"], "holographic")
+        stamped = weighted_code_lookup(variant_profile["finishWeights"], "stamped")
 
         uncommon_row: Decimal | None = None
         if "Uncommon" in cards_by_rarity:
@@ -2208,7 +2218,7 @@ def build_export_extension_inputs(
         combo_probability = (
             Fraction(rarest_card["drawWeight"], total_weight)
             * Fraction(rarest_sky["weight"], total_weight_of_codes(variant_profile["skyQualityWeights"]))
-            * Fraction(holographic["weight"], total_weight_of_codes(variant_profile["finishWeights"]))
+            * Fraction(stamped["weight"], total_weight_of_codes(variant_profile["finishWeights"]))
         )
         inputs.append(
             {
@@ -2251,7 +2261,7 @@ def build_visible_fingerprint(
                 "suburbanMeanDays": stable_number(row["suburbanMeanDays"]),
                 "ruralMeanDays": stable_number(row["ruralMeanDays"]),
                 "mountainMeanDays": stable_number(row["mountainMeanDays"]),
-                "holographicMeanDays": stable_number(row["holographicMeanDays"]),
+                "holographicSkyMeanDays": stable_number(row["holographicSkyMeanDays"]),
             }
             for row in variant_inputs
         ],
@@ -2505,7 +2515,8 @@ def default_game_balance_data() -> GameBalanceData:
         suburban_mean_per_day=Decimal("6"),
         rural_mean_per_day=Decimal("3"),
         mountain_mean_per_day=Decimal("1"),
-        percent_holo_mean_per_day=Decimal("10"),
+        holographic_sky_mean_per_day=Decimal("0.14285714285714285"),
+        percent_stamped_per_day=Decimal("10"),
     )
 
 
@@ -2555,9 +2566,9 @@ def default_equipment_cards_data() -> list[dict[str, Any]]:
             "imageRef": "equipment_telescope_1",
             "packsAffected": 3,
             "bonusValue": Decimal("8"),
-            "bonusUnit": "holographicPercent",
+            "bonusUnit": "holographicSkyPercent",
             "dropWeight": 45,
-            "description": "Augmente legerement la chance holographique.",
+            "description": "Augmente legerement la chance holo.",
         },
         {
             "id": "telescope-advanced",
@@ -2567,9 +2578,9 @@ def default_equipment_cards_data() -> list[dict[str, Any]]:
             "imageRef": "equipment_telescope_2",
             "packsAffected": 4,
             "bonusValue": Decimal("14"),
-            "bonusUnit": "holographicPercent",
+            "bonusUnit": "holographicSkyPercent",
             "dropWeight": 30,
-            "description": "Augmente nettement la chance holographique.",
+            "description": "Augmente nettement la chance holo.",
         },
         {
             "id": "telescope-master",
@@ -2579,9 +2590,9 @@ def default_equipment_cards_data() -> list[dict[str, Any]]:
             "imageRef": "equipment_telescope_3",
             "packsAffected": 5,
             "bonusValue": Decimal("22"),
-            "bonusUnit": "holographicPercent",
+            "bonusUnit": "holographicSkyPercent",
             "dropWeight": 15,
-            "description": "Augmente fortement la chance holographique.",
+            "description": "Augmente fortement la chance holo.",
         },
         {
             "id": "mount-beginner",

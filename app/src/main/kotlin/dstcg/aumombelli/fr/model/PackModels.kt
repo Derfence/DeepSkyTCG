@@ -64,6 +64,7 @@ data class CardVariant(
     val finish: String,
     val finishLabel: String,
     val isHolographic: Boolean,
+    val isStamped: Boolean,
 )
 
 fun List<PackCard>.sortedForPackReveal(): List<PackCard> =

@@ -61,13 +61,14 @@ internal fun sortBadgeCelebrationItems(badges: List<BadgeItem>): List<BadgeItem>
 
 private fun badgeRequirementPriority(requirementType: BadgeRequirementType): Int = when (requirementType) {
     BadgeRequirementType.PerfectCollection -> 5
-    BadgeRequirementType.MountainHolographic -> 4
-    BadgeRequirementType.Holographic -> 3
+    BadgeRequirementType.HolographicStamped -> 4
+    BadgeRequirementType.Stamped -> 3
     BadgeRequirementType.FirstPackOpened -> 2
     BadgeRequirementType.SkyQuality -> 1
 }
 
 private fun skyQualityCelebrationPriority(skyQualityCode: String?): Int = when (skyQualityCode) {
+    "holographic" -> 5
     "mountain" -> 4
     "rural" -> 3
     "suburban" -> 2

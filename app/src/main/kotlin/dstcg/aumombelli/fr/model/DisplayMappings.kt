@@ -22,7 +22,8 @@ fun VariantProfile.toDisplayVariant(
         skyQualityLabel = skyQualityDefinition.label,
         finish = finishDefinition.code,
         finishLabel = finishDefinition.label,
-        isHolographic = finishDefinition.isHolographic,
+        isHolographic = skyQualityDefinition.isHolographic,
+        isStamped = finishDefinition.isStamped,
         count = count,
     )
 }
@@ -34,6 +35,7 @@ fun CardVariant.toDisplayVariant(count: Int = 0): DisplayCardVariant =
         finish = finish,
         finishLabel = finishLabel,
         isHolographic = isHolographic,
+        isStamped = isStamped,
         count = count,
     )
 

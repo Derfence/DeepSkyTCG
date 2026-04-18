@@ -202,13 +202,13 @@ class LocalPackEngine(
         val runtimeVariantWeights = checkNotNull(runtimeCatalog.variantWeightsByProfileId[definition.variantProfileId]) {
             "Poids de variante introuvables pour '${definition.variantProfileId}'."
         }
-        val skyQuality = variantProfile.requireSkyQualityDefinition(
-            pickWeightedCode(runtimeVariantWeights.skyQualityWeights),
-        )
-        val finish = pickFinishWithEquipmentBonus(
+        val skyQuality = pickSkyQualityWithEquipmentBonus(
             variantProfile = variantProfile,
             runtimeVariantWeights = runtimeVariantWeights,
-            holographicPercent = activeBonus.holographicPercent,
+            holographicQualityPercent = activeBonus.holographicQualityPercent,
+        )
+        val finish = variantProfile.requireFinishDefinition(
+            pickWeightedCode(runtimeVariantWeights.finishWeights),
         )
         return AstronomyPackRevealSlot(
             slotIndex = plannedSlot.slotIndex,
@@ -222,7 +222,8 @@ class LocalPackEngine(
                     skyQualityLabel = skyQuality.label,
                     finish = finish.code,
                     finishLabel = finish.label,
-                    isHolographic = finish.isHolographic,
+                    isHolographic = skyQuality.isHolographic,
+                    isStamped = finish.isStamped,
                 ),
             ),
         )
@@ -412,41 +413,41 @@ class LocalPackEngine(
         return pickWeighted(weightedEquipmentCards) { it.dropWeight }
     }
 
-    private fun pickFinishWithEquipmentBonus(
+    private fun pickSkyQualityWithEquipmentBonus(
         variantProfile: fr.aumombelli.dstcg.model.VariantProfile,
         runtimeVariantWeights: RuntimeVariantWeights,
-        holographicPercent: Double,
-    ): fr.aumombelli.dstcg.model.CardFinishDefinition {
-        if (holographicPercent <= 0.0) {
-            return variantProfile.requireFinishDefinition(
-                pickWeightedCode(runtimeVariantWeights.finishWeights),
+        holographicQualityPercent: Double,
+    ): fr.aumombelli.dstcg.model.SkyQualityDefinition {
+        if (holographicQualityPercent <= 0.0) {
+            return variantProfile.requireSkyQualityDefinition(
+                pickWeightedCode(runtimeVariantWeights.skyQualityWeights),
             )
         }
 
-        val finishWeightsByCode = runtimeVariantWeights.finishWeights.associateBy { it.code }
-        val holographicEntries = variantProfile.finishes
+        val skyWeightsByCode = runtimeVariantWeights.skyQualityWeights.associateBy { it.code }
+        val holographicEntries = variantProfile.skyQualities
             .filter { it.isHolographic }
-            .mapNotNull { finish -> finishWeightsByCode[finish.code] }
-        val nonHolographicEntries = variantProfile.finishes
+            .mapNotNull { skyQuality -> skyWeightsByCode[skyQuality.code] }
+        val nonHolographicEntries = variantProfile.skyQualities
             .filterNot { it.isHolographic }
-            .mapNotNull { finish -> finishWeightsByCode[finish.code] }
+            .mapNotNull { skyQuality -> skyWeightsByCode[skyQuality.code] }
 
         if (holographicEntries.isEmpty() || nonHolographicEntries.isEmpty()) {
-            return variantProfile.requireFinishDefinition(
-                pickWeightedCode(runtimeVariantWeights.finishWeights),
+            return variantProfile.requireSkyQualityDefinition(
+                pickWeightedCode(runtimeVariantWeights.skyQualityWeights),
             )
         }
 
-        val totalWeight = runtimeVariantWeights.finishWeights.sumOf { it.weight }.coerceAtLeast(1)
+        val totalWeight = runtimeVariantWeights.skyQualityWeights.sumOf { it.weight }.coerceAtLeast(1)
         val baseHolographicProbability = holographicEntries.sumOf { it.weight }.toDouble() / totalWeight.toDouble()
-        val finalHolographicProbability = (baseHolographicProbability + holographicPercent / 100.0)
+        val finalHolographicProbability = (baseHolographicProbability + holographicQualityPercent / 100.0)
             .coerceIn(0.0, 1.0)
         val selectedPool = if (rollProbability(finalHolographicProbability)) {
             holographicEntries
         } else {
             nonHolographicEntries
         }
-        return variantProfile.requireFinishDefinition(
+        return variantProfile.requireSkyQualityDefinition(
             pickWeighted(selectedPool) { it.weight }.code,
         )
     }

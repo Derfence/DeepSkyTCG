@@ -20,6 +20,7 @@ data class DisplayCardVariant(
     val finishLabel: String,
     val isHolographic: Boolean,
     val count: Int = 0,
+    val isStamped: Boolean = false,
 ) {
     val key: String get() = "$skyQuality::$finish"
 
@@ -57,5 +58,6 @@ fun skyQualitySortPriority(code: String): Int = when (code) {
     "suburban" -> 2
     "rural" -> 3
     "mountain" -> 4
+    "holographic" -> 5
     else -> 0
 }

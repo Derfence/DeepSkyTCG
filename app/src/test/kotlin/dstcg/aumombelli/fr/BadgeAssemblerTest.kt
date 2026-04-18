@@ -37,7 +37,7 @@ class BadgeAssemblerTest {
     }
 
     @Test
-    fun `holographic city card unlocks holographic badge but not mountain holographic`() {
+    fun `stamped city card unlocks stamped badge but not holo stamped badge`() {
         val section = buildBadgeBookSections(
             extensions = listOf(ExtensionDefinition("astro", "Astro", "cover")),
             cards = listOf(testCardDefinition("AST-001", extensionId = "astro")),
@@ -45,15 +45,15 @@ class BadgeAssemblerTest {
             progress = badgeProgress(
                 collection = ownedCollectionWithVariants(
                     "AST-001",
-                    OwnedVariantCount("city", "holographic", 1),
+                    OwnedVariantCount("city", "stamped", 1),
                 ),
             ),
         ).first { it.extensionId == "astro" }
 
         val badgesById = section.badges.associateBy { it.id }
 
-        assertTrue(checkNotNull(badgesById["astro::finish::holographic"]).isUnlocked)
-        assertFalse(checkNotNull(badgesById["astro::finish::mountain-holographic"]).isUnlocked)
+        assertTrue(checkNotNull(badgesById["astro::finish::stamped"]).isUnlocked)
+        assertFalse(checkNotNull(badgesById["astro::finish::holographic-stamped"]).isUnlocked)
     }
 
     @Test
@@ -70,30 +70,30 @@ class BadgeAssemblerTest {
                     cards = sortedMapOf(
                         "AST-001" to fr.aumombelli.dstcg.model.OwnedCardEntry(
                             totalOwned = 1,
-                            variants = listOf(OwnedVariantCount("mountain", "holographic", 1)),
+                            variants = listOf(OwnedVariantCount("holographic", "stamped", 1)),
                         ),
                         "AST-002" to fr.aumombelli.dstcg.model.OwnedCardEntry(
                             totalOwned = 1,
-                            variants = listOf(OwnedVariantCount("mountain", "standard", 1)),
+                            variants = listOf(OwnedVariantCount("holographic", "standard", 1)),
                         ),
                     ),
                 ),
             ),
         ).first { it.extensionId == "astro" }
 
-        val holographicBadge = section.badges.first { it.id == "astro::finish::holographic" }
-        val mountainHolographicBadge = section.badges.first {
-            it.id == "astro::finish::mountain-holographic"
+        val stampedBadge = section.badges.first { it.id == "astro::finish::stamped" }
+        val holographicStampedBadge = section.badges.first {
+            it.id == "astro::finish::holographic-stamped"
         }
 
-        assertEquals("1 / 2 cartes valides", holographicBadge.progress.label)
-        assertFalse(holographicBadge.isUnlocked)
-        assertFalse(mountainHolographicBadge.isUnlocked)
+        assertEquals("1 / 2 cartes valides", stampedBadge.progress.label)
+        assertFalse(stampedBadge.isUnlocked)
+        assertFalse(holographicStampedBadge.isUnlocked)
         assertEquals(section.badges.count { it.isUnlocked }, section.unlockedCount)
     }
 
     @Test
-    fun `perfect collection badge unlocks only when all eight variants are owned`() {
+    fun `perfect collection badge unlocks only when all ten variants are owned`() {
         val section = buildBadgeBookSections(
             extensions = listOf(ExtensionDefinition("astro", "Astro", "cover")),
             cards = listOf(testCardDefinition("AST-001", extensionId = "astro")),
@@ -102,13 +102,15 @@ class BadgeAssemblerTest {
                 collection = ownedCollectionWithVariants(
                     "AST-001",
                     OwnedVariantCount("city", "standard", 1),
-                    OwnedVariantCount("city", "holographic", 1),
+                    OwnedVariantCount("city", "stamped", 1),
                     OwnedVariantCount("suburban", "standard", 1),
-                    OwnedVariantCount("suburban", "holographic", 1),
+                    OwnedVariantCount("suburban", "stamped", 1),
                     OwnedVariantCount("rural", "standard", 1),
-                    OwnedVariantCount("rural", "holographic", 1),
+                    OwnedVariantCount("rural", "stamped", 1),
                     OwnedVariantCount("mountain", "standard", 1),
-                    OwnedVariantCount("mountain", "holographic", 1),
+                    OwnedVariantCount("mountain", "stamped", 1),
+                    OwnedVariantCount("holographic", "standard", 1),
+                    OwnedVariantCount("holographic", "stamped", 1),
                 ),
             ),
         ).first { it.extensionId == "astro" }
@@ -129,15 +131,16 @@ class BadgeAssemblerTest {
             afterProgress = badgeProgress(
                 collection = ownedCollectionWithVariants(
                     "AST-001",
-                    OwnedVariantCount("mountain", "holographic", 1),
+                    OwnedVariantCount("holographic", "stamped", 1),
                 ),
             ),
         )
 
         assertEquals(
             listOf(
-                "astro::finish::mountain-holographic",
-                "astro::finish::holographic",
+                "astro::finish::holographic-stamped",
+                "astro::finish::stamped",
+                "astro::sky::holographic",
                 "astro::sky::mountain",
                 "astro::sky::rural",
                 "astro::sky::suburban",

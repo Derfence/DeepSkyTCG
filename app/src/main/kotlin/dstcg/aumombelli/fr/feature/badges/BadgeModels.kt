@@ -24,8 +24,8 @@ data class BadgeSection(
 enum class BadgeRequirementType {
     FirstPackOpened,
     SkyQuality,
-    Holographic,
-    MountainHolographic,
+    Stamped,
+    HolographicStamped,
     PerfectCollection,
 }
 

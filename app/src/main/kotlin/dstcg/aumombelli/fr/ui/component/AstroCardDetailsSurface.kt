@@ -102,7 +102,7 @@ fun AstroCardDetailsSurface(
                     modifier = Modifier.fillMaxWidth(),
                 )
                 accessoryContent?.invoke(this)
-                DescriptionBlock(displayCard.definition)
+                DescriptionBlock(displayCard)
                 IdentitySection(displayCard)
                 CoordinatesSection(displayCard)
                 MeasurementsSection(displayCard)

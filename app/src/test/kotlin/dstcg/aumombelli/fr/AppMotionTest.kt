@@ -200,8 +200,8 @@ class AppMotionTest {
                 name = "Comete",
                 rarityLabel = "Epic",
                 imageRef = "comet",
-                finish = "holographic",
-                finishLabel = "Holographique",
+                skyQuality = "holographic",
+                skyQualityLabel = "Holographique",
                 isHolographic = true,
             ).variant.toDisplayVariant(),
         )

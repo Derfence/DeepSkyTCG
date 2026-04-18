@@ -62,8 +62,8 @@ class LocalPackEngineTest {
         assertEquals("2026-03-24T18:00:00Z", chargeStatus.nextChargeAt)
         assertEquals(setOf("ALP-001", "ALP-002"), response.cards.map { it.cardId }.toSet())
         assertEquals(2, response.cards.map { it.cardId }.distinct().size)
-        assertEquals(listOf("Montagne", "Montagne"), response.cards.map { it.variant.skyQualityLabel })
-        assertEquals(listOf("Holographique", "Holographique"), response.cards.map { it.variant.finishLabel })
+        assertEquals(listOf("Holographique", "Holographique"), response.cards.map { it.variant.skyQualityLabel })
+        assertEquals(listOf("Tamponnee", "Tamponnee"), response.cards.map { it.variant.finishLabel })
     }
 
     @Test
@@ -274,10 +274,10 @@ class LocalPackEngineTest {
     private fun localPackProfile(): VariantProfile = VariantProfile(
         id = "local-pack-profile",
         skyQualities = listOf(
-            SkyQualityDefinition("mountain", "Montagne"),
+            SkyQualityDefinition("holographic", "Holographique", isHolographic = true),
         ),
         finishes = listOf(
-            CardFinishDefinition("holographic", "Holographique", isHolographic = true),
+            CardFinishDefinition("stamped", "Tamponnee", isStamped = true),
         ),
     )
 

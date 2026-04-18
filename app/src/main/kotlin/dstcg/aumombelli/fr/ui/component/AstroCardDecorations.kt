@@ -11,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,7 +28,9 @@ import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import fr.aumombelli.dstcg.ui.motion.BrandLogoVariant
 import fr.aumombelli.dstcg.ui.motion.HolographicCardMotion
+import fr.aumombelli.dstcg.ui.motion.LaunchLogoMark
 import fr.aumombelli.dstcg.ui.theme.SkyQualityPalette
 import fr.aumombelli.dstcg.ui.theme.rarityBadgeStyle
 import kotlin.math.PI
@@ -213,10 +216,10 @@ internal fun HolographicFoilOverlay(
         val cornerRadius = size.minDimension * 0.12f
         val iridescentBrush = Brush.linearGradient(
             colors = listOf(
-                Color(0xFF78F1FF).copy(alpha = 0.16f + highlightAlpha * 0.28f),
-                Color(0xFFFF84E0).copy(alpha = 0.14f + highlightAlpha * 0.22f),
-                Color(0xFFFFE38C).copy(alpha = 0.18f + highlightAlpha * 0.26f),
-                Color(0xFF8DD8FF).copy(alpha = 0.15f + highlightAlpha * 0.22f),
+                Color(0xFF2DEBFF).copy(alpha = 0.84f + highlightAlpha * 0.14f),
+                Color(0xFFFF3FCB).copy(alpha = 0.82f + highlightAlpha * 0.16f),
+                Color(0xFFFFD84D).copy(alpha = 0.88f + highlightAlpha * 0.10f),
+                Color(0xFF41A2FF).copy(alpha = 0.84f + highlightAlpha * 0.14f),
             ),
             start = Offset(sweepCenter - size.width * 0.82f, size.height * 0.06f),
             end = Offset(sweepCenter + size.width * 0.42f, size.height * 0.96f),
@@ -229,10 +232,10 @@ internal fun HolographicFoilOverlay(
         drawRoundRect(
             brush = Brush.linearGradient(
                 colors = listOf(
-                    Color(0xFFA5F6FF).copy(alpha = 0.1f + highlightAlpha * 0.18f),
-                    Color(0xFFFFD2F3).copy(alpha = 0.08f + highlightAlpha * 0.14f),
-                    Color(0xFFFFF1BA).copy(alpha = 0.11f + highlightAlpha * 0.18f),
-                    Color(0xFFA9D6FF).copy(alpha = 0.08f + highlightAlpha * 0.14f),
+                    Color(0xFFA5FCFF).copy(alpha = 0.62f + highlightAlpha * 0.18f),
+                    Color(0xFFFFB3EB).copy(alpha = 0.56f + highlightAlpha * 0.20f),
+                    Color(0xFFFFF1A0).copy(alpha = 0.66f + highlightAlpha * 0.16f),
+                    Color(0xFFABD8FF).copy(alpha = 0.58f + highlightAlpha * 0.18f),
                 ),
                 start = Offset(sweepCenter - size.width * 0.54f, size.height * 0.02f),
                 end = Offset(sweepCenter + size.width * 0.18f, size.height * 0.98f),
@@ -290,10 +293,10 @@ internal fun HolographicRimLightOverlay(
         drawRoundRect(
             brush = Brush.linearGradient(
                 colors = listOf(
-                    Color(0xFF99E9FF).copy(alpha = edgeAlpha * 0.8f),
-                    Color(0xFFFFB4EA).copy(alpha = edgeAlpha * 0.62f),
-                    Color(0xFFFFE38C).copy(alpha = edgeAlpha * 0.76f),
-                    Color(0xFF9ED3FF).copy(alpha = edgeAlpha * 0.66f),
+                    Color(0xFF66F2FF).copy(alpha = 0.74f + edgeAlpha * 0.26f),
+                    Color(0xFFFF84E0).copy(alpha = 0.72f + edgeAlpha * 0.28f),
+                    Color(0xFFFFE15B).copy(alpha = 0.78f + edgeAlpha * 0.22f),
+                    Color(0xFF7CC2FF).copy(alpha = 0.72f + edgeAlpha * 0.26f),
                 ),
                 start = Offset.Zero,
                 end = Offset(size.width, size.height),
@@ -302,6 +305,18 @@ internal fun HolographicRimLightOverlay(
             style = Stroke(width = size.minDimension * 0.0145f),
         )
     }
+}
+
+@Composable
+internal fun StampedSealOverlay(
+    compact: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    LaunchLogoMark(
+        variant = BrandLogoVariant.Badge17,
+        emblemSize = if (compact) 18.dp else 24.dp,
+        modifier = modifier.size(if (compact) 18.dp else 24.dp),
+    )
 }
 
 internal fun starPath(

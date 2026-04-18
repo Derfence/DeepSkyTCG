@@ -41,7 +41,7 @@ Chaque carte d'equipement est un consommable data-driven avec un niveau immuable
 ## Bonus
 
 - `Monture` : ajoute une chance additive de promouvoir un slot d'un palier de rarete, sans depasser `Epic`.
-- `Telescope` : ajoute une chance additive de finition holographique, capee a `100%`.
+- `Telescope` : ajoute une chance additive de qualite holo, capee a `100%`.
 - `Observatoire` : multiplie la vitesse de recharge des packs tant que l'effet est actif.
 
 ## Activation et persistance

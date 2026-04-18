@@ -21,9 +21,9 @@ class CatalogBalanceRuntimeTest {
 
         assertEquals(20.0, balance.cardsPerDay(), 0.000001)
         assertEquals(0.5, balance.commonRarityProbability(), 0.000001)
-        assertEquals(0.5, balance.cityProbability(), 0.000001)
+        assertEquals(0.4928571428571429, balance.cityProbability(), 0.000001)
         assertEquals(0.9, balance.finishProbabilities().getValue("standard"), 0.000001)
-        assertEquals(0.1, balance.finishProbabilities().getValue("holographic"), 0.000001)
+        assertEquals(0.1, balance.finishProbabilities().getValue("stamped"), 0.000001)
         assertEquals(0.3, balance.rarityProbabilities().getValue("Uncommon"), 0.000001)
         assertEquals(0.15, balance.skyQualityProbabilities().getValue("rural"), 0.000001)
         assertEquals(6L, balance.drawCooldownDuration().toHours())

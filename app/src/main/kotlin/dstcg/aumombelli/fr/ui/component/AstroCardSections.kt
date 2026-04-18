@@ -184,11 +184,17 @@ internal fun CardFooter(
         }
         Column(
             horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.Bottom,
+            verticalArrangement = Arrangement.spacedBy(
+                space = if (compact) 2.dp else 4.dp,
+                alignment = Alignment.Bottom,
+            ),
             modifier = Modifier
                 .weight(1f)
                 .wrapContentHeight(align = Alignment.Bottom),
         ) {
+            if (displayCard.activeVariant.isStamped) {
+                StampedSealOverlay(compact = compact)
+            }
             RarityStarBadge(
                 rarityLabel = displayCard.definition.rarityLabel,
                 modifier = Modifier
@@ -237,10 +243,17 @@ private fun FooterTextBlock(
 }
 
 @Composable
-internal fun DescriptionBlock(definition: CardDefinition) {
-    SectionCard(title = "Description") {
+internal fun DescriptionBlock(displayCard: DisplayCard) {
+    SectionCard(
+        title = "Description",
+        containerColor = if (displayCard.activeVariant.isHolographic) {
+            Color.Black.copy(alpha = 0.72f)
+        } else {
+            Color.Black.copy(alpha = 0.18f)
+        },
+    ) {
         Text(
-            text = definition.astronomy.shortDescription,
+            text = displayCard.definition.astronomy.shortDescription,
             color = Color(0xFFF3F7FB),
             style = MaterialTheme.typography.bodyLarge,
         )
@@ -293,10 +306,11 @@ internal fun MeasurementsSection(displayCard: DisplayCard) {
 @Composable
 internal fun SectionCard(
     title: String,
+    containerColor: Color = Color.Black.copy(alpha = 0.18f),
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Surface(
-        color = Color.Black.copy(alpha = 0.18f),
+        color = containerColor,
         shape = RoundedCornerShape(22.dp),
     ) {
         Column(
@@ -381,5 +395,6 @@ internal fun fallbackDisplayCard(item: LibraryCardItem) =
             finish = "standard",
             finishLabel = "Standard",
             isHolographic = false,
+            isStamped = false,
         ),
     )

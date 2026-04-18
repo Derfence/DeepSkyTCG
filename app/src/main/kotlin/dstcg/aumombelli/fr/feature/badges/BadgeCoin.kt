@@ -208,13 +208,13 @@ private fun badgePalette(badge: BadgeItem): SkyQualityPalette = when (badge.requ
         mist = Color(0x55F8BE57),
     )
     BadgeRequirementType.SkyQuality -> skyQualityPalette(badge.skyQualityCode.orEmpty())
-    BadgeRequirementType.Holographic -> SkyQualityPalette(
+    BadgeRequirementType.Stamped -> SkyQualityPalette(
         top = Color(0xFF9EA4B1),
         bottom = Color(0xFF555A67),
         glow = Color(0x88D9E1F2),
         mist = Color(0x44C6D2E6),
     )
-    BadgeRequirementType.MountainHolographic -> skyQualityPalette("mountain")
+    BadgeRequirementType.HolographicStamped -> skyQualityPalette("holographic")
     BadgeRequirementType.PerfectCollection -> SkyQualityPalette(
         top = Color(0xFFB5BCCE),
         bottom = Color(0xFF596274),
@@ -294,8 +294,8 @@ private fun badgeUsesTwinklingStars(badge: BadgeItem): Boolean = when (badge.req
     BadgeRequirementType.FirstPackOpened,
     BadgeRequirementType.SkyQuality,
     -> false
-    BadgeRequirementType.Holographic,
-    BadgeRequirementType.MountainHolographic,
+    BadgeRequirementType.Stamped,
+    BadgeRequirementType.HolographicStamped,
     BadgeRequirementType.PerfectCollection,
     -> true
 }

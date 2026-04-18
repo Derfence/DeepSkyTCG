@@ -178,7 +178,8 @@ internal fun GameBalanceDefinition.validated(): GameBalanceDefinition {
     require(suburbanMeanPerDay > 0.0) { "suburbanMeanPerDay must be strictly positive." }
     require(ruralMeanPerDay > 0.0) { "ruralMeanPerDay must be strictly positive." }
     require(mountainMeanPerDay > 0.0) { "mountainMeanPerDay must be strictly positive." }
-    require(percentHoloMeanPerDay > 0.0) { "percentHoloMeanPerDay must be strictly positive." }
+    require(holographicSkyMeanPerDay > 0.0) { "holographicSkyMeanPerDay must be strictly positive." }
+    require(percentStampedPerDay > 0.0) { "percentStampedPerDay must be strictly positive." }
     require(commonRarityProbability() > 0.0) { "Derived common probability must stay strictly positive." }
     require(cityProbability() > 0.0) { "Derived city probability must stay strictly positive." }
     require(standardProbability() > 0.0) { "Derived standard probability must stay strictly positive." }
@@ -191,9 +192,9 @@ internal fun GameBalanceDefinition.commonRarityProbability(): Double =
     1.0 - percentUncommonPerDay / 100.0 - percentRarePerDay / 100.0 - percentEpicPerDay / 100.0
 
 internal fun GameBalanceDefinition.cityProbability(): Double =
-    1.0 - (suburbanMeanPerDay + ruralMeanPerDay + mountainMeanPerDay) / cardsPerDay()
+    1.0 - (suburbanMeanPerDay + ruralMeanPerDay + mountainMeanPerDay + holographicSkyMeanPerDay) / cardsPerDay()
 
-internal fun GameBalanceDefinition.standardProbability(): Double = 1.0 - percentHoloMeanPerDay / 100.0
+internal fun GameBalanceDefinition.standardProbability(): Double = 1.0 - percentStampedPerDay / 100.0
 
 internal fun GameBalanceDefinition.rarityProbabilities(): Map<String, Double> = mapOf(
     "Common" to commonRarityProbability(),
@@ -207,9 +208,10 @@ internal fun GameBalanceDefinition.skyQualityProbabilities(): Map<String, Double
     "suburban" to suburbanMeanPerDay / cardsPerDay(),
     "rural" to ruralMeanPerDay / cardsPerDay(),
     "mountain" to mountainMeanPerDay / cardsPerDay(),
+    "holographic" to holographicSkyMeanPerDay / cardsPerDay(),
 )
 
 internal fun GameBalanceDefinition.finishProbabilities(): Map<String, Double> = mapOf(
     "standard" to standardProbability(),
-    "holographic" to percentHoloMeanPerDay / 100.0,
+    "stamped" to percentStampedPerDay / 100.0,
 )
