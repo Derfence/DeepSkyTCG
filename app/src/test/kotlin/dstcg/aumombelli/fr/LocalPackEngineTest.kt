@@ -1,15 +1,21 @@
 package fr.aumombelli.dstcg
 
+import fr.aumombelli.dstcg.data.ClockTrustedTimeSource
 import fr.aumombelli.dstcg.data.LocalPackEngine
 import fr.aumombelli.dstcg.data.PackCooldownException
 import fr.aumombelli.dstcg.data.DeterministicWeatherCalendar
+import fr.aumombelli.dstcg.data.EntropySource
+import fr.aumombelli.dstcg.data.StandaloneGameSettings
 import fr.aumombelli.dstcg.data.buildPackChargeUiStatus
 import fr.aumombelli.dstcg.model.CardFinishDefinition
+import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.SkyQualityDefinition
 import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.model.VariantProfile
+import java.time.Clock
 import java.time.Duration
 import java.time.Instant
+import java.time.ZoneOffset
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -27,21 +33,20 @@ class LocalPackEngineTest {
                     name = "Nebuleuse d'Orion",
                     variantProfileId = "local-pack-profile",
                 ),
-                testCardDefinition(
-                    id = "ALP-002",
-                    name = "Galaxie d'Andromede",
-                    variantProfileId = "local-pack-profile",
-                ),
             )
             variantProfiles = listOf(localPackProfile())
-            gameBalance = localPackBalance(cardsPerDraw = 2)
+            gameBalance = localPackBalance(
+                cardsPerDraw = 1,
+                holographicSkyMeanPerDay = 3.9996,
+                percentStampedPerDay = 99.9999,
+                suburbanMeanPerDay = 0.0001,
+                ruralMeanPerDay = 0.0001,
+                mountainMeanPerDay = 0.0001,
+            )
         }
         val engine = LocalPackEngine(
             catalogRepository = catalogGateway,
-            settings = testGameSettings(
-                now = fixedNow,
-                randomSeed = 0,
-            ),
+            settings = queuedGameSettings(0, 0, 4, 1),
         )
 
         val response = engine.drawPack(
@@ -60,10 +65,9 @@ class LocalPackEngineTest {
         assertEquals("2026-03-24T12:00:00Z", response.drawnAt)
         assertEquals(9, response.rechargeState.availableDrawCount)
         assertEquals("2026-03-24T18:00:00Z", chargeStatus.nextChargeAt)
-        assertEquals(setOf("ALP-001", "ALP-002"), response.cards.map { it.cardId }.toSet())
-        assertEquals(2, response.cards.map { it.cardId }.distinct().size)
-        assertEquals(listOf("Holographique", "Holographique"), response.cards.map { it.variant.skyQualityLabel })
-        assertEquals(listOf("Tamponnee", "Tamponnee"), response.cards.map { it.variant.finishLabel })
+        assertEquals(listOf("ALP-001"), response.cards.map { it.cardId })
+        assertEquals(listOf("Holographique"), response.cards.map { it.variant.skyQualityLabel })
+        assertEquals(listOf("Tamponnee"), response.cards.map { it.variant.finishLabel })
     }
 
     @Test
@@ -274,23 +278,59 @@ class LocalPackEngineTest {
     private fun localPackProfile(): VariantProfile = VariantProfile(
         id = "local-pack-profile",
         skyQualities = listOf(
+            SkyQualityDefinition("city", "Ville"),
             SkyQualityDefinition("holographic", "Holographique", isHolographic = true),
         ),
         finishes = listOf(
+            CardFinishDefinition("standard", "Standard"),
             CardFinishDefinition("stamped", "Tamponnee", isStamped = true),
         ),
     )
 
-    private fun localPackBalance(cardsPerDraw: Int) = testGameBalanceDefinition(
+    private fun localPackBalance(
+        cardsPerDraw: Int,
+        drawCooldownHours: Double = 6.0,
+        suburbanMeanPerDay: Double = 1.0,
+        ruralMeanPerDay: Double = 1.0,
+        mountainMeanPerDay: Double = 1.0,
+        holographicSkyMeanPerDay: Double = 0.14285714285714285,
+        percentStampedPerDay: Double = 10.0,
+    ) = testGameBalanceDefinition(
         cardsPerDraw = cardsPerDraw,
-        suburbanMeanPerDay = 1.0,
-        ruralMeanPerDay = 1.0,
-        mountainMeanPerDay = 1.0,
+        drawCooldownHours = drawCooldownHours,
+        suburbanMeanPerDay = suburbanMeanPerDay,
+        ruralMeanPerDay = ruralMeanPerDay,
+        mountainMeanPerDay = mountainMeanPerDay,
+        holographicSkyMeanPerDay = holographicSkyMeanPerDay,
+        percentStampedPerDay = percentStampedPerDay,
     )
 
-    private fun testProgress(rechargeState: fr.aumombelli.dstcg.model.PackRechargeState): StandaloneProgress =
+    private fun testProgress(
+        rechargeState: fr.aumombelli.dstcg.model.PackRechargeState,
+        openedPackCount: Int = 2,
+        newPlayerOnboardingStep: NewPlayerOnboardingStep = NewPlayerOnboardingStep.Completed,
+    ): StandaloneProgress =
         StandaloneProgress(
             collection = ownedCollectionOf(),
             rechargeState = rechargeState,
+            openedPackCount = openedPackCount,
+            newPlayerOnboardingStep = newPlayerOnboardingStep,
         )
+
+    private fun queuedGameSettings(vararg values: Int): StandaloneGameSettings = StandaloneGameSettings(
+        timeSource = ClockTrustedTimeSource(Clock.fixed(fixedNow, ZoneOffset.UTC)),
+        entropySource = QueuedEntropySource(values.toList()),
+    )
+
+    private class QueuedEntropySource(
+        private val queuedValues: List<Int>,
+    ) : EntropySource {
+        private var index = 0
+
+        override fun nextInt(bound: Int): Int {
+            val queuedValue = queuedValues.getOrNull(index) ?: 0
+            index += 1
+            return queuedValue.mod(bound.coerceAtLeast(1))
+        }
+    }
 }

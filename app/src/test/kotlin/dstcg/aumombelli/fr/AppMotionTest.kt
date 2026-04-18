@@ -320,7 +320,20 @@ class AppMotionTest {
     }
 
     @Test
-    fun `screen centered holo burst origin can be pushed well below center`() {
+    fun `screen centered standard burst origin aligns with the lowered reveal source`() {
+        val origin = packOpeningBurstOrigin(
+            originBounds = null,
+            canvasWidth = 1080f,
+            canvasHeight = 1920f,
+            hasHolographicBurst = false,
+        )
+
+        assertEquals(540f, origin.x, 0.001f)
+        assertEquals(1344f, origin.y, 0.001f)
+    }
+
+    @Test
+    fun `screen centered holo burst origin stays on the same lowered source`() {
         val origin = packOpeningBurstOrigin(
             originBounds = null,
             canvasWidth = 1080f,

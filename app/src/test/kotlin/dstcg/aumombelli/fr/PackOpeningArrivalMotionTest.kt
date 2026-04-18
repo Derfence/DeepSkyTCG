@@ -30,8 +30,8 @@ class PackOpeningArrivalMotionTest {
         assertTrue(
             shouldTriggerPackOpeningHolographicCue(
                 cardsVisible = true,
-                settledPage = 1,
-                lastSettledPage = 0,
+                currentPage = 1,
+                lastObservedPage = 0,
                 isHolographic = true,
                 alreadyPlayed = false,
             ),
@@ -39,8 +39,8 @@ class PackOpeningArrivalMotionTest {
         assertTrue(
             !shouldTriggerPackOpeningHolographicCue(
                 cardsVisible = true,
-                settledPage = 1,
-                lastSettledPage = 0,
+                currentPage = 1,
+                lastObservedPage = 0,
                 isHolographic = true,
                 alreadyPlayed = true,
             ),

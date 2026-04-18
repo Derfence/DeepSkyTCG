@@ -21,15 +21,18 @@ Chaque carte d'equipement est un consommable data-driven avec un niveau immuable
 5. Le joueur active plus tard une carte depuis l'ecran `Equipements`.
 6. L'activation consomme exactement une carte possedee et applique l'effet sur les prochains packs.
 7. A l'interieur d'un meme pack, le moteur ne renvoie jamais deux fois la meme carte exacte. Si une rarete planifiee n'a plus de carte libre, il choisit une autre carte encore inedite dans l'extension.
+8. Hors fallback de catalogue invalide, un meme pack ne contient jamais plus d'une carte astronomique holographique.
 
 ## Overrides onboarding
 
 - 1er pack de l'onboarding :
   - aucune carte d'equipement ne peut apparaitre, meme si `EquipmentChancePercent` vaut `100` ;
   - toutes les cartes astronomiques sont forcees en `Common`.
+  - aucune carte astronomique holographique ou tamponnee ne peut apparaitre.
 - 2e pack de l'onboarding, apres la visite du carnet `Badges` :
   - il correspond au premier pack effectivement ouvert apres la pause silencieuse `OpenSecondPackMenu` ;
   - les cartes astronomiques y sont plafonnees a `Uncommon` ;
+  - aucune carte astronomique holographique ou tamponnee ne peut apparaitre ;
   - exactement une carte d'equipement est garantie ;
   - seules les cartes `level == 1` avec `dropWeight > 0` sont candidates ;
   - le remplacement aleatoire normal est desactive pour ce pack ;

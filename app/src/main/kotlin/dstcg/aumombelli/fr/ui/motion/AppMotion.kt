@@ -118,18 +118,14 @@ fun packOpeningBurstOrigin(
             y = canvasHeight / 2f,
         )
     }
-    val holographicVerticalBias = if (hasHolographicBurst) {
-        if (originBounds != null) {
-            originBounds.heightPx * 0.035f
-        } else {
-            -canvasHeight * 0.20f
-        }
-    } else {
-        0f
+    val verticalBias = when {
+        originBounds == null -> -canvasHeight * 0.20f
+        hasHolographicBurst -> originBounds.heightPx * 0.035f
+        else -> 0f
     }
     return PixelPoint(
         x = baseCenter.x,
-        y = baseCenter.y - holographicVerticalBias,
+        y = baseCenter.y - verticalBias,
     )
 }
 

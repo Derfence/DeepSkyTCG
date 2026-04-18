@@ -110,6 +110,7 @@ class LocalPackEngine(
             equipmentSettings = equipmentSettings,
         )
         val astronomyRarityCap = resolveAstronomyRarityCap(progress)
+        val astronomyVariantDrawPolicy = resolveAstronomyVariantDrawPolicy(progress)
         val drawnAt = now.toString()
         val plannedRevealSlots = List(drawConfig.cardsPerDraw) { slotIndex ->
             val baseRarity = pickWeighted(extensionPlan.rarityWeights) { it.weight }.code
@@ -132,6 +133,7 @@ class LocalPackEngine(
         )
         val usedAstronomyCardIds = mutableSetOf<String>()
         val usedEquipmentDefinitionIds = mutableSetOf<String>()
+        var drawnHolographicCardCount = 0
         val revealSlots = plannedRevealSlots.map { plannedSlot ->
             if (forcedEquipmentReward?.slotIndex == plannedSlot.slotIndex) {
                 usedEquipmentDefinitionIds += forcedEquipmentReward.definition.id
@@ -167,7 +169,13 @@ class LocalPackEngine(
                         activeBonus = activeBonus,
                         excludedCardIds = usedAstronomyCardIds,
                         maxAllowedRarityLabel = astronomyRarityCap,
-                    )
+                        variantDrawPolicy = astronomyVariantDrawPolicy,
+                        holographicCardsAlreadyDrawn = drawnHolographicCardCount,
+                    ).also { astronomyRevealSlot ->
+                        if (astronomyRevealSlot.card.variant.isHolographic) {
+                            drawnHolographicCardCount += 1
+                        }
+                    }
                 }
             }
         }.sortedRevealSlotsForPackReveal()
@@ -188,6 +196,8 @@ class LocalPackEngine(
         activeBonus: ActiveEquipmentBonus,
         excludedCardIds: MutableSet<String>,
         maxAllowedRarityLabel: String?,
+        variantDrawPolicy: AstronomyVariantDrawPolicy,
+        holographicCardsAlreadyDrawn: Int,
     ): AstronomyPackRevealSlot {
         val definition = pickUniqueAstronomyCardDefinition(
             plannedSlot = plannedSlot,
@@ -206,9 +216,14 @@ class LocalPackEngine(
             variantProfile = variantProfile,
             runtimeVariantWeights = runtimeVariantWeights,
             holographicQualityPercent = activeBonus.holographicQualityPercent,
+            allowHolographic =
+                variantDrawPolicy.allowHolographic &&
+                    holographicCardsAlreadyDrawn < variantDrawPolicy.maxHolographicCardsPerPack,
         )
-        val finish = variantProfile.requireFinishDefinition(
-            pickWeightedCode(runtimeVariantWeights.finishWeights),
+        val finish = pickFinishWithPolicy(
+            variantProfile = variantProfile,
+            runtimeVariantWeights = runtimeVariantWeights,
+            allowStamped = variantDrawPolicy.allowStamped,
         )
         return AstronomyPackRevealSlot(
             slotIndex = plannedSlot.slotIndex,
@@ -234,12 +249,10 @@ class LocalPackEngine(
         equipmentCards: List<EquipmentCardDefinition>,
         equipmentSettings: EquipmentSettingsDefinition,
     ): EquipmentDrawPolicy = when {
-        progress.openedPackCount == 0 &&
-            progress.newPlayerOnboardingStep in FIRST_PACK_ONBOARDING_STEPS ->
+        isFirstOnboardingPack(progress) ->
             EquipmentDrawPolicy.Disabled
 
-        progress.openedPackCount == 1 &&
-            progress.newPlayerOnboardingStep == NewPlayerOnboardingStep.OpenSecondPackMenu ->
+        isSecondOnboardingPack(progress) ->
             EquipmentDrawPolicy.ForceSingleLevelOne(
                 candidates = equipmentCards.filter { it.level == 1 && it.dropWeight > 0 },
             )
@@ -250,15 +263,22 @@ class LocalPackEngine(
     }
 
     private fun resolveAstronomyRarityCap(progress: StandaloneProgress): String? = when {
-        progress.openedPackCount == 0 &&
-            progress.newPlayerOnboardingStep in FIRST_PACK_ONBOARDING_STEPS ->
+        isFirstOnboardingPack(progress) ->
             "Common"
 
-        progress.openedPackCount == 1 &&
-            progress.newPlayerOnboardingStep == NewPlayerOnboardingStep.OpenSecondPackMenu ->
+        isSecondOnboardingPack(progress) ->
             "Uncommon"
 
         else -> null
+    }
+
+    private fun resolveAstronomyVariantDrawPolicy(progress: StandaloneProgress): AstronomyVariantDrawPolicy {
+        val protectsOpeningVariants = isFirstOnboardingPack(progress) || isSecondOnboardingPack(progress)
+        return AstronomyVariantDrawPolicy(
+            allowHolographic = !protectsOpeningVariants,
+            allowStamped = !protectsOpeningVariants,
+            maxHolographicCardsPerPack = if (protectsOpeningVariants) 0 else 1,
+        )
     }
 
     private fun resolveForcedEquipmentReward(
@@ -417,13 +437,8 @@ class LocalPackEngine(
         variantProfile: fr.aumombelli.dstcg.model.VariantProfile,
         runtimeVariantWeights: RuntimeVariantWeights,
         holographicQualityPercent: Double,
+        allowHolographic: Boolean,
     ): fr.aumombelli.dstcg.model.SkyQualityDefinition {
-        if (holographicQualityPercent <= 0.0) {
-            return variantProfile.requireSkyQualityDefinition(
-                pickWeightedCode(runtimeVariantWeights.skyQualityWeights),
-            )
-        }
-
         val skyWeightsByCode = runtimeVariantWeights.skyQualityWeights.associateBy { it.code }
         val holographicEntries = variantProfile.skyQualities
             .filter { it.isHolographic }
@@ -431,6 +446,19 @@ class LocalPackEngine(
         val nonHolographicEntries = variantProfile.skyQualities
             .filterNot { it.isHolographic }
             .mapNotNull { skyQuality -> skyWeightsByCode[skyQuality.code] }
+
+        if (!allowHolographic) {
+            val selectedPool = nonHolographicEntries.ifEmpty { runtimeVariantWeights.skyQualityWeights }
+            return variantProfile.requireSkyQualityDefinition(
+                pickWeighted(selectedPool) { it.weight }.code,
+            )
+        }
+
+        if (holographicQualityPercent <= 0.0) {
+            return variantProfile.requireSkyQualityDefinition(
+                pickWeightedCode(runtimeVariantWeights.skyQualityWeights),
+            )
+        }
 
         if (holographicEntries.isEmpty() || nonHolographicEntries.isEmpty()) {
             return variantProfile.requireSkyQualityDefinition(
@@ -449,6 +477,26 @@ class LocalPackEngine(
         }
         return variantProfile.requireSkyQualityDefinition(
             pickWeighted(selectedPool) { it.weight }.code,
+        )
+    }
+
+    private fun pickFinishWithPolicy(
+        variantProfile: fr.aumombelli.dstcg.model.VariantProfile,
+        runtimeVariantWeights: RuntimeVariantWeights,
+        allowStamped: Boolean,
+    ): fr.aumombelli.dstcg.model.CardFinishDefinition {
+        if (allowStamped) {
+            return variantProfile.requireFinishDefinition(
+                pickWeightedCode(runtimeVariantWeights.finishWeights),
+            )
+        }
+        val finishWeightsByCode = runtimeVariantWeights.finishWeights.associateBy { it.code }
+        val nonStampedEntries = variantProfile.finishes
+            .filterNot { it.isStamped }
+            .mapNotNull { finish -> finishWeightsByCode[finish.code] }
+            .ifEmpty { runtimeVariantWeights.finishWeights }
+        return variantProfile.requireFinishDefinition(
+            pickWeighted(nonStampedEntries) { it.weight }.code,
         )
     }
 
@@ -474,6 +522,12 @@ class LocalPackEngine(
         val definition: EquipmentCardDefinition,
     )
 
+    private data class AstronomyVariantDrawPolicy(
+        val allowHolographic: Boolean,
+        val allowStamped: Boolean,
+        val maxHolographicCardsPerPack: Int,
+    )
+
     private sealed interface EquipmentDrawPolicy {
         data object Disabled : EquipmentDrawPolicy
 
@@ -494,4 +548,12 @@ class LocalPackEngine(
             NewPlayerOnboardingStep.SelectFirstBooster,
         )
     }
+
+    private fun isFirstOnboardingPack(progress: StandaloneProgress): Boolean =
+        progress.openedPackCount == 0 &&
+            progress.newPlayerOnboardingStep in FIRST_PACK_ONBOARDING_STEPS
+
+    private fun isSecondOnboardingPack(progress: StandaloneProgress): Boolean =
+        progress.openedPackCount == 1 &&
+            progress.newPlayerOnboardingStep == NewPlayerOnboardingStep.OpenSecondPackMenu
 }
