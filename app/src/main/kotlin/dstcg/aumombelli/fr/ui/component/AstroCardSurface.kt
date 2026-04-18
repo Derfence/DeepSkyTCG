@@ -92,7 +92,6 @@ internal fun AstroCardPreviewSurface(
                 artVisibility = artVisibility,
                 modifier = Modifier.fillMaxSize(),
             )
-            HeroAtmosphere(palette = palette)
             CardFaceScrim(modifier = Modifier.fillMaxSize())
             if (renderedHoloMotion != null) {
                 HolographicFoilOverlay(

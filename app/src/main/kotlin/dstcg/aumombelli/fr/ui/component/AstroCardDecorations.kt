@@ -307,7 +307,6 @@ internal fun HolographicRimLightOverlay(
 
 @Composable
 internal fun StampedSealOverlay(
-    compact: Boolean,
     modifier: Modifier = Modifier,
 ) {
     AssetSvgImage(

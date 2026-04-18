@@ -217,7 +217,6 @@ internal fun CardFooter(
             ) {
                 if (displayCard.activeVariant.isStamped) {
                     StampedSealOverlay(
-                        compact = compact,
                         modifier = Modifier
                             .requiredSize(
                                 width = stampedSealWidth,
