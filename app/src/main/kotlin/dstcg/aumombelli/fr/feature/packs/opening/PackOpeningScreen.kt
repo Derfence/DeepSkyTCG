@@ -58,6 +58,7 @@ import kotlinx.coroutines.launch
 private const val PACK_OPENING_BURST_DURATION_MS = 4_800
 private const val PACK_OPENING_REVEAL_DELAY_MS = 3_200
 private const val PACK_OPENING_CARDS_ENTRANCE_DURATION_MS = 760
+private const val PACK_OPENING_HOLOGRAPHIC_CUE_PREWARM_PROGRESS = 0.08f
 
 @Composable
 fun PackOpeningScreen(
@@ -91,7 +92,7 @@ fun PackOpeningScreen(
     var currentRevealCardBounds by remember(packResult?.drawnAt) { mutableStateOf<PackRevealBounds?>(null) }
     var revealCelebrationLayerBounds by remember(packResult?.drawnAt) { mutableStateOf<PackRevealBounds?>(null) }
     var playedHolographicCuePages by remember(packResult?.drawnAt) { mutableStateOf(setOf<Int>()) }
-    var lastSettledPage by remember(packResult?.drawnAt) { mutableIntStateOf(0) }
+    var lastObservedCuePage by remember(packResult?.drawnAt) { mutableIntStateOf(0) }
     var activeHolographicCuePage by remember(packResult?.drawnAt) { mutableStateOf<Int?>(null) }
     val scale = remember(packResult?.drawnAt) { Animatable(1f) }
     val burstProgress = remember(packResult?.drawnAt) { Animatable(0f) }
@@ -115,7 +116,7 @@ fun PackOpeningScreen(
         currentRevealCardBounds = null
         revealCelebrationLayerBounds = null
         playedHolographicCuePages = emptySet()
-        lastSettledPage = 0
+        lastObservedCuePage = 0
         activeHolographicCuePage = null
         scale.snapTo(1f)
         burstProgress.snapTo(0f)
@@ -286,7 +287,20 @@ fun PackOpeningScreen(
                         val pagerState = rememberPagerState(pageCount = { revealItems.size })
                         val currentPage = pagerState.currentPage
                         val settledPage = pagerState.settledPage
-                        val currentItem = revealItems.getOrNull(currentPage)
+                        val currentItem = revealItems.getOrNull(settledPage)
+                        val currentAstroItem = revealItems.getOrNull(currentPage) as? AstroPackRevealUiItem
+                        val pendingHolographicCuePage = currentPage.takeIf {
+                            shouldTriggerPackOpeningHolographicCue(
+                                cardsVisible = cardsVisible,
+                                currentPage = currentPage,
+                                lastObservedPage = lastObservedCuePage,
+                                isHolographic = currentAstroItem
+                                    ?.displayCard
+                                    ?.activeVariant
+                                    ?.isHolographic == true,
+                                alreadyPlayed = currentPage in playedHolographicCuePages,
+                            )
+                        }
                         val pagerIsFullySettled =
                             !pagerState.isScrollInProgress &&
                                 currentPage == settledPage &&
@@ -303,8 +317,15 @@ fun PackOpeningScreen(
                                 !dismissRequested &&
                                 showPersistentDismissHint &&
                                 swipeHintLabelActivated
-                        val holographicCelebrationProgress = if (activeHolographicCuePage != null) {
+                        val animatedHolographicCueProgress = if (activeHolographicCuePage != null) {
                             1f - holographicCueProgress.value
+                        } else {
+                            0f
+                        }
+                        val holographicCueOverlayProgress = if (animatedHolographicCueProgress > 0f) {
+                            animatedHolographicCueProgress
+                        } else if (pendingHolographicCuePage != null) {
+                            PACK_OPENING_HOLOGRAPHIC_CUE_PREWARM_PROGRESS
                         } else {
                             0f
                         }
@@ -315,32 +336,30 @@ fun PackOpeningScreen(
                             }
                         }
 
-                        LaunchedEffect(packResult.drawnAt, settledPage, cardsVisible) {
-                            val settledAstroItem = revealItems
-                                .getOrNull(settledPage) as? AstroPackRevealUiItem
+                        LaunchedEffect(packResult.drawnAt, currentPage, cardsVisible) {
                             val shouldTriggerCue = shouldTriggerPackOpeningHolographicCue(
                                 cardsVisible = cardsVisible,
-                                settledPage = settledPage,
-                                lastSettledPage = lastSettledPage,
-                                isHolographic = settledAstroItem
+                                currentPage = currentPage,
+                                lastObservedPage = lastObservedCuePage,
+                                isHolographic = currentAstroItem
                                     ?.displayCard
                                     ?.activeVariant
                                     ?.isHolographic == true,
-                                alreadyPlayed = settledPage in playedHolographicCuePages,
+                                alreadyPlayed = currentPage in playedHolographicCuePages,
                             )
-                            if (settledPage != lastSettledPage) {
-                                lastSettledPage = settledPage
+                            if (currentPage != lastObservedCuePage) {
+                                lastObservedCuePage = currentPage
                             }
                             if (!shouldTriggerCue) return@LaunchedEffect
 
-                            playedHolographicCuePages = playedHolographicCuePages + settledPage
-                            activeHolographicCuePage = settledPage
-                            holographicCueProgress.snapTo(1f)
+                            playedHolographicCuePages = playedHolographicCuePages + currentPage
+                            activeHolographicCuePage = currentPage
+                            holographicCueProgress.snapTo(1f - PACK_OPENING_HOLOGRAPHIC_CUE_PREWARM_PROGRESS)
                             holographicCueProgress.animateTo(
                                 targetValue = 0f,
                                 animationSpec = tween(durationMillis = 1_450, easing = FastOutSlowInEasing),
                             )
-                            if (activeHolographicCuePage == settledPage) {
+                            if (activeHolographicCuePage == currentPage) {
                                 activeHolographicCuePage = null
                             }
                         }
@@ -447,7 +466,9 @@ fun PackOpeningScreen(
                                         0f
                                     }
                                     val arrivalCueProgress = if (page == activeHolographicCuePage) {
-                                        1f - holographicCueProgress.value
+                                        animatedHolographicCueProgress
+                                    } else if (page == pendingHolographicCuePage) {
+                                        PACK_OPENING_HOLOGRAPHIC_CUE_PREWARM_PROGRESS
                                     } else {
                                         0f
                                     }
@@ -488,9 +509,9 @@ fun PackOpeningScreen(
                                     )
                                 }
 
-                                if (holographicCelebrationProgress > 0f) {
+                                if (holographicCueOverlayProgress > 0f) {
                                     HolographicArrivalCelebrationOverlay(
-                                        progress = holographicCelebrationProgress,
+                                        progress = holographicCueOverlayProgress,
                                         originBounds = currentRevealCardBounds
                                             ?.takeIf { revealCelebrationLayerBounds != null }
                                             ?.relativeTo(revealCelebrationLayerBounds!!),
@@ -753,11 +774,11 @@ private data class PagerScrollSnapshot(
 
 internal fun shouldTriggerPackOpeningHolographicCue(
     cardsVisible: Boolean,
-    settledPage: Int,
-    lastSettledPage: Int,
+    currentPage: Int,
+    lastObservedPage: Int,
     isHolographic: Boolean,
     alreadyPlayed: Boolean,
 ): Boolean = cardsVisible &&
-    settledPage != lastSettledPage &&
+    currentPage != lastObservedPage &&
     isHolographic &&
     !alreadyPlayed

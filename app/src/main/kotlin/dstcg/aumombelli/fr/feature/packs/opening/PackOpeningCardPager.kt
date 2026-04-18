@@ -48,7 +48,6 @@ import fr.aumombelli.dstcg.ui.component.EquipmentArtBackground
 import fr.aumombelli.dstcg.ui.component.EquipmentArtMode
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.motion.HolographicCardMotion
-import fr.aumombelli.dstcg.ui.motion.HolographicArrivalOverlay
 import fr.aumombelli.dstcg.ui.motion.PackRevealBounds
 import fr.aumombelli.dstcg.ui.motion.easeInOutBurst
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
@@ -79,25 +78,6 @@ internal fun RevealCard(
         val arrivalScale = holographicArrivalScale(arrivalProgress)
         val arrivalLiftPx = holographicArrivalLiftPx(arrivalProgress)
         val arrivalRotationZ = holographicArrivalRotationZ(arrivalProgress)
-        val arrivalCenterXFraction = if (maxWidth.value > 0f) {
-            revealSlot.cardCenterX.value / maxWidth.value
-        } else {
-            0.5f
-        }
-        val arrivalCenterYFraction = if (maxHeight.value > 0f) {
-            revealSlot.cardCenterY.value / maxHeight.value
-        } else {
-            0.56f
-        }
-
-        if (arrivalProgress > 0f) {
-            HolographicArrivalOverlay(
-                progress = arrivalProgress,
-                centerXFraction = arrivalCenterXFraction,
-                centerYFraction = arrivalCenterYFraction,
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
 
         PackOpeningRevealCardFrame(
             modifier = Modifier.fillMaxSize(),

@@ -323,13 +323,12 @@ class PackOpeningScreenTest {
         composeRule.onAllNodesWithTag("pack-opening-holo-arrival", useUnmergedTree = true).assertCountEquals(0)
         composeRule.onAllNodesWithTag("pack-opening-holo-celebration", useUnmergedTree = true).assertCountEquals(0)
 
-        composeRule.mainClock.autoAdvance = true
         composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeLeft() }
-        composeRule.waitUntil(timeoutMillis = 5_000) {
-            composeRule.safeReadCurrentPackOpeningCardId() == "ALP-777"
-        }
+        composeRule.mainClock.advanceTimeBy(700)
+        composeRule.runOnIdle { }
         composeRule.onNodeWithTag("pack-opening-holo-arrival", useUnmergedTree = true).assertIsDisplayed()
         composeRule.onNodeWithTag("pack-opening-holo-celebration", useUnmergedTree = true).assertIsDisplayed()
+        assertEquals("ALP-777", composeRule.readCurrentPackOpeningCardId())
     }
 
     @Test
