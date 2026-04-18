@@ -1,7 +1,9 @@
 package fr.aumombelli.dstcg.ui.component
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.graphics.Color as AndroidColor
+import android.view.MotionEvent
 import android.view.ViewGroup
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -15,6 +17,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 internal fun AssetSvgImage(
     assetPath: String,
     modifier: Modifier = Modifier,
+    allowTouchInteraction: Boolean = false,
 ) {
     val context = LocalContext.current.applicationContext
     val svgMarkup = remember(context, assetPath) {
@@ -29,6 +32,7 @@ internal fun AssetSvgImage(
         InlineSvgImage(
             svgMarkup = svgMarkup,
             modifier = modifier,
+            allowTouchInteraction = allowTouchInteraction,
         )
     }
 }
@@ -38,6 +42,7 @@ internal fun AssetSvgImage(
 private fun InlineSvgImage(
     svgMarkup: String,
     modifier: Modifier = Modifier,
+    allowTouchInteraction: Boolean = false,
 ) {
     val htmlDocument = remember(svgMarkup) {
         """
@@ -52,11 +57,13 @@ private fun InlineSvgImage(
                 height: 100%;
                 overflow: hidden;
                 background: transparent;
+                pointer-events: none;
               }
               svg {
                 display: block;
                 width: 100%;
                 height: 100%;
+                pointer-events: none;
               }
             </style>
           </head>
@@ -69,7 +76,10 @@ private fun InlineSvgImage(
 
     AndroidView(
         factory = { viewContext ->
-            WebView(viewContext).apply {
+            SvgWebView(
+                context = viewContext,
+                allowTouchInteraction = allowTouchInteraction,
+            ).apply {
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -96,4 +106,16 @@ private fun InlineSvgImage(
         },
         modifier = modifier,
     )
+}
+
+private class SvgWebView(
+    context: Context,
+    private val allowTouchInteraction: Boolean,
+) : WebView(context) {
+    override fun onTouchEvent(event: MotionEvent?): Boolean =
+        if (allowTouchInteraction) {
+            super.onTouchEvent(event)
+        } else {
+            false
+        }
 }

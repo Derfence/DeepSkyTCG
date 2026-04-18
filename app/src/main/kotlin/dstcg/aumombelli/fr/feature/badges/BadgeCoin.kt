@@ -33,8 +33,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.performance.LocalAppPerformanceProfile
 import fr.aumombelli.dstcg.ui.component.ExtensionLogoMark
-import fr.aumombelli.dstcg.ui.motion.BrandLogoVariant
-import fr.aumombelli.dstcg.ui.motion.LaunchLogoMark
+import fr.aumombelli.dstcg.ui.component.GeneralBadgeLogoMark
 import fr.aumombelli.dstcg.ui.component.TwinklingStarsOverlay
 import fr.aumombelli.dstcg.ui.theme.SkyQualityPalette
 import fr.aumombelli.dstcg.ui.theme.skyQualityPalette
@@ -263,9 +262,8 @@ private fun BadgeCenterMark(
 ) {
     val taggedModifier = testTag?.let { Modifier.testTag(it) } ?: Modifier
     Box(modifier = taggedModifier) {
-        if (badge.requirementType == BadgeRequirementType.FirstPackOpened) {
-            LaunchLogoMark(
-                variant = BrandLogoVariant.Badge17,
+        if (badge.extensionId == GeneralBadgeSectionId) {
+            GeneralBadgeLogoMark(
                 emblemSize = logoSize,
                 modifier = modifier,
             )
