@@ -53,6 +53,7 @@ Les hints d'onboarding n'apparaissent qu'une fois les animations de transition t
   - les pages restent legerement plus petites que les couvertures et gardent un petit decor d'etoiles imprimees.
 - Lors de la premiere visite bibliotheque, un micro-hint local s'affiche :
   `Touche une carte obtenue pour l'ouvrir.`
+- Les cartes affichees dans les panneaux pedagogiques de variantes sont maintenant tirees aleatoirement dans le vrai catalogue, par rarete, donc l'ensemble d'exemples peut changer d'un joueur a l'autre.
 - Si cette visite suit l'obtention de nouvelles cartes, leurs vignettes affichent aussi l'indicateur de nouveaute a trois etoiles pendant cette ouverture de la bibliotheque.
 - Cet indicateur local disparait apres cette visite, meme si le joueur referme aussitot l'ecran.
 - Quand le joueur revient a l'accueil, la celebration de badge differee est rejouee si elle est encore en memoire.

@@ -2,6 +2,8 @@ package fr.aumombelli.dstcg
 
 import androidx.compose.ui.geometry.Rect
 import fr.aumombelli.dstcg.app.AppSceneUiState
+import fr.aumombelli.dstcg.app.NewPlayerBlockingModalKind
+import fr.aumombelli.dstcg.app.NewPlayerBlockingModalSpec
 import fr.aumombelli.dstcg.app.NewPlayerCoachmarkSpec
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingCoordinator
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
@@ -24,23 +26,26 @@ class NewPlayerOnboardingCoordinatorTest {
                 collection = OwnedCollection(),
                 rechargeState = testRechargeState(),
                 openedPackCount = 0,
-                newPlayerOnboardingStep = NewPlayerOnboardingStep.OpenFirstPackMenu,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.ShowWelcomeIntro,
             )
         }
         val coordinator = NewPlayerOnboardingCoordinator(progressGateway)
 
         coordinator.syncFromProgress()
+        coordinator.onWelcomeIntroAcknowledged()
         coordinator.onHomeOpenPackSelected()
         coordinator.onExtensionSelected()
         val shouldDeferBadgeCelebration = coordinator.onPackOpened()
-        val shouldResumeBadgeCelebration = coordinator.onLibraryOpened()
+        val shouldResumeBadgeCelebrationOnOpen = coordinator.onLibraryOpened()
+        val shouldResumeBadgeCelebrationOnCompletion = coordinator.onLibraryVariantWalkthroughCompleted()
         coordinator.onBadgeBookOpened()
         val shouldDeferEquipmentChapterBadges = coordinator.onPackOpened()
         coordinator.onEquipmentOpened()
         coordinator.onEquipmentActivated()
 
         assertTrue(shouldDeferBadgeCelebration)
-        assertTrue(shouldResumeBadgeCelebration)
+        assertFalse(shouldResumeBadgeCelebrationOnOpen)
+        assertTrue(shouldResumeBadgeCelebrationOnCompletion)
         assertTrue(shouldDeferEquipmentChapterBadges)
         assertEquals(NewPlayerOnboardingStep.Completed, coordinator.uiState.currentStep)
         assertEquals(NewPlayerOnboardingStep.Completed, progressGateway.progress.newPlayerOnboardingStep)
@@ -48,7 +53,7 @@ class NewPlayerOnboardingCoordinatorTest {
     }
 
     @Test
-    fun `library visit enables local hint and badges coachmark after step advance`() = runTest {
+    fun `library walkthrough completion enables local hint and badges coachmark after step advance`() = runTest {
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
                 collection = ownedCollectionOf("ALP-001" to 1),
@@ -60,15 +65,67 @@ class NewPlayerOnboardingCoordinatorTest {
         val coordinator = NewPlayerOnboardingCoordinator(progressGateway)
 
         coordinator.syncFromProgress()
-        val shouldResumeBadgeCelebration = coordinator.onLibraryOpened()
+        val shouldResumeBadgeCelebrationOnOpen = coordinator.onLibraryOpened()
 
-        assertTrue(shouldResumeBadgeCelebration)
+        assertFalse(shouldResumeBadgeCelebrationOnOpen)
+        assertEquals(NewPlayerOnboardingStep.LearnLibraryVariants, coordinator.uiState.currentStep)
+        assertFalse(coordinator.uiState.libraryCardHintVisible)
+
+        val shouldResumeBadgeCelebrationOnCompletion = coordinator.onLibraryVariantWalkthroughCompleted()
+
+        assertTrue(shouldResumeBadgeCelebrationOnCompletion)
         assertEquals(NewPlayerOnboardingStep.ViewBadges, coordinator.uiState.currentStep)
         assertTrue(coordinator.uiState.libraryCardHintVisible)
 
         coordinator.onLibraryCardHintConsumed()
 
         assertFalse(coordinator.uiState.libraryCardHintVisible)
+    }
+
+    @Test
+    fun `welcome intro stays active until acknowledged and becomes blocking modal on home`() = runTest {
+        val progressGateway = FakeProgressGateway().apply {
+            progress = StandaloneProgress(
+                collection = OwnedCollection(),
+                rechargeState = testRechargeState(),
+                openedPackCount = 0,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.ShowWelcomeIntro,
+            )
+        }
+        val coordinator = NewPlayerOnboardingCoordinator(progressGateway)
+        val sceneState = AppSceneUiState(
+            currentScene = AppScene.Home,
+            homeContentVisible = true,
+            onboardingHintsVisible = true,
+        )
+
+        coordinator.syncFromProgress()
+
+        assertEquals(
+            NewPlayerBlockingModalSpec(NewPlayerBlockingModalKind.WelcomeIntro),
+            coordinator.activeBlockingModal(
+                currentScene = AppScene.Home,
+                sceneState = sceneState,
+            ),
+        )
+        assertNull(
+            coordinator.activeCoachmark(
+                currentScene = AppScene.Home,
+                sceneState = sceneState,
+                badgeCelebrationVisible = false,
+            ),
+        )
+
+        coordinator.onWelcomeIntroAcknowledged()
+
+        assertEquals(NewPlayerOnboardingStep.OpenFirstPackMenu, coordinator.uiState.currentStep)
+        assertEquals(NewPlayerOnboardingStep.OpenFirstPackMenu, progressGateway.progress.newPlayerOnboardingStep)
+        assertNull(
+            coordinator.activeBlockingModal(
+                currentScene = AppScene.Home,
+                sceneState = sceneState,
+            ),
+        )
     }
 
     @Test

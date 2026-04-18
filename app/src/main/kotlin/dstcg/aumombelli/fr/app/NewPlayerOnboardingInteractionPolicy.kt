@@ -12,10 +12,12 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.Completed,
         -> false
 
+        NewPlayerOnboardingStep.ShowWelcomeIntro,
         NewPlayerOnboardingStep.OpenFirstPackMenu,
         NewPlayerOnboardingStep.SelectFirstExtension,
         NewPlayerOnboardingStep.SelectFirstBooster,
         NewPlayerOnboardingStep.ViewLibrary,
+        NewPlayerOnboardingStep.LearnLibraryVariants,
         NewPlayerOnboardingStep.ViewBadges,
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
@@ -35,7 +37,9 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.Completed,
         -> true
 
+        NewPlayerOnboardingStep.ShowWelcomeIntro,
         NewPlayerOnboardingStep.ViewLibrary,
+        NewPlayerOnboardingStep.LearnLibraryVariants,
         NewPlayerOnboardingStep.ViewBadges,
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
@@ -45,10 +49,12 @@ internal object NewPlayerOnboardingInteractionPolicy {
     fun allowsHomeLibrary(step: NewPlayerOnboardingStep?): Boolean = when (step) {
         null,
         NewPlayerOnboardingStep.ViewLibrary,
+        NewPlayerOnboardingStep.LearnLibraryVariants,
         NewPlayerOnboardingStep.OpenSecondPackMenu,
         NewPlayerOnboardingStep.Completed,
         -> true
 
+        NewPlayerOnboardingStep.ShowWelcomeIntro,
         NewPlayerOnboardingStep.OpenFirstPackMenu,
         NewPlayerOnboardingStep.SelectFirstExtension,
         NewPlayerOnboardingStep.SelectFirstBooster,
@@ -65,10 +71,12 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.Completed,
         -> true
 
+        NewPlayerOnboardingStep.ShowWelcomeIntro,
         NewPlayerOnboardingStep.OpenFirstPackMenu,
         NewPlayerOnboardingStep.SelectFirstExtension,
         NewPlayerOnboardingStep.SelectFirstBooster,
         NewPlayerOnboardingStep.ViewLibrary,
+        NewPlayerOnboardingStep.LearnLibraryVariants,
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
         -> false
@@ -82,10 +90,12 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.Completed,
         -> true
 
+        NewPlayerOnboardingStep.ShowWelcomeIntro,
         NewPlayerOnboardingStep.OpenFirstPackMenu,
         NewPlayerOnboardingStep.SelectFirstExtension,
         NewPlayerOnboardingStep.SelectFirstBooster,
         NewPlayerOnboardingStep.ViewLibrary,
+        NewPlayerOnboardingStep.LearnLibraryVariants,
         NewPlayerOnboardingStep.ViewBadges,
         -> false
     }
@@ -96,10 +106,12 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.Completed,
         -> true
 
+        NewPlayerOnboardingStep.ShowWelcomeIntro,
         NewPlayerOnboardingStep.OpenFirstPackMenu,
         NewPlayerOnboardingStep.SelectFirstExtension,
         NewPlayerOnboardingStep.SelectFirstBooster,
         NewPlayerOnboardingStep.ViewLibrary,
+        NewPlayerOnboardingStep.LearnLibraryVariants,
         NewPlayerOnboardingStep.ViewBadges,
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
@@ -115,7 +127,9 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.Completed,
         -> true
 
+        NewPlayerOnboardingStep.ShowWelcomeIntro,
         NewPlayerOnboardingStep.ViewLibrary,
+        NewPlayerOnboardingStep.LearnLibraryVariants,
         NewPlayerOnboardingStep.ViewBadges,
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
@@ -129,9 +143,11 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.Completed,
         -> true
 
+        NewPlayerOnboardingStep.ShowWelcomeIntro,
         NewPlayerOnboardingStep.OpenFirstPackMenu,
         NewPlayerOnboardingStep.SelectFirstExtension,
         NewPlayerOnboardingStep.ViewLibrary,
+        NewPlayerOnboardingStep.LearnLibraryVariants,
         NewPlayerOnboardingStep.ViewBadges,
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
@@ -144,10 +160,12 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.Completed,
         -> true
 
+        NewPlayerOnboardingStep.ShowWelcomeIntro,
         NewPlayerOnboardingStep.OpenFirstPackMenu,
         NewPlayerOnboardingStep.SelectFirstExtension,
         NewPlayerOnboardingStep.SelectFirstBooster,
         NewPlayerOnboardingStep.ViewLibrary,
+        NewPlayerOnboardingStep.LearnLibraryVariants,
         NewPlayerOnboardingStep.ViewBadges,
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
@@ -162,10 +180,12 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.Completed,
         -> true
 
+        NewPlayerOnboardingStep.ShowWelcomeIntro,
         NewPlayerOnboardingStep.OpenFirstPackMenu,
         NewPlayerOnboardingStep.SelectFirstExtension,
         NewPlayerOnboardingStep.SelectFirstBooster,
         NewPlayerOnboardingStep.ViewLibrary,
+        NewPlayerOnboardingStep.LearnLibraryVariants,
         NewPlayerOnboardingStep.ViewBadges,
         -> false
     }

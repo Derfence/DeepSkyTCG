@@ -84,6 +84,7 @@ class AppSceneStateTest {
             launchLogoVisible = true,
             launchLogoRaised = true,
             homeContentVisible = true,
+            onboardingHintsVisible = true,
         )
 
         val nextState = initialState.resetLaunchSequence()
@@ -92,6 +93,7 @@ class AppSceneStateTest {
         assertEquals(false, nextState.launchLogoVisible)
         assertEquals(false, nextState.launchLogoRaised)
         assertEquals(false, nextState.homeContentVisible)
+        assertEquals(false, nextState.onboardingHintsVisible)
     }
 
     @Test

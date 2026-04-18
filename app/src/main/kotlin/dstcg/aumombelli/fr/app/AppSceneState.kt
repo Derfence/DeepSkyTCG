@@ -54,6 +54,7 @@ internal fun AppSceneUiState.resetLaunchSequence(): AppSceneUiState = copy(
     launchLogoVisible = false,
     launchLogoRaised = false,
     homeContentVisible = false,
+    onboardingHintsVisible = false,
 )
 
 internal fun AppSceneUiState.showLaunchLogo(): AppSceneUiState = copy(launchLogoVisible = true)

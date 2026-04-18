@@ -488,6 +488,7 @@ class LocalPackEngine(
 
     private companion object {
         val FIRST_PACK_ONBOARDING_STEPS = setOf(
+            NewPlayerOnboardingStep.ShowWelcomeIntro,
             NewPlayerOnboardingStep.OpenFirstPackMenu,
             NewPlayerOnboardingStep.SelectFirstExtension,
             NewPlayerOnboardingStep.SelectFirstBooster,

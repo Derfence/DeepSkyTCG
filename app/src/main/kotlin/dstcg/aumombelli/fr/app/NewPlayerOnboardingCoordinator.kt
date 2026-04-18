@@ -11,12 +11,22 @@ import fr.aumombelli.dstcg.ui.motion.AppScene
 internal data class NewPlayerOnboardingUiState(
     val currentStep: NewPlayerOnboardingStep? = null,
     val libraryCardHintVisible: Boolean = false,
+    val blockingModalStep: NewPlayerOnboardingStep? = null,
 )
 
 internal data class NewPlayerCoachmarkSpec(
     val target: NewPlayerOnboardingTarget,
     val title: String,
     val message: String,
+)
+
+internal enum class NewPlayerBlockingModalKind {
+    WelcomeIntro,
+    LibraryVariants,
+}
+
+internal data class NewPlayerBlockingModalSpec(
+    val kind: NewPlayerBlockingModalKind,
 )
 
 internal class NewPlayerOnboardingCoordinator(
@@ -27,7 +37,13 @@ internal class NewPlayerOnboardingCoordinator(
 
     suspend fun syncFromProgress() {
         val progress = progressRepository.loadProgress().requireUsableProgress().progress
-        uiState = uiState.copy(currentStep = progress.newPlayerOnboardingStep)
+        uiState = uiState.withStep(progress.newPlayerOnboardingStep)
+    }
+
+    suspend fun onWelcomeIntroAcknowledged() {
+        advanceTo(NewPlayerOnboardingStep.OpenFirstPackMenu) {
+            it == NewPlayerOnboardingStep.ShowWelcomeIntro
+        }
     }
 
     suspend fun onHomeOpenPackSelected() {
@@ -45,6 +61,7 @@ internal class NewPlayerOnboardingCoordinator(
     suspend fun onPackOpened(): Boolean {
         val currentStep = uiState.currentStep ?: return false
         return when (currentStep) {
+            NewPlayerOnboardingStep.ShowWelcomeIntro,
             NewPlayerOnboardingStep.OpenFirstPackMenu,
             NewPlayerOnboardingStep.SelectFirstExtension,
             NewPlayerOnboardingStep.SelectFirstBooster,
@@ -63,6 +80,7 @@ internal class NewPlayerOnboardingCoordinator(
             -> true
 
             NewPlayerOnboardingStep.ViewLibrary,
+            NewPlayerOnboardingStep.LearnLibraryVariants,
             NewPlayerOnboardingStep.ViewBadges,
             NewPlayerOnboardingStep.Completed,
             -> false
@@ -71,10 +89,25 @@ internal class NewPlayerOnboardingCoordinator(
 
     suspend fun onLibraryOpened(): Boolean {
         val currentStep = uiState.currentStep ?: return false
-        if (currentStep != NewPlayerOnboardingStep.ViewLibrary) return false
+        return when (currentStep) {
+            NewPlayerOnboardingStep.ViewLibrary -> {
+                persistStep(NewPlayerOnboardingStep.LearnLibraryVariants)
+                false
+            }
 
-        persistStep(NewPlayerOnboardingStep.ViewBadges)
-        uiState = uiState.copy(libraryCardHintVisible = true)
+            NewPlayerOnboardingStep.LearnLibraryVariants -> false
+            else -> false
+        }
+    }
+
+    suspend fun onLibraryVariantWalkthroughCompleted(): Boolean {
+        val currentStep = uiState.currentStep ?: return false
+        if (currentStep != NewPlayerOnboardingStep.LearnLibraryVariants) return false
+
+        persistStep(
+            nextStep = NewPlayerOnboardingStep.ViewBadges,
+            libraryCardHintVisible = true,
+        )
         return true
     }
 
@@ -105,6 +138,31 @@ internal class NewPlayerOnboardingCoordinator(
     fun isBlockingStep(step: NewPlayerOnboardingStep? = uiState.currentStep): Boolean =
         NewPlayerOnboardingInteractionPolicy.isBlockingStep(step)
 
+    fun activeBlockingModal(
+        currentScene: AppScene,
+        sceneState: AppSceneUiState,
+    ): NewPlayerBlockingModalSpec? {
+        if (sceneState.transitionLocked || !sceneState.onboardingHintsVisible) return null
+
+        return when (uiState.blockingModalStep) {
+            NewPlayerOnboardingStep.ShowWelcomeIntro ->
+                if (currentScene == AppScene.Home && sceneState.homeContentVisible) {
+                    NewPlayerBlockingModalSpec(kind = NewPlayerBlockingModalKind.WelcomeIntro)
+                } else {
+                    null
+                }
+
+            NewPlayerOnboardingStep.LearnLibraryVariants ->
+                if (currentScene == AppScene.Library && sceneState.libraryContentVisible) {
+                    NewPlayerBlockingModalSpec(kind = NewPlayerBlockingModalKind.LibraryVariants)
+                } else {
+                    null
+                }
+
+            else -> null
+        }
+    }
+
     fun activeCoachmark(
         currentScene: AppScene,
         sceneState: AppSceneUiState,
@@ -114,6 +172,8 @@ internal class NewPlayerOnboardingCoordinator(
         if (step == NewPlayerOnboardingStep.Completed) return null
 
         return when (step) {
+            NewPlayerOnboardingStep.ShowWelcomeIntro -> null
+
             NewPlayerOnboardingStep.OpenFirstPackMenu -> {
                 if (
                     currentScene == AppScene.Home &&
@@ -167,7 +227,9 @@ internal class NewPlayerOnboardingCoordinator(
                 }
             }
 
-            NewPlayerOnboardingStep.ViewLibrary -> {
+            NewPlayerOnboardingStep.ViewLibrary,
+            NewPlayerOnboardingStep.LearnLibraryVariants,
+            -> {
                 if (
                     currentScene == AppScene.Home &&
                     sceneState.homeContentVisible &&
@@ -259,10 +321,16 @@ internal class NewPlayerOnboardingCoordinator(
         persistStep(nextStep)
     }
 
-    private suspend fun persistStep(nextStep: NewPlayerOnboardingStep) {
+    private suspend fun persistStep(
+        nextStep: NewPlayerOnboardingStep,
+        libraryCardHintVisible: Boolean = false,
+    ) {
         val loadedProgress = progressRepository.loadProgress().requireUsableProgress().progress
         if (loadedProgress.newPlayerOnboardingStep == nextStep) {
-            uiState = uiState.copy(currentStep = nextStep)
+            uiState = uiState.withStep(
+                nextStep = nextStep,
+                libraryCardHintVisible = libraryCardHintVisible,
+            )
             return
         }
 
@@ -273,6 +341,24 @@ internal class NewPlayerOnboardingCoordinator(
                 currentProgress.copy(newPlayerOnboardingStep = nextStep)
             }
         }
-        uiState = uiState.copy(currentStep = nextStep)
+        uiState = uiState.withStep(
+            nextStep = nextStep,
+            libraryCardHintVisible = libraryCardHintVisible,
+        )
     }
 }
+
+private fun NewPlayerOnboardingUiState.withStep(
+    nextStep: NewPlayerOnboardingStep?,
+    libraryCardHintVisible: Boolean = false,
+): NewPlayerOnboardingUiState = copy(
+    currentStep = nextStep,
+    libraryCardHintVisible = libraryCardHintVisible,
+    blockingModalStep = when (nextStep) {
+        NewPlayerOnboardingStep.ShowWelcomeIntro,
+        NewPlayerOnboardingStep.LearnLibraryVariants,
+        -> nextStep
+
+        else -> null
+    },
+)

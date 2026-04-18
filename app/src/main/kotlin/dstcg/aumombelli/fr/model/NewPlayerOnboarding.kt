@@ -4,10 +4,12 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 enum class NewPlayerOnboardingStep {
+    ShowWelcomeIntro,
     OpenFirstPackMenu,
     SelectFirstExtension,
     SelectFirstBooster,
     ViewLibrary,
+    LearnLibraryVariants,
     ViewBadges,
     OpenSecondPackMenu,
     ViewEquipmentMenu,
@@ -24,6 +26,6 @@ internal fun NewPlayerOnboardingStep.normalizedForProgress(
     return if (openedPackCount > 0 || collection.cards.isNotEmpty()) {
         NewPlayerOnboardingStep.Completed
     } else {
-        NewPlayerOnboardingStep.OpenFirstPackMenu
+        NewPlayerOnboardingStep.ShowWelcomeIntro
     }
 }

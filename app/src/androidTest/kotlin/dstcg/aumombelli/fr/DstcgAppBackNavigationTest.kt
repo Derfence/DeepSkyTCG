@@ -225,7 +225,8 @@ class DstcgAppBackNavigationTest {
         composeRule.onAllNodesWithTag("badge-unlock-celebration").assertCountEquals(0)
 
         composeRule.onNodeWithTag("home-library").performClick()
-        advanceBy(3_200)
+        advanceUntilTagDisplayed("new-player-modal-library-variants", timeoutMillis = 10_000)
+        completeLibraryVariantWalkthrough()
         composeRule.onNodeWithTag("library-grid").assertIsDisplayed()
         pressAndroidBack()
         advanceBy(2_400)
@@ -260,6 +261,16 @@ class DstcgAppBackNavigationTest {
 
     private fun startAndReachHome() {
         composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
+    }
+
+    private fun completeLibraryVariantWalkthrough() {
+        repeat(3) {
+            composeRule.onNodeWithTag("new-player-modal-next").performClick()
+            advanceBy(500)
+        }
+        advanceUntilTagDisplayed("new-player-modal-page-3", timeoutMillis = 5_000)
+        composeRule.onNodeWithTag("new-player-modal-finish").performClick()
+        advanceUntilTagGone("new-player-modal-library-variants", timeoutMillis = 10_000)
     }
 
     private fun advanceBy(durationMillis: Long) {

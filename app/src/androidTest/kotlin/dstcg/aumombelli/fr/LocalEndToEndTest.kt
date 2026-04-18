@@ -54,6 +54,8 @@ class LocalEndToEndTest {
     private fun startAndReachHome() {
         composeRule.waitUntilTagEnabled("home-open-pack", timeoutMillis = 20_000)
         composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
+        composeRule.waitUntilTagDisplayed("new-player-modal-welcome", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("new-player-modal-finish").performClick()
         composeRule.waitUntilTagDisplayed("new-player-coachmark-HomeOpenPack", timeoutMillis = 10_000)
     }
 
@@ -92,6 +94,8 @@ class LocalEndToEndTest {
     private fun verifyLibraryContainsDrawnCard(cardId: String) {
         composeRule.waitUntilTagEnabled("home-library", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("home-library").performClick()
+        composeRule.waitUntilTagDisplayed("new-player-modal-library-variants", timeoutMillis = 10_000)
+        completeLibraryVariantWalkthrough()
         composeRule.waitUntilTagExists("library-section-${LocalE2eConfig.extensionId}", timeoutMillis = 10_000)
         composeRule.waitUntilTagDisplayed("library-onboarding-hint", timeoutMillis = 10_000)
 
@@ -110,6 +114,17 @@ class LocalEndToEndTest {
         composeRule.waitUntilTagGone("badge-unlock-celebration", timeoutMillis = 10_000)
         composeRule.waitUntilTagDisplayed("new-player-coachmark-HomeBadges", timeoutMillis = 10_000)
         composeRule.waitUntilTagEnabled("home-open-pack", timeoutMillis = 10_000)
+    }
+
+    private fun completeLibraryVariantWalkthrough() {
+        composeRule.onNodeWithTag("new-player-modal-page-0").assertIsDisplayed()
+        repeat(3) {
+            composeRule.onNodeWithTag("new-player-modal-next").performClick()
+            composeRule.waitForIdle()
+        }
+        composeRule.onNodeWithTag("new-player-modal-page-3").assertIsDisplayed()
+        composeRule.onNodeWithTag("new-player-modal-finish").performClick()
+        composeRule.waitUntilTagGone("new-player-modal-library-variants", timeoutMillis = 10_000)
     }
 
     private fun openBadgeBookAndLaunchEquipmentChapter() {

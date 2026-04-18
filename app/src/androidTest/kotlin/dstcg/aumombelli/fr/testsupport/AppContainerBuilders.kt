@@ -128,6 +128,34 @@ internal fun backNavigationTestAppContainer(): AppContainer {
 internal fun badgeCelebrationBackNavigationTestAppContainer(): AppContainer {
     return navigationTestAppContainer(
         initialCollection = OwnedCollection(),
+        initialOnboardingStep = NewPlayerOnboardingStep.OpenFirstPackMenu,
+    )
+}
+
+internal fun libraryVariantBackNavigationTestAppContainer(): AppContainer {
+    return navigationTestAppContainer(
+        initialCollection = OwnedCollection(
+            cards = mapOf(
+                "ALP-001" to fr.aumombelli.dstcg.model.OwnedCardEntry(
+                    totalOwned = 1,
+                    variants = listOf(
+                        OwnedVariantCount(
+                            skyQuality = "city",
+                            finish = "standard",
+                            count = 1,
+                        ),
+                    ),
+                ),
+            ),
+        ),
+        initialOnboardingStep = NewPlayerOnboardingStep.LearnLibraryVariants,
+    )
+}
+
+internal fun welcomeBackNavigationTestAppContainer(): AppContainer {
+    return navigationTestAppContainer(
+        initialCollection = OwnedCollection(),
+        initialOnboardingStep = NewPlayerOnboardingStep.ShowWelcomeIntro,
     )
 }
 
@@ -162,6 +190,7 @@ internal fun homeMenuNoveltyTestAppContainer(): AppContainer {
 private fun navigationTestAppContainer(
     initialCollection: OwnedCollection,
     unlockEquipmentMenu: Boolean = false,
+    initialOnboardingStep: NewPlayerOnboardingStep? = null,
     homeMenuNoveltyState: HomeMenuNoveltyState = HomeMenuNoveltyState(),
     libraryCardNoveltyState: LibraryCardNoveltyState = LibraryCardNoveltyState(),
 ): AppContainer {
@@ -175,7 +204,7 @@ private fun navigationTestAppContainer(
         initialProgress = StandaloneProgress(
             collection = initialCollection,
             rechargeState = PackRechargeState(),
-            newPlayerOnboardingStep = if (initialCollection.cards.isEmpty()) {
+            newPlayerOnboardingStep = initialOnboardingStep ?: if (initialCollection.cards.isEmpty()) {
                 NewPlayerOnboardingStep.OpenFirstPackMenu
             } else {
                 NewPlayerOnboardingStep.Completed
@@ -254,6 +283,7 @@ private class MutableProgressGateway(
         progress = StandaloneProgress(
             collection = OwnedCollection(),
             rechargeState = PackRechargeState(),
+            newPlayerOnboardingStep = NewPlayerOnboardingStep.ShowWelcomeIntro,
         )
     }
 }
@@ -262,9 +292,14 @@ private fun navigationVariantProfile(): VariantProfile = VariantProfile(
     id = "observation-default",
     skyQualities = listOf(
         SkyQualityDefinition(code = "city", label = "Ville"),
+        SkyQualityDefinition(code = "suburban", label = "Periurbain"),
+        SkyQualityDefinition(code = "rural", label = "Campagne"),
+        SkyQualityDefinition(code = "mountain", label = "Montagne"),
+        SkyQualityDefinition(code = "holographic", label = "Holographique", isHolographic = true),
     ),
     finishes = listOf(
         CardFinishDefinition(code = "standard", label = "Standard"),
+        CardFinishDefinition(code = "stamped", label = "Tamponnee", isStamped = true),
     ),
 )
 

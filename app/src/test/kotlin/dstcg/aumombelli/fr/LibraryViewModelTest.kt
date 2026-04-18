@@ -58,6 +58,11 @@ class LibraryViewModelTest {
             listOf("holographic::stamped", "city::standard"),
             ownedCard.availableVariants.map { it.key },
         )
+        assertEquals(4, state.onboardingVariantWalkthroughPages.size)
+        assertEquals(
+            listOf("Rareté", "Qualité du ciel", "Tampon", "Holographique"),
+            state.onboardingVariantWalkthroughPages.map { it.title },
+        )
     }
 
     @Test

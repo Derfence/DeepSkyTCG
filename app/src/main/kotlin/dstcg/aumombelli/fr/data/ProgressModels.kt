@@ -19,7 +19,7 @@ data class ProgressSnapshot(
     val collection: OwnedCollection,
     val rechargeState: PackRechargeState = PackRechargeState(),
     val openedPackCount: Int = 0,
-    val newPlayerOnboardingStep: NewPlayerOnboardingStep = NewPlayerOnboardingStep.OpenFirstPackMenu,
+    val newPlayerOnboardingStep: NewPlayerOnboardingStep = NewPlayerOnboardingStep.ShowWelcomeIntro,
     val equipmentInventory: OwnedEquipmentInventory = OwnedEquipmentInventory(),
     val activeEquipmentByType: Map<EquipmentType, ActiveEquipmentEffect> = emptyMap(),
     val lastActivatedCardIdByType: Map<EquipmentType, String> = emptyMap(),

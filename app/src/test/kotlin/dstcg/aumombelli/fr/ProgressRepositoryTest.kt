@@ -45,7 +45,7 @@ class ProgressRepositoryTest {
         assertEquals(emptyMap<String, Int>(), loaded.progress.collection.cards.mapValues { it.value.totalOwned })
         assertEquals(10, loaded.progress.rechargeState.availableDrawCount)
         assertEquals(0, loaded.progress.openedPackCount)
-        assertEquals(NewPlayerOnboardingStep.OpenFirstPackMenu, loaded.progress.newPlayerOnboardingStep)
+        assertEquals(NewPlayerOnboardingStep.ShowWelcomeIntro, loaded.progress.newPlayerOnboardingStep)
         assertFalse(fixture.secureDataStore.data.first().isEmpty())
     }
 
@@ -58,11 +58,12 @@ class ProgressRepositoryTest {
                 availableDrawCount = 4,
                 nextChargeAt = "2026-03-25T00:00:00Z",
             ),
-            openedPackCount = 3,
-            homeMenuNoveltyState = HomeMenuNoveltyState(
-                library = true,
-                badgeBook = true,
-            ),
+                openedPackCount = 3,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.LearnLibraryVariants,
+                homeMenuNoveltyState = HomeMenuNoveltyState(
+                    library = true,
+                    badgeBook = true,
+                ),
             libraryCardNoveltyState = LibraryCardNoveltyState(
                 newCardIds = setOf("ALP-001"),
             ),
@@ -72,7 +73,7 @@ class ProgressRepositoryTest {
         val reloaded = fixture.repository.loadProgress().requireUsableProgress()
 
         assertEquals(progress, reloaded.progress)
-        assertEquals(NewPlayerOnboardingStep.OpenFirstPackMenu, reloaded.progress.newPlayerOnboardingStep)
+        assertEquals(NewPlayerOnboardingStep.LearnLibraryVariants, reloaded.progress.newPlayerOnboardingStep)
         val storedEnvelope = fixture.secureDataStore.data.first()
         assertFalse(storedEnvelope.isEmpty())
         assertFalse(storedEnvelope.ciphertextBase64.contains("ALP-001"))
@@ -96,7 +97,7 @@ class ProgressRepositoryTest {
         fixture.repository.resetProgress()
 
         val reloaded = fixture.repository.loadProgress().requireUsableProgress().progress
-        assertEquals(NewPlayerOnboardingStep.OpenFirstPackMenu, reloaded.newPlayerOnboardingStep)
+        assertEquals(NewPlayerOnboardingStep.ShowWelcomeIntro, reloaded.newPlayerOnboardingStep)
         assertEquals(0, reloaded.openedPackCount)
         assertEquals(OwnedCollection(), reloaded.collection)
         assertEquals(10, reloaded.rechargeState.availableDrawCount)

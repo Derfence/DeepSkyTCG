@@ -39,6 +39,31 @@ class NewPlayerOnboardingInteractionPolicyTest {
     }
 
     @Test
+    fun `show welcome intro blocks leaving home until onboarding starts`() {
+        val step = NewPlayerOnboardingStep.ShowWelcomeIntro
+
+        assertTrue(NewPlayerOnboardingInteractionPolicy.isBlockingStep(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeExit(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeAuxiliaryActions(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeOpenPack(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeLibrary(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeBadgeBook(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeEquipment(step))
+    }
+
+    @Test
+    fun `learn library variants keeps home limited to reopening the library`() {
+        val step = NewPlayerOnboardingStep.LearnLibraryVariants
+
+        assertTrue(NewPlayerOnboardingInteractionPolicy.isBlockingStep(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeExit(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeOpenPack(step))
+        assertTrue(NewPlayerOnboardingInteractionPolicy.allowsHomeLibrary(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeBadgeBook(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeEquipment(step))
+    }
+
+    @Test
     fun `activate first equipment keeps equipment activation available while blocking exits`() {
         val step = NewPlayerOnboardingStep.ActivateFirstEquipment
 

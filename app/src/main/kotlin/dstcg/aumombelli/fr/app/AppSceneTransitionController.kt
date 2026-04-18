@@ -66,7 +66,6 @@ internal class AppSceneTransitionController(
         writeState(readState().showHomeContent())
         delay(260)
         writeState(readState().hideLaunchLogo())
-        revealOnboardingHintsAfterTransition()
     }
 
     suspend fun animateHomeToPackSelection() {
@@ -348,8 +347,10 @@ internal class AppSceneTransitionController(
         revealOnboardingHintsAfterTransition()
     }
 
-    private suspend fun revealOnboardingHintsAfterTransition() {
-        delay(OnboardingHintRevealDelayMillis)
+    private suspend fun revealOnboardingHintsAfterTransition(
+        delayMillis: Long = OnboardingHintRevealDelayMillis,
+    ) {
+        delay(delayMillis)
         if (!readState().transitionLocked) {
             writeState(readState().showOnboardingHints())
         }

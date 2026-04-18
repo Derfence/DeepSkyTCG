@@ -27,6 +27,7 @@ class HomeScreenLaunchTest {
     fun home_screen_shows_logo_and_primary_actions_on_launch() {
         waitForHomeScreen()
 
+        composeRule.onNodeWithTag("new-player-modal-welcome").assertIsDisplayed()
         composeRule.onNodeWithTag("home-logo-lockup").assertIsDisplayed()
         composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
         composeRule.onNodeWithTag("home-library").assertIsDisplayed()
@@ -34,6 +35,7 @@ class HomeScreenLaunchTest {
         composeRule.onNodeWithTag("home-badges").assertIsDisplayed()
         composeRule.onNodeWithTag("home-settings").assertIsDisplayed()
         composeRule.onAllNodesWithTag("start-footer-version").assertCountEquals(0)
+        composeRule.onNodeWithTag("new-player-modal-finish").assertIsDisplayed()
     }
 
     private fun waitForHomeScreen() {

@@ -72,6 +72,7 @@ fun HomeScreen(
     allowAuxiliaryActions: Boolean = true,
     homeLogoVariant: BrandLogoVariant = BrandLogoVariant.Lockup19,
     onHomeLogoLayoutChanged: (Float, Float) -> Unit = { _, _ -> },
+    onContentEntranceSettledChanged: (Boolean) -> Unit = {},
     onCoachmarkTargetBoundsChanged: (NewPlayerOnboardingTarget, Rect?) -> Unit = { _, _ -> },
 ) {
     var settingsExpanded by remember { mutableStateOf(false) }
@@ -81,6 +82,11 @@ fun HomeScreen(
     val contentAlpha by animateFloatAsState(
         targetValue = if (contentVisible) 1f else 0f,
         animationSpec = tween(durationMillis = 520, easing = FastOutSlowInEasing),
+        finishedListener = { animatedValue ->
+            if (contentVisible && animatedValue >= 0.99f) {
+                onContentEntranceSettledChanged(true)
+            }
+        },
         label = "home-content-alpha",
     )
     val contentTranslationY by animateFloatAsState(
@@ -109,6 +115,7 @@ fun HomeScreen(
 
     LaunchedEffect(contentVisible) {
         if (!contentVisible) {
+            onContentEntranceSettledChanged(false)
             settingsExpanded = false
             resetConfirmationVisible = false
             aboutSheetVisible = false

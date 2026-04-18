@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 data class LibraryUiState(
     val isLoading: Boolean = true,
     val sections: List<LibrarySection> = emptyList(),
+    val onboardingVariantWalkthroughPages: List<LibraryOnboardingVariantWalkthroughPage> = emptyList(),
     val errorMessage: String? = null,
 )
 
@@ -52,6 +53,11 @@ class LibraryViewModel(
                         collection = collection,
                         newCardIds = progress?.libraryCardNoveltyState?.newCardIds.orEmpty(),
                     ),
+                    onboardingVariantWalkthroughPages = buildLibraryOnboardingVariantWalkthroughPages(
+                        extensions = extensions,
+                        cards = cards,
+                        variantProfiles = variantProfiles,
+                    ),
                     shouldClearPresentedNovelty = progressRepository != null &&
                         (
                             progress?.homeMenuNoveltyState?.library == true ||
@@ -62,6 +68,7 @@ class LibraryViewModel(
                 _uiState.value = LibraryUiState(
                     isLoading = false,
                     sections = content.sections,
+                    onboardingVariantWalkthroughPages = content.onboardingVariantWalkthroughPages,
                 )
                 if (content.shouldClearPresentedNovelty) {
                     viewModelScope.launch {
@@ -84,5 +91,6 @@ class LibraryViewModel(
 
 private data class LoadedLibraryContent(
     val sections: List<LibrarySection>,
+    val onboardingVariantWalkthroughPages: List<LibraryOnboardingVariantWalkthroughPage>,
     val shouldClearPresentedNovelty: Boolean,
 )

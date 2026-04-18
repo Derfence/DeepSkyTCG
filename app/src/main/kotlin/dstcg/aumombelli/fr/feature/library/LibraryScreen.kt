@@ -32,6 +32,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import fr.aumombelli.dstcg.app.NewPlayerBlockingModal
+import fr.aumombelli.dstcg.app.NewPlayerBlockingModalPage
 import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.ui.component.AstroCardThumbnail
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
@@ -42,8 +44,11 @@ fun LibraryScreen(
     state: LibraryUiState,
     onRefresh: () -> Unit,
     contentVisible: Boolean = true,
+    interactionsEnabled: Boolean = true,
     showOnboardingHint: Boolean = false,
     onOnboardingHintConsumed: () -> Unit = {},
+    showOnboardingVariantWalkthrough: Boolean = false,
+    onOnboardingVariantWalkthroughCompleted: () -> Unit = {},
 ) {
     val contentAlpha by animateFloatAsState(
         targetValue = if (contentVisible) 1f else 0f,
@@ -63,6 +68,7 @@ fun LibraryScreen(
     val fullscreenItem = fullscreenCardId?.let(cardsById::get)
     val previewCard = previewItem?.toDisplayCard(selectedVariantKey)
     val fullscreenCard = fullscreenItem?.toDisplayCard(selectedVariantKey)
+    val walkthroughVisible = showOnboardingVariantWalkthrough && state.onboardingVariantWalkthroughPages.isNotEmpty()
     val closePreviewToLibrary = {
         previewCardId = null
         fullscreenCardId = null
@@ -165,10 +171,14 @@ fun LibraryScreen(
                     AstroCardThumbnail(
                         item = card,
                         modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            previewCardId = card.definition.id
-                            selectedVariantKey = card.availableVariants.firstOrNull()?.key
-                            fullscreenCardId = null
+                        onClick = if (interactionsEnabled && !walkthroughVisible) {
+                            {
+                                previewCardId = card.definition.id
+                                selectedVariantKey = card.availableVariants.firstOrNull()?.key
+                                fullscreenCardId = null
+                            }
+                        } else {
+                            {}
                         },
                     )
                 }
@@ -198,6 +208,27 @@ fun LibraryScreen(
                     selectedVariantKey = variantKey
                 },
             )
+        }
+
+        if (walkthroughVisible) {
+            NewPlayerBlockingModal(
+                testTag = "new-player-modal-library-variants",
+                pages = state.onboardingVariantWalkthroughPages.map { page ->
+                    NewPlayerBlockingModalPage(
+                        title = page.title,
+                        message = page.message,
+                    )
+                },
+                finishButtonLabel = "Terminer",
+                onFinished = onOnboardingVariantWalkthroughCompleted,
+            ) { pageIndex ->
+                LibraryOnboardingVariantWalkthroughVisual(
+                    page = state.onboardingVariantWalkthroughPages[pageIndex],
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
+                )
+            }
         }
     }
 }

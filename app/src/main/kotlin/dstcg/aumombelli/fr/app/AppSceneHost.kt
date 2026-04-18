@@ -47,6 +47,7 @@ import fr.aumombelli.dstcg.feature.packs.opening.PackOpeningViewModel
 import fr.aumombelli.dstcg.feature.packs.selection.PackEvent
 import fr.aumombelli.dstcg.feature.packs.selection.PackSelectionScreen
 import fr.aumombelli.dstcg.feature.packs.selection.PackViewModel
+import fr.aumombelli.dstcg.model.NewPlayerOnboardingContent
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.ui.motion.AppScene
 import fr.aumombelli.dstcg.ui.motion.AppSkyBackdrop
@@ -77,6 +78,11 @@ internal fun AppSceneHost(
     }
     val sceneState = sceneStateHolder.value
     val hasEnteredHomeOnce = remember(launchConfig) { mutableStateOf(false) }
+    val homeContentEntranceSettled = remember(launchConfig) { mutableStateOf(false) }
+    val homeLockupEntranceSettled = remember(launchConfig) { mutableStateOf(false) }
+    val launchWelcomeAwaitingHomeEntrance = remember(launchConfig) {
+        mutableStateOf(launchConfig.scene == AppLaunchScene.Start)
+    }
 
     val cameraTilt = remember(launchConfig) { Animatable(0f) }
     val mountainSkyBlend = remember(launchConfig) { Animatable(0f) }
@@ -112,6 +118,10 @@ internal fun AppSceneHost(
         NewPlayerOnboardingCoordinator(appContainer.progressRepository)
     }
     val onboardingStep = onboardingCoordinator.uiState.currentStep
+    val blockingModalSpec = onboardingCoordinator.activeBlockingModal(
+        currentScene = sceneState.currentScene,
+        sceneState = sceneState,
+    )
 
     val launchLogoAlpha by animateFloatAsState(
         targetValue = if (sceneState.launchLogoVisible) 1f else 0f,
@@ -131,6 +141,15 @@ internal fun AppSceneHost(
     val homeLockupRevealProgress by animateFloatAsState(
         targetValue = if (sceneState.currentScene == AppScene.Home && sceneState.homeContentVisible) 1f else 0f,
         animationSpec = tween(durationMillis = 520, easing = FastOutSlowInEasing),
+        finishedListener = { animatedValue ->
+            if (
+                sceneState.currentScene == AppScene.Home &&
+                sceneState.homeContentVisible &&
+                animatedValue >= 0.99f
+            ) {
+                homeLockupEntranceSettled.value = true
+            }
+        },
         label = "home-lockup-reveal",
     )
     val launchBadgeLandingSize = if (sceneState.homeLogoBadgeLandingSizePx > 0f) {
@@ -169,6 +188,34 @@ internal fun AppSceneHost(
 
         if (launchConfig.scene == AppLaunchScene.Start) {
             transitions.runLaunchSequence()
+        }
+    }
+
+    LaunchedEffect(sceneState.currentScene, sceneState.homeContentVisible) {
+        if (sceneState.currentScene != AppScene.Home || !sceneState.homeContentVisible) {
+            homeContentEntranceSettled.value = false
+            homeLockupEntranceSettled.value = false
+        }
+    }
+
+    LaunchedEffect(
+        launchWelcomeAwaitingHomeEntrance.value,
+        sceneState.currentScene,
+        sceneState.homeContentVisible,
+        sceneState.onboardingHintsVisible,
+        homeContentEntranceSettled.value,
+        homeLockupEntranceSettled.value,
+    ) {
+        if (
+            launchWelcomeAwaitingHomeEntrance.value &&
+            sceneState.currentScene == AppScene.Home &&
+            sceneState.homeContentVisible &&
+            !sceneState.onboardingHintsVisible &&
+            homeContentEntranceSettled.value &&
+            homeLockupEntranceSettled.value
+        ) {
+            sceneStateHolder.value = sceneStateHolder.value.showOnboardingHints()
+            launchWelcomeAwaitingHomeEntrance.value = false
         }
     }
 
@@ -284,6 +331,9 @@ internal fun AppSceneHost(
                             landingSizePx = landingSizePx,
                         )
                     },
+                    onContentEntranceSettledChanged = { settled ->
+                        homeContentEntranceSettled.value = settled
+                    },
                     onCoachmarkTargetBoundsChanged = { target, bounds ->
                         sceneStateHolder.value = sceneStateHolder.value.withCoachmarkTargetBounds(target, bounds)
                     },
@@ -309,7 +359,10 @@ internal fun AppSceneHost(
                     }
                 }
 
-                BackHandler(enabled = !sceneState.transitionLocked) {
+                BackHandler(
+                    enabled = !sceneState.transitionLocked &&
+                        onboardingStep != NewPlayerOnboardingStep.LearnLibraryVariants,
+                ) {
                     scope.launch { transitions.animateLibraryToHome() }
                 }
 
@@ -317,9 +370,21 @@ internal fun AppSceneHost(
                     state = uiState,
                     onRefresh = libraryViewModel::refresh,
                     contentVisible = sceneState.libraryContentVisible,
+                    interactionsEnabled = onboardingStep != NewPlayerOnboardingStep.LearnLibraryVariants,
                     showOnboardingHint = onboardingCoordinator.uiState.libraryCardHintVisible &&
                         sceneState.onboardingHintsVisible,
                     onOnboardingHintConsumed = onboardingCoordinator::onLibraryCardHintConsumed,
+                    showOnboardingVariantWalkthrough =
+                        blockingModalSpec?.kind == NewPlayerBlockingModalKind.LibraryVariants,
+                    onOnboardingVariantWalkthroughCompleted = {
+                        scope.launch {
+                            val shouldResumeBadgeCelebration =
+                                onboardingCoordinator.onLibraryVariantWalkthroughCompleted()
+                            if (shouldResumeBadgeCelebration) {
+                                sceneStateHolder.value = sceneStateHolder.value.resumePendingBadgeCelebration()
+                            }
+                        }
+                    },
                 )
             }
 
@@ -607,32 +672,50 @@ internal fun AppSceneHost(
             !sceneState.badgeCelebrationDeferred &&
             badgeCelebrationTargetBounds != null
 
-        onboardingCoordinator.activeCoachmark(
-            currentScene = sceneState.currentScene,
-            sceneState = sceneState,
-            badgeCelebrationVisible = badgeCelebrationVisible,
-        )?.let { spec ->
-            val targetBounds = sceneState.coachmarkTargetBounds[spec.target]
-            val forceScrollDownHint =
-                spec.target == NewPlayerOnboardingTarget.EquipmentActivation &&
-                    sceneState.equipmentActivationScrollHintVisible
-            if (targetBounds != null || forceScrollDownHint) {
-                NewPlayerCoachmarkOverlay(
-                    spec = spec,
-                    targetBounds = targetBounds,
-                    forceScrollDownHint = forceScrollDownHint,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
+        if (blockingModalSpec?.kind == NewPlayerBlockingModalKind.WelcomeIntro) {
+            NewPlayerBlockingModal(
+                testTag = "new-player-modal-welcome",
+                pages = listOf(
+                    NewPlayerBlockingModalPage(
+                        title = NewPlayerOnboardingContent.welcomeIntro.title,
+                        message = NewPlayerOnboardingContent.welcomeIntro.message,
+                    ),
+                ),
+                finishButtonLabel = "Commencer",
+                onFinished = {
+                    scope.launch { onboardingCoordinator.onWelcomeIntroAcknowledged() }
+                },
+            )
         }
 
-        BadgeUnlockCelebrationOverlay(
-            badges = sceneState.pendingBadgeCelebration,
-            targetBounds = badgeCelebrationTargetBounds,
-            visible = badgeCelebrationVisible,
-            onFinished = transitions::completeBadgeCelebration,
-            modifier = Modifier.fillMaxSize(),
-        )
+        if (blockingModalSpec == null) {
+            onboardingCoordinator.activeCoachmark(
+                currentScene = sceneState.currentScene,
+                sceneState = sceneState,
+                badgeCelebrationVisible = badgeCelebrationVisible,
+            )?.let { spec ->
+                val targetBounds = sceneState.coachmarkTargetBounds[spec.target]
+                val forceScrollDownHint =
+                    spec.target == NewPlayerOnboardingTarget.EquipmentActivation &&
+                        sceneState.equipmentActivationScrollHintVisible
+                if (targetBounds != null || forceScrollDownHint) {
+                    NewPlayerCoachmarkOverlay(
+                        spec = spec,
+                        targetBounds = targetBounds,
+                        forceScrollDownHint = forceScrollDownHint,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+            }
+
+            BadgeUnlockCelebrationOverlay(
+                badges = sceneState.pendingBadgeCelebration,
+                targetBounds = badgeCelebrationTargetBounds,
+                visible = badgeCelebrationVisible,
+                onFinished = transitions::completeBadgeCelebration,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
     }
 }
 
