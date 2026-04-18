@@ -1,5 +1,6 @@
 package fr.aumombelli.dstcg
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.Modifier
@@ -347,6 +348,48 @@ class AstroCardThumbnailTest {
 
         assertTrue("Expected preview art width to leave a visible border", artBounds.width < surfaceBounds.width - 1f)
         assertTrue("Expected preview art height to leave a visible border", artBounds.height < surfaceBounds.height - 1f)
+    }
+
+    @Test
+    fun holographic_thumbnail_and_preview_keep_foil_border_without_explicit_motion() {
+        val holographicVariant = DisplayCardVariant(
+            skyQuality = "holographic",
+            skyQualityLabel = "Holographique",
+            finish = "standard",
+            finishLabel = "Standard",
+            isHolographic = true,
+            count = 1,
+        )
+        val item = LibraryCardItem(
+            definition = testCardDefinition("M42", name = "Nebuleuse d'Orion"),
+            extensionName = "Astronomes en herbe",
+            ownedCount = 1,
+            availableVariants = listOf(holographicVariant),
+        )
+        val displayCard = item.toDisplayCard() ?: error("Expected display card")
+
+        composeRule.setContent {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                AstroCardThumbnail(
+                    item = item,
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {},
+                )
+                AstroCardPreviewSurface(
+                    displayCard = displayCard,
+                    mode = AstroCardSurfaceMode.Preview,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("preview-card-surface"),
+                )
+            }
+        }
+
+        composeRule.onAllNodesWithTag("astro-card-holo-foil", useUnmergedTree = true).assertCountEquals(2)
+        composeRule.onAllNodesWithTag("astro-card-holo-glare", useUnmergedTree = true).assertCountEquals(2)
     }
 
     private companion object {

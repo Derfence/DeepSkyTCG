@@ -50,6 +50,11 @@ internal fun AstroCardPreviewSurface(
     val artInset = cardArtInset(mode)
     val interactiveHoloMotion = holographicMotion
         ?.takeIf { displayCard.activeVariant.isHolographic }
+    val renderedHoloMotion = if (displayCard.activeVariant.isHolographic) {
+        interactiveHoloMotion ?: HolographicCardMotion()
+    } else {
+        null
+    }
     val clickableModifier = if (onClick == null) {
         modifier
     } else {
@@ -89,25 +94,23 @@ internal fun AstroCardPreviewSurface(
             )
             HeroAtmosphere(palette = palette)
             CardFaceScrim(modifier = Modifier.fillMaxSize())
-            if (displayCard.activeVariant.isHolographic) {
-                if (interactiveHoloMotion != null) {
-                    HolographicFoilOverlay(
-                        motion = interactiveHoloMotion,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .testTag("astro-card-holo-foil"),
-                    )
-                    HolographicGlareOverlay(
-                        motion = interactiveHoloMotion,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .testTag("astro-card-holo-glare"),
-                    )
-                    HolographicRimLightOverlay(
-                        motion = interactiveHoloMotion,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
+            if (renderedHoloMotion != null) {
+                HolographicFoilOverlay(
+                    motion = renderedHoloMotion,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag("astro-card-holo-foil"),
+                )
+                HolographicGlareOverlay(
+                    motion = renderedHoloMotion,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .testTag("astro-card-holo-glare"),
+                )
+                HolographicRimLightOverlay(
+                    motion = renderedHoloMotion,
+                    modifier = Modifier.fillMaxSize(),
+                )
                 TwinklingStarsOverlay(
                     animated = mode != AstroCardSurfaceMode.Thumbnail ||
                         performanceProfile.enableAnimatedThumbnailTwinkles,
