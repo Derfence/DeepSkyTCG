@@ -28,11 +28,13 @@ class BadgeBookViewModel(
             runCatching {
                 val extensions = catalogRepository.loadExtensions()
                 val cards = catalogRepository.loadCards()
+                val equipmentCards = catalogRepository.loadEquipmentCards()
                 val variantProfiles = catalogRepository.loadVariantProfiles()
                 val progress = progressRepository.loadProgress().requireUsableProgress().progress
                 buildBadgeBookSections(
                     extensions = extensions,
                     cards = cards,
+                    equipmentCards = equipmentCards,
                     variantProfiles = variantProfiles,
                     progress = progress,
                 )

@@ -2,6 +2,7 @@ package fr.aumombelli.dstcg
 
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.feature.badges.BadgeItem
+import fr.aumombelli.dstcg.feature.badges.BadgeCenterMarkKind
 import fr.aumombelli.dstcg.feature.badges.BadgeProgress
 import fr.aumombelli.dstcg.feature.badges.BadgeRequirementType
 import fr.aumombelli.dstcg.feature.badges.badgeCoinLogoScale
@@ -19,13 +20,19 @@ class BadgeCoinTest {
             badge = sampleBadge(requirementType = BadgeRequirementType.FirstPackOpened),
             coinSize = coinSize,
         )
+        val equipmentLogoSize = badgeCoinLogoSize(
+            badge = sampleBadge(requirementType = BadgeRequirementType.EquipmentActivations100),
+            coinSize = coinSize,
+        )
         val regularLogoSize = badgeCoinLogoSize(
             badge = sampleBadge(requirementType = BadgeRequirementType.Stamped),
             coinSize = coinSize,
         )
 
         assertTrue(generalLogoSize > regularLogoSize)
+        assertTrue(equipmentLogoSize > regularLogoSize)
         assertEquals(0.72f, badgeCoinLogoScale(sampleBadge(BadgeRequirementType.FirstPackOpened)), 0.0001f)
+        assertEquals(0.64f, badgeCoinLogoScale(sampleBadge(BadgeRequirementType.EquipmentActivations100)), 0.0001f)
         assertEquals(0.60f, badgeCoinLogoScale(sampleBadge(BadgeRequirementType.Stamped)), 0.0001f)
     }
 
@@ -47,5 +54,15 @@ class BadgeCoinTest {
         description = "Description",
         requirementType = requirementType,
         progress = BadgeProgress(matchedCards = 1, totalCards = 1),
+        centerMarkKind = when (requirementType) {
+            BadgeRequirementType.FirstPackOpened -> BadgeCenterMarkKind.GeneralLogo
+            BadgeRequirementType.EquipmentAllCardsActivatedOnce,
+            BadgeRequirementType.EquipmentThreeTypesActiveSimultaneously,
+            BadgeRequirementType.EquipmentThreeLevelThreeTypesActiveSimultaneously,
+            BadgeRequirementType.EquipmentAffectedPacks100,
+            BadgeRequirementType.EquipmentActivations100,
+            -> BadgeCenterMarkKind.EquipmentMountGlyph
+            else -> BadgeCenterMarkKind.ExtensionLogo
+        },
     )
 }

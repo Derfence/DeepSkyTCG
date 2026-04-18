@@ -7,6 +7,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import fr.aumombelli.dstcg.feature.badges.BadgeBookScreen
 import fr.aumombelli.dstcg.feature.badges.BadgeBookUiState
+import fr.aumombelli.dstcg.feature.badges.BadgeCenterMarkKind
 import fr.aumombelli.dstcg.feature.badges.BadgeItem
 import fr.aumombelli.dstcg.feature.badges.BadgeProgress
 import fr.aumombelli.dstcg.feature.badges.BadgeRequirementType
@@ -45,6 +46,7 @@ class BadgeBookScreenTest {
                                             matchedCards = 1,
                                             totalCards = 3,
                                         ),
+                                        centerMarkKind = BadgeCenterMarkKind.ExtensionLogo,
                                     ),
                                 ),
                             ),
@@ -97,6 +99,7 @@ class BadgeBookScreenTest {
                                             totalCards = 1,
                                             unitLabel = "packs",
                                         ),
+                                        centerMarkKind = BadgeCenterMarkKind.GeneralLogo,
                                     ),
                                 ),
                             ),
@@ -133,5 +136,46 @@ class BadgeBookScreenTest {
         val detailRatio = detailMarkBounds.width / detailCoinBounds.width
 
         assertEquals(gridRatio, detailRatio, 0.02f)
+    }
+
+    @Test
+    fun equipment_general_badge_uses_mount_center_mark() {
+        composeRule.setContent {
+            DstcgTheme {
+                BadgeBookScreen(
+                    state = BadgeBookUiState(
+                        isLoading = false,
+                        sections = listOf(
+                            BadgeSection(
+                                extensionId = "general",
+                                extensionName = "Badges generaux",
+                                sectionType = BadgeSectionType.General,
+                                badges = listOf(
+                                    BadgeItem(
+                                        id = "general::equipment::three-types-active",
+                                        extensionId = "general",
+                                        extensionName = "Badges generaux",
+                                        title = "Trois équipements actifs",
+                                        description = "Cumule les trois types en meme temps.",
+                                        requirementType = BadgeRequirementType.EquipmentThreeTypesActiveSimultaneously,
+                                        progress = BadgeProgress(
+                                            matchedCards = 2,
+                                            totalCards = 3,
+                                            unitLabel = "équipements actifs en même temps",
+                                        ),
+                                        centerMarkKind = BadgeCenterMarkKind.EquipmentMountGlyph,
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                    onRefresh = {},
+                )
+            }
+        }
+
+        composeRule
+            .onNodeWithTag("badge-center-mark-general::equipment::three-types-active", useUnmergedTree = true)
+            .assertIsDisplayed()
     }
 }

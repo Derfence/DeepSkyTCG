@@ -1,6 +1,7 @@
 package fr.aumombelli.dstcg
 
 import fr.aumombelli.dstcg.feature.badges.BadgeBookViewModel
+import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.OwnedVariantCount
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -26,6 +27,9 @@ class BadgeBookViewModelTest {
                 testCardDefinition("ALP-001", extensionId = "core-alpha"),
                 testCardDefinition("MON-001", extensionId = "moon-dawn"),
             )
+            equipmentCards = listOf(
+                testEquipmentCardDefinition(id = "mount-beginner", type = EquipmentType.Mount, level = 1),
+            )
         }
         val progressGateway = FakeProgressGateway().apply {
             progress = progress.copy(
@@ -44,7 +48,7 @@ class BadgeBookViewModelTest {
         assertEquals(false, state.isLoading)
         assertEquals(listOf("general", "core-alpha", "moon-dawn"), state.sections.map { it.extensionId })
         assertEquals("Général", state.sections.first().extensionName)
-        assertEquals("1 / 1 pack ouvert", state.sections.first().badges.single().progress.label)
+        assertEquals("1 / 1 pack ouvert", state.sections.first().badges.first().progress.label)
         assertEquals("Moon Dawn", state.sections[2].extensionName)
         assertEquals("1 / 1 cartes valides", state.sections[2].badges.first().progress.label)
     }

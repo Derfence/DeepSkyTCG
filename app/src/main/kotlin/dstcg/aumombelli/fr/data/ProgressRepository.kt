@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import fr.aumombelli.dstcg.model.ActiveEquipmentEffect
 import fr.aumombelli.dstcg.model.CardDefinition
+import fr.aumombelli.dstcg.model.EquipmentBadgeProgress
 import fr.aumombelli.dstcg.model.EquipmentCardDefinition
 import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.model.HomeMenuNoveltyState
@@ -102,6 +103,7 @@ class ProgressRepository(
             equipmentInventory = normalizedProgress.equipmentInventory,
             activeEquipmentByType = normalizedProgress.activeEquipmentByType,
             lastActivatedCardIdByType = normalizedProgress.lastActivatedCardIdByType,
+            equipmentBadgeProgress = normalizedProgress.equipmentBadgeProgress,
             homeMenuNoveltyState = normalizedProgress.homeMenuNoveltyState,
             libraryCardNoveltyState = normalizedProgress.libraryCardNoveltyState,
             lastTrustedWallClockUtc = effectiveNow.toString(),
@@ -121,6 +123,7 @@ class ProgressRepository(
             rechargeState = PackRechargeState(availableDrawCount = settings.maxStoredDraws),
             openedPackCount = 0,
             newPlayerOnboardingStep = NewPlayerOnboardingStep.ShowWelcomeIntro,
+            equipmentBadgeProgress = EquipmentBadgeProgress(),
             homeMenuNoveltyState = HomeMenuNoveltyState(),
             libraryCardNoveltyState = LibraryCardNoveltyState(),
             lastTrustedWallClockUtc = timeEvidence.wallClockUtc.toString(),
@@ -156,6 +159,7 @@ class ProgressRepository(
                 rechargeState = PackRechargeState(availableDrawCount = settings.maxStoredDraws),
                 openedPackCount = 0,
                 newPlayerOnboardingStep = NewPlayerOnboardingStep.ShowWelcomeIntro,
+                equipmentBadgeProgress = EquipmentBadgeProgress(),
                 homeMenuNoveltyState = HomeMenuNoveltyState(),
                 libraryCardNoveltyState = LibraryCardNoveltyState(),
                 lastTrustedWallClockUtc = timeEvidence.wallClockUtc.toString(),
@@ -211,6 +215,7 @@ class ProgressRepository(
             equipmentInventory = normalizedProgress.equipmentInventory,
             activeEquipmentByType = normalizedProgress.activeEquipmentByType,
             lastActivatedCardIdByType = normalizedProgress.lastActivatedCardIdByType,
+            equipmentBadgeProgress = normalizedProgress.equipmentBadgeProgress,
             homeMenuNoveltyState = normalizedProgress.homeMenuNoveltyState,
             libraryCardNoveltyState = normalizedProgress.libraryCardNoveltyState,
             lastTrustedWallClockUtc = trustedTime.trustedNow.toString(),
@@ -227,6 +232,7 @@ class ProgressRepository(
             snapshot.equipmentInventory != normalizedSnapshot.equipmentInventory ||
             snapshot.activeEquipmentByType != normalizedSnapshot.activeEquipmentByType ||
             snapshot.lastActivatedCardIdByType != normalizedSnapshot.lastActivatedCardIdByType ||
+            snapshot.equipmentBadgeProgress != normalizedSnapshot.equipmentBadgeProgress ||
             snapshot.homeMenuNoveltyState != normalizedSnapshot.homeMenuNoveltyState ||
             snapshot.libraryCardNoveltyState != normalizedSnapshot.libraryCardNoveltyState ||
             snapshot.tamperFlag ||

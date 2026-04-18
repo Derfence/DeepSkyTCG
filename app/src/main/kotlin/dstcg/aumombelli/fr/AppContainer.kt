@@ -38,9 +38,13 @@ class AppContainer(
             val collectionRepository = CollectionRepository(
                 progressRepository = progressRepository,
             )
+            val homeMenuNoveltyEvaluator = HomeMenuNoveltyEvaluator(
+                catalogRepository = catalogRepository,
+            )
             val equipmentRepository = EquipmentRepository(
                 progressRepository = progressRepository,
                 catalogRepository = catalogRepository,
+                homeMenuNoveltyEvaluator = homeMenuNoveltyEvaluator,
             )
             val packRepository = PackRepository(
                 progressRepository = progressRepository,
@@ -49,9 +53,7 @@ class AppContainer(
                     catalogRepository = catalogRepository,
                     settings = gameSettings,
                 ),
-                homeMenuNoveltyEvaluator = HomeMenuNoveltyEvaluator(
-                    catalogRepository = catalogRepository,
-                ),
+                homeMenuNoveltyEvaluator = homeMenuNoveltyEvaluator,
             )
 
             return AppContainer(

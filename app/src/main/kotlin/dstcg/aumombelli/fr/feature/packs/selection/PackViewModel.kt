@@ -210,6 +210,7 @@ class PackViewModel(
         buildNewlyUnlockedBadges(
             extensions = catalogRepository.loadExtensions(),
             cards = catalogRepository.loadCards(),
+            equipmentCards = catalogRepository.loadEquipmentCards(),
             variantProfiles = catalogRepository.loadVariantProfiles(),
             beforeProgress = beforeProgress,
             afterProgress = afterProgress,

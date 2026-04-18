@@ -3,6 +3,7 @@ package fr.aumombelli.dstcg.data
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.model.ActiveEquipmentEffect
+import fr.aumombelli.dstcg.model.EquipmentBadgeProgress
 import fr.aumombelli.dstcg.model.OwnedEquipmentInventory
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.PackRechargeState
@@ -23,6 +24,7 @@ data class ProgressSnapshot(
     val equipmentInventory: OwnedEquipmentInventory = OwnedEquipmentInventory(),
     val activeEquipmentByType: Map<EquipmentType, ActiveEquipmentEffect> = emptyMap(),
     val lastActivatedCardIdByType: Map<EquipmentType, String> = emptyMap(),
+    val equipmentBadgeProgress: EquipmentBadgeProgress = EquipmentBadgeProgress(),
     val homeMenuNoveltyState: HomeMenuNoveltyState = HomeMenuNoveltyState(),
     val libraryCardNoveltyState: LibraryCardNoveltyState = LibraryCardNoveltyState(),
     val lastTrustedWallClockUtc: String,
@@ -38,12 +40,13 @@ data class ProgressSnapshot(
         equipmentInventory = equipmentInventory,
         activeEquipmentByType = activeEquipmentByType,
         lastActivatedCardIdByType = lastActivatedCardIdByType,
+        equipmentBadgeProgress = equipmentBadgeProgress,
         homeMenuNoveltyState = homeMenuNoveltyState,
         libraryCardNoveltyState = libraryCardNoveltyState,
     )
 
     companion object {
-        const val CURRENT_SCHEMA_VERSION: Int = 6
+        const val CURRENT_SCHEMA_VERSION: Int = 7
         const val ONBOARDING_STATE_SCHEMA_VERSION: Int = 4
     }
 }

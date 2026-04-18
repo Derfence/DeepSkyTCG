@@ -12,6 +12,7 @@ class HomeMenuNoveltyEvaluator(
     ): Boolean = buildNewlyUnlockedBadgeIds(
         extensions = catalogRepository.loadExtensions(),
         cards = catalogRepository.loadCards(),
+        equipmentCards = catalogRepository.loadEquipmentCards(),
         variantProfiles = catalogRepository.loadVariantProfiles(),
         beforeProgress = beforeProgress,
         afterProgress = afterProgress,

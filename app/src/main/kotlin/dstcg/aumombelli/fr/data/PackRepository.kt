@@ -10,6 +10,7 @@ import fr.aumombelli.dstcg.model.consumeEquipmentEffectsAfterPackOpen
 import fr.aumombelli.dstcg.model.hasEquipmentStockCrossedZero
 import fr.aumombelli.dstcg.model.hasNewLibraryCard
 import fr.aumombelli.dstcg.model.or
+import fr.aumombelli.dstcg.model.recordAffectedPackIfEquipmentActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -47,6 +48,7 @@ class PackRepository(
             rechargeState = packResponse.rechargeState,
             openedPackCount = progress.openedPackCount + 1,
         )
+            .recordAffectedPackIfEquipmentActive()
             .consumeEquipmentEffectsAfterPackOpen()
         val drawnNewLibraryCardIds = buildNewLibraryCardIds(
             beforeProgress = progress,

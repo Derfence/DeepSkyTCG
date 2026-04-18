@@ -31,10 +31,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.performance.LocalAppPerformanceProfile
+import fr.aumombelli.dstcg.ui.component.EquipmentMountBadgeMark
 import fr.aumombelli.dstcg.ui.component.ExtensionLogoMark
 import fr.aumombelli.dstcg.ui.component.GeneralBadgeLogoMark
 import fr.aumombelli.dstcg.ui.component.TwinklingStarsOverlay
+import fr.aumombelli.dstcg.ui.component.equipmentCategoryColorTokens
 import fr.aumombelli.dstcg.ui.theme.SkyQualityPalette
 import fr.aumombelli.dstcg.ui.theme.skyQualityPalette
 
@@ -206,6 +209,20 @@ private fun badgePalette(badge: BadgeItem): SkyQualityPalette = when (badge.requ
         glow = Color(0xAAFFE29B),
         mist = Color(0x55F8BE57),
     )
+    BadgeRequirementType.EquipmentAllCardsActivatedOnce,
+    BadgeRequirementType.EquipmentThreeTypesActiveSimultaneously,
+    BadgeRequirementType.EquipmentThreeLevelThreeTypesActiveSimultaneously,
+    BadgeRequirementType.EquipmentAffectedPacks100,
+    BadgeRequirementType.EquipmentActivations100,
+    -> {
+        val tokens = equipmentCategoryColorTokens(EquipmentType.Mount)
+        SkyQualityPalette(
+            top = tokens.cardStart,
+            bottom = tokens.cardEnd,
+            glow = tokens.accent.copy(alpha = 0.76f),
+            mist = tokens.chipColor,
+        )
+    }
     BadgeRequirementType.SkyQuality -> skyQualityPalette(badge.skyQualityCode.orEmpty())
     BadgeRequirementType.Stamped -> SkyQualityPalette(
         top = Color(0xFF9EA4B1),
@@ -262,15 +279,20 @@ private fun BadgeCenterMark(
 ) {
     val taggedModifier = testTag?.let { Modifier.testTag(it) } ?: Modifier
     Box(modifier = taggedModifier) {
-        if (badge.extensionId == GeneralBadgeSectionId) {
-            GeneralBadgeLogoMark(
+        when (badge.centerMarkKind) {
+            BadgeCenterMarkKind.ExtensionLogo -> ExtensionLogoMark(
+                extensionId = badge.extensionId,
+                compact = false,
                 emblemSize = logoSize,
                 modifier = modifier,
             )
-        } else {
-            ExtensionLogoMark(
-                extensionId = badge.extensionId,
-                compact = false,
+
+            BadgeCenterMarkKind.GeneralLogo -> GeneralBadgeLogoMark(
+                emblemSize = logoSize,
+                modifier = modifier,
+            )
+
+            BadgeCenterMarkKind.EquipmentMountGlyph -> EquipmentMountBadgeMark(
                 emblemSize = logoSize,
                 modifier = modifier,
             )
@@ -278,9 +300,10 @@ private fun BadgeCenterMark(
     }
 }
 
-internal fun badgeCoinLogoScale(badge: BadgeItem): Float = when (badge.requirementType) {
-    BadgeRequirementType.FirstPackOpened -> 0.72f
-    else -> 0.60f
+internal fun badgeCoinLogoScale(badge: BadgeItem): Float = when (badge.centerMarkKind) {
+    BadgeCenterMarkKind.GeneralLogo -> 0.72f
+    BadgeCenterMarkKind.EquipmentMountGlyph -> 0.64f
+    BadgeCenterMarkKind.ExtensionLogo -> 0.60f
 }
 
 internal fun badgeCoinLogoSize(
@@ -290,6 +313,11 @@ internal fun badgeCoinLogoSize(
 
 private fun badgeUsesTwinklingStars(badge: BadgeItem): Boolean = when (badge.requirementType) {
     BadgeRequirementType.FirstPackOpened,
+    BadgeRequirementType.EquipmentAllCardsActivatedOnce,
+    BadgeRequirementType.EquipmentThreeTypesActiveSimultaneously,
+    BadgeRequirementType.EquipmentThreeLevelThreeTypesActiveSimultaneously,
+    BadgeRequirementType.EquipmentAffectedPacks100,
+    BadgeRequirementType.EquipmentActivations100,
     BadgeRequirementType.SkyQuality,
     -> false
     BadgeRequirementType.Stamped,

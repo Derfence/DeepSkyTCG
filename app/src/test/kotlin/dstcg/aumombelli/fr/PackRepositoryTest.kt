@@ -7,6 +7,7 @@ import fr.aumombelli.dstcg.data.PackRepository
 import fr.aumombelli.dstcg.model.ActiveEquipmentEffect
 import fr.aumombelli.dstcg.model.AstronomyPackRevealSlot
 import fr.aumombelli.dstcg.model.CardFinishDefinition
+import fr.aumombelli.dstcg.model.EquipmentBadgeProgress
 import fr.aumombelli.dstcg.model.EquipmentSettingsDefinition
 import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.model.HomeMenuNoveltyState
@@ -144,8 +145,50 @@ class PackRepositoryTest {
         assertEquals(listOf(rewardCard.id), response.equipmentCards.map { it.id })
         assertEquals(1, progressGateway.progress.equipmentInventory.entryFor(rewardCard.id).countOwned)
         assertFalse(progressGateway.progress.activeEquipmentByType.containsKey(EquipmentType.Mount))
+        assertEquals(1, progressGateway.progress.equipmentBadgeProgress.affectedPackCount)
         assertEquals(1, progressGateway.progress.collection.cards.values.sumOf { it.totalOwned })
         assertEquals(true, progressGateway.progress.homeMenuNoveltyState.equipment)
+    }
+
+    @Test
+    fun `open pack does not increment affected pack count when no equipment is active`() = runTest {
+        val fixedNow = Instant.parse("2026-03-24T12:00:00Z")
+        val progressGateway = FakeProgressGateway().apply {
+            progress = StandaloneProgress(
+                collection = ownedCollectionOf("ALP-001" to 1),
+                rechargeState = testRechargeState(),
+                equipmentBadgeProgress = EquipmentBadgeProgress(affectedPackCount = 7),
+            )
+        }
+        val catalogGateway = FakeCatalogGateway().apply {
+            cards = listOf(
+                testCardDefinition("ALP-001", name = "Nebuleuse d'Orion", variantProfileId = "local-pack-profile"),
+            )
+            variantProfiles = listOf(localPackProfile())
+            gameBalance = testGameBalanceDefinition(
+                cardsPerDraw = 1,
+                suburbanMeanPerDay = 1.0,
+                ruralMeanPerDay = 1.0,
+                mountainMeanPerDay = 1.0,
+            )
+        }
+        val repository = PackRepository(
+            progressRepository = progressGateway,
+            collectionRepository = CollectionRepository(progressGateway),
+            localPackEngine = LocalPackEngine(
+                catalogRepository = catalogGateway,
+                settings = testGameSettings(
+                    now = fixedNow,
+                    maxStoredDraws = 10,
+                    randomSeed = 1,
+                ),
+            ),
+            homeMenuNoveltyEvaluator = HomeMenuNoveltyEvaluator(catalogGateway),
+        )
+
+        repository.openPack("astronomes-en-herbe")
+
+        assertEquals(7, progressGateway.progress.equipmentBadgeProgress.affectedPackCount)
     }
 
     @Test

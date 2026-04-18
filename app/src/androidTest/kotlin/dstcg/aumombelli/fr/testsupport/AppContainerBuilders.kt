@@ -79,9 +79,13 @@ internal fun offlineMainActivityTestAppContainer(
         progressCipher = AesGcmProgressCipher(keyProvider = ::newTestSecretKey),
     )
     val collectionRepository = CollectionRepository(progressRepository)
+    val homeMenuNoveltyEvaluator = HomeMenuNoveltyEvaluator(
+        catalogRepository = catalogRepository,
+    )
     val equipmentRepository = EquipmentRepository(
         progressRepository = progressRepository,
         catalogRepository = catalogRepository,
+        homeMenuNoveltyEvaluator = homeMenuNoveltyEvaluator,
     )
     val packRepository = PackRepository(
         progressRepository = progressRepository,
@@ -90,9 +94,7 @@ internal fun offlineMainActivityTestAppContainer(
             catalogRepository = catalogRepository,
             settings = gameSettings,
         ),
-        homeMenuNoveltyEvaluator = HomeMenuNoveltyEvaluator(
-            catalogRepository = catalogRepository,
-        ),
+        homeMenuNoveltyEvaluator = homeMenuNoveltyEvaluator,
     )
 
     return AppContainer(
@@ -252,6 +254,7 @@ private fun navigationTestAppContainer(
         equipmentRepository = EquipmentRepository(
             progressRepository = progressRepository,
             catalogRepository = catalogRepository,
+            homeMenuNoveltyEvaluator = HomeMenuNoveltyEvaluator(catalogRepository),
         ),
         packRepository = NavigationPackGateway(progressRepository, packResponse),
         gameSettings = StandaloneGameSettings(

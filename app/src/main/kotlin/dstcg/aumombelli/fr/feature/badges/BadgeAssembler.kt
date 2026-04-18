@@ -1,17 +1,22 @@
 package fr.aumombelli.dstcg.feature.badges
 
 import fr.aumombelli.dstcg.model.CardDefinition
+import fr.aumombelli.dstcg.model.EquipmentCardDefinition
+import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.OwnedVariantCount
 import fr.aumombelli.dstcg.model.SkyQualityDefinition
 import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.model.VariantProfile
+import fr.aumombelli.dstcg.model.activatedEquipmentCardCount
 import fr.aumombelli.dstcg.model.normalized
+import fr.aumombelli.dstcg.model.totalEquipmentActivationCount
 
 internal fun buildBadgeBookSections(
     extensions: List<ExtensionDefinition>,
     cards: List<CardDefinition>,
+    equipmentCards: List<EquipmentCardDefinition>,
     variantProfiles: List<VariantProfile>,
     progress: StandaloneProgress,
 ): List<BadgeSection> {
@@ -19,7 +24,7 @@ internal fun buildBadgeBookSections(
     val collection = progress.collection
 
     return buildList {
-        add(buildGeneralSection(progress))
+        add(buildGeneralSection(progress = progress, equipmentCards = equipmentCards))
         addAll(
             extensions.map { extension ->
                 val extensionCards = cards
@@ -88,11 +93,21 @@ internal fun buildBadgeBookSections(
     }
 }
 
-private fun buildGeneralSection(progress: StandaloneProgress): BadgeSection = BadgeSection(
+private fun buildGeneralSection(
+    progress: StandaloneProgress,
+    equipmentCards: List<EquipmentCardDefinition>,
+): BadgeSection = BadgeSection(
     extensionId = GeneralBadgeSectionId,
     extensionName = "Général",
     sectionType = BadgeSectionType.General,
-    badges = listOf(buildFirstPackOpenedBadge(progress)),
+    badges = listOf(
+        buildFirstPackOpenedBadge(progress),
+        buildEquipmentAllCardsActivatedOnceBadge(progress, equipmentCards),
+        buildEquipmentThreeTypesActiveSimultaneouslyBadge(progress),
+        buildEquipmentThreeLevelThreeTypesActiveSimultaneouslyBadge(progress),
+        buildEquipmentAffectedPacks100Badge(progress),
+        buildEquipmentActivations100Badge(progress, equipmentCards),
+    ),
 )
 
 private fun buildFirstPackOpenedBadge(progress: StandaloneProgress): BadgeItem {
@@ -109,8 +124,101 @@ private fun buildFirstPackOpenedBadge(progress: StandaloneProgress): BadgeItem {
             totalCards = 1,
             unitLabel = "pack ouvert",
         ),
+        centerMarkKind = BadgeCenterMarkKind.GeneralLogo,
     )
 }
+
+private fun buildEquipmentAllCardsActivatedOnceBadge(
+    progress: StandaloneProgress,
+    equipmentCards: List<EquipmentCardDefinition>,
+): BadgeItem {
+    val totalEquipmentCards = equipmentCards.size
+    return BadgeItem(
+        id = "$GeneralBadgeSectionId::equipment::all-used-once",
+        extensionId = GeneralBadgeSectionId,
+        extensionName = "Général",
+        title = "Tous les équipements utilisés",
+        description = "Active au moins une fois chaque carte d'équipement actuelle : les trois niveaux d'Observatoire, de Télescope et de Monture.",
+        requirementType = BadgeRequirementType.EquipmentAllCardsActivatedOnce,
+        progress = BadgeProgress(
+            matchedCards = progress.activatedEquipmentCardCount(equipmentCards).coerceAtMost(totalEquipmentCards),
+            totalCards = totalEquipmentCards,
+            unitLabel = "équipements utilisés",
+        ),
+        centerMarkKind = BadgeCenterMarkKind.EquipmentMountGlyph,
+    )
+}
+
+private fun buildEquipmentThreeTypesActiveSimultaneouslyBadge(
+    progress: StandaloneProgress,
+): BadgeItem = BadgeItem(
+    id = "$GeneralBadgeSectionId::equipment::three-types-active",
+    extensionId = GeneralBadgeSectionId,
+    extensionName = "Général",
+    title = "Trois équipements actifs",
+    description = "Cumule en même temps un Observatoire, un Télescope et une Monture actifs.",
+    requirementType = BadgeRequirementType.EquipmentThreeTypesActiveSimultaneously,
+    progress = BadgeProgress(
+        matchedCards = progress.equipmentBadgeProgress.maxSimultaneouslyActiveEquipmentTypeCount
+            .coerceAtMost(EquipmentType.entries.size),
+        totalCards = EquipmentType.entries.size,
+        unitLabel = "équipements actifs en même temps",
+    ),
+    centerMarkKind = BadgeCenterMarkKind.EquipmentMountGlyph,
+)
+
+private fun buildEquipmentThreeLevelThreeTypesActiveSimultaneouslyBadge(
+    progress: StandaloneProgress,
+): BadgeItem = BadgeItem(
+    id = "$GeneralBadgeSectionId::equipment::three-level-three-active",
+    extensionId = GeneralBadgeSectionId,
+    extensionName = "Général",
+    title = "Trio niveau III",
+    description = "Maintiens en même temps les trois types d'équipements actifs avec leurs cartes de niveau III.",
+    requirementType = BadgeRequirementType.EquipmentThreeLevelThreeTypesActiveSimultaneously,
+    progress = BadgeProgress(
+        matchedCards = progress.equipmentBadgeProgress.maxSimultaneouslyActiveLevelThreeEquipmentTypeCount
+            .coerceAtMost(EquipmentType.entries.size),
+        totalCards = EquipmentType.entries.size,
+        unitLabel = "équipements niv. III actifs en même temps",
+    ),
+    centerMarkKind = BadgeCenterMarkKind.EquipmentMountGlyph,
+)
+
+private fun buildEquipmentAffectedPacks100Badge(
+    progress: StandaloneProgress,
+): BadgeItem = BadgeItem(
+    id = "$GeneralBadgeSectionId::equipment::packs-affected-100",
+    extensionId = GeneralBadgeSectionId,
+    extensionName = "Général",
+    title = "100 packs équipés",
+    description = "Ouvre 100 packs avec au moins un équipement actif au moment du tirage.",
+    requirementType = BadgeRequirementType.EquipmentAffectedPacks100,
+    progress = BadgeProgress(
+        matchedCards = progress.equipmentBadgeProgress.affectedPackCount.coerceAtMost(100),
+        totalCards = 100,
+        unitLabel = "packs affectés",
+    ),
+    centerMarkKind = BadgeCenterMarkKind.EquipmentMountGlyph,
+)
+
+private fun buildEquipmentActivations100Badge(
+    progress: StandaloneProgress,
+    equipmentCards: List<EquipmentCardDefinition>,
+): BadgeItem = BadgeItem(
+    id = "$GeneralBadgeSectionId::equipment::activations-100",
+    extensionId = GeneralBadgeSectionId,
+    extensionName = "Général",
+    title = "100 équipements utilisés",
+    description = "Active des équipements pour un total cumulé de 100 utilisations, tous types et niveaux confondus.",
+    requirementType = BadgeRequirementType.EquipmentActivations100,
+    progress = BadgeProgress(
+        matchedCards = progress.totalEquipmentActivationCount().coerceAtMost(100),
+        totalCards = 100,
+        unitLabel = "équipements utilisés",
+    ),
+    centerMarkKind = BadgeCenterMarkKind.EquipmentMountGlyph,
+)
 
 private fun buildSkyQualityBadge(
     extension: ExtensionDefinition,
@@ -141,6 +249,7 @@ private fun buildSkyQualityBadge(
         requirementType = BadgeRequirementType.SkyQuality,
         progress = progress,
         skyQualityCode = skyQuality.code,
+        centerMarkKind = BadgeCenterMarkKind.ExtensionLogo,
     )
 }
 
@@ -168,6 +277,7 @@ private fun buildStampedBadge(
         description = "Obtiens chaque carte de ${extension.name} en version tamponnee, quelle que soit la qualite du ciel.",
         requirementType = BadgeRequirementType.Stamped,
         progress = progress,
+        centerMarkKind = BadgeCenterMarkKind.ExtensionLogo,
     )
 }
 
@@ -200,6 +310,7 @@ private fun buildHolographicStampedBadge(
         requirementType = BadgeRequirementType.HolographicStamped,
         progress = progress,
         skyQualityCode = "holographic",
+        centerMarkKind = BadgeCenterMarkKind.ExtensionLogo,
     )
 }
 
@@ -229,6 +340,7 @@ private fun buildPerfectCollectionBadge(
         description = "Obtiens les dix variations de chaque carte de ${extension.name} : les cinq qualites du ciel en standard et en tamponnee.",
         requirementType = BadgeRequirementType.PerfectCollection,
         progress = progress,
+        centerMarkKind = BadgeCenterMarkKind.ExtensionLogo,
     )
 }
 
