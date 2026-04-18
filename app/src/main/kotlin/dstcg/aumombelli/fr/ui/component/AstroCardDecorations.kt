@@ -11,7 +11,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -26,11 +25,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import fr.aumombelli.dstcg.ui.motion.BrandLogoVariant
 import fr.aumombelli.dstcg.ui.motion.HolographicCardMotion
-import fr.aumombelli.dstcg.ui.motion.LaunchLogoMark
 import fr.aumombelli.dstcg.ui.theme.SkyQualityPalette
 import fr.aumombelli.dstcg.ui.theme.rarityBadgeStyle
 import kotlin.math.PI
@@ -312,12 +310,14 @@ internal fun StampedSealOverlay(
     compact: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    LaunchLogoMark(
-        variant = BrandLogoVariant.Badge17,
-        emblemSize = if (compact) 18.dp else 24.dp,
-        modifier = modifier.size(if (compact) 18.dp else 24.dp),
+    AssetSvgImage(
+        assetPath = StampedSealAssetPath,
+        modifier = modifier
+            .graphicsLayer(rotationZ = -45f),
     )
 }
+
+private const val StampedSealAssetPath = "branding/22-tampon.svg"
 
 internal fun starPath(
     center: Offset,

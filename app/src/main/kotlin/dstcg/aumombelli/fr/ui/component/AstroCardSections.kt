@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -182,25 +184,52 @@ internal fun CardFooter(
                 modifier = Modifier.testTag(CardExtensionLogoTag),
             )
         }
-        Column(
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(
-                space = if (compact) 2.dp else 4.dp,
-                alignment = Alignment.Bottom,
-            ),
+        Box(
+            contentAlignment = Alignment.BottomEnd,
             modifier = Modifier
                 .weight(1f)
                 .wrapContentHeight(align = Alignment.Bottom),
         ) {
-            if (displayCard.activeVariant.isStamped) {
-                StampedSealOverlay(compact = compact)
+            val rarityBadgeSize = if (compact) 36.dp else 48.dp
+            val stampedSealWidth = if (compact) 60.dp else 84.dp
+            val stampedSealHeight = if (compact) 10.dp else 14.dp
+            val stampedSealVerticalGap = if (compact) 2.dp else 4.dp
+            val stampedSealHorizontalOverlap = if (compact) 4.dp else 6.dp
+            val stampedSealLeftShift =
+                (stampedSealWidth + stampedSealHeight) * RotatedStampHalfHorizontalFootprintFactor
+            val clusterHeight = if (displayCard.activeVariant.isStamped) {
+                rarityBadgeSize + stampedSealVerticalGap + stampedSealHeight
+            } else {
+                rarityBadgeSize
             }
-            RarityStarBadge(
-                rarityLabel = displayCard.definition.rarityLabel,
+
+            Box(
                 modifier = Modifier
-                    .size(if (compact) 36.dp else 48.dp)
-                    .testTag(rarityBadgeTag(displayCard.definition.rarityLabel)),
-            )
+                    .requiredSize(
+                        width = rarityBadgeSize,
+                        height = clusterHeight,
+                    ),
+            ) {
+                if (displayCard.activeVariant.isStamped) {
+                    StampedSealOverlay(
+                        compact = compact,
+                        modifier = Modifier
+                            .requiredSize(
+                                width = stampedSealWidth,
+                                height = stampedSealHeight,
+                            )
+                            .align(Alignment.TopEnd)
+                            .offset(x = stampedSealHorizontalOverlap - stampedSealLeftShift),
+                    )
+                }
+                RarityStarBadge(
+                    rarityLabel = displayCard.definition.rarityLabel,
+                    modifier = Modifier
+                        .size(rarityBadgeSize)
+                        .align(Alignment.BottomEnd)
+                        .testTag(rarityBadgeTag(displayCard.definition.rarityLabel)),
+                )
+            }
         }
     }
 }
@@ -385,6 +414,8 @@ internal fun buildVariantLine(variant: DisplayCardVariant): String = buildString
 
 internal fun rarityBadgeTag(rarityLabel: String): String =
     "astro-card-rarity-${rarityLabel.lowercase()}"
+
+private const val RotatedStampHalfHorizontalFootprintFactor = 0.35355338f
 
 internal fun fallbackDisplayCard(item: LibraryCardItem) =
     item.definition.toDisplayCard(
