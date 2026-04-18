@@ -5,6 +5,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -16,7 +17,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material.icons.automirrored.filled.MenuBook
@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
 import fr.aumombelli.dstcg.ui.component.NewContentIndicator
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
+import fr.aumombelli.dstcg.ui.component.drawEquipmentMountGlyph
 import fr.aumombelli.dstcg.ui.motion.MotionCard
 import fr.aumombelli.dstcg.ui.motion.BrandLogoVariant
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
@@ -303,13 +304,15 @@ fun HomeScreen(
 
                     if (state.isEquipmentMenuVisible) {
                         HomeCornerActionButton(
-                            imageVector = Icons.Filled.AutoAwesome,
                             contentDescription = "Equipements",
                             enabled = navigationEnabled,
                             onClick = onOpenEquipment,
                             buttonSize = homeLayout.menuButtonSize,
                             showNewIndicator = state.showEquipmentNewIndicator,
                             newIndicatorTestTag = "home-equipment-new-indicator",
+                            iconContent = { iconModifier ->
+                                EquipmentHomeMountIcon(modifier = iconModifier)
+                            },
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
                                 .onGloballyPositioned { coordinates ->
@@ -381,7 +384,6 @@ private fun reportHomeLayoutMetrics(
 
 @Composable
 private fun HomeCornerActionButton(
-    imageVector: ImageVector,
     contentDescription: String,
     enabled: Boolean,
     onClick: () -> Unit,
@@ -389,10 +391,20 @@ private fun HomeCornerActionButton(
     showNewIndicator: Boolean,
     newIndicatorTestTag: String,
     modifier: Modifier = Modifier,
+    imageVector: ImageVector? = null,
+    iconContent: (@Composable (Modifier) -> Unit)? = null,
 ) {
     val mainIconSize = buttonSize * 0.36f
     val indicatorSize = buttonSize * 0.36f
     val indicatorPadding = buttonSize * 0.10f
+    val resolvedIconContent: @Composable (Modifier) -> Unit = iconContent ?: { iconModifier ->
+        Icon(
+            imageVector = requireNotNull(imageVector),
+            contentDescription = contentDescription,
+            tint = Color.White,
+            modifier = iconModifier,
+        )
+    }
 
     Surface(
         onClick = onClick,
@@ -407,13 +419,7 @@ private fun HomeCornerActionButton(
             contentAlignment = Alignment.Center,
             modifier = Modifier.fillMaxSize(),
         ) {
-            Icon(
-                imageVector = imageVector,
-                contentDescription = contentDescription,
-                tint = Color.White,
-                modifier = Modifier
-                    .size(mainIconSize),
-            )
+            resolvedIconContent(Modifier.size(mainIconSize))
             if (showNewIndicator) {
                 HomeMenuNewIndicator(
                     modifier = Modifier
@@ -424,6 +430,18 @@ private fun HomeCornerActionButton(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun EquipmentHomeMountIcon(
+    modifier: Modifier = Modifier,
+) {
+    Canvas(modifier = modifier) {
+        drawEquipmentMountGlyph(
+            strokeColor = Color.White,
+            strokeWidth = size.minDimension * 0.07f,
+        )
     }
 }
 
