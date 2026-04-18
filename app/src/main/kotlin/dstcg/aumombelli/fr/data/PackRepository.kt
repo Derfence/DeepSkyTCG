@@ -1,5 +1,6 @@
 package fr.aumombelli.dstcg.data
 
+import fr.aumombelli.dstcg.model.AstronomyPackRevealSlot
 import fr.aumombelli.dstcg.model.DrawPackResponse
 import fr.aumombelli.dstcg.model.HomeMenuNoveltyState
 import fr.aumombelli.dstcg.model.LibraryCardNoveltyState
@@ -47,9 +48,21 @@ class PackRepository(
             openedPackCount = progress.openedPackCount + 1,
         )
             .consumeEquipmentEffectsAfterPackOpen()
-        val newLibraryCardIds = progress.libraryCardNoveltyState.newCardIds + buildNewLibraryCardIds(
+        val drawnNewLibraryCardIds = buildNewLibraryCardIds(
             beforeProgress = progress,
             afterProgress = afterProgress,
+        )
+        val newLibraryCardIds = progress.libraryCardNoveltyState.newCardIds + drawnNewLibraryCardIds
+        val decoratedPackResponse = packResponse.copy(
+            revealSlots = packResponse.revealSlots.map { slot ->
+                when (slot) {
+                    is AstronomyPackRevealSlot -> slot.copy(
+                        isFirstEncounter = slot.card.cardId in drawnNewLibraryCardIds,
+                    )
+
+                    else -> slot
+                }
+            },
         )
         val noveltyState = progress.homeMenuNoveltyState.or(
             other = HomeMenuNoveltyState(
@@ -73,7 +86,7 @@ class PackRepository(
                 libraryCardNoveltyState = LibraryCardNoveltyState(newCardIds = newLibraryCardIds),
             ),
         )
-        currentPackResult.value = packResponse
-        packResponse
+        currentPackResult.value = decoratedPackResponse
+        decoratedPackResponse
     }
 }

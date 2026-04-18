@@ -43,6 +43,7 @@ sealed interface PackRevealSlot {
 data class AstronomyPackRevealSlot(
     override val slotIndex: Int,
     val card: PackCard,
+    val isFirstEncounter: Boolean = false,
 ) : PackRevealSlot
 
 data class EquipmentPackRevealSlot(

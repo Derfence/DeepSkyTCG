@@ -46,6 +46,7 @@ import fr.aumombelli.dstcg.ui.component.AstroCardPreviewSurface
 import fr.aumombelli.dstcg.ui.component.AstroCardSurfaceMode
 import fr.aumombelli.dstcg.ui.component.EquipmentArtBackground
 import fr.aumombelli.dstcg.ui.component.EquipmentArtMode
+import fr.aumombelli.dstcg.ui.component.NewContentIndicator
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.motion.HolographicCardMotion
 import fr.aumombelli.dstcg.ui.motion.PackRevealBounds
@@ -88,21 +89,36 @@ internal fun RevealCard(
         ) {
             when (item) {
                 is AstroPackRevealUiItem -> {
-                    AstroCardPreviewSurface(
-                        displayCard = item.displayCard,
-                        mode = AstroCardSurfaceMode.PackReveal,
-                        holographicMotion = holographicMotion,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag(
-                                if (isCurrentPage) {
-                                    "pack-opening-current-card-surface"
-                                } else {
-                                    "pack-opening-card-surface"
-                                },
-                            ),
-                        onClick = onOpenFullscreen,
-                    )
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        AstroCardPreviewSurface(
+                            displayCard = item.displayCard,
+                            mode = AstroCardSurfaceMode.PackReveal,
+                            holographicMotion = holographicMotion,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag(
+                                    if (isCurrentPage) {
+                                        "pack-opening-current-card-surface"
+                                    } else {
+                                        "pack-opening-card-surface"
+                                    },
+                                ),
+                            onClick = onOpenFullscreen,
+                        )
+                        if (item.showFirstEncounterIndicator) {
+                            NewContentIndicator(
+                                modifier = Modifier
+                                    .align(Alignment.TopStart)
+                                    .padding(10.dp)
+                                    .testTag(
+                                        "pack-opening-first-encounter-indicator-${item.displayCard.definition.id}",
+                                    ),
+                                iconSize = 15.dp,
+                            )
+                        }
+                    }
                 }
 
                 is EquipmentPackRevealUiItem -> {

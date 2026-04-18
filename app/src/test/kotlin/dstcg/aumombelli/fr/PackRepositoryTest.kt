@@ -5,6 +5,7 @@ import fr.aumombelli.dstcg.data.HomeMenuNoveltyEvaluator
 import fr.aumombelli.dstcg.data.LocalPackEngine
 import fr.aumombelli.dstcg.data.PackRepository
 import fr.aumombelli.dstcg.model.ActiveEquipmentEffect
+import fr.aumombelli.dstcg.model.AstronomyPackRevealSlot
 import fr.aumombelli.dstcg.model.CardFinishDefinition
 import fr.aumombelli.dstcg.model.EquipmentSettingsDefinition
 import fr.aumombelli.dstcg.model.EquipmentType
@@ -59,11 +60,21 @@ class PackRepositoryTest {
         )
 
         val response = repository.openPack("astronomes-en-herbe")
+        val astronomySlotsByCardId = response.revealSlots
+            .filterIsInstance<AstronomyPackRevealSlot>()
+            .associate { it.card.cardId to it.isFirstEncounter }
 
         assertEquals(response, repository.currentPackResult().value)
         assertEquals(response.rechargeState, progressGateway.progress.rechargeState)
         assertEquals(1, progressGateway.progress.openedPackCount)
         assertEquals(3, progressGateway.progress.collection.cards.values.sumOf { it.totalOwned })
+        assertEquals(
+            mapOf(
+                "ALP-001" to false,
+                "ALP-002" to true,
+            ),
+            astronomySlotsByCardId,
+        )
         assertEquals(true, progressGateway.progress.homeMenuNoveltyState.library)
         assertEquals(false, progressGateway.progress.homeMenuNoveltyState.equipment)
         assertEquals(true, progressGateway.progress.homeMenuNoveltyState.badgeBook)

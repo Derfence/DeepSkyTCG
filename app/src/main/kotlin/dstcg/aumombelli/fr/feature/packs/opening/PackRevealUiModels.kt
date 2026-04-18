@@ -9,6 +9,7 @@ sealed interface PackRevealUiItem {
 
 data class AstroPackRevealUiItem(
     val displayCard: DisplayCard,
+    val showFirstEncounterIndicator: Boolean = false,
 ) : PackRevealUiItem {
     override val id: String = displayCard.definition.id
 }

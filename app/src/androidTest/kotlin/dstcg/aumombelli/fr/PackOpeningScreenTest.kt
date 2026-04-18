@@ -24,6 +24,7 @@ import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.dp
+import fr.aumombelli.dstcg.feature.packs.opening.AstroPackRevealUiItem
 import fr.aumombelli.dstcg.feature.packs.opening.EquipmentPackRevealUiItem
 import fr.aumombelli.dstcg.feature.packs.opening.PackOpeningRevealSlotProbe
 import fr.aumombelli.dstcg.model.CardDefinition
@@ -153,6 +154,52 @@ class PackOpeningScreenTest {
         composeRule.runOnIdle { }
         composeRule.mainClock.autoAdvance = true
         assertEquals(1, doneCallCount)
+    }
+
+    @Test
+    fun pack_opening_displays_first_encounter_indicator_on_new_cards() {
+        val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
+        val packResult = DrawPackResponse.fromCards(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
+            cards = listOf(
+                testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
+            ),
+        )
+        val displayCard = firstCard.toDisplayCard(
+            extensionName = "Astronomes en herbe",
+            activeVariant = packResult.cards[0].variant.toDisplayVariant(),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackOpeningScreen(
+                state = PackOpeningUiState(
+                    packResult = packResult,
+                    revealItems = listOf(
+                        AstroPackRevealUiItem(
+                            displayCard = displayCard,
+                            showFirstEncounterIndicator = true,
+                        ),
+                    ),
+                    displayCards = listOf(displayCard),
+                    highestBurstRarity = "Common",
+                    hasHolographicBurst = false,
+                ),
+                onDone = {},
+            )
+        }
+
+        composeRule.advanceToRevealedCards()
+
+        composeRule.onNodeWithTag(
+            "pack-opening-first-encounter-indicator-ALP-001",
+            useUnmergedTree = true,
+        ).assertIsDisplayed()
     }
 
     @Test

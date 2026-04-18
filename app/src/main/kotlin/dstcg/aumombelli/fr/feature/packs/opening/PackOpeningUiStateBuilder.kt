@@ -30,6 +30,7 @@ internal suspend fun buildPackOpeningUiState(
                         extensionName = extensionName,
                         activeVariant = slot.card.variant.toDisplayVariant(),
                     ),
+                    showFirstEncounterIndicator = slot.isFirstEncounter,
                 )
             }
 
