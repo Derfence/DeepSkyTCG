@@ -191,14 +191,19 @@ internal fun CardFooter(
                 .wrapContentHeight(align = Alignment.Bottom),
         ) {
             val rarityBadgeSize = if (compact) 36.dp else 48.dp
-            val stampedSealWidth = if (compact) 60.dp else 84.dp
-            val stampedSealHeight = if (compact) 10.dp else 14.dp
+            val stampedSealBaseWidth = if (compact) 60.dp else 84.dp
+            val stampedSealBaseHeight = if (compact) 10.dp else 14.dp
+            val stampedSealWidth = stampedSealBaseWidth * 2f
+            val stampedSealHeight = stampedSealBaseHeight * 2f
             val stampedSealVerticalGap = if (compact) 2.dp else 4.dp
             val stampedSealHorizontalOverlap = if (compact) 4.dp else 6.dp
             val stampedSealLeftShift =
-                (stampedSealWidth + stampedSealHeight) * RotatedStampHalfHorizontalFootprintFactor
+                (stampedSealBaseWidth + stampedSealBaseHeight) * RotatedStampHalfHorizontalFootprintFactor
+            val stampedSealHorizontalOffset =
+                stampedSealHorizontalOverlap - stampedSealLeftShift
+            val stampedSealVerticalOffset = -(stampedSealBaseHeight * 0.5f)
             val clusterHeight = if (displayCard.activeVariant.isStamped) {
-                rarityBadgeSize + stampedSealVerticalGap + stampedSealHeight
+                rarityBadgeSize + stampedSealVerticalGap + stampedSealBaseHeight
             } else {
                 rarityBadgeSize
             }
@@ -219,7 +224,10 @@ internal fun CardFooter(
                                 height = stampedSealHeight,
                             )
                             .align(Alignment.TopEnd)
-                            .offset(x = stampedSealHorizontalOverlap - stampedSealLeftShift),
+                            .offset(
+                                x = stampedSealHorizontalOffset,
+                                y = stampedSealVerticalOffset,
+                            ),
                     )
                 }
                 RarityStarBadge(
