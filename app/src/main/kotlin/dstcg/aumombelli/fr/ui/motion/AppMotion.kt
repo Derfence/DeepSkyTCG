@@ -15,22 +15,22 @@ enum class SkyBackdropVariant(
 ) {
     City(
         skyQuality = "city",
-        twinklingStarCount = 12,
-        horizonLightCount = 7,
+        twinklingStarCount = 6,
+        horizonLightCount = 20,
     ),
     Suburban(
         skyQuality = "suburban",
-        twinklingStarCount = 24,
-        horizonLightCount = 4,
+        twinklingStarCount = 18,
+        horizonLightCount = 10,
     ),
     Rural(
         skyQuality = "rural",
-        twinklingStarCount = 38,
-        horizonLightCount = 2,
+        twinklingStarCount = 35,
+        horizonLightCount = 4,
     ),
     Mountain(
         skyQuality = "mountain",
-        twinklingStarCount = 54,
+        twinklingStarCount = 60,
         horizonLightCount = 0,
     ),
     ;
