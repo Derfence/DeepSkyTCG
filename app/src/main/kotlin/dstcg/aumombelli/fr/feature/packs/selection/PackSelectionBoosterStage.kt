@@ -363,6 +363,7 @@ private fun BoosterField(
                     animationDelayMillis = 180 + index * 120,
                     animationKey = "pack-$index",
                     animationsEnabled = introReveal > 0f,
+                    decorSeed = index,
                 )
             }
         }
@@ -409,5 +410,6 @@ private fun SelectedBoosterOverlay(
             .testTag("pack-booster-$boosterIndex"),
         animationKey = "selected-pack-overlay-$boosterIndex",
         revealProgressOverride = 1f,
+        decorSeed = boosterIndex,
     )
 }
