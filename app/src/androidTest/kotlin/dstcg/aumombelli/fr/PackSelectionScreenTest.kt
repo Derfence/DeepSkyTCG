@@ -257,6 +257,70 @@ class PackSelectionScreenTest {
     }
 
     @Test
+    fun booster_idle_motion_keeps_semantic_bounds_stable_and_clickable() {
+        var selectedBooster: Int? = null
+        val state = mutableStateOf(
+            PackSelectionUiState(
+                isLoading = false,
+                extensions = listOf(
+                    ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                ),
+                selectedExtensionId = "astronomes-en-herbe",
+            ),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackSelectionScreen(
+                state = state.value,
+                onRefresh = {},
+                onSelectExtension = {},
+                onSelectBooster = { boosterIndex ->
+                    selectedBooster = boosterIndex
+                    state.value = state.value.copy(
+                        selectedBoosterIndex = boosterIndex,
+                        isAwaitingPackResult = true,
+                    )
+                },
+                onOpenPack = {},
+                onPackRevealReady = {},
+                packReadySignal = 0,
+                showBackground = false,
+            )
+        }
+
+        composeRule.mainClock.advanceTimeBy(1_800)
+        composeRule.waitForIdle()
+
+        val initialBounds = (0 until 4).map { index ->
+            composeRule.onNodeWithTag("pack-booster-$index")
+                .assertIsDisplayed()
+                .fetchSemanticsNode()
+                .boundsInRoot
+        }
+
+        composeRule.mainClock.advanceTimeBy(1_800)
+        composeRule.waitForIdle()
+
+        (0 until 4).forEach { index ->
+            val currentBounds = composeRule.onNodeWithTag("pack-booster-$index")
+                .assertIsDisplayed()
+                .fetchSemanticsNode()
+                .boundsInRoot
+            composeRule.assertBoundsClose(
+                expected = initialBounds[index],
+                actual = currentBounds,
+                tolerancePx = 0.5f,
+            )
+        }
+
+        composeRule.onNodeWithTag("pack-booster-2").performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(2, selectedBooster)
+    }
+
+    @Test
     fun first_booster_keeps_the_same_node_when_coachmark_becomes_ready() {
         val state = mutableStateOf(
             PackSelectionUiState(

@@ -57,7 +57,7 @@ private fun buildPackRarityStarSpecs(seed: Int): List<PackRarityStarSpec> {
 
     return rarityLabels.map { rarityLabel ->
         val topWindow = random.nextBoolean()
-        val yStart = if (topWindow) 0.05f else 0.60f
+        val yStart = if (topWindow) 0.10f else 0.60f
         val radius = when (rarityLabel) {
             "Common" -> random.nextFloatIn(0.014f, 0.019f)
             "Uncommon" -> random.nextFloatIn(0.021f, 0.025f)
@@ -68,8 +68,8 @@ private fun buildPackRarityStarSpecs(seed: Int): List<PackRarityStarSpec> {
 
         PackRarityStarSpec(
             rarityLabel = rarityLabel,
-            xFraction = random.nextFloatIn(0.05f + radius, 0.95f - radius),
-            yFraction = random.nextFloatIn(yStart + radius, yStart + 0.35f - radius),
+            xFraction = random.nextFloatIn(0.10f + radius, 0.90f - radius),
+            yFraction = random.nextFloatIn(yStart + radius, yStart + 0.30f - radius),
             radiusFraction = radius,
         )
     }
@@ -90,15 +90,13 @@ internal fun buildPackSawtoothEdgePoints(
 
     val toothWidth = width / toothCount.toFloat()
     val halfToothWidth = toothWidth / 2f
-    return buildList(capacity = (toothCount+1) * 2 + 1) {
-        add(Offset(0f, tipY))
+    return buildList(capacity = toothCount * 2 + 1) {
         add(Offset(0f, baselineY))
         repeat(toothCount) { index ->
             val startX = toothWidth * index
             add(Offset(startX + halfToothWidth, tipY))
             add(Offset(startX + toothWidth, baselineY))
         }
-        add(Offset(toothWidth * toothCount, tipY))
     }
 }
 internal fun drawPackSawtoothEdgePoints(

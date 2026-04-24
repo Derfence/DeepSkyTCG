@@ -1,5 +1,11 @@
 package fr.aumombelli.dstcg.feature.packs.selection
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.Box
@@ -37,10 +43,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import fr.aumombelli.dstcg.model.ExtensionDefinition
+import fr.aumombelli.dstcg.performance.LocalAppPerformanceProfile
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.motion.AnimatedExtensionPackCard
 import fr.aumombelli.dstcg.ui.motion.MotionCard
 import fr.aumombelli.dstcg.ui.motion.PackRevealBounds
+import fr.aumombelli.dstcg.ui.motion.packSelectionBoosterIdlePose
 
 @Composable
 internal fun ExtensionBoosterStage(
@@ -272,6 +280,24 @@ private fun BoosterField(
     BoxWithConstraints(
         modifier = modifier.fillMaxSize(),
     ) {
+        val density = LocalDensity.current
+        val performanceProfile = LocalAppPerformanceProfile.current
+        val idleMotionEnabledByProfile = performanceProfile.enableAnimatedBoosterIdleMotion
+        val idleLoopProgress = if (idleMotionEnabledByProfile) {
+            val idleTransition = rememberInfiniteTransition(label = "pack-selection-booster-idle")
+            val animatedProgress by idleTransition.animateFloat(
+                initialValue = 0f,
+                targetValue = 1f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(durationMillis = 3_600, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart,
+                ),
+                label = "pack-selection-booster-idle-progress",
+            )
+            animatedProgress
+        } else {
+            0f
+        }
         val introSequenceComplete = introProgress >= 0.99f
         var firstBoosterCoachmarkReady by remember(extension.id) { mutableStateOf(false) }
         var firstBoosterBounds by remember(extension.id) { mutableStateOf<Rect?>(null) }
@@ -325,10 +351,19 @@ private fun BoosterField(
                 !isAwaitingPackResult &&
                 selectedBoosterIndex == null &&
                 introReveal >= 0.98f
+            val idlePose = packSelectionBoosterIdlePose(
+                index = index,
+                loopProgress = idleLoopProgress,
+                enabled = idleMotionEnabledByProfile &&
+                    introReveal >= 0.99f &&
+                    selectedBoosterIndex == null &&
+                    !drawLocked &&
+                    !isAwaitingPackResult,
+            )
+            val idleTranslationYPx = with(density) { idlePose.translationYDp.dp.toPx() }
 
             key(index) {
-                AnimatedExtensionPackCard(
-                    extensionId = extension.id,
+                Box(
                     modifier = Modifier
                         .align(Alignment.TopStart)
                         .absoluteOffset(
@@ -360,11 +395,24 @@ private fun BoosterField(
                             enabled = packEnabled,
                             onClick = { onSelectBooster(index) },
                         ),
-                    animationDelayMillis = 180 + index * 120,
-                    animationKey = "pack-$index",
-                    animationsEnabled = introReveal > 0f,
-                    decorSeed = index,
-                )
+                ) {
+                    AnimatedExtensionPackCard(
+                        extensionId = extension.id,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .graphicsLayer {
+                                translationY = idleTranslationYPx
+                                rotationZ = idlePose.rotationZDeg
+                                scaleX = idlePose.scale
+                                scaleY = idlePose.scale
+                            },
+                        animationDelayMillis = 180 + index * 120,
+                        animationKey = "pack-$index",
+                        animationsEnabled = introReveal > 0f,
+                        decorSeed = index,
+                        showContainerChrome = false,
+                    )
+                }
             }
         }
     }
@@ -411,5 +459,6 @@ private fun SelectedBoosterOverlay(
         animationKey = "selected-pack-overlay-$boosterIndex",
         revealProgressOverride = 1f,
         decorSeed = boosterIndex,
+        showContainerChrome = false,
     )
 }

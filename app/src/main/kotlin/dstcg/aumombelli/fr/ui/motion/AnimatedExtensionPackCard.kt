@@ -4,8 +4,8 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -21,11 +21,9 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Fill
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.ui.theme.rarityBadgeStyle
 import kotlinx.coroutines.delay
-import kotlin.io.path.Path
 
 @Composable
 fun AnimatedExtensionPackCard(
@@ -36,6 +34,7 @@ fun AnimatedExtensionPackCard(
     animationsEnabled: Boolean = true,
     revealProgressOverride: Float? = null,
     decorSeed: Any? = Unit,
+    showContainerChrome: Boolean = true,
 ) {
     val spec = remember(extensionId) { extensionAnimationSpec(extensionId) }
     val decorSpec = remember(extensionId, decorSeed) {
@@ -76,136 +75,165 @@ fun AnimatedExtensionPackCard(
         ExtensionAnimationStyle.NeutralSky -> neutralProgress.value
     }
 
-    MotionCard(modifier = modifier) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(14.dp),
-        ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                decorSpec.rarityStars.forEachIndexed { index, star ->
-                    val style = rarityBadgeStyle(star.rarityLabel)
-                    val staggeredReveal = ((revealProgress - index * 0.025f) / 0.55f).coerceIn(0f, 1f)
-                    if (staggeredReveal <= 0f) return@forEachIndexed
+    if (showContainerChrome) {
+        MotionCard(modifier = modifier) {
+            AnimatedExtensionPackCardContent(
+                spec = spec,
+                decorSpec = decorSpec,
+                revealProgress = revealProgress,
+                lineProgress = revealProgressOverride ?: lineProgress.value,
+                neutralProgress = revealProgressOverride ?: neutralProgress.value,
+            )
+        }
+    } else {
+        Box(modifier = modifier) {
+            AnimatedExtensionPackCardContent(
+                spec = spec,
+                decorSpec = decorSpec,
+                revealProgress = revealProgress,
+                lineProgress = revealProgressOverride ?: lineProgress.value,
+                neutralProgress = revealProgressOverride ?: neutralProgress.value,
+            )
+        }
+    }
+}
 
-                    val center = Offset(
-                        x = size.width * star.xFraction,
-                        y = size.height * star.yFraction,
-                    )
-                    val outerRadius = size.minDimension * star.radiusFraction
-                    val alpha = staggeredReveal * 0.96f
-                    drawPath(
-                        path = starPath(
-                            center = center,
-                            points = style.branchCount,
-                            outerRadius = outerRadius,
-                            innerRadius = outerRadius * 0.42f,
-                        ),
-                        color = style.color.copy(alpha = alpha),
-                        style = Fill,
-                    )
-                }
-                val toothDepth = size.height * decorSpec.tearBand.toothDepthFraction
-                val topEdge = buildPackSawtoothEdgePoints(
-                    width = size.width,
-                    baselineY = -toothDepth,
-                    tipY = 0f,
-                    toothCount = decorSpec.tearBand.toothCount,
-                )
-                for (i in 0 until topEdge.size - 2 step 2) {
-                    val p1 = topEdge[i]
-                    val p2 = topEdge[i + 1]
-                    val p3 = topEdge[i + 2]
-                    drawPath(
-                        path = Path().apply {
-                            moveTo(p1.x, p1.y)
-                            lineTo(p2.x, p2.y)
-                            lineTo(p3.x, p3.y)
-                            close()
-                        },
-                        color = Color.Black.copy(alpha = 0.22f)
-                    )
-                }
-                val bottomEdge = buildPackSawtoothEdgePoints(
-                    width = size.width,
-                    baselineY = size.height + toothDepth,
-                    tipY = size.height,
-                    toothCount = decorSpec.tearBand.toothCount,
-                )
-                for (i in 0 until bottomEdge.size - 2 step 2) {
-                    val p1 = bottomEdge[i]
-                    val p2 = bottomEdge[i + 1]
-                    val p3 = bottomEdge[i + 2]
-                    drawPath(
-                        path = Path().apply {
-                            moveTo(p1.x, p1.y)
-                            lineTo(p2.x, p2.y)
-                            lineTo(p3.x, p3.y)
-                            close()
-                        },
-                        color = Color.White.copy(alpha = 0.08f)
-                    )
-                }
-                drawLine(
-                    color = rarityBadgeStyle("Rare").color.copy(alpha = 0.2f),
-                    start = Offset(topEdge[0].x, bottomEdge[0].y * 0.02f),
-                    end = Offset(topEdge[topEdge.size-1].x, bottomEdge[0].y * 0.02f),
-                    strokeWidth = size.minDimension * 0.01f
-                )
-                drawLine(
-                    color = rarityBadgeStyle("Rare").color.copy(alpha = 0.2f),
-                    start = Offset(bottomEdge[0].x, bottomEdge[0].y * 0.98f),
-                    end = Offset(bottomEdge[bottomEdge.size-1].x, bottomEdge[0].y * 0.98f),
-                    strokeWidth = size.minDimension * 0.01f
-                )
+@Composable
+private fun BoxScope.AnimatedExtensionPackCardContent(
+    spec: ExtensionAnimationSpec,
+    decorSpec: PackCardDecorSpec,
+    revealProgress: Float,
+    lineProgress: Float,
+    neutralProgress: Float,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(14.dp),
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            decorSpec.rarityStars.forEachIndexed { index, star ->
+                val style = rarityBadgeStyle(star.rarityLabel)
+                val staggeredReveal = ((revealProgress - index * 0.025f) / 0.55f).coerceIn(0f, 1f)
+                if (staggeredReveal <= 0f) return@forEachIndexed
 
-                drawRect(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            Color(0x443B72B7),
-                            Color.Transparent,
-                        ),
-                        center = Offset(size.width * 0.5f, size.height * 0.5f),
-                        radius = size.minDimension * 0.72f,
+                val center = Offset(
+                    x = size.width * star.xFraction,
+                    y = size.height * star.yFraction,
+                )
+                val outerRadius = size.minDimension * star.radiusFraction
+                val alpha = staggeredReveal * 0.96f
+                drawPath(
+                    path = starPath(
+                        center = center,
+                        points = style.branchCount,
+                        outerRadius = outerRadius,
+                        innerRadius = outerRadius * 0.42f,
                     ),
-                )
-                drawRect(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Black.copy(alpha = 0.22f),
-                            Color.Transparent,
-                            Color.White.copy(alpha = 0.08f),
-                        ),
-                    ),
-                )
-
-                val cardShape = topEdge + bottomEdge.reversed() + topEdge[0]
-                drawPoints(
-                    points = cardShape,
-                    pointMode = androidx.compose.ui.graphics.PointMode.Polygon,
-                    color = rarityBadgeStyle("Rare").color.copy(alpha = 0.2f),
-                    strokeWidth = size.minDimension * 0.01f,
+                    color = style.color.copy(alpha = alpha),
+                    style = Fill,
                 )
             }
-
-            if (spec.style == ExtensionAnimationStyle.BigDipper) {
-                ExtensionConstellationOverlay(
-                    spec = spec,
-                    lineProgress = revealProgressOverride ?: lineProgress.value,
-                    isReversing = false,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 18.dp, vertical = 24.dp),
-                    tag = null,
-                )
-            } else {
-                NeutralPackGlyph(
-                    progress = revealProgressOverride ?: neutralProgress.value,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 18.dp, vertical = 22.dp),
+            val toothDepth = size.height * decorSpec.tearBand.toothDepthFraction
+            val topEdge = buildPackSawtoothEdgePoints(
+                width = size.width,
+                baselineY = toothDepth,
+                tipY = 0f,
+                toothCount = decorSpec.tearBand.toothCount,
+            )
+            for (i in 0 until topEdge.size - 2 step 2) {
+                val p1 = topEdge[i]
+                val p2 = topEdge[i + 1]
+                val p3 = topEdge[i + 2]
+                drawPath(
+                    path = Path().apply {
+                        moveTo(p1.x, p1.y)
+                        lineTo(p2.x, p2.y)
+                        lineTo(p3.x, p3.y)
+                        close()
+                    },
+                    color = Color.Black.copy(alpha = 0.22f),
                 )
             }
+            val bottomEdge = buildPackSawtoothEdgePoints(
+                width = size.width,
+                baselineY = size.height - toothDepth,
+                tipY = size.height,
+                toothCount = decorSpec.tearBand.toothCount,
+            )
+            for (i in 0 until bottomEdge.size - 2 step 2) {
+                val p1 = bottomEdge[i]
+                val p2 = bottomEdge[i + 1]
+                val p3 = bottomEdge[i + 2]
+                drawPath(
+                    path = Path().apply {
+                        moveTo(p1.x, p1.y)
+                        lineTo(p2.x, p2.y)
+                        lineTo(p3.x, p3.y)
+                        close()
+                    },
+                    color = Color.White.copy(alpha = 0.08f),
+                )
+            }
+            drawLine(
+                color = rarityBadgeStyle("Rare").color.copy(alpha = 0.2f),
+                start = Offset(topEdge[0].x, topEdge[0].y + toothDepth * 0.44f),
+                end = Offset(topEdge[topEdge.size - 1].x, topEdge[0].y + toothDepth * 0.44f),
+                strokeWidth = size.minDimension * 0.01f,
+            )
+            drawLine(
+                color = rarityBadgeStyle("Rare").color.copy(alpha = 0.2f),
+                start = Offset(bottomEdge[0].x, bottomEdge[0].y - toothDepth * 0.44f),
+                end = Offset(bottomEdge[bottomEdge.size - 1].x, bottomEdge[0].y - toothDepth * 0.44f),
+                strokeWidth = size.minDimension * 0.01f,
+            )
+
+            drawRect(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color(0x443B72B7),
+                        Color.Transparent,
+                    ),
+                    center = Offset(size.width * 0.5f, size.height * 0.5f),
+                    radius = size.minDimension * 0.72f,
+                ),
+            )
+            drawRect(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color.Black.copy(alpha = 0.22f),
+                        Color.Transparent,
+                        Color.White.copy(alpha = 0.08f),
+                    ),
+                ),
+            )
+
+            val cardShape = topEdge + bottomEdge.reversed() + topEdge[0]
+            drawPoints(
+                points = cardShape,
+                pointMode = androidx.compose.ui.graphics.PointMode.Polygon,
+                color = rarityBadgeStyle("Rare").color.copy(alpha = 0.2f),
+                strokeWidth = size.minDimension * 0.01f,
+            )
+        }
+
+        if (spec.style == ExtensionAnimationStyle.BigDipper) {
+            ExtensionConstellationOverlay(
+                spec = spec,
+                lineProgress = lineProgress,
+                isReversing = false,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 18.dp, vertical = 24.dp),
+                tag = null,
+            )
+        } else {
+            NeutralPackGlyph(
+                progress = neutralProgress,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 18.dp, vertical = 22.dp),
+            )
         }
     }
 }

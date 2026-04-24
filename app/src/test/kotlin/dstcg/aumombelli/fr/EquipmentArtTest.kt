@@ -61,5 +61,6 @@ class EquipmentArtTest {
         enableAnimatedThumbnailTwinkles = true,
         enableInteractiveHolographicEffects = true,
         enableAnimatedBadgeCoins = true,
+        enableAnimatedBoosterIdleMotion = true,
     )
 }

@@ -14,12 +14,14 @@ import fr.aumombelli.dstcg.ui.motion.homeLogoVariantFor
 import fr.aumombelli.dstcg.ui.motion.packOpeningBurstOrbitOrigin
 import fr.aumombelli.dstcg.ui.motion.packOpeningBurstOrigin
 import fr.aumombelli.dstcg.ui.motion.packOpeningHolographicMotion
+import fr.aumombelli.dstcg.ui.motion.packSelectionBoosterIdlePose
 import fr.aumombelli.dstcg.ui.motion.PackRevealBounds
 import fr.aumombelli.dstcg.ui.motion.pickSkyBackdropVariant
 import fr.aumombelli.dstcg.ui.motion.projectExtensionPattern
 import fr.aumombelli.dstcg.ui.motion.summarizePackOpening
 import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.model.toDisplayVariant
+import kotlin.math.abs
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -180,6 +182,73 @@ class AppMotionTest {
             ),
             0.001f,
         )
+    }
+
+    @Test
+    fun `booster idle pose is neutral when disabled`() {
+        val pose = packSelectionBoosterIdlePose(
+            index = 2,
+            loopProgress = 0.42f,
+            enabled = false,
+        )
+
+        assertEquals(0f, pose.translationYDp, 0.001f)
+        assertEquals(0f, pose.rotationZDeg, 0.001f)
+        assertEquals(1f, pose.scale, 0.001f)
+    }
+
+    @Test
+    fun `booster idle pose stays within subtle motion bounds`() {
+        val samples = listOf(0f, 0.125f, 0.25f, 0.375f, 0.5f, 0.625f, 0.75f, 0.875f, 1f)
+
+        for (index in 0 until 4) {
+            samples.forEach { progress ->
+                val pose = packSelectionBoosterIdlePose(
+                    index = index,
+                    loopProgress = progress,
+                    enabled = true,
+                )
+
+                assertTrue(pose.translationYDp in -3f..3f)
+                assertTrue(pose.rotationZDeg in -0.8f..0.8f)
+                assertTrue(pose.scale in 0.994f..1.006f)
+            }
+        }
+    }
+
+    @Test
+    fun `booster idle pose desynchronizes each booster`() {
+        val firstPose = packSelectionBoosterIdlePose(
+            index = 0,
+            loopProgress = 0f,
+            enabled = true,
+        )
+        val secondPose = packSelectionBoosterIdlePose(
+            index = 1,
+            loopProgress = 0f,
+            enabled = true,
+        )
+
+        assertTrue(abs(firstPose.translationYDp - secondPose.translationYDp) > 1f)
+        assertTrue(abs(firstPose.rotationZDeg - secondPose.rotationZDeg) > 0.1f)
+    }
+
+    @Test
+    fun `booster idle pose loops continuously`() {
+        val startPose = packSelectionBoosterIdlePose(
+            index = 3,
+            loopProgress = 0f,
+            enabled = true,
+        )
+        val endPose = packSelectionBoosterIdlePose(
+            index = 3,
+            loopProgress = 1f,
+            enabled = true,
+        )
+
+        assertEquals(startPose.translationYDp, endPose.translationYDp, 0.001f)
+        assertEquals(startPose.rotationZDeg, endPose.rotationZDeg, 0.001f)
+        assertEquals(startPose.scale, endPose.scale, 0.001f)
     }
 
     @Test

@@ -82,6 +82,12 @@ data class PackOpeningSummary(
     val hasHolographicCard: Boolean,
 )
 
+internal data class PackSelectionBoosterIdlePose(
+    val translationYDp: Float = 0f,
+    val rotationZDeg: Float = 0f,
+    val scale: Float = 1f,
+)
+
 data class PackRevealBounds(
     val leftPx: Float,
     val topPx: Float,
@@ -295,6 +301,26 @@ fun autoplayHolographicMotion(
         } else {
             0f
         },
+    )
+}
+
+internal fun packSelectionBoosterIdlePose(
+    index: Int,
+    loopProgress: Float,
+    enabled: Boolean,
+): PackSelectionBoosterIdlePose {
+    if (!enabled) return PackSelectionBoosterIdlePose()
+
+    val normalizedLoopProgress = ((loopProgress % 1f) + 1f) % 1f
+    val phase = ((normalizedLoopProgress + index * 0.19f) % 1f + 1f) % 1f
+    val primaryWave = sin(phase * PI * 2).toFloat()
+    val secondaryWave = sin((phase + 0.13f) * PI * 2).toFloat()
+    val scaleWave = sin((phase + 0.31f) * PI * 2).toFloat()
+
+    return PackSelectionBoosterIdlePose(
+        translationYDp = primaryWave * 3f,
+        rotationZDeg = secondaryWave * 0.8f,
+        scale = 1f + scaleWave * 0.006f,
     )
 }
 
