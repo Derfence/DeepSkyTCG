@@ -176,6 +176,10 @@ class LibraryScreenTest {
 
         composeRule.onNodeWithTag("new-player-modal-library-variants").assertIsDisplayed()
         composeRule.onNodeWithTag("new-player-modal-page-0").assertIsDisplayed()
+        composeRule.assertNodeInsideModalVerticalBounds(
+            nodeTag = "new-player-modal-next",
+            modalTag = "new-player-modal-library-variants",
+        )
         composeRule.onAllNodesWithTag("library-card-preview").assertCountEquals(0)
 
         composeRule.onNodeWithTag("library-card-ALP-001").performClick()
@@ -207,6 +211,18 @@ class LibraryScreenTest {
         assertTrue(
             "Expected $tag width/height ratio near $TRADING_CARD_WIDTH_OVER_HEIGHT but was $actualRatio",
             abs(actualRatio - TRADING_CARD_WIDTH_OVER_HEIGHT) <= tolerance,
+        )
+    }
+
+    private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertNodeInsideModalVerticalBounds(
+        nodeTag: String,
+        modalTag: String,
+    ) {
+        val modalBounds = onNodeWithTag(modalTag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val nodeBounds = onNodeWithTag(nodeTag, useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        assertTrue(
+            "Expected $nodeTag vertical bounds $nodeBounds to stay inside modal bounds $modalBounds",
+            nodeBounds.top >= modalBounds.top && nodeBounds.bottom <= modalBounds.bottom,
         )
     }
 

@@ -7,17 +7,24 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -109,14 +116,20 @@ internal fun NewPlayerBlockingModal(
             usePlatformDefaultWidth = false,
         ),
     ) {
-        Box(
+        BoxWithConstraints(
             modifier = modifier
                 .fillMaxSize()
                 .background(Color(0xFF0A1220).copy(alpha = 0.9f * backdropAlpha))
-                .systemBarsPadding()
-                .padding(horizontal = 18.dp, vertical = 24.dp)
+                .windowInsetsPadding(
+                    WindowInsets.safeDrawing.only(
+                        WindowInsetsSides.Horizontal + WindowInsetsSides.Vertical,
+                    ),
+                )
+                .padding(start = 18.dp, top = 24.dp, end = 18.dp, bottom = 40.dp)
                 .testTag(testTag),
         ) {
+            val modalMaxHeight = this@BoxWithConstraints.maxHeight
+
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF10233B)),
                 shape = RoundedCornerShape(30.dp),
@@ -128,7 +141,8 @@ internal fun NewPlayerBlockingModal(
                         scaleY = cardScale
                         translationY = cardTranslationY
                     }
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .heightIn(max = modalMaxHeight),
             ) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(18.dp),
@@ -138,12 +152,18 @@ internal fun NewPlayerBlockingModal(
                                 colors = listOf(Color(0xFF15314F), Color(0xFF0C1728)),
                             ),
                         )
+                        .heightIn(max = modalMaxHeight)
                         .padding(horizontal = 22.dp, vertical = 24.dp),
                 ) {
+                    val pagerModifier = if (pages.size > 1) {
+                        Modifier.weight(1f, fill = false)
+                    } else {
+                        Modifier
+                    }
                     HorizontalPager(
                         state = pagerState,
                         userScrollEnabled = false,
-                        modifier = Modifier
+                        modifier = pagerModifier
                             .fillMaxWidth()
                             .pointerInput(pages.size, pagerState.currentPage) {
                                 if (pages.size <= 1) return@pointerInput
@@ -173,10 +193,12 @@ internal fun NewPlayerBlockingModal(
                             },
                     ) { pageIndex ->
                         val page = pages[pageIndex]
+                        val pageScrollState = rememberScrollState()
                         Column(
                             verticalArrangement = Arrangement.spacedBy(16.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .verticalScroll(pageScrollState)
                                 .testTag("new-player-modal-page-$pageIndex"),
                         ) {
                             Text(
