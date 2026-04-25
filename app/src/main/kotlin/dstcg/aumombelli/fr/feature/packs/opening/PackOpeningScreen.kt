@@ -67,6 +67,7 @@ fun PackOpeningScreen(
     dismissSignal: Int = 0,
     showPersistentDismissHint: Boolean = false,
     initialBoosterBounds: PackRevealBounds? = null,
+    initialBoosterDecorSeed: Any? = Unit,
     modifier: Modifier = Modifier,
 ) {
     val packResult = state.packResult
@@ -77,6 +78,7 @@ fun PackOpeningScreen(
     } else {
         displayCards.map(::AstroPackRevealUiItem)
     }
+    val boosterDecorSeed = remember(packResult?.drawnAt) { initialBoosterDecorSeed }
     var cardsVisible by remember(packResult?.drawnAt) { mutableStateOf(false) }
     var fullscreenPage by remember(packResult?.drawnAt) { mutableStateOf<Int?>(null) }
     var dismissStartOffset by remember(packResult?.drawnAt) { mutableFloatStateOf(0f) }
@@ -256,6 +258,7 @@ fun PackOpeningScreen(
                         extensionId = packResult.extensionId,
                         scale = scale.value,
                         exitProgress = packExitProgress,
+                        decorSeed = boosterDecorSeed,
                         onBoundsChanged = { bounds ->
                             transitionBoosterBounds = bounds
                         },

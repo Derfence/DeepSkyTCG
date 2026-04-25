@@ -18,6 +18,7 @@ internal fun BoosterCover(
     extensionId: String,
     scale: Float,
     exitProgress: Float,
+    decorSeed: Any? = Unit,
     onBoundsChanged: (PackRevealBounds?) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -43,6 +44,8 @@ internal fun BoosterCover(
                     }
                     .testTag("pack-opening-booster"),
                 revealProgressOverride = 1f,
+                decorSeed = decorSeed,
+                showContainerChrome = false,
             )
         }
     }

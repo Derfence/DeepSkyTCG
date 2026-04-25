@@ -605,6 +605,7 @@ internal fun AppSceneHost(
                         state = openingUiState,
                         showPersistentDismissHint = showPersistentDismissHint,
                         initialBoosterBounds = sceneState.selectedPackRevealBounds,
+                        initialBoosterDecorSeed = uiState.selectedBoosterIndex,
                         dismissSignal = sceneState.packOpeningExitSignal,
                         onDone = {
                             scope.launch { transitions.finishPackOpeningToHome() }
