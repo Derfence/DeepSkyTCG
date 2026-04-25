@@ -1,7 +1,7 @@
 package fr.aumombelli.dstcg.ui.motion
 
-import android.graphics.Color
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Path
 import kotlin.random.Random
 
 internal data class PackRarityStarSpec(
@@ -99,9 +99,19 @@ internal fun buildPackSawtoothEdgePoints(
         }
     }
 }
-internal fun drawPackSawtoothEdgePoints(
-    points: List<Offset>,
-    color: Color,
-) {
 
+internal fun buildPackSawtoothOutlinePath(
+    topEdge: List<Offset>,
+    bottomEdge: List<Offset>,
+): Path = Path().apply {
+    if (topEdge.isEmpty() || bottomEdge.isEmpty()) return@apply
+
+    moveTo(topEdge.first().x, topEdge.first().y)
+    topEdge.drop(1).forEach { point ->
+        lineTo(point.x, point.y)
+    }
+    bottomEdge.asReversed().forEach { point ->
+        lineTo(point.x, point.y)
+    }
+    close()
 }
