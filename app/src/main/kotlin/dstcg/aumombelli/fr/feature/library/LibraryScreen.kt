@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,6 +18,10 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.app.NewPlayerBlockingModal
 import fr.aumombelli.dstcg.app.NewPlayerBlockingModalPage
+import fr.aumombelli.dstcg.model.TradeCardCandidate
 import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.ui.component.AstroCardThumbnail
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
@@ -43,6 +49,7 @@ import kotlinx.coroutines.delay
 fun LibraryScreen(
     state: LibraryUiState,
     onRefresh: () -> Unit,
+    onOpenTrade: (TradeCardCandidate) -> Unit = {},
     contentVisible: Boolean = true,
     interactionsEnabled: Boolean = true,
     showOnboardingHint: Boolean = false,
@@ -63,6 +70,19 @@ fun LibraryScreen(
     var previewCardId by remember(state.sections) { mutableStateOf<String?>(null) }
     var fullscreenCardId by remember(state.sections) { mutableStateOf<String?>(null) }
     var selectedVariantKey by remember(state.sections) { mutableStateOf<String?>(null) }
+    var showExchangeableOnly by remember(state.sections) { mutableStateOf(false) }
+    val displaySections = remember(state.sections, showExchangeableOnly) {
+        if (!showExchangeableOnly) {
+            state.sections
+        } else {
+            state.sections.mapNotNull { section ->
+                val cards = section.cards.filter { card ->
+                    card.availableVariants.any { variant -> variant.count >= 2 }
+                }
+                section.copy(cards = cards).takeIf { cards.isNotEmpty() }
+            }
+        }
+    }
 
     val previewItem = previewCardId?.let(cardsById::get)
     val fullscreenItem = fullscreenCardId?.let(cardsById::get)
@@ -108,12 +128,30 @@ fun LibraryScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text(
-                        text = "Bibliothèque",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = "Bibliothèque",
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                        )
+                        FilterChip(
+                            selected = showExchangeableOnly,
+                            onClick = { showExchangeableOnly = !showExchangeableOnly },
+                            enabled = interactionsEnabled && !walkthroughVisible,
+                            label = { Text("Échangeable") },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Filled.SwapHoriz,
+                                    contentDescription = null,
+                                )
+                            },
+                            modifier = Modifier.testTag("library-filter-tradeable"),
+                        )
+                    }
                     Text(
                         text = "Les cartes obtenues peuvent etre ouvertes en apercu puis en plein ecran. Les autres gardent un visuel masque jusqu'a leur premiere obtention.",
                         color = Color(0xFFD0E0F2),
@@ -155,7 +193,19 @@ fun LibraryScreen(
                 }
             }
 
-            state.sections.forEach { section ->
+            if (!state.isLoading && state.errorMessage == null && displaySections.isEmpty() && showExchangeableOnly) {
+                item(span = { GridItemSpan(maxLineSpan) }) {
+                    Text(
+                        text = "Aucune carte echangeable pour le moment.",
+                        color = Color(0xFFD0E0F2),
+                        modifier = Modifier
+                            .padding(vertical = 20.dp)
+                            .testTag("library-no-tradeable-cards"),
+                    )
+                }
+            }
+
+            displaySections.forEach { section ->
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     Text(
                         text = section.extension.name,
@@ -174,7 +224,11 @@ fun LibraryScreen(
                         onClick = if (interactionsEnabled && !walkthroughVisible) {
                             {
                                 previewCardId = card.definition.id
-                                selectedVariantKey = card.availableVariants.firstOrNull()?.key
+                                selectedVariantKey = if (showExchangeableOnly) {
+                                    card.availableVariants.firstOrNull { it.count >= 2 }?.key
+                                } else {
+                                    card.availableVariants.firstOrNull()?.key
+                                }
                                 fullscreenCardId = null
                             }
                         } else {
@@ -195,6 +249,10 @@ fun LibraryScreen(
                 },
                 onVariantSelected = { variantKey ->
                     selectedVariantKey = variantKey
+                },
+                onTrade = { candidate ->
+                    closePreviewToLibrary()
+                    onOpenTrade(candidate)
                 },
             )
         }

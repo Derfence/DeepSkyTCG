@@ -31,4 +31,5 @@ data class StandaloneProgress(
     val equipmentBadgeProgress: EquipmentBadgeProgress = EquipmentBadgeProgress(),
     val homeMenuNoveltyState: HomeMenuNoveltyState = HomeMenuNoveltyState(),
     val libraryCardNoveltyState: LibraryCardNoveltyState = LibraryCardNoveltyState(),
+    val tradeLedgerState: TradeLedgerState = TradeLedgerState(),
 )

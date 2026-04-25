@@ -14,7 +14,10 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
 import fr.aumombelli.dstcg.model.LibraryCardItem
+import fr.aumombelli.dstcg.model.TradeCardCandidate
 import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.ui.component.AstroCardDetailsSurface
 import fr.aumombelli.dstcg.ui.component.AstroCardFullscreenCloseButton
@@ -30,8 +33,20 @@ internal fun CardPreviewDialog(
     onDismiss: () -> Unit,
     onExpand: () -> Unit,
     onVariantSelected: (String) -> Unit,
+    onTrade: ((TradeCardCandidate) -> Unit)? = null,
 ) {
-    val displayCard = item?.toDisplayCard(selectedVariantKey) ?: return
+    val libraryItem = item ?: return
+    val displayCard = libraryItem.toDisplayCard(selectedVariantKey) ?: return
+    val activeVariant = displayCard.activeVariant
+    val tradeCandidate = if (activeVariant.count >= 2) {
+        TradeCardCandidate(
+            card = libraryItem.definition,
+            extensionName = libraryItem.extensionName,
+            variant = activeVariant,
+        )
+    } else {
+        null
+    }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -57,6 +72,16 @@ internal fun CardPreviewDialog(
                 onVariantSelected = { variant -> onVariantSelected(variant.key) },
                 modifier = Modifier.fillMaxWidth(),
             )
+            if (tradeCandidate != null && onTrade != null) {
+                Button(
+                    onClick = { onTrade(tradeCandidate) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("library-card-trade"),
+                ) {
+                    Text("Échanger")
+                }
+            }
         }
     }
 }

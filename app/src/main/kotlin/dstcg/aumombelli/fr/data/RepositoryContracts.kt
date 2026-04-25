@@ -10,6 +10,9 @@ import fr.aumombelli.dstcg.model.GameBalanceDefinition
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.PackCard
 import fr.aumombelli.dstcg.model.StandaloneProgress
+import fr.aumombelli.dstcg.model.TradeCardCandidate
+import fr.aumombelli.dstcg.model.TradeCardRef
+import fr.aumombelli.dstcg.model.TradeValidationResult
 import fr.aumombelli.dstcg.model.VariantProfile
 import kotlinx.coroutines.flow.StateFlow
 
@@ -44,4 +47,18 @@ interface PackGateway {
     fun currentPackResult(): StateFlow<DrawPackResponse?>
     fun clearCurrentPackResult()
     suspend fun openPack(extensionId: String): DrawPackResponse
+}
+
+interface TradeGateway {
+    suspend fun loadTradeCandidates(): List<TradeCardCandidate>
+    suspend fun catalogFingerprint(): String
+    suspend fun validateTrade(
+        localOutgoing: TradeCardRef,
+        remoteOutgoing: TradeCardRef,
+    ): TradeValidationResult
+    suspend fun applyTrade(
+        tradeId: String,
+        outgoing: TradeCardRef,
+        incoming: TradeCardRef,
+    ): TradeValidationResult
 }

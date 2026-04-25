@@ -20,6 +20,7 @@ import fr.aumombelli.dstcg.data.ProgressGateway
 import fr.aumombelli.dstcg.data.ProgressRepository
 import fr.aumombelli.dstcg.data.RandomEntropySource
 import fr.aumombelli.dstcg.data.StandaloneGameSettings
+import fr.aumombelli.dstcg.data.TradeRepository
 import fr.aumombelli.dstcg.model.CardDefinition
 import fr.aumombelli.dstcg.model.CardFinishDefinition
 import fr.aumombelli.dstcg.model.DrawPackResponse
@@ -96,6 +97,10 @@ internal fun offlineMainActivityTestAppContainer(
         ),
         homeMenuNoveltyEvaluator = homeMenuNoveltyEvaluator,
     )
+    val tradeRepository = TradeRepository(
+        catalogRepository = catalogRepository,
+        progressRepository = progressRepository,
+    )
 
     return AppContainer(
         progressRepository = progressRepository,
@@ -103,6 +108,7 @@ internal fun offlineMainActivityTestAppContainer(
         collectionRepository = collectionRepository,
         equipmentRepository = equipmentRepository,
         packRepository = packRepository,
+        tradeRepository = tradeRepository,
         gameSettings = gameSettings,
     )
 }
@@ -257,6 +263,10 @@ private fun navigationTestAppContainer(
             homeMenuNoveltyEvaluator = HomeMenuNoveltyEvaluator(catalogRepository),
         ),
         packRepository = NavigationPackGateway(progressRepository, packResponse),
+        tradeRepository = TradeRepository(
+            catalogRepository = catalogRepository,
+            progressRepository = progressRepository,
+        ),
         gameSettings = StandaloneGameSettings(
             entropySource = RandomEntropySource(Random(12345)),
         ),

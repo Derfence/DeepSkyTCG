@@ -47,8 +47,11 @@ import fr.aumombelli.dstcg.feature.packs.opening.PackOpeningViewModel
 import fr.aumombelli.dstcg.feature.packs.selection.PackEvent
 import fr.aumombelli.dstcg.feature.packs.selection.PackSelectionScreen
 import fr.aumombelli.dstcg.feature.packs.selection.PackViewModel
+import fr.aumombelli.dstcg.feature.trade.TradeScreen
+import fr.aumombelli.dstcg.feature.trade.TradeViewModel
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingContent
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
+import fr.aumombelli.dstcg.model.TradeCardCandidate
 import fr.aumombelli.dstcg.ui.motion.AppScene
 import fr.aumombelli.dstcg.ui.motion.AppSkyBackdrop
 import fr.aumombelli.dstcg.ui.motion.BrandLogoVariant
@@ -80,6 +83,7 @@ internal fun AppSceneHost(
     val hasEnteredHomeOnce = remember(launchConfig) { mutableStateOf(false) }
     val homeContentEntranceSettled = remember(launchConfig) { mutableStateOf(false) }
     val homeLockupEntranceSettled = remember(launchConfig) { mutableStateOf(false) }
+    val selectedTradeCandidate = remember(launchConfig) { mutableStateOf<TradeCardCandidate?>(null) }
     val launchWelcomeAwaitingHomeEntrance = remember(launchConfig) {
         mutableStateOf(launchConfig.scene == AppLaunchScene.Start)
     }
@@ -195,6 +199,9 @@ internal fun AppSceneHost(
         if (sceneState.currentScene != AppScene.Home || !sceneState.homeContentVisible) {
             homeContentEntranceSettled.value = false
             homeLockupEntranceSettled.value = false
+        }
+        if (sceneState.currentScene != AppScene.Library) {
+            selectedTradeCandidate.value = null
         }
     }
 
@@ -369,6 +376,11 @@ internal fun AppSceneHost(
                 LibraryScreen(
                     state = uiState,
                     onRefresh = libraryViewModel::refresh,
+                    onOpenTrade = { candidate ->
+                        if (onboardingStep != NewPlayerOnboardingStep.LearnLibraryVariants) {
+                            selectedTradeCandidate.value = candidate
+                        }
+                    },
                     contentVisible = sceneState.libraryContentVisible,
                     interactionsEnabled = onboardingStep != NewPlayerOnboardingStep.LearnLibraryVariants,
                     showOnboardingHint = onboardingCoordinator.uiState.libraryCardHintVisible &&
@@ -386,6 +398,26 @@ internal fun AppSceneHost(
                         }
                     },
                 )
+
+                selectedTradeCandidate.value?.let { tradeCandidate ->
+                    val tradeViewModel: TradeViewModel = viewModel(
+                        key = "trade-${tradeCandidate.card.id}-${tradeCandidate.variant.key}",
+                        factory = DstcgViewModelFactory {
+                            TradeViewModel(
+                                selectedCandidate = tradeCandidate,
+                                tradeRepository = appContainer.tradeRepository,
+                            )
+                        },
+                    )
+                    TradeScreen(
+                        viewModel = tradeViewModel,
+                        tradeGateway = appContainer.tradeRepository,
+                        onDismiss = {
+                            selectedTradeCandidate.value = null
+                            libraryViewModel.refresh()
+                        },
+                    )
+                }
             }
 
             AppScene.Equipment -> {

@@ -15,6 +15,8 @@ import fr.aumombelli.dstcg.data.PackRepository
 import fr.aumombelli.dstcg.data.ProgressGateway
 import fr.aumombelli.dstcg.data.ProgressRepository
 import fr.aumombelli.dstcg.data.StandaloneGameSettings
+import fr.aumombelli.dstcg.data.TradeGateway
+import fr.aumombelli.dstcg.data.TradeRepository
 
 class AppContainer(
     val progressRepository: ProgressGateway,
@@ -22,6 +24,7 @@ class AppContainer(
     val collectionRepository: CollectionGateway,
     val equipmentRepository: EquipmentGateway,
     val packRepository: PackGateway,
+    val tradeRepository: TradeGateway,
     val gameSettings: StandaloneGameSettings,
 ) {
     companion object {
@@ -55,6 +58,10 @@ class AppContainer(
                 ),
                 homeMenuNoveltyEvaluator = homeMenuNoveltyEvaluator,
             )
+            val tradeRepository = TradeRepository(
+                catalogRepository = catalogRepository,
+                progressRepository = progressRepository,
+            )
 
             return AppContainer(
                 progressRepository = progressRepository,
@@ -62,6 +69,7 @@ class AppContainer(
                 collectionRepository = collectionRepository,
                 equipmentRepository = equipmentRepository,
                 packRepository = packRepository,
+                tradeRepository = tradeRepository,
                 gameSettings = gameSettings,
             )
         }

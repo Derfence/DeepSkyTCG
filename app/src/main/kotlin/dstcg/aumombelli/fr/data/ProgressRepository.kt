@@ -18,6 +18,7 @@ import fr.aumombelli.dstcg.model.OwnedEquipmentInventory
 import fr.aumombelli.dstcg.model.OwnedVariantCount
 import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.StandaloneProgress
+import fr.aumombelli.dstcg.model.TradeLedgerState
 import fr.aumombelli.dstcg.model.VariantProfile
 import fr.aumombelli.dstcg.model.normalized
 import fr.aumombelli.dstcg.model.normalizedEquipmentState
@@ -106,6 +107,7 @@ class ProgressRepository(
             equipmentBadgeProgress = normalizedProgress.equipmentBadgeProgress,
             homeMenuNoveltyState = normalizedProgress.homeMenuNoveltyState,
             libraryCardNoveltyState = normalizedProgress.libraryCardNoveltyState,
+            tradeLedgerState = normalizedProgress.tradeLedgerState,
             lastTrustedWallClockUtc = effectiveNow.toString(),
             lastTrustedElapsedRealtimeMs = timeEvidence.elapsedRealtimeMs,
             lastObservedBootMarker = timeEvidence.bootSessionId,
@@ -126,6 +128,7 @@ class ProgressRepository(
             equipmentBadgeProgress = EquipmentBadgeProgress(),
             homeMenuNoveltyState = HomeMenuNoveltyState(),
             libraryCardNoveltyState = LibraryCardNoveltyState(),
+            tradeLedgerState = TradeLedgerState(),
             lastTrustedWallClockUtc = timeEvidence.wallClockUtc.toString(),
             lastTrustedElapsedRealtimeMs = timeEvidence.elapsedRealtimeMs,
             lastObservedBootMarker = timeEvidence.bootSessionId,
@@ -162,6 +165,7 @@ class ProgressRepository(
                 equipmentBadgeProgress = EquipmentBadgeProgress(),
                 homeMenuNoveltyState = HomeMenuNoveltyState(),
                 libraryCardNoveltyState = LibraryCardNoveltyState(),
+                tradeLedgerState = TradeLedgerState(),
                 lastTrustedWallClockUtc = timeEvidence.wallClockUtc.toString(),
                 lastTrustedElapsedRealtimeMs = timeEvidence.elapsedRealtimeMs,
                 lastObservedBootMarker = timeEvidence.bootSessionId,
@@ -218,6 +222,7 @@ class ProgressRepository(
             equipmentBadgeProgress = normalizedProgress.equipmentBadgeProgress,
             homeMenuNoveltyState = normalizedProgress.homeMenuNoveltyState,
             libraryCardNoveltyState = normalizedProgress.libraryCardNoveltyState,
+            tradeLedgerState = normalizedProgress.tradeLedgerState,
             lastTrustedWallClockUtc = trustedTime.trustedNow.toString(),
             lastTrustedElapsedRealtimeMs = trustedTime.timeEvidence.elapsedRealtimeMs,
             lastObservedBootMarker = trustedTime.timeEvidence.bootSessionId,
@@ -235,6 +240,7 @@ class ProgressRepository(
             snapshot.equipmentBadgeProgress != normalizedSnapshot.equipmentBadgeProgress ||
             snapshot.homeMenuNoveltyState != normalizedSnapshot.homeMenuNoveltyState ||
             snapshot.libraryCardNoveltyState != normalizedSnapshot.libraryCardNoveltyState ||
+            snapshot.tradeLedgerState != normalizedSnapshot.tradeLedgerState ||
             snapshot.tamperFlag ||
             trustedTime.tamperDetected
 
