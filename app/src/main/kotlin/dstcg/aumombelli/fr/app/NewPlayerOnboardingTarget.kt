@@ -5,7 +5,11 @@ enum class NewPlayerOnboardingTarget {
     HomeLibrary,
     HomeBadges,
     HomeEquipment,
+    HomeCrafting,
     PackSelectionExtension,
     PackSelectionBooster,
     EquipmentActivation,
+    CraftingDarkenSkyMode,
+    CraftingCandidate,
+    CraftingConfirm,
 }

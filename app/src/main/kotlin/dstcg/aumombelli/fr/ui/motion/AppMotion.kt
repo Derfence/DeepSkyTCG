@@ -42,6 +42,7 @@ enum class SkyBackdropVariant(
 enum class AppScene {
     Home,
     Library,
+    Crafting,
     Equipment,
     BadgeBook,
     PackSelection,

@@ -3,10 +3,12 @@ package fr.aumombelli.dstcg
 import fr.aumombelli.dstcg.app.AppSceneUiState
 import fr.aumombelli.dstcg.app.clearPendingBadgeCelebration
 import fr.aumombelli.dstcg.app.enterBadgeBook
+import fr.aumombelli.dstcg.app.enterCrafting
 import fr.aumombelli.dstcg.app.enterPackOpening
 import fr.aumombelli.dstcg.app.finishPackOpeningToHome
 import fr.aumombelli.dstcg.app.lockTransitions
 import fr.aumombelli.dstcg.app.prepareBadgeBookEntry
+import fr.aumombelli.dstcg.app.prepareCraftingEntry
 import fr.aumombelli.dstcg.app.preparePackOpeningReturnToHome
 import fr.aumombelli.dstcg.app.preparePackSelection
 import fr.aumombelli.dstcg.app.registerPackReady
@@ -121,6 +123,33 @@ class AppSceneStateTest {
         assertEquals(false, nextState.homeContentVisible)
         assertEquals(false, nextState.badgeBookContentVisible)
         assertEquals(3, nextState.badgeBookRefreshSignal)
+    }
+
+    @Test
+    fun `prepare crafting entry resets crafting content and bumps refresh signal`() {
+        val initialState = AppSceneUiState(
+            currentScene = AppScene.Home,
+            homeContentVisible = true,
+            craftingContentVisible = true,
+            craftingRefreshSignal = 2,
+        )
+
+        val nextState = initialState.prepareCraftingEntry(nextCraftingRefreshSignal = 3)
+
+        assertEquals(AppScene.Home, nextState.currentScene)
+        assertEquals(false, nextState.homeContentVisible)
+        assertEquals(false, nextState.craftingContentVisible)
+        assertEquals(3, nextState.craftingRefreshSignal)
+    }
+
+    @Test
+    fun `enter crafting switches current scene only`() {
+        val state = AppSceneUiState(currentScene = AppScene.Home)
+
+        val nextState = state.enterCrafting()
+
+        assertEquals(AppScene.Crafting, nextState.currentScene)
+        assertEquals(state.homeContentVisible, nextState.homeContentVisible)
     }
 
     @Test

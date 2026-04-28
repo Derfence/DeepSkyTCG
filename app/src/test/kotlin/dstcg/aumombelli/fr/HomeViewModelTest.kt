@@ -4,6 +4,9 @@ import fr.aumombelli.dstcg.app.NewPlayerOnboardingCoordinator
 import fr.aumombelli.dstcg.data.ProgressGateway
 import fr.aumombelli.dstcg.data.ProgressLoadResult
 import fr.aumombelli.dstcg.feature.home.HomeViewModel
+import fr.aumombelli.dstcg.model.CraftingCardCandidate
+import fr.aumombelli.dstcg.model.CraftingMode
+import fr.aumombelli.dstcg.model.DisplayCardVariant
 import fr.aumombelli.dstcg.model.HomeMenuNoveltyState
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.StandaloneProgress
@@ -37,7 +40,10 @@ class HomeViewModelTest {
         assertEquals(1, progressGateway.loadCallCount.get())
         assertEquals(false, viewModel.uiState.value.isLoading)
         assertNull(viewModel.uiState.value.errorMessage)
+        assertFalse(viewModel.uiState.value.isLibraryMenuVisible)
         assertFalse(viewModel.uiState.value.isEquipmentMenuVisible)
+        assertFalse(viewModel.uiState.value.isBadgeBookMenuVisible)
+        assertFalse(viewModel.uiState.value.isCraftingMenuAvailable)
     }
 
     @Test
@@ -94,6 +100,57 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.isEquipmentMenuVisible)
+    }
+
+    @Test
+    fun `library and badge menus become visible after the first opened pack`() = runTest {
+        val progressGateway = FakeProgressGateway().apply {
+            progress = progress.copy(openedPackCount = 1)
+        }
+
+        val viewModel = HomeViewModel(progressGateway)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isLibraryMenuVisible)
+        assertTrue(viewModel.uiState.value.isBadgeBookMenuVisible)
+    }
+
+    @Test
+    fun `crafting menu unlocks from the third pack when darken sky candidate exists`() = runTest {
+        val progressGateway = FakeProgressGateway().apply {
+            progress = progress.copy(
+                openedPackCount = 3,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.AwaitCraftingEligibility,
+                collection = ownedCollectionOf("ALP-001" to 2),
+            )
+        }
+        val craftingGateway = FakeCraftingGateway().apply {
+            candidatesByMode = mapOf(CraftingMode.DarkenSky to listOf(testDarkenSkyCandidate()))
+        }
+
+        val viewModel = HomeViewModel(progressGateway, craftingGateway)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isCraftingMenuAvailable)
+    }
+
+    @Test
+    fun `crafting menu stays locked before third pack even with darken sky candidate`() = runTest {
+        val progressGateway = FakeProgressGateway().apply {
+            progress = progress.copy(
+                openedPackCount = 2,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.AwaitCraftingEligibility,
+                collection = ownedCollectionOf("ALP-001" to 2),
+            )
+        }
+        val craftingGateway = FakeCraftingGateway().apply {
+            candidatesByMode = mapOf(CraftingMode.DarkenSky to listOf(testDarkenSkyCandidate()))
+        }
+
+        val viewModel = HomeViewModel(progressGateway, craftingGateway)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isCraftingMenuAvailable)
     }
 
     @Test
@@ -281,4 +338,28 @@ class HomeViewModelTest {
             )
         }
     }
+
+    private fun testDarkenSkyCandidate(): CraftingCardCandidate =
+        CraftingCardCandidate(
+            card = testCardDefinition("ALP-001"),
+            extensionName = "Astronomes en herbe",
+            mode = CraftingMode.DarkenSky,
+            sourceVariant = DisplayCardVariant(
+                skyQuality = "city",
+                skyQualityLabel = "Ville",
+                finish = "standard",
+                finishLabel = "Standard",
+                isHolographic = false,
+                count = 2,
+            ),
+            targetVariant = DisplayCardVariant(
+                skyQuality = "suburban",
+                skyQualityLabel = "Periurbain",
+                finish = "standard",
+                finishLabel = "Standard",
+                isHolographic = false,
+                count = 0,
+            ),
+            consumedCount = 2,
+        )
 }

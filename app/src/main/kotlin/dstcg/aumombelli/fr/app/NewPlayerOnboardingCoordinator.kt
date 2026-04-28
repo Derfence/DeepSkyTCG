@@ -3,9 +3,11 @@ package fr.aumombelli.dstcg.app
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import fr.aumombelli.dstcg.data.CraftingGateway
 import fr.aumombelli.dstcg.data.ProgressGateway
 import fr.aumombelli.dstcg.data.requireUsableProgress
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
+import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.ui.motion.AppScene
 
 internal data class NewPlayerOnboardingUiState(
@@ -31,13 +33,14 @@ internal data class NewPlayerBlockingModalSpec(
 
 internal class NewPlayerOnboardingCoordinator(
     private val progressRepository: ProgressGateway,
+    private val craftingRepository: CraftingGateway? = null,
 ) {
     var uiState by mutableStateOf(NewPlayerOnboardingUiState())
         private set
 
     suspend fun syncFromProgress() {
         val progress = progressRepository.loadProgress().requireUsableProgress().progress
-        uiState = uiState.withStep(progress.newPlayerOnboardingStep)
+        uiState = uiState.withStep(resolveCraftingEligibilityStep(progress))
     }
 
     suspend fun onWelcomeIntroAcknowledged() {
@@ -79,9 +82,16 @@ internal class NewPlayerOnboardingCoordinator(
             NewPlayerOnboardingStep.ActivateFirstEquipment,
             -> true
 
+            NewPlayerOnboardingStep.AwaitCraftingEligibility -> {
+                syncCraftingEligibility()
+                false
+            }
+
             NewPlayerOnboardingStep.ViewLibrary,
             NewPlayerOnboardingStep.LearnLibraryVariants,
             NewPlayerOnboardingStep.ViewBadges,
+            NewPlayerOnboardingStep.ViewCraftingMenu,
+            NewPlayerOnboardingStep.UseSkyDarkening,
             NewPlayerOnboardingStep.Completed,
             -> false
         }
@@ -125,8 +135,22 @@ internal class NewPlayerOnboardingCoordinator(
     }
 
     suspend fun onEquipmentActivated() {
-        advanceTo(NewPlayerOnboardingStep.Completed) {
+        advanceTo(NewPlayerOnboardingStep.AwaitCraftingEligibility) {
             it == NewPlayerOnboardingStep.ActivateFirstEquipment
+        }
+        syncCraftingEligibility()
+    }
+
+    suspend fun onCraftingOpened() {
+        advanceTo(NewPlayerOnboardingStep.UseSkyDarkening) {
+            it == NewPlayerOnboardingStep.ViewCraftingMenu
+        }
+    }
+
+    suspend fun onSkyDarkeningCrafted() {
+        advanceTo(NewPlayerOnboardingStep.Completed) {
+            it == NewPlayerOnboardingStep.ViewCraftingMenu ||
+                it == NewPlayerOnboardingStep.UseSkyDarkening
         }
     }
 
@@ -308,7 +332,70 @@ internal class NewPlayerOnboardingCoordinator(
                 }
             }
 
+            NewPlayerOnboardingStep.AwaitCraftingEligibility -> null
+
+            NewPlayerOnboardingStep.ViewCraftingMenu,
+            NewPlayerOnboardingStep.UseSkyDarkening,
+            -> activeCraftingCoachmark(
+                currentScene = currentScene,
+                sceneState = sceneState,
+                badgeCelebrationVisible = badgeCelebrationVisible,
+            )
+
             NewPlayerOnboardingStep.Completed -> null
+        }
+    }
+
+    private fun activeCraftingCoachmark(
+        currentScene: AppScene,
+        sceneState: AppSceneUiState,
+        badgeCelebrationVisible: Boolean,
+    ): NewPlayerCoachmarkSpec? {
+        if (
+            currentScene == AppScene.Home &&
+            sceneState.homeContentVisible &&
+            sceneState.onboardingHintsVisible &&
+            !sceneState.transitionLocked &&
+            !badgeCelebrationVisible &&
+            sceneState.coachmarkTargetBounds.containsKey(NewPlayerOnboardingTarget.HomeCrafting)
+        ) {
+            return NewPlayerCoachmarkSpec(
+                target = NewPlayerOnboardingTarget.HomeCrafting,
+                title = "Atelier de fabrication",
+                message = "Une carte peut être amélioré grâce à ses doublons. Ouvre l'atelier pour découvrir comment faire.",
+            )
+        }
+        if (
+            currentScene != AppScene.Crafting ||
+            !sceneState.craftingContentVisible ||
+            !sceneState.onboardingHintsVisible ||
+            sceneState.transitionLocked
+        ) {
+            return null
+        }
+        return when {
+            sceneState.coachmarkTargetBounds.containsKey(NewPlayerOnboardingTarget.CraftingConfirm) ->
+                NewPlayerCoachmarkSpec(
+                    target = NewPlayerOnboardingTarget.CraftingConfirm,
+                    title = "Confirme l'amélioration",
+                    message = "Valide pour consommer les doublons et créer la carte au ciel suivant.",
+                )
+
+            sceneState.coachmarkTargetBounds.containsKey(NewPlayerOnboardingTarget.CraftingCandidate) ->
+                NewPlayerCoachmarkSpec(
+                    target = NewPlayerOnboardingTarget.CraftingCandidate,
+                    title = "Passons à l'amélioration",
+                    message = "Cette carte est eligible, sélectionne-la pour voir ce qui sera consommé.",
+                )
+
+            sceneState.coachmarkTargetBounds.containsKey(NewPlayerOnboardingTarget.CraftingDarkenSkyMode) ->
+                NewPlayerCoachmarkSpec(
+                    target = NewPlayerOnboardingTarget.CraftingDarkenSkyMode,
+                    title = "Assombrir le ciel",
+                    message = "L'une des deux améliorations permet d'assombrir le ciel d'une carte.",
+                )
+
+            else -> null
         }
     }
 
@@ -346,7 +433,42 @@ internal class NewPlayerOnboardingCoordinator(
             libraryCardHintVisible = libraryCardHintVisible,
         )
     }
+
+    private suspend fun syncCraftingEligibility() {
+        val progress = progressRepository.loadProgress().requireUsableProgress().progress
+        uiState = uiState.withStep(resolveCraftingEligibilityStep(progress))
+    }
+
+    private suspend fun resolveCraftingEligibilityStep(
+        progress: StandaloneProgress,
+    ): NewPlayerOnboardingStep {
+        if (
+            progress.newPlayerOnboardingStep != NewPlayerOnboardingStep.AwaitCraftingEligibility ||
+            progress.openedPackCount < CraftingOnboardingMinOpenedPackCount ||
+            !hasDarkenSkyCandidate()
+        ) {
+            return progress.newPlayerOnboardingStep
+        }
+        progressRepository.updateProgress { currentProgress ->
+            if (
+                currentProgress.newPlayerOnboardingStep == NewPlayerOnboardingStep.AwaitCraftingEligibility &&
+                currentProgress.openedPackCount >= CraftingOnboardingMinOpenedPackCount
+            ) {
+                currentProgress.copy(newPlayerOnboardingStep = NewPlayerOnboardingStep.ViewCraftingMenu)
+            } else {
+                currentProgress
+            }
+        }
+        return NewPlayerOnboardingStep.ViewCraftingMenu
+    }
+
+    private suspend fun hasDarkenSkyCandidate(): Boolean =
+        craftingRepository?.let { repository ->
+            runCatching { repository.hasDarkenSkyCandidates() }.getOrDefault(false)
+        } ?: false
 }
+
+private const val CraftingOnboardingMinOpenedPackCount = 3
 
 private fun NewPlayerOnboardingUiState.withStep(
     nextStep: NewPlayerOnboardingStep?,

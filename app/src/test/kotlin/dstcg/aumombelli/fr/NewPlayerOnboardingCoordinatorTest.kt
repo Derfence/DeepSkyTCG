@@ -7,6 +7,9 @@ import fr.aumombelli.dstcg.app.NewPlayerBlockingModalSpec
 import fr.aumombelli.dstcg.app.NewPlayerCoachmarkSpec
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingCoordinator
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
+import fr.aumombelli.dstcg.model.CraftingCardCandidate
+import fr.aumombelli.dstcg.model.CraftingMode
+import fr.aumombelli.dstcg.model.DisplayCardVariant
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.StandaloneProgress
@@ -47,8 +50,8 @@ class NewPlayerOnboardingCoordinatorTest {
         assertFalse(shouldResumeBadgeCelebrationOnOpen)
         assertTrue(shouldResumeBadgeCelebrationOnCompletion)
         assertTrue(shouldDeferEquipmentChapterBadges)
-        assertEquals(NewPlayerOnboardingStep.Completed, coordinator.uiState.currentStep)
-        assertEquals(NewPlayerOnboardingStep.Completed, progressGateway.progress.newPlayerOnboardingStep)
+        assertEquals(NewPlayerOnboardingStep.AwaitCraftingEligibility, coordinator.uiState.currentStep)
+        assertEquals(NewPlayerOnboardingStep.AwaitCraftingEligibility, progressGateway.progress.newPlayerOnboardingStep)
         assertFalse(coordinator.uiState.libraryCardHintVisible)
     }
 
@@ -172,7 +175,7 @@ class NewPlayerOnboardingCoordinatorTest {
     }
 
     @Test
-    fun `badge book visit opens second pack chapter and equipment activation completes onboarding`() = runTest {
+    fun `badge book visit opens second pack chapter and equipment activation waits for crafting eligibility`() = runTest {
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
                 collection = ownedCollectionOf("ALP-001" to 1),
@@ -197,6 +200,118 @@ class NewPlayerOnboardingCoordinatorTest {
         assertEquals(NewPlayerOnboardingStep.ActivateFirstEquipment, coordinator.uiState.currentStep)
 
         coordinator.onEquipmentActivated()
+        assertEquals(NewPlayerOnboardingStep.AwaitCraftingEligibility, coordinator.uiState.currentStep)
+        assertEquals(NewPlayerOnboardingStep.AwaitCraftingEligibility, progressGateway.progress.newPlayerOnboardingStep)
+    }
+
+    @Test
+    fun `crafting onboarding starts only after third pack and darken sky candidate`() = runTest {
+        val progressGateway = FakeProgressGateway().apply {
+            progress = StandaloneProgress(
+                collection = ownedCollectionOf("ALP-001" to 2),
+                rechargeState = testRechargeState(availableDrawCount = 9),
+                openedPackCount = 3,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.AwaitCraftingEligibility,
+            )
+        }
+        val craftingGateway = FakeCraftingGateway().apply {
+            candidatesByMode = mapOf(CraftingMode.DarkenSky to listOf(testDarkenSkyCandidate()))
+        }
+        val coordinator = NewPlayerOnboardingCoordinator(progressGateway, craftingGateway)
+
+        coordinator.syncFromProgress()
+
+        assertEquals(NewPlayerOnboardingStep.ViewCraftingMenu, coordinator.uiState.currentStep)
+        assertEquals(NewPlayerOnboardingStep.ViewCraftingMenu, progressGateway.progress.newPlayerOnboardingStep)
+    }
+
+    @Test
+    fun `crafting onboarding remains pending before third pack even with eligible card`() = runTest {
+        val progressGateway = FakeProgressGateway().apply {
+            progress = StandaloneProgress(
+                collection = ownedCollectionOf("ALP-001" to 2),
+                rechargeState = testRechargeState(availableDrawCount = 9),
+                openedPackCount = 2,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.AwaitCraftingEligibility,
+            )
+        }
+        val craftingGateway = FakeCraftingGateway().apply {
+            candidatesByMode = mapOf(CraftingMode.DarkenSky to listOf(testDarkenSkyCandidate()))
+        }
+        val coordinator = NewPlayerOnboardingCoordinator(progressGateway, craftingGateway)
+
+        coordinator.syncFromProgress()
+
+        assertEquals(NewPlayerOnboardingStep.AwaitCraftingEligibility, coordinator.uiState.currentStep)
+        assertEquals(NewPlayerOnboardingStep.AwaitCraftingEligibility, progressGateway.progress.newPlayerOnboardingStep)
+    }
+
+    @Test
+    fun `crafting coachmark points home then darken sky flow until execution`() = runTest {
+        val progressGateway = FakeProgressGateway().apply {
+            progress = StandaloneProgress(
+                collection = ownedCollectionOf("ALP-001" to 2),
+                rechargeState = testRechargeState(availableDrawCount = 9),
+                openedPackCount = 3,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.ViewCraftingMenu,
+            )
+        }
+        val coordinator = NewPlayerOnboardingCoordinator(progressGateway)
+        val homeSceneState = AppSceneUiState(
+            currentScene = AppScene.Home,
+            homeContentVisible = true,
+            coachmarkTargetBounds = mapOf(
+                NewPlayerOnboardingTarget.HomeCrafting to Rect(10f, 20f, 120f, 72f),
+            ),
+        )
+        val craftingModeSceneState = AppSceneUiState(
+            currentScene = AppScene.Crafting,
+            craftingContentVisible = true,
+            coachmarkTargetBounds = mapOf(
+                NewPlayerOnboardingTarget.CraftingDarkenSkyMode to Rect(10f, 20f, 180f, 92f),
+            ),
+        )
+        val craftingConfirmSceneState = craftingModeSceneState.copy(
+            coachmarkTargetBounds = mapOf(
+                NewPlayerOnboardingTarget.CraftingDarkenSkyMode to Rect(10f, 20f, 180f, 92f),
+                NewPlayerOnboardingTarget.CraftingCandidate to Rect(20f, 120f, 160f, 300f),
+                NewPlayerOnboardingTarget.CraftingConfirm to Rect(20f, 520f, 220f, 600f),
+            ),
+        )
+
+        coordinator.syncFromProgress()
+
+        assertEquals(
+            NewPlayerOnboardingTarget.HomeCrafting,
+            coordinator.activeCoachmark(
+                currentScene = AppScene.Home,
+                sceneState = homeSceneState,
+                badgeCelebrationVisible = false,
+            )?.target,
+        )
+
+        coordinator.onCraftingOpened()
+
+        assertEquals(NewPlayerOnboardingStep.UseSkyDarkening, coordinator.uiState.currentStep)
+        assertEquals(
+            NewPlayerOnboardingTarget.CraftingDarkenSkyMode,
+            coordinator.activeCoachmark(
+                currentScene = AppScene.Crafting,
+                sceneState = craftingModeSceneState,
+                badgeCelebrationVisible = false,
+            )?.target,
+        )
+        assertEquals(
+            NewPlayerOnboardingTarget.CraftingConfirm,
+            coordinator.activeCoachmark(
+                currentScene = AppScene.Crafting,
+                sceneState = craftingConfirmSceneState,
+                badgeCelebrationVisible = false,
+            )?.target,
+        )
+
+        coordinator.onSkyDarkeningCrafted()
+
         assertEquals(NewPlayerOnboardingStep.Completed, coordinator.uiState.currentStep)
         assertEquals(NewPlayerOnboardingStep.Completed, progressGateway.progress.newPlayerOnboardingStep)
     }
@@ -299,4 +414,28 @@ class NewPlayerOnboardingCoordinatorTest {
             visibleCoachmark,
         )
     }
+
+    private fun testDarkenSkyCandidate(): CraftingCardCandidate =
+        CraftingCardCandidate(
+            card = testCardDefinition("ALP-001"),
+            extensionName = "Astronomes en herbe",
+            mode = CraftingMode.DarkenSky,
+            sourceVariant = DisplayCardVariant(
+                skyQuality = "city",
+                skyQualityLabel = "Ville",
+                finish = "standard",
+                finishLabel = "Standard",
+                isHolographic = false,
+                count = 2,
+            ),
+            targetVariant = DisplayCardVariant(
+                skyQuality = "suburban",
+                skyQualityLabel = "Periurbain",
+                finish = "standard",
+                finishLabel = "Standard",
+                isHolographic = false,
+                count = 0,
+            ),
+            consumedCount = 2,
+        )
 }

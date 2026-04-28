@@ -115,6 +115,25 @@ internal class AppSceneTransitionController(
         unlockTransitionsAndRevealOnboardingHints()
     }
 
+    suspend fun animateHomeToCrafting() {
+        val state = readState()
+        if (state.transitionLocked) return
+
+        writeState(
+            state.lockTransitions()
+                .hideLaunchLogo()
+                .hideHomeContent()
+                .hideCraftingContent()
+                .prepareCraftingEntry(nextCraftingRefreshSignal = state.craftingRefreshSignal + 1),
+        )
+        delay(520)
+        writeState(readState().enterCrafting())
+        awaitNextFrame()
+        writeState(readState().showCraftingContent())
+        delay(420)
+        unlockTransitionsAndRevealOnboardingHints()
+    }
+
     suspend fun animateHomeToEquipment() {
         val state = readState()
         if (state.transitionLocked) return
@@ -208,6 +227,30 @@ internal class AppSceneTransitionController(
         bookOverlayAlpha.animateTo(1f, animationSpec = tween(durationMillis = 960, easing = FastOutSlowInEasing))
         writeState(readState().enterHome())
         bookProgress.animateTo(0f, animationSpec = tween(durationMillis = 980, easing = FastOutSlowInEasing))
+        val nextState = readState().showHomeContent()
+        writeState(
+            if (nextState.pendingBadgeCelebration.isNotEmpty() && !nextState.badgeCelebrationDeferred) {
+                nextState
+            } else {
+                nextState.unlockTransitions()
+            },
+        )
+        if (nextState.pendingBadgeCelebration.isEmpty() || nextState.badgeCelebrationDeferred) {
+            revealOnboardingHintsAfterTransition()
+        }
+    }
+
+    suspend fun animateCraftingToHome() {
+        val state = readState()
+        if (state.transitionLocked) return
+
+        writeState(
+            state.lockTransitions()
+                .hideCraftingContent(),
+        )
+        delay(420)
+        writeState(readState().enterHome())
+        awaitNextFrame()
         val nextState = readState().showHomeContent()
         writeState(
             if (nextState.pendingBadgeCelebration.isNotEmpty() && !nextState.badgeCelebrationDeferred) {

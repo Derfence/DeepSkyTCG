@@ -33,15 +33,17 @@ import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.model.DisplayCard
 import fr.aumombelli.dstcg.performance.LocalAppPerformanceProfile
 import fr.aumombelli.dstcg.ui.motion.autoplayHolographicMotion
+import fr.aumombelli.dstcg.ui.theme.SkyQualityPalette
 import fr.aumombelli.dstcg.ui.theme.skyQualityPalette
 
 @Composable
 fun AstroCardDetailsSurface(
     displayCard: DisplayCard,
     modifier: Modifier = Modifier,
+    paletteOverride: SkyQualityPalette? = null,
     accessoryContent: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
-    val palette = skyQualityPalette(displayCard.activeVariant.skyQuality)
+    val palette = paletteOverride ?: skyQualityPalette(displayCard.activeVariant.skyQuality)
     val imageCredit = rememberCardArtCredit(displayCard.definition)
     val performanceProfile = LocalAppPerformanceProfile.current
     val holoLoop = if (displayCard.activeVariant.isHolographic) {
@@ -99,6 +101,7 @@ fun AstroCardDetailsSurface(
                     displayCard = displayCard,
                     mode = AstroCardSurfaceMode.Preview,
                     holographicMotion = holographicMotion,
+                    paletteOverride = palette,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 accessoryContent?.invoke(this)

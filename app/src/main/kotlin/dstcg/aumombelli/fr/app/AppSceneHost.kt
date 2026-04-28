@@ -34,6 +34,9 @@ import fr.aumombelli.dstcg.AppContainer
 import fr.aumombelli.dstcg.feature.badges.BadgeBookScreen
 import fr.aumombelli.dstcg.feature.badges.BadgeBookViewModel
 import fr.aumombelli.dstcg.feature.badges.BadgeUnlockCelebrationOverlay
+import fr.aumombelli.dstcg.feature.crafting.CraftingScreen
+import fr.aumombelli.dstcg.feature.crafting.CraftingEvent
+import fr.aumombelli.dstcg.feature.crafting.CraftingViewModel
 import fr.aumombelli.dstcg.feature.equipment.EquipmentScreen
 import fr.aumombelli.dstcg.feature.equipment.EquipmentEvent
 import fr.aumombelli.dstcg.feature.equipment.EquipmentViewModel
@@ -51,6 +54,7 @@ import fr.aumombelli.dstcg.feature.trade.TradeScreen
 import fr.aumombelli.dstcg.feature.trade.TradeViewModel
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingContent
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
+import fr.aumombelli.dstcg.model.CraftingMode
 import fr.aumombelli.dstcg.model.TradeCardCandidate
 import fr.aumombelli.dstcg.ui.motion.AppScene
 import fr.aumombelli.dstcg.ui.motion.AppSkyBackdrop
@@ -119,7 +123,10 @@ internal fun AppSceneHost(
         )
     }
     val onboardingCoordinator = remember(appContainer) {
-        NewPlayerOnboardingCoordinator(appContainer.progressRepository)
+        NewPlayerOnboardingCoordinator(
+            progressRepository = appContainer.progressRepository,
+            craftingRepository = appContainer.craftingRepository,
+        )
     }
     val onboardingStep = onboardingCoordinator.uiState.currentStep
     val blockingModalSpec = onboardingCoordinator.activeBlockingModal(
@@ -253,6 +260,7 @@ internal fun AppSceneHost(
                     factory = DstcgViewModelFactory {
                         HomeViewModel(
                             progressRepository = appContainer.progressRepository,
+                            craftingRepository = appContainer.craftingRepository,
                         )
                     },
                 )
@@ -289,6 +297,7 @@ internal fun AppSceneHost(
                     onOpenLibrary = {
                         if (
                             !sceneState.transitionLocked &&
+                            uiState.isLibraryMenuVisible &&
                             NewPlayerOnboardingInteractionPolicy.allowsHomeLibrary(onboardingStep)
                         ) {
                             homeViewModel.markLibrarySeen()
@@ -298,6 +307,18 @@ internal fun AppSceneHost(
                                     sceneStateHolder.value = sceneStateHolder.value.resumePendingBadgeCelebration()
                                 }
                                 transitions.animateHomeToLibrary()
+                            }
+                        }
+                    },
+                    onOpenCrafting = {
+                        if (
+                            !sceneState.transitionLocked &&
+                            uiState.isCraftingMenuAvailable &&
+                            NewPlayerOnboardingInteractionPolicy.allowsHomeCrafting(onboardingStep)
+                        ) {
+                            scope.launch {
+                                onboardingCoordinator.onCraftingOpened()
+                                transitions.animateHomeToCrafting()
                             }
                         }
                     },
@@ -316,6 +337,7 @@ internal fun AppSceneHost(
                     onOpenBadgeBook = {
                         if (
                             !sceneState.transitionLocked &&
+                            uiState.isBadgeBookMenuVisible &&
                             NewPlayerOnboardingInteractionPolicy.allowsHomeBadgeBook(onboardingStep)
                         ) {
                             homeViewModel.markBadgeBookSeen()
@@ -418,6 +440,83 @@ internal fun AppSceneHost(
                         },
                     )
                 }
+            }
+
+            AppScene.Crafting -> {
+                val craftingViewModel: CraftingViewModel = viewModel(
+                    key = "crafting",
+                    factory = DstcgViewModelFactory {
+                        CraftingViewModel(
+                            craftingRepository = appContainer.craftingRepository,
+                        )
+                    },
+                )
+                val uiState by craftingViewModel.uiState.collectAsState()
+
+                LaunchedEffect(sceneState.craftingRefreshSignal) {
+                    if (uiState.selectedMode != null) {
+                        craftingViewModel.refresh()
+                    }
+                }
+
+                LaunchedEffect(craftingViewModel) {
+                    craftingViewModel.events.collect { event ->
+                        when (event) {
+                            is CraftingEvent.Applied -> {
+                                if (event.mode == CraftingMode.DarkenSky) {
+                                    onboardingCoordinator.onSkyDarkeningCrafted()
+                                }
+                            }
+                        }
+                    }
+                }
+
+                BackHandler(
+                    enabled = !sceneState.transitionLocked &&
+                        !NewPlayerOnboardingInteractionPolicy.allowsCraftingBack(onboardingStep),
+                ) {
+                }
+
+                BackHandler(
+                    enabled = !sceneState.transitionLocked &&
+                        NewPlayerOnboardingInteractionPolicy.allowsCraftingBack(onboardingStep),
+                ) {
+                    if (uiState.selectedMode != null) {
+                        craftingViewModel.backToModeSelection()
+                    } else {
+                        scope.launch { transitions.animateCraftingToHome() }
+                    }
+                }
+
+                CraftingScreen(
+                    state = uiState,
+                    onRefresh = craftingViewModel::refresh,
+                    onSelectMode = { mode ->
+                        if (NewPlayerOnboardingInteractionPolicy.allowsCraftingModeSelection(onboardingStep, mode)) {
+                            craftingViewModel.selectMode(mode)
+                        }
+                    },
+                    onBackHome = {
+                        if (NewPlayerOnboardingInteractionPolicy.allowsCraftingBack(onboardingStep)) {
+                            scope.launch { transitions.animateCraftingToHome() }
+                        }
+                    },
+                    onBackToModes = craftingViewModel::backToModeSelection,
+                    onApplyCrafting = { candidate ->
+                        if (
+                            NewPlayerOnboardingInteractionPolicy.allowsCraftingApplication(
+                                step = onboardingStep,
+                                mode = uiState.selectedMode,
+                            )
+                        ) {
+                            craftingViewModel.applyCrafting(candidate)
+                        }
+                    },
+                    contentVisible = sceneState.craftingContentVisible,
+                    onCoachmarkTargetBoundsChanged = { target, bounds ->
+                        sceneStateHolder.value = sceneStateHolder.value.withCoachmarkTargetBounds(target, bounds)
+                    },
+                )
             }
 
             AppScene.Equipment -> {

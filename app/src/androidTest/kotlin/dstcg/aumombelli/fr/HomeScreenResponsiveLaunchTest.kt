@@ -4,7 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
-import fr.aumombelli.dstcg.testsupport.offlineMainActivityTestAppContainer
+import fr.aumombelli.dstcg.testsupport.homeMenuNoveltyTestAppContainer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -12,11 +12,8 @@ import org.junit.Test
 
 class HomeScreenResponsiveLaunchTest {
     init {
-        MainActivity.appContainerFactory = { context ->
-            offlineMainActivityTestAppContainer(
-                context = context,
-                dataStoreFileName = "home-responsive-launch.preferences_pb",
-            )
+        MainActivity.appContainerFactory = {
+            homeMenuNoveltyTestAppContainer()
         }
     }
 

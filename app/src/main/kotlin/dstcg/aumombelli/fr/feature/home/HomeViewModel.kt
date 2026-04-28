@@ -2,10 +2,12 @@ package fr.aumombelli.dstcg.feature.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import fr.aumombelli.dstcg.data.CraftingGateway
 import fr.aumombelli.dstcg.data.ProgressGateway
 import fr.aumombelli.dstcg.data.ProgressLoadResult
-import fr.aumombelli.dstcg.data.requireUsableProgress
 import fr.aumombelli.dstcg.model.HomeMenuDestination
+import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
+import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.model.hasUnlockedEquipmentMenu
 import fr.aumombelli.dstcg.model.markHomeMenuSeen
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,14 +19,18 @@ data class HomeUiState(
     val isLoading: Boolean = true,
     val errorMessage: String? = null,
     val isResettingProgress: Boolean = false,
+    val isLibraryMenuVisible: Boolean = false,
     val isEquipmentMenuVisible: Boolean = false,
+    val isBadgeBookMenuVisible: Boolean = false,
     val showLibraryNewIndicator: Boolean = false,
     val showEquipmentNewIndicator: Boolean = false,
     val showBadgeBookNewIndicator: Boolean = false,
+    val isCraftingMenuAvailable: Boolean = false,
 )
 
 class HomeViewModel(
     private val progressRepository: ProgressGateway,
+    private val craftingRepository: CraftingGateway? = null,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -95,9 +101,13 @@ class HomeViewModel(
             runCatching { progressRepository.loadProgress() }
                 .onSuccess { result ->
                     _uiState.value = when (result) {
-                        is ProgressLoadResult.Ok -> result.toHomeUiState()
+                        is ProgressLoadResult.Ok -> result.toHomeUiState(
+                            isCraftingMenuAvailable = result.progress.isCraftingMenuAvailable(craftingRepository),
+                        )
 
-                        is ProgressLoadResult.Recovered -> result.toHomeUiState()
+                        is ProgressLoadResult.Recovered -> result.toHomeUiState(
+                            isCraftingMenuAvailable = result.progress.isCraftingMenuAvailable(craftingRepository),
+                        )
 
                         is ProgressLoadResult.Compromised -> HomeUiState(
                             isLoading = false,
@@ -115,21 +125,48 @@ class HomeViewModel(
     }
 }
 
-private fun ProgressLoadResult.Ok.toHomeUiState(): HomeUiState = HomeUiState(
+private fun ProgressLoadResult.Ok.toHomeUiState(
+    isCraftingMenuAvailable: Boolean,
+): HomeUiState = HomeUiState(
     isLoading = false,
+    isLibraryMenuVisible = progress.hasOpenedFirstPack(),
     isEquipmentMenuVisible = progress.hasUnlockedEquipmentMenu(),
+    isBadgeBookMenuVisible = progress.hasOpenedFirstPack(),
+    isCraftingMenuAvailable = isCraftingMenuAvailable,
     showLibraryNewIndicator = progress.homeMenuNoveltyState.library,
     showEquipmentNewIndicator = progress.homeMenuNoveltyState.equipment,
     showBadgeBookNewIndicator = progress.homeMenuNoveltyState.badgeBook,
 )
 
-private fun ProgressLoadResult.Recovered.toHomeUiState(): HomeUiState = HomeUiState(
+private fun ProgressLoadResult.Recovered.toHomeUiState(
+    isCraftingMenuAvailable: Boolean,
+): HomeUiState = HomeUiState(
     isLoading = false,
+    isLibraryMenuVisible = progress.hasOpenedFirstPack(),
     isEquipmentMenuVisible = progress.hasUnlockedEquipmentMenu(),
+    isBadgeBookMenuVisible = progress.hasOpenedFirstPack(),
+    isCraftingMenuAvailable = isCraftingMenuAvailable,
     showLibraryNewIndicator = progress.homeMenuNoveltyState.library,
     showEquipmentNewIndicator = progress.homeMenuNoveltyState.equipment,
     showBadgeBookNewIndicator = progress.homeMenuNoveltyState.badgeBook,
 )
+
+private suspend fun StandaloneProgress.isCraftingMenuAvailable(
+    craftingRepository: CraftingGateway? = null,
+): Boolean {
+    if (openedPackCount < CraftingMenuMinOpenedPackCount) return false
+    val alreadyUnlocked = newPlayerOnboardingStep == NewPlayerOnboardingStep.ViewCraftingMenu ||
+        newPlayerOnboardingStep == NewPlayerOnboardingStep.UseSkyDarkening ||
+        newPlayerOnboardingStep == NewPlayerOnboardingStep.Completed
+    if (alreadyUnlocked) return true
+    return craftingRepository?.let { repository ->
+        runCatching { repository.hasDarkenSkyCandidates() }.getOrDefault(false)
+    } ?: false
+}
+
+private const val CraftingMenuMinOpenedPackCount = 3
+
+private fun StandaloneProgress.hasOpenedFirstPack(): Boolean = openedPackCount > 0
 
 private fun HomeUiState.hasNewIndicator(destination: HomeMenuDestination): Boolean = when (destination) {
     HomeMenuDestination.Library -> showLibraryNewIndicator

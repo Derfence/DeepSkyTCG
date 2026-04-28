@@ -89,6 +89,8 @@ class HomeScreenStateTest {
         setHomeScreenContent(
             HomeUiState(
                 isLoading = false,
+                isLibraryMenuVisible = true,
+                isBadgeBookMenuVisible = true,
             ),
         )
 
@@ -98,11 +100,66 @@ class HomeScreenStateTest {
     }
 
     @Test
+    fun crafting_action_is_visible_and_opens_callback() {
+        var openCraftingCount = 0
+        setHomeScreenContent(
+            initialState = HomeUiState(
+                isLoading = false,
+                isCraftingMenuAvailable = true,
+            ),
+            onOpenCrafting = { openCraftingCount += 1 },
+        )
+
+        composeRule.onNodeWithTag("home-crafting").assertIsDisplayed().performClick()
+
+        composeRule.runOnIdle {
+            assertEquals(1, openCraftingCount)
+        }
+    }
+
+    @Test
+    fun badges_move_to_top_start_and_crafting_replaces_bottom_end() {
+        setHomeScreenContent(
+            HomeUiState(
+                isLoading = false,
+                isLibraryMenuVisible = true,
+                isBadgeBookMenuVisible = true,
+                isCraftingMenuAvailable = true,
+            ),
+        )
+
+        val badgeBounds = composeRule.onNodeWithTag("home-badges").fetchSemanticsNode().boundsInRoot
+        val libraryBounds = composeRule.onNodeWithTag("home-library").fetchSemanticsNode().boundsInRoot
+        val craftingBounds = composeRule.onNodeWithTag("home-crafting").fetchSemanticsNode().boundsInRoot
+
+        assertTrue(badgeBounds.top < libraryBounds.top)
+        assertTrue(badgeBounds.left <= libraryBounds.left + 1f)
+        assertEquals(libraryBounds.top, craftingBounds.top, 2f)
+        assertTrue(craftingBounds.left > libraryBounds.left)
+    }
+
+    @Test
+    fun locked_menus_are_hidden_until_their_unlock_conditions_are_met() {
+        setHomeScreenContent(
+            HomeUiState(
+                isLoading = false,
+                isCraftingMenuAvailable = false,
+            ),
+        )
+
+        composeRule.onAllNodesWithTag("home-library").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("home-badges").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("home-crafting").assertCountEquals(0)
+    }
+
+    @Test
     fun novelty_indicators_are_shown_only_for_matching_buttons() {
         setHomeScreenContent(
             HomeUiState(
                 isLoading = false,
+                isLibraryMenuVisible = true,
                 isEquipmentMenuVisible = true,
+                isBadgeBookMenuVisible = true,
                 showLibraryNewIndicator = true,
                 showEquipmentNewIndicator = true,
                 showBadgeBookNewIndicator = true,
@@ -261,6 +318,7 @@ class HomeScreenStateTest {
 
     private fun setHomeScreenContent(
         initialState: HomeUiState,
+        onOpenCrafting: () -> Unit = {},
         onResetProgress: () -> Unit = {},
     ): MutableState<HomeUiState> {
         val state = mutableStateOf(initialState)
@@ -270,6 +328,7 @@ class HomeScreenStateTest {
                     state = state.value,
                     onOpenPack = {},
                     onOpenLibrary = {},
+                    onOpenCrafting = onOpenCrafting,
                     onOpenEquipment = {},
                     onOpenBadgeBook = {},
                     onResetProgress = onResetProgress,
@@ -298,6 +357,7 @@ class HomeScreenStateTest {
                         state = state,
                         onOpenPack = {},
                         onOpenLibrary = {},
+                        onOpenCrafting = {},
                         onOpenEquipment = {},
                         onOpenBadgeBook = {},
                         onResetProgress = {},

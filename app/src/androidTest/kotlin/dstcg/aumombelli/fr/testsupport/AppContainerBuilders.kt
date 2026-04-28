@@ -8,6 +8,7 @@ import fr.aumombelli.dstcg.data.AndroidTrustedTimeSource
 import fr.aumombelli.dstcg.data.CatalogGateway
 import fr.aumombelli.dstcg.data.CollectionGateway
 import fr.aumombelli.dstcg.data.CollectionRepository
+import fr.aumombelli.dstcg.data.CraftingRepository
 import fr.aumombelli.dstcg.data.EncryptedProgressEnvelopeSerializer
 import fr.aumombelli.dstcg.data.EquipmentRepository
 import fr.aumombelli.dstcg.data.GameCatalogRepository
@@ -80,6 +81,10 @@ internal fun offlineMainActivityTestAppContainer(
         progressCipher = AesGcmProgressCipher(keyProvider = ::newTestSecretKey),
     )
     val collectionRepository = CollectionRepository(progressRepository)
+    val craftingRepository = CraftingRepository(
+        catalogRepository = catalogRepository,
+        progressRepository = progressRepository,
+    )
     val homeMenuNoveltyEvaluator = HomeMenuNoveltyEvaluator(
         catalogRepository = catalogRepository,
     )
@@ -106,6 +111,7 @@ internal fun offlineMainActivityTestAppContainer(
         progressRepository = progressRepository,
         catalogRepository = catalogRepository,
         collectionRepository = collectionRepository,
+        craftingRepository = craftingRepository,
         equipmentRepository = equipmentRepository,
         packRepository = packRepository,
         tradeRepository = tradeRepository,
@@ -212,6 +218,7 @@ private fun navigationTestAppContainer(
         initialProgress = StandaloneProgress(
             collection = initialCollection,
             rechargeState = PackRechargeState(),
+            openedPackCount = if (initialCollection.cards.isEmpty()) 0 else 1,
             newPlayerOnboardingStep = initialOnboardingStep ?: if (initialCollection.cards.isEmpty()) {
                 NewPlayerOnboardingStep.OpenFirstPackMenu
             } else {
@@ -257,6 +264,10 @@ private fun navigationTestAppContainer(
         progressRepository = progressRepository,
         catalogRepository = catalogRepository,
         collectionRepository = collectionRepository,
+        craftingRepository = CraftingRepository(
+            catalogRepository = catalogRepository,
+            progressRepository = progressRepository,
+        ),
         equipmentRepository = EquipmentRepository(
             progressRepository = progressRepository,
             catalogRepository = catalogRepository,

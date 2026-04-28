@@ -1,5 +1,6 @@
 package fr.aumombelli.dstcg.app
 
+import fr.aumombelli.dstcg.model.CraftingMode
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 
 internal object NewPlayerOnboardingInteractionPolicy {
@@ -9,6 +10,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
     fun isBlockingStep(step: NewPlayerOnboardingStep?): Boolean = when (step) {
         null,
         NewPlayerOnboardingStep.OpenSecondPackMenu,
+        NewPlayerOnboardingStep.AwaitCraftingEligibility,
         NewPlayerOnboardingStep.Completed,
         -> false
 
@@ -21,6 +23,8 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ViewBadges,
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
+        NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.UseSkyDarkening,
         -> true
     }
 
@@ -34,6 +38,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.SelectFirstExtension,
         NewPlayerOnboardingStep.SelectFirstBooster,
         NewPlayerOnboardingStep.OpenSecondPackMenu,
+        NewPlayerOnboardingStep.AwaitCraftingEligibility,
         NewPlayerOnboardingStep.Completed,
         -> true
 
@@ -43,6 +48,8 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ViewBadges,
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
+        NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.UseSkyDarkening,
         -> false
     }
 
@@ -51,6 +58,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ViewLibrary,
         NewPlayerOnboardingStep.LearnLibraryVariants,
         NewPlayerOnboardingStep.OpenSecondPackMenu,
+        NewPlayerOnboardingStep.AwaitCraftingEligibility,
         NewPlayerOnboardingStep.Completed,
         -> true
 
@@ -61,6 +69,8 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ViewBadges,
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
+        NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.UseSkyDarkening,
         -> false
     }
 
@@ -68,6 +78,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         null,
         NewPlayerOnboardingStep.ViewBadges,
         NewPlayerOnboardingStep.OpenSecondPackMenu,
+        NewPlayerOnboardingStep.AwaitCraftingEligibility,
         NewPlayerOnboardingStep.Completed,
         -> true
 
@@ -79,6 +90,29 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.LearnLibraryVariants,
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
+        NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.UseSkyDarkening,
+        -> false
+    }
+
+    fun allowsHomeCrafting(step: NewPlayerOnboardingStep?): Boolean = when (step) {
+        null,
+        NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.UseSkyDarkening,
+        NewPlayerOnboardingStep.Completed,
+        -> true
+
+        NewPlayerOnboardingStep.ShowWelcomeIntro,
+        NewPlayerOnboardingStep.OpenFirstPackMenu,
+        NewPlayerOnboardingStep.SelectFirstExtension,
+        NewPlayerOnboardingStep.SelectFirstBooster,
+        NewPlayerOnboardingStep.ViewLibrary,
+        NewPlayerOnboardingStep.LearnLibraryVariants,
+        NewPlayerOnboardingStep.ViewBadges,
+        NewPlayerOnboardingStep.OpenSecondPackMenu,
+        NewPlayerOnboardingStep.ViewEquipmentMenu,
+        NewPlayerOnboardingStep.ActivateFirstEquipment,
+        NewPlayerOnboardingStep.AwaitCraftingEligibility,
         -> false
     }
 
@@ -87,6 +121,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.OpenSecondPackMenu,
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
+        NewPlayerOnboardingStep.AwaitCraftingEligibility,
         NewPlayerOnboardingStep.Completed,
         -> true
 
@@ -97,12 +132,15 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ViewLibrary,
         NewPlayerOnboardingStep.LearnLibraryVariants,
         NewPlayerOnboardingStep.ViewBadges,
+        NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.UseSkyDarkening,
         -> false
     }
 
     fun allowsPackSelectionBack(step: NewPlayerOnboardingStep?): Boolean = when (step) {
         null,
         NewPlayerOnboardingStep.OpenSecondPackMenu,
+        NewPlayerOnboardingStep.AwaitCraftingEligibility,
         NewPlayerOnboardingStep.Completed,
         -> true
 
@@ -115,6 +153,8 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ViewBadges,
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
+        NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.UseSkyDarkening,
         -> false
     }
 
@@ -124,6 +164,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.SelectFirstExtension,
         NewPlayerOnboardingStep.SelectFirstBooster,
         NewPlayerOnboardingStep.OpenSecondPackMenu,
+        NewPlayerOnboardingStep.AwaitCraftingEligibility,
         NewPlayerOnboardingStep.Completed,
         -> true
 
@@ -133,6 +174,8 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ViewBadges,
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
+        NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.UseSkyDarkening,
         -> false
     }
 
@@ -140,6 +183,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         null,
         NewPlayerOnboardingStep.SelectFirstBooster,
         NewPlayerOnboardingStep.OpenSecondPackMenu,
+        NewPlayerOnboardingStep.AwaitCraftingEligibility,
         NewPlayerOnboardingStep.Completed,
         -> true
 
@@ -151,12 +195,15 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ViewBadges,
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
+        NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.UseSkyDarkening,
         -> false
     }
 
     fun allowsEquipmentBack(step: NewPlayerOnboardingStep?): Boolean = when (step) {
         null,
         NewPlayerOnboardingStep.OpenSecondPackMenu,
+        NewPlayerOnboardingStep.AwaitCraftingEligibility,
         NewPlayerOnboardingStep.Completed,
         -> true
 
@@ -169,6 +216,8 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ViewBadges,
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
+        NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.UseSkyDarkening,
         -> false
     }
 
@@ -177,6 +226,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.OpenSecondPackMenu,
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
+        NewPlayerOnboardingStep.AwaitCraftingEligibility,
         NewPlayerOnboardingStep.Completed,
         -> true
 
@@ -187,6 +237,41 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ViewLibrary,
         NewPlayerOnboardingStep.LearnLibraryVariants,
         NewPlayerOnboardingStep.ViewBadges,
+        NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.UseSkyDarkening,
         -> false
+    }
+
+    fun allowsCraftingBack(step: NewPlayerOnboardingStep?): Boolean = when (step) {
+        NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.UseSkyDarkening,
+        -> false
+
+        null,
+        NewPlayerOnboardingStep.ShowWelcomeIntro,
+        NewPlayerOnboardingStep.OpenFirstPackMenu,
+        NewPlayerOnboardingStep.SelectFirstExtension,
+        NewPlayerOnboardingStep.SelectFirstBooster,
+        NewPlayerOnboardingStep.ViewLibrary,
+        NewPlayerOnboardingStep.LearnLibraryVariants,
+        NewPlayerOnboardingStep.ViewBadges,
+        NewPlayerOnboardingStep.OpenSecondPackMenu,
+        NewPlayerOnboardingStep.ViewEquipmentMenu,
+        NewPlayerOnboardingStep.ActivateFirstEquipment,
+        NewPlayerOnboardingStep.AwaitCraftingEligibility,
+        NewPlayerOnboardingStep.Completed,
+        -> true
+    }
+
+    fun allowsCraftingModeSelection(step: NewPlayerOnboardingStep?, mode: CraftingMode): Boolean = when (step) {
+        NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.UseSkyDarkening -> mode == CraftingMode.DarkenSky
+        else -> true
+    }
+
+    fun allowsCraftingApplication(step: NewPlayerOnboardingStep?, mode: CraftingMode?): Boolean = when (step) {
+        NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.UseSkyDarkening -> mode == CraftingMode.DarkenSky
+        else -> true
     }
 }

@@ -48,6 +48,13 @@ data class CardDefinition(
     val astronomy: AstronomyInfo,
 )
 
+val DefaultSkyUpgradeCosts: Map<String, Int> = mapOf(
+    "city" to 2,
+    "suburban" to 2,
+    "rural" to 3,
+    "mountain" to 6,
+)
+
 @Serializable
 data class GameBalanceDefinition(
     val cardsPerDraw: Int,
@@ -60,4 +67,8 @@ data class GameBalanceDefinition(
     val mountainMeanPerDay: Double,
     val holographicSkyMeanPerDay: Double,
     val percentStampedPerDay: Double,
+    val skyUpgradeCosts: Map<String, Int> = emptyMap(),
 )
+
+fun GameBalanceDefinition.resolvedSkyUpgradeCosts(): Map<String, Int> =
+    DefaultSkyUpgradeCosts + skyUpgradeCosts

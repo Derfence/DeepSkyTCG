@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Construction
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material3.DropdownMenu
@@ -63,6 +64,7 @@ fun HomeScreen(
     state: HomeUiState,
     onOpenPack: () -> Unit,
     onOpenLibrary: () -> Unit,
+    onOpenCrafting: () -> Unit,
     onOpenEquipment: () -> Unit,
     onOpenBadgeBook: () -> Unit,
     onResetProgress: () -> Unit,
@@ -124,12 +126,31 @@ fun HomeScreen(
             onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeLibrary, null)
             onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeEquipment, null)
             onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeBadges, null)
+            onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeCrafting, null)
         }
     }
 
     LaunchedEffect(contentVisible, state.isEquipmentMenuVisible) {
         if (!contentVisible || !state.isEquipmentMenuVisible) {
             onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeEquipment, null)
+        }
+    }
+
+    LaunchedEffect(contentVisible, state.isLibraryMenuVisible) {
+        if (!contentVisible || !state.isLibraryMenuVisible) {
+            onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeLibrary, null)
+        }
+    }
+
+    LaunchedEffect(contentVisible, state.isBadgeBookMenuVisible) {
+        if (!contentVisible || !state.isBadgeBookMenuVisible) {
+            onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeBadges, null)
+        }
+    }
+
+    LaunchedEffect(contentVisible, state.isCraftingMenuAvailable) {
+        if (!contentVisible || !state.isCraftingMenuAvailable) {
+            onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeCrafting, null)
         }
     }
 
@@ -281,26 +302,51 @@ fun HomeScreen(
                         }
                     }
 
-                    HomeCornerActionButton(
-                        imageVector = Icons.AutoMirrored.Filled.MenuBook,
-                        contentDescription = "Bibliothèque",
-                        enabled = navigationEnabled,
-                        onClick = onOpenLibrary,
-                        buttonSize = homeLayout.menuButtonSize,
-                        showNewIndicator = state.showLibraryNewIndicator,
-                        newIndicatorTestTag = "home-library-new-indicator",
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .onGloballyPositioned { coordinates ->
-                                if (contentVisible) {
-                                    onCoachmarkTargetBoundsChanged(
-                                        NewPlayerOnboardingTarget.HomeLibrary,
-                                        coordinates.boundsInRoot(),
-                                    )
+                    if (state.isBadgeBookMenuVisible) {
+                        HomeCornerActionButton(
+                            imageVector = Icons.Filled.WorkspacePremium,
+                            contentDescription = "Badges",
+                            enabled = navigationEnabled,
+                            onClick = onOpenBadgeBook,
+                            buttonSize = 52.dp,
+                            showNewIndicator = state.showBadgeBookNewIndicator,
+                            newIndicatorTestTag = "home-badges-new-indicator",
+                            modifier = Modifier
+                                .align(Alignment.TopStart)
+                                .onGloballyPositioned { coordinates ->
+                                    if (contentVisible) {
+                                        onCoachmarkTargetBoundsChanged(
+                                            NewPlayerOnboardingTarget.HomeBadges,
+                                            coordinates.boundsInRoot(),
+                                        )
+                                    }
                                 }
-                            }
-                            .testTag("home-library"),
-                    )
+                                .testTag("home-badges"),
+                        )
+                    }
+
+                    if (state.isLibraryMenuVisible) {
+                        HomeCornerActionButton(
+                            imageVector = Icons.AutoMirrored.Filled.MenuBook,
+                            contentDescription = "Bibliothèque",
+                            enabled = navigationEnabled,
+                            onClick = onOpenLibrary,
+                            buttonSize = homeLayout.menuButtonSize,
+                            showNewIndicator = state.showLibraryNewIndicator,
+                            newIndicatorTestTag = "home-library-new-indicator",
+                            modifier = Modifier
+                                .align(Alignment.BottomStart)
+                                .onGloballyPositioned { coordinates ->
+                                    if (contentVisible) {
+                                        onCoachmarkTargetBoundsChanged(
+                                            NewPlayerOnboardingTarget.HomeLibrary,
+                                            coordinates.boundsInRoot(),
+                                        )
+                                    }
+                                }
+                                .testTag("home-library"),
+                        )
+                    }
 
                     if (state.isEquipmentMenuVisible) {
                         HomeCornerActionButton(
@@ -327,26 +373,28 @@ fun HomeScreen(
                         )
                     }
 
-                    HomeCornerActionButton(
-                        imageVector = Icons.Filled.WorkspacePremium,
-                        contentDescription = "Badges",
-                        enabled = navigationEnabled,
-                        onClick = onOpenBadgeBook,
-                        buttonSize = homeLayout.menuButtonSize,
-                        showNewIndicator = state.showBadgeBookNewIndicator,
-                        newIndicatorTestTag = "home-badges-new-indicator",
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .onGloballyPositioned { coordinates ->
-                                if (contentVisible) {
-                                    onCoachmarkTargetBoundsChanged(
-                                        NewPlayerOnboardingTarget.HomeBadges,
-                                        coordinates.boundsInRoot(),
-                                    )
+                    if (state.isCraftingMenuAvailable) {
+                        HomeCornerActionButton(
+                            imageVector = Icons.Filled.Construction,
+                            contentDescription = "Artisanat",
+                            enabled = navigationEnabled,
+                            onClick = onOpenCrafting,
+                            buttonSize = homeLayout.menuButtonSize,
+                            showNewIndicator = false,
+                            newIndicatorTestTag = "home-crafting-new-indicator",
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .onGloballyPositioned { coordinates ->
+                                    if (contentVisible) {
+                                        onCoachmarkTargetBoundsChanged(
+                                            NewPlayerOnboardingTarget.HomeCrafting,
+                                            coordinates.boundsInRoot(),
+                                        )
+                                    }
                                 }
-                            }
-                            .testTag("home-badges"),
-                    )
+                                .testTag("home-crafting"),
+                        )
+                    }
                 }
             }
         }

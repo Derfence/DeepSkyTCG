@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.model.DisplayCard
 import fr.aumombelli.dstcg.performance.LocalAppPerformanceProfile
 import fr.aumombelli.dstcg.ui.motion.HolographicCardMotion
+import fr.aumombelli.dstcg.ui.theme.SkyQualityPalette
 import fr.aumombelli.dstcg.ui.theme.skyQualityPalette
 
 const val TRADING_CARD_WIDTH_OVER_HEIGHT = 1f / 1.754f
@@ -41,9 +42,10 @@ internal fun AstroCardPreviewSurface(
     mode: AstroCardSurfaceMode = AstroCardSurfaceMode.Preview,
     artVisibility: CardArtVisibility = CardArtVisibility.Visible,
     holographicMotion: HolographicCardMotion? = null,
+    paletteOverride: SkyQualityPalette? = null,
     onClick: (() -> Unit)? = null,
 ) {
-    val palette = skyQualityPalette(displayCard.activeVariant.skyQuality)
+    val palette = paletteOverride ?: skyQualityPalette(displayCard.activeVariant.skyQuality)
     val performanceProfile = LocalAppPerformanceProfile.current
     val compact = mode == AstroCardSurfaceMode.Thumbnail
     val shape = RoundedCornerShape(if (compact) 24.dp else 30.dp)

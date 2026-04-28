@@ -1,6 +1,7 @@
 package fr.aumombelli.dstcg
 
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingInteractionPolicy
+import fr.aumombelli.dstcg.model.CraftingMode
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -17,12 +18,27 @@ class NewPlayerOnboardingInteractionPolicyTest {
         assertTrue(NewPlayerOnboardingInteractionPolicy.allowsHomeOpenPack(step))
         assertTrue(NewPlayerOnboardingInteractionPolicy.allowsHomeLibrary(step))
         assertTrue(NewPlayerOnboardingInteractionPolicy.allowsHomeBadgeBook(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeCrafting(step))
         assertTrue(NewPlayerOnboardingInteractionPolicy.allowsHomeEquipment(step))
         assertTrue(NewPlayerOnboardingInteractionPolicy.allowsPackSelectionBack(step))
         assertTrue(NewPlayerOnboardingInteractionPolicy.allowsPackSelectionExtensionSelection(step))
         assertTrue(NewPlayerOnboardingInteractionPolicy.allowsPackSelectionBoosterSelection(step))
         assertTrue(NewPlayerOnboardingInteractionPolicy.allowsEquipmentBack(step))
         assertTrue(NewPlayerOnboardingInteractionPolicy.allowsEquipmentActivation(step))
+    }
+
+    @Test
+    fun `await crafting eligibility is a free pause state with crafting still locked`() {
+        val step = NewPlayerOnboardingStep.AwaitCraftingEligibility
+
+        assertFalse(NewPlayerOnboardingInteractionPolicy.isBlockingStep(step))
+        assertTrue(NewPlayerOnboardingInteractionPolicy.allowsHomeExit(step))
+        assertTrue(NewPlayerOnboardingInteractionPolicy.allowsHomeAuxiliaryActions(step))
+        assertTrue(NewPlayerOnboardingInteractionPolicy.allowsHomeOpenPack(step))
+        assertTrue(NewPlayerOnboardingInteractionPolicy.allowsHomeLibrary(step))
+        assertTrue(NewPlayerOnboardingInteractionPolicy.allowsHomeBadgeBook(step))
+        assertTrue(NewPlayerOnboardingInteractionPolicy.allowsHomeEquipment(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeCrafting(step))
     }
 
     @Test
@@ -49,6 +65,7 @@ class NewPlayerOnboardingInteractionPolicyTest {
         assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeLibrary(step))
         assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeBadgeBook(step))
         assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeEquipment(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeCrafting(step))
     }
 
     @Test
@@ -72,6 +89,35 @@ class NewPlayerOnboardingInteractionPolicyTest {
         assertTrue(NewPlayerOnboardingInteractionPolicy.allowsHomeEquipment(step))
         assertFalse(NewPlayerOnboardingInteractionPolicy.allowsEquipmentBack(step))
         assertTrue(NewPlayerOnboardingInteractionPolicy.allowsEquipmentActivation(step))
+    }
+
+    @Test
+    fun `view crafting menu keeps home limited to crafting`() {
+        val step = NewPlayerOnboardingStep.ViewCraftingMenu
+
+        assertTrue(NewPlayerOnboardingInteractionPolicy.isBlockingStep(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeOpenPack(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeLibrary(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeBadgeBook(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeEquipment(step))
+        assertTrue(NewPlayerOnboardingInteractionPolicy.allowsHomeCrafting(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsCraftingBack(step))
+        assertTrue(NewPlayerOnboardingInteractionPolicy.allowsCraftingModeSelection(step, CraftingMode.DarkenSky))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsCraftingModeSelection(step, CraftingMode.SpaceAgency))
+        assertTrue(NewPlayerOnboardingInteractionPolicy.allowsCraftingApplication(step, CraftingMode.DarkenSky))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsCraftingApplication(step, CraftingMode.SpaceAgency))
+    }
+
+    @Test
+    fun `use sky darkening restricts crafting to the darken sky recipe`() {
+        val step = NewPlayerOnboardingStep.UseSkyDarkening
+
+        assertTrue(NewPlayerOnboardingInteractionPolicy.isBlockingStep(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsCraftingBack(step))
+        assertTrue(NewPlayerOnboardingInteractionPolicy.allowsCraftingModeSelection(step, CraftingMode.DarkenSky))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsCraftingModeSelection(step, CraftingMode.SpaceAgency))
+        assertTrue(NewPlayerOnboardingInteractionPolicy.allowsCraftingApplication(step, CraftingMode.DarkenSky))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsCraftingApplication(step, CraftingMode.SpaceAgency))
     }
 
     @Test

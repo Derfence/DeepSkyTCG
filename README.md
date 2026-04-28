@@ -84,6 +84,7 @@ La collection locale ne porte plus de version de catalogue. Au premier lancement
 - etats meteo : `Pluie x0`, `Nuageux x0.8`, `Clair x1`, `Pur x2`
 - moyenne garantie sur un cycle complet de 20 jours : `1.11`
 - `cardsPerDraw` et `drawCooldownHours` charges depuis `app/src/main/assets/catalog/game_balance.json`
+- `skyUpgradeCosts` peut etre charge depuis `game_balance.json` pour l'artisanat ; si le champ est absent, l'application utilise `city=2`, `suburban=2`, `rural=3`, `mountain=6`
 - tirage des cartes a deux phases par extension : rarete, puis carte dans la rarete
 - chaque slot `Common` peut etre remplace par une carte d'equipement selon `equipment_settings.json`
 - un seul equipement actif par type ; des types differents peuvent coexister
@@ -201,6 +202,8 @@ python3 scripts/catalog_sync.py apply --sheet catalogue_astronomie.xlsx
 Le script n'a pas besoin de dependance Python externe : le support XLSX est embarque dans `scripts/simple_xlsx.py`.
 
 `python3 scripts/catalog_sync.py apply` lit `Catalogue`, `Donnees` et `Equipements`, ecrit `extensions.json`, `cards.json`, `variant_profiles.json`, `game_balance.json`, `equipment_cards.json` et `equipment_settings.json`, puis laisse le classeur strictement intact. Les probabilites de cartes ne sont plus transferees depuis le classeur : elles sont recalculees dans l'application a partir des donnees brutes et des multiplicateurs de rarete.
+
+Les couts `skyUpgradeCosts` de l'artisanat sont pour l'instant prepares cote application avec des valeurs de repli. Une evolution ulterieure de `scripts/catalog_sync.py` devra les exporter depuis le classeur XLSX vers `game_balance.json`.
 
 Les illustrations de cartes d'equipement doivent etre preparees separement dans :
 

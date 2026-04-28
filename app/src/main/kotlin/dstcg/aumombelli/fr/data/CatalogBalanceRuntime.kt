@@ -180,6 +180,7 @@ internal fun GameBalanceDefinition.validated(): GameBalanceDefinition {
     require(mountainMeanPerDay > 0.0) { "mountainMeanPerDay must be strictly positive." }
     require(holographicSkyMeanPerDay > 0.0) { "holographicSkyMeanPerDay must be strictly positive." }
     require(percentStampedPerDay > 0.0) { "percentStampedPerDay must be strictly positive." }
+    require(skyUpgradeCosts.values.all { it > 0 }) { "skyUpgradeCosts values must stay strictly positive." }
     require(commonRarityProbability() > 0.0) { "Derived common probability must stay strictly positive." }
     require(cityProbability() > 0.0) { "Derived city probability must stay strictly positive." }
     require(standardProbability() > 0.0) { "Derived standard probability must stay strictly positive." }

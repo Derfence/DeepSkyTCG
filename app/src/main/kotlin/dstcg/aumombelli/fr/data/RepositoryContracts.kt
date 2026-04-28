@@ -1,6 +1,10 @@
 package fr.aumombelli.dstcg.data
 
 import fr.aumombelli.dstcg.model.CardDefinition
+import fr.aumombelli.dstcg.model.CraftingApplyResult
+import fr.aumombelli.dstcg.model.CraftingCardCandidate
+import fr.aumombelli.dstcg.model.CraftingCardRef
+import fr.aumombelli.dstcg.model.CraftingMode
 import fr.aumombelli.dstcg.model.DrawPackResponse
 import fr.aumombelli.dstcg.model.EquipmentCardDefinition
 import fr.aumombelli.dstcg.model.EquipmentSettingsDefinition
@@ -36,6 +40,15 @@ interface CollectionGateway {
     suspend fun loadCollection(): OwnedCollection
     suspend fun saveCollection(collection: OwnedCollection)
     fun mergeCards(collection: OwnedCollection, cards: List<PackCard>): OwnedCollection
+}
+
+interface CraftingGateway {
+    suspend fun loadCraftingCandidates(mode: CraftingMode): List<CraftingCardCandidate>
+    suspend fun hasDarkenSkyCandidates(): Boolean
+    suspend fun applyCrafting(
+        mode: CraftingMode,
+        source: CraftingCardRef,
+    ): CraftingApplyResult
 }
 
 interface EquipmentGateway {

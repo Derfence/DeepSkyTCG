@@ -5,6 +5,8 @@ import fr.aumombelli.dstcg.data.AndroidKeystoreProgressCipher
 import fr.aumombelli.dstcg.data.CatalogGateway
 import fr.aumombelli.dstcg.data.CollectionGateway
 import fr.aumombelli.dstcg.data.CollectionRepository
+import fr.aumombelli.dstcg.data.CraftingGateway
+import fr.aumombelli.dstcg.data.CraftingRepository
 import fr.aumombelli.dstcg.data.EquipmentGateway
 import fr.aumombelli.dstcg.data.EquipmentRepository
 import fr.aumombelli.dstcg.data.GameCatalogRepository
@@ -22,6 +24,7 @@ class AppContainer(
     val progressRepository: ProgressGateway,
     val catalogRepository: CatalogGateway,
     val collectionRepository: CollectionGateway,
+    val craftingRepository: CraftingGateway,
     val equipmentRepository: EquipmentGateway,
     val packRepository: PackGateway,
     val tradeRepository: TradeGateway,
@@ -39,6 +42,10 @@ class AppContainer(
                 progressCipher = AndroidKeystoreProgressCipher(),
             )
             val collectionRepository = CollectionRepository(
+                progressRepository = progressRepository,
+            )
+            val craftingRepository = CraftingRepository(
+                catalogRepository = catalogRepository,
                 progressRepository = progressRepository,
             )
             val homeMenuNoveltyEvaluator = HomeMenuNoveltyEvaluator(
@@ -67,6 +74,7 @@ class AppContainer(
                 progressRepository = progressRepository,
                 catalogRepository = catalogRepository,
                 collectionRepository = collectionRepository,
+                craftingRepository = craftingRepository,
                 equipmentRepository = equipmentRepository,
                 packRepository = packRepository,
                 tradeRepository = tradeRepository,

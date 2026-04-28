@@ -2,11 +2,16 @@ package fr.aumombelli.dstcg.testsupport.fakes
 
 import fr.aumombelli.dstcg.data.CatalogGateway
 import fr.aumombelli.dstcg.data.CollectionGateway
+import fr.aumombelli.dstcg.data.CraftingGateway
 import fr.aumombelli.dstcg.data.EquipmentGateway
 import fr.aumombelli.dstcg.data.PackGateway
 import fr.aumombelli.dstcg.data.ProgressLoadResult
 import fr.aumombelli.dstcg.data.ProgressGateway
 import fr.aumombelli.dstcg.model.CardDefinition
+import fr.aumombelli.dstcg.model.CraftingApplyResult
+import fr.aumombelli.dstcg.model.CraftingCardCandidate
+import fr.aumombelli.dstcg.model.CraftingCardRef
+import fr.aumombelli.dstcg.model.CraftingMode
 import fr.aumombelli.dstcg.model.DrawPackResponse
 import fr.aumombelli.dstcg.model.EquipmentCardDefinition
 import fr.aumombelli.dstcg.model.EquipmentSettingsDefinition
@@ -95,6 +100,26 @@ class FakeCollectionGateway : CollectionGateway {
 
     override fun mergeCards(collection: OwnedCollection, cards: List<PackCard>): OwnedCollection =
         collection.mergePackCards(cards)
+}
+
+class FakeCraftingGateway : CraftingGateway {
+    var candidatesByMode: Map<CraftingMode, List<CraftingCardCandidate>> = emptyMap()
+    var applyResult: CraftingApplyResult = CraftingApplyResult.Invalid("Validation refusee.")
+    val applied = mutableListOf<Pair<CraftingMode, CraftingCardRef>>()
+
+    override suspend fun loadCraftingCandidates(mode: CraftingMode): List<CraftingCardCandidate> =
+        candidatesByMode[mode].orEmpty()
+
+    override suspend fun hasDarkenSkyCandidates(): Boolean =
+        candidatesByMode[CraftingMode.DarkenSky].orEmpty().isNotEmpty()
+
+    override suspend fun applyCrafting(
+        mode: CraftingMode,
+        source: CraftingCardRef,
+    ): CraftingApplyResult {
+        applied += mode to source
+        return applyResult
+    }
 }
 
 class FakeCatalogGateway : CatalogGateway {

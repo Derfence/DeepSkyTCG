@@ -11,6 +11,7 @@ internal data class AppSceneUiState(
     val launchLogoRaised: Boolean = false,
     val homeContentVisible: Boolean = false,
     val libraryContentVisible: Boolean = false,
+    val craftingContentVisible: Boolean = false,
     val equipmentContentVisible: Boolean = false,
     val badgeBookContentVisible: Boolean = false,
     val packSceneVisible: Boolean = false,
@@ -20,6 +21,7 @@ internal data class AppSceneUiState(
     val homeLogoBadgeCenterYPx: Float = 0f,
     val homeLogoBadgeLandingSizePx: Float = 0f,
     val libraryRefreshSignal: Int = 0,
+    val craftingRefreshSignal: Int = 0,
     val equipmentRefreshSignal: Int = 0,
     val badgeBookRefreshSignal: Int = 0,
     val packRefreshSignal: Int = 0,
@@ -75,6 +77,10 @@ internal fun AppSceneUiState.hideLibraryContent(): AppSceneUiState = copy(librar
 
 internal fun AppSceneUiState.showLibraryContent(): AppSceneUiState = copy(libraryContentVisible = true)
 
+internal fun AppSceneUiState.hideCraftingContent(): AppSceneUiState = copy(craftingContentVisible = false)
+
+internal fun AppSceneUiState.showCraftingContent(): AppSceneUiState = copy(craftingContentVisible = true)
+
 internal fun AppSceneUiState.hideEquipmentContent(): AppSceneUiState = copy(equipmentContentVisible = false)
 
 internal fun AppSceneUiState.showEquipmentContent(): AppSceneUiState = copy(equipmentContentVisible = true)
@@ -117,6 +123,14 @@ internal fun AppSceneUiState.prepareLibraryEntry(nextLibraryRefreshSignal: Int):
 )
 
 internal fun AppSceneUiState.enterLibrary(): AppSceneUiState = copy(currentScene = AppScene.Library)
+
+internal fun AppSceneUiState.prepareCraftingEntry(nextCraftingRefreshSignal: Int): AppSceneUiState = copy(
+    homeContentVisible = false,
+    craftingContentVisible = false,
+    craftingRefreshSignal = nextCraftingRefreshSignal,
+)
+
+internal fun AppSceneUiState.enterCrafting(): AppSceneUiState = copy(currentScene = AppScene.Crafting)
 
 internal fun AppSceneUiState.prepareEquipmentEntry(nextEquipmentRefreshSignal: Int): AppSceneUiState = copy(
     homeContentVisible = false,

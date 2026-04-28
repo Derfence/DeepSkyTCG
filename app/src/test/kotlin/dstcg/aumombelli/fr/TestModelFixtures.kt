@@ -28,6 +28,7 @@ fun testGameBalanceDefinition(
     mountainMeanPerDay: Double = 1.0,
     holographicSkyMeanPerDay: Double = 0.14285714285714285,
     percentStampedPerDay: Double = 10.0,
+    skyUpgradeCosts: Map<String, Int> = emptyMap(),
 ) = fixtureTestGameBalanceDefinition(
     cardsPerDraw = cardsPerDraw,
     drawCooldownHours = drawCooldownHours,
@@ -39,6 +40,7 @@ fun testGameBalanceDefinition(
     mountainMeanPerDay = mountainMeanPerDay,
     holographicSkyMeanPerDay = holographicSkyMeanPerDay,
     percentStampedPerDay = percentStampedPerDay,
+    skyUpgradeCosts = skyUpgradeCosts,
 )
 
 fun testCardDefinition(
