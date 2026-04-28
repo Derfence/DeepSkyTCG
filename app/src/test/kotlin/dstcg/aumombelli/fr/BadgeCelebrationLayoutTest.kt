@@ -21,7 +21,7 @@ class BadgeCelebrationLayoutTest {
     }
 
     @Test
-    fun celebration_lands_below_target_top_with_configured_gap() {
+    fun celebration_lands_above_target_top_with_configured_gap() {
         val target = Rect(left = 900f, top = 2100f, right = 1044f, bottom = 2244f)
 
         val endCenter = badgeCelebrationEndCenter(
@@ -31,7 +31,7 @@ class BadgeCelebrationLayoutTest {
         )
 
         assertEquals(972f, endCenter.x, 0.01f)
-        assertEquals(2133f, endCenter.y, 0.01f)
+        assertEquals(2113f, endCenter.y, 0.01f)
     }
 
     @Test

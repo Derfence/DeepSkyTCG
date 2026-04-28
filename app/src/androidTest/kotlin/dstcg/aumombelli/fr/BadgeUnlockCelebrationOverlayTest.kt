@@ -97,7 +97,7 @@ class BadgeUnlockCelebrationOverlayTest {
         val landingGapPx = with(density) { 10.dp.toPx() }
 
         assertEquals((targetBounds.left + targetBounds.right) / 2f, finalBadgeBounds.center.x, 4f)
-        assertEquals(targetBounds.top + landingGapPx, finalBadgeBounds.top, 8f)
+        assertEquals(targetBounds.top - landingGapPx, finalBadgeBounds.top, 8f)
         composeRule.onNodeWithTag("badge-unlock-celebration-title").assertIsDisplayed()
         assertTrue(finalTitleBounds.width > 0f)
         assertTrue(finalTitleBounds.height > 0f)
