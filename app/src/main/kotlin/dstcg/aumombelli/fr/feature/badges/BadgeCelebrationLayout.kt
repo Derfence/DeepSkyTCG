@@ -17,7 +17,7 @@ internal fun badgeCelebrationEndCenter(
     gapPx: Float,
 ): Offset = Offset(
     x = targetBounds.left + ((targetBounds.right - targetBounds.left) / 2f),
-    y = targetBounds.top + gapPx + (displayedCoinSizePx / 2f),
+    y = targetBounds.top - gapPx + (displayedCoinSizePx / 2f),
 )
 
 internal fun badgeCelebrationInitialCoinCenters(
