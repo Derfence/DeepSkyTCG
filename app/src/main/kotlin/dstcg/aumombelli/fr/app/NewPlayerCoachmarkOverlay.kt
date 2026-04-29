@@ -74,6 +74,7 @@ internal fun NewPlayerCoachmarkOverlay(
         val horizontalMarginPx = with(density) { 16.dp.toPx() }
         val verticalMarginPx = with(density) { 20.dp.toPx() }
         val targetBottomOverlapPx = with(density) { 8.dp.toPx() }
+        val belowTargetFallbackLiftPx = with(density) { 72.dp.toPx() }
         val availableBubbleWidthPx = max(0f, rootWidthPx - horizontalMarginPx * 2f)
         val bubbleWidthPx = min(
             with(density) { 320.dp.toPx() },
@@ -106,6 +107,7 @@ internal fun NewPlayerCoachmarkOverlay(
                     max(horizontalMarginPx, rootWidthPx - bubbleWidthPx - horizontalMarginPx),
                 )
             val bubbleAbove = targetBounds.top > rootHeightPx * 0.42f
+            val maxBubbleY = max(verticalMarginPx, rootHeightPx - bubbleHeightPx - verticalMarginPx)
             val desiredBubbleY = when (spec.placement) {
                 NewPlayerCoachmarkPlacement.AroundTarget ->
                     if (bubbleAbove) {
@@ -113,6 +115,15 @@ internal fun NewPlayerCoachmarkOverlay(
                     } else {
                         targetBounds.bottom + verticalMarginPx
                     }
+
+                NewPlayerCoachmarkPlacement.BelowTarget -> {
+                    val belowTargetY = targetBounds.bottom + verticalMarginPx
+                    if (belowTargetY <= maxBubbleY) {
+                        belowTargetY
+                    } else {
+                        targetBounds.top - bubbleHeightPx - verticalMarginPx - belowTargetFallbackLiftPx
+                    }
+                }
 
                 NewPlayerCoachmarkPlacement.CenteredOnTarget ->
                     targetBounds.top + targetBounds.height / 2f - bubbleHeightPx / 2f
@@ -122,7 +133,7 @@ internal fun NewPlayerCoachmarkOverlay(
             }
             val bubbleY = desiredBubbleY.coerceIn(
                 minimumValue = verticalMarginPx,
-                maximumValue = max(verticalMarginPx, rootHeightPx - bubbleHeightPx - verticalMarginPx),
+                maximumValue = maxBubbleY,
             )
 
             when (spec.targetEffect) {

@@ -5,7 +5,6 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -22,6 +21,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.ui.theme.rarityBadgeStyle
 import kotlinx.coroutines.delay
@@ -100,7 +100,27 @@ fun AnimatedExtensionPackCard(
 }
 
 @Composable
-private fun BoxScope.AnimatedExtensionPackCardContent(
+internal fun GenericPackCardShell(
+    decorSeed: Any? = Unit,
+    revealProgress: Float = 1f,
+    modifier: Modifier = Modifier,
+    contentPadding: Dp = 14.dp,
+) {
+    val decorSpec = remember(decorSeed) {
+        packCardDecorSpec(seed = decorSeed?.hashCode() ?: 0)
+    }
+
+    PackCardShellCanvas(
+        decorSpec = decorSpec,
+        revealProgress = revealProgress,
+        modifier = modifier
+            .fillMaxSize()
+            .padding(contentPadding),
+    )
+}
+
+@Composable
+private fun AnimatedExtensionPackCardContent(
     spec: ExtensionAnimationSpec,
     decorSpec: PackCardDecorSpec,
     revealProgress: Float,
@@ -112,128 +132,11 @@ private fun BoxScope.AnimatedExtensionPackCardContent(
             .fillMaxSize()
             .padding(14.dp),
     ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            val toothDepth = size.height * decorSpec.tearBand.toothDepthFraction
-            val topEdge = buildPackSawtoothEdgePoints(
-                width = size.width,
-                baselineY = toothDepth,
-                tipY = 0f,
-                toothCount = decorSpec.tearBand.toothCount,
-            )
-            val bottomEdge = buildPackSawtoothEdgePoints(
-                width = size.width,
-                baselineY = size.height - toothDepth,
-                tipY = size.height,
-                toothCount = decorSpec.tearBand.toothCount,
-            )
-            val packOutline = buildPackSawtoothOutlinePath(
-                topEdge = topEdge,
-                bottomEdge = bottomEdge,
-            )
-
-            clipPath(packOutline) {
-                drawRect(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFF182B45),
-                            Color(0xFF08111D),
-                        ),
-                    ),
-                )
-                drawRect(
-                    brush = Brush.radialGradient(
-                        colors = listOf(
-                            Color(0x553B72B7),
-                            Color.Transparent,
-                        ),
-                        center = Offset(size.width * 0.5f, size.height * 0.5f),
-                        radius = size.minDimension * 0.72f,
-                    ),
-                )
-                drawRect(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Black.copy(alpha = 0.18f),
-                            Color.Transparent,
-                            Color.White.copy(alpha = 0.08f),
-                        ),
-                    ),
-                )
-
-                for (i in 0 until topEdge.size - 2 step 2) {
-                    val p1 = topEdge[i]
-                    val p2 = topEdge[i + 1]
-                    val p3 = topEdge[i + 2]
-                    drawPath(
-                        path = Path().apply {
-                            moveTo(p1.x, p1.y)
-                            lineTo(p2.x, p2.y)
-                            lineTo(p3.x, p3.y)
-                            close()
-                        },
-                        color = Color.Black.copy(alpha = 0.2f),
-                    )
-                }
-                for (i in 0 until bottomEdge.size - 2 step 2) {
-                    val p1 = bottomEdge[i]
-                    val p2 = bottomEdge[i + 1]
-                    val p3 = bottomEdge[i + 2]
-                    drawPath(
-                        path = Path().apply {
-                            moveTo(p1.x, p1.y)
-                            lineTo(p2.x, p2.y)
-                            lineTo(p3.x, p3.y)
-                            close()
-                        },
-                        color = Color.White.copy(alpha = 0.08f),
-                    )
-                }
-
-                decorSpec.rarityStars.forEachIndexed { index, star ->
-                    val style = rarityBadgeStyle(star.rarityLabel)
-                    val staggeredReveal = ((revealProgress - index * 0.025f) / 0.55f).coerceIn(0f, 1f)
-                    if (staggeredReveal <= 0f) return@forEachIndexed
-
-                    val center = Offset(
-                        x = size.width * star.xFraction,
-                        y = size.height * star.yFraction,
-                    )
-                    val outerRadius = size.minDimension * star.radiusFraction
-                    val alpha = staggeredReveal * 0.96f
-                    drawPath(
-                        path = starPath(
-                            center = center,
-                            points = style.branchCount,
-                            outerRadius = outerRadius,
-                            innerRadius = outerRadius * 0.42f,
-                        ),
-                        color = style.color.copy(alpha = alpha),
-                        style = Fill,
-                    )
-                }
-
-                drawLine(
-                    color = rarityBadgeStyle("Rare").color.copy(alpha = 0.24f),
-                    start = Offset(topEdge.first().x, topEdge.first().y + toothDepth * 0.44f),
-                    end = Offset(topEdge.last().x, topEdge.last().y + toothDepth * 0.44f),
-                    strokeWidth = size.minDimension * 0.01f,
-                )
-                drawLine(
-                    color = rarityBadgeStyle("Rare").color.copy(alpha = 0.24f),
-                    start = Offset(bottomEdge.first().x, bottomEdge.first().y - toothDepth * 0.44f),
-                    end = Offset(bottomEdge.last().x, bottomEdge.last().y - toothDepth * 0.44f),
-                    strokeWidth = size.minDimension * 0.01f,
-                )
-            }
-
-            drawPath(
-                path = packOutline,
-                color = rarityBadgeStyle("Rare").color.copy(alpha = 0.24f),
-                style = Stroke(
-                    width = size.minDimension * 0.01f,
-                ),
-            )
-        }
+        PackCardShellCanvas(
+            decorSpec = decorSpec,
+            revealProgress = revealProgress,
+            modifier = Modifier.fillMaxSize(),
+        )
 
         if (spec.style == ExtensionAnimationStyle.BigDipper) {
             ExtensionConstellationOverlay(
@@ -253,6 +156,136 @@ private fun BoxScope.AnimatedExtensionPackCardContent(
                     .padding(horizontal = 18.dp, vertical = 22.dp),
             )
         }
+    }
+}
+
+@Composable
+private fun PackCardShellCanvas(
+    decorSpec: PackCardDecorSpec,
+    revealProgress: Float,
+    modifier: Modifier = Modifier,
+) {
+    Canvas(modifier = modifier) {
+        val toothDepth = size.height * decorSpec.tearBand.toothDepthFraction
+        val topEdge = buildPackSawtoothEdgePoints(
+            width = size.width,
+            baselineY = toothDepth,
+            tipY = 0f,
+            toothCount = decorSpec.tearBand.toothCount,
+        )
+        val bottomEdge = buildPackSawtoothEdgePoints(
+            width = size.width,
+            baselineY = size.height - toothDepth,
+            tipY = size.height,
+            toothCount = decorSpec.tearBand.toothCount,
+        )
+        val packOutline = buildPackSawtoothOutlinePath(
+            topEdge = topEdge,
+            bottomEdge = bottomEdge,
+        )
+
+        clipPath(packOutline) {
+            drawRect(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF182B45),
+                        Color(0xFF08111D),
+                    ),
+                ),
+            )
+            drawRect(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color(0x553B72B7),
+                        Color.Transparent,
+                    ),
+                    center = Offset(size.width * 0.5f, size.height * 0.5f),
+                    radius = size.minDimension * 0.72f,
+                ),
+            )
+            drawRect(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color.Black.copy(alpha = 0.18f),
+                        Color.Transparent,
+                        Color.White.copy(alpha = 0.08f),
+                    ),
+                ),
+            )
+
+            for (i in 0 until topEdge.size - 2 step 2) {
+                val p1 = topEdge[i]
+                val p2 = topEdge[i + 1]
+                val p3 = topEdge[i + 2]
+                drawPath(
+                    path = Path().apply {
+                        moveTo(p1.x, p1.y)
+                        lineTo(p2.x, p2.y)
+                        lineTo(p3.x, p3.y)
+                        close()
+                    },
+                    color = Color.Black.copy(alpha = 0.2f),
+                )
+            }
+            for (i in 0 until bottomEdge.size - 2 step 2) {
+                val p1 = bottomEdge[i]
+                val p2 = bottomEdge[i + 1]
+                val p3 = bottomEdge[i + 2]
+                drawPath(
+                    path = Path().apply {
+                        moveTo(p1.x, p1.y)
+                        lineTo(p2.x, p2.y)
+                        lineTo(p3.x, p3.y)
+                        close()
+                    },
+                    color = Color.White.copy(alpha = 0.08f),
+                )
+            }
+
+            decorSpec.rarityStars.forEachIndexed { index, star ->
+                val style = rarityBadgeStyle(star.rarityLabel)
+                val staggeredReveal = ((revealProgress - index * 0.025f) / 0.55f).coerceIn(0f, 1f)
+                if (staggeredReveal <= 0f) return@forEachIndexed
+
+                val center = Offset(
+                    x = size.width * star.xFraction,
+                    y = size.height * star.yFraction,
+                )
+                val outerRadius = size.minDimension * star.radiusFraction
+                val alpha = staggeredReveal * 0.96f
+                drawPath(
+                    path = starPath(
+                        center = center,
+                        points = style.branchCount,
+                        outerRadius = outerRadius,
+                        innerRadius = outerRadius * 0.42f,
+                    ),
+                    color = style.color.copy(alpha = alpha),
+                    style = Fill,
+                )
+            }
+
+            drawLine(
+                color = rarityBadgeStyle("Rare").color.copy(alpha = 0.24f),
+                start = Offset(topEdge.first().x, topEdge.first().y + toothDepth * 0.44f),
+                end = Offset(topEdge.last().x, topEdge.last().y + toothDepth * 0.44f),
+                strokeWidth = size.minDimension * 0.01f,
+            )
+            drawLine(
+                color = rarityBadgeStyle("Rare").color.copy(alpha = 0.24f),
+                start = Offset(bottomEdge.first().x, bottomEdge.first().y - toothDepth * 0.44f),
+                end = Offset(bottomEdge.last().x, bottomEdge.last().y - toothDepth * 0.44f),
+                strokeWidth = size.minDimension * 0.01f,
+            )
+        }
+
+        drawPath(
+            path = packOutline,
+            color = rarityBadgeStyle("Rare").color.copy(alpha = 0.24f),
+            style = Stroke(
+                width = size.minDimension * 0.01f,
+            ),
+        )
     }
 }
 

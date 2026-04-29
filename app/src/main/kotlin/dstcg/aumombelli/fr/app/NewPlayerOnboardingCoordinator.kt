@@ -26,6 +26,7 @@ internal data class NewPlayerCoachmarkSpec(
 
 internal enum class NewPlayerCoachmarkPlacement {
     AroundTarget,
+    BelowTarget,
     CenteredOnTarget,
     OverlapTargetBottom,
 }
@@ -242,6 +243,7 @@ internal class NewPlayerOnboardingCoordinator(
                         target = NewPlayerOnboardingTarget.PackSelectionExtension,
                         title = "Choisis une extension",
                         message = "Choisissons cette collection pour commencer.",
+                        placement = NewPlayerCoachmarkPlacement.BelowTarget,
                     )
                 } else {
                     null

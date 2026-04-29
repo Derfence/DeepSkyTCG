@@ -156,6 +156,47 @@ class NewPlayerCoachmarkOverlayTest {
     }
 
     @Test
+    fun below_target_coachmark_places_text_under_the_target_when_space_allows() {
+        lateinit var targetBounds: Rect
+
+        composeRule.setContent {
+            val density = LocalDensity.current
+            targetBounds = with(density) {
+                Rect(
+                    left = 72.dp.toPx(),
+                    top = 384.dp.toPx(),
+                    right = 288.dp.toPx(),
+                    bottom = 432.dp.toPx(),
+                )
+            }
+            Box(modifier = Modifier.size(width = 360.dp, height = 720.dp)) {
+                NewPlayerCoachmarkOverlay(
+                    spec = NewPlayerCoachmarkSpec(
+                        target = NewPlayerOnboardingTarget.PackSelectionExtension,
+                        title = "Choisis une extension",
+                        message = "Choisissons cette collection pour commencer.",
+                        placement = NewPlayerCoachmarkPlacement.BelowTarget,
+                    ),
+                    targetBounds = targetBounds,
+                    modifier = Modifier.size(width = 360.dp, height = 720.dp),
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("new-player-coachmark-PackSelectionExtension").assertIsDisplayed()
+        composeRule.waitForIdle()
+
+        val bubbleBounds = composeRule
+            .onNodeWithTag("new-player-coachmark-PackSelectionExtension", useUnmergedTree = true)
+            .fetchSemanticsNode()
+            .boundsInRoot
+        assertTrue(
+            "Expected extension coachmark bubble top ${bubbleBounds.top} to stay below target bottom ${targetBounds.bottom}.",
+            bubbleBounds.top > targetBounds.bottom,
+        )
+    }
+
+    @Test
     fun touch_zone_coachmark_draws_tap_hint_and_places_text_slightly_over_target_bottom() {
         lateinit var density: Density
         lateinit var targetBounds: Rect

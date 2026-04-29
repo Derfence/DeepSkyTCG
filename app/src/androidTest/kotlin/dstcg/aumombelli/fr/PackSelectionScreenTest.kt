@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
 import fr.aumombelli.dstcg.model.DrawPackResponse
 import fr.aumombelli.dstcg.model.ExtensionDefinition
+import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.model.toDisplayVariant
 import fr.aumombelli.dstcg.testsupport.androidTestRechargeStateWithNextChargeAt
@@ -651,8 +652,8 @@ class PackSelectionScreenTest {
         val forecastBounds = composeRule.onNodeWithTag("pack-weather-forecast").fetchSemanticsNode().boundsInRoot
         val statusBounds = composeRule.onNodeWithTag("pack-status").fetchSemanticsNode().boundsInRoot
 
-        assertTrue(titleBounds.bottom <= forecastBounds.top)
-        assertTrue(forecastBounds.bottom <= statusBounds.top)
+        assertTrue(titleBounds.bottom <= statusBounds.top)
+        assertTrue(statusBounds.bottom <= forecastBounds.top)
         composeRule.onNodeWithTag("pack-weather-title").assertIsDisplayed()
         composeRule.onNodeWithTag("pack-weather-time").assertTextContains("12:00 UTC")
         composeRule.onNodeWithTag("pack-weather-forecast").assertIsDisplayed()
@@ -661,6 +662,9 @@ class PackSelectionScreenTest {
         composeRule.onNodeWithTag("pack-weather-day-multiplier-0").assertTextContains("x1")
         composeRule.onNodeWithTag("pack-weather-day-multiplier-1").assertTextContains("x0")
         composeRule.onNodeWithTag("pack-status-count").assertTextContains("0/10")
+        composeRule.onNodeWithTag("pack-status-ready-count").assertTextContains("0")
+        composeRule.onAllNodesWithTag("pack-status-pack-slot-filled").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("pack-status-pack-slot-empty").assertCountEquals(10)
         composeRule.onAllNodesWithTag("pack-status-weather").assertCountEquals(0)
         composeRule.onNodeWithTag("pack-status-remaining")
             .assertTextContains("Prochaine charge dans", substring = true)
@@ -668,6 +672,35 @@ class PackSelectionScreenTest {
         composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").assertIsNotEnabled()
         composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe")
             .assertTextContains("Pas de pack disponible")
+    }
+
+    @Test
+    fun stock_status_shows_filled_and_empty_pack_slots() {
+        composeRule.setContent {
+            PackSelectionScreen(
+                state = PackSelectionUiState(
+                    isLoading = false,
+                    extensions = listOf(
+                        ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                    ),
+                    rechargeState = PackRechargeState(availableDrawCount = 4),
+                    trustedNow = Instant.parse("2026-03-24T12:00:00Z"),
+                    trustedElapsedRealtimeMs = SystemClock.elapsedRealtime(),
+                ),
+                onRefresh = {},
+                onSelectExtension = {},
+                onSelectBooster = {},
+                onOpenPack = {},
+                onPackRevealReady = {},
+                packReadySignal = 0,
+                showBackground = false,
+            )
+        }
+
+        composeRule.onNodeWithTag("pack-status-count").assertTextContains("4/10")
+        composeRule.onNodeWithTag("pack-status-ready-count").assertTextContains("4")
+        composeRule.onAllNodesWithTag("pack-status-pack-slot-filled").assertCountEquals(4)
+        composeRule.onAllNodesWithTag("pack-status-pack-slot-empty").assertCountEquals(6)
     }
 
     @Test
