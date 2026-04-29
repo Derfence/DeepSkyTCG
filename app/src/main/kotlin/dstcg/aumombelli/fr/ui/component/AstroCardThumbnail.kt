@@ -3,6 +3,7 @@ package fr.aumombelli.dstcg.ui.component
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -46,9 +47,9 @@ fun AstroCardThumbnail(
                 NewContentIndicator(
                     modifier = Modifier
                         .align(Alignment.TopStart)
-                        .padding(8.dp)
+                        .absoluteOffset(x = (-14).dp, y = (-14).dp)
                         .testTag("library-card-new-indicator-${item.definition.id}"),
-                    iconSize = 14.dp,
+                    iconSize = 20.dp,
                 )
             }
             QuantityPill(

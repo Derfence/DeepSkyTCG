@@ -111,11 +111,11 @@ internal fun RevealCard(
                             NewContentIndicator(
                                 modifier = Modifier
                                     .align(Alignment.TopStart)
-                                    .padding(10.dp)
+                                    .absoluteOffset(x = (-30).dp, y = (-30).dp)
                                     .testTag(
                                         "pack-opening-first-encounter-indicator-${item.displayCard.definition.id}",
                                     ),
-                                iconSize = 15.dp,
+                                iconSize = 44.dp,
                             )
                         }
                     }
