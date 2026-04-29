@@ -161,7 +161,27 @@ class PackSelectionScreenTest {
 
         composeRule.mainClock.advanceTimeBy(800)
         composeRule.waitForIdle()
-        assertTrue(latestBoosterCoachmarkBounds != null)
+        val coachmarkBounds = latestBoosterCoachmarkBounds
+            ?: error("Expected booster coachmark bounds after booster intro completion.")
+        val boosterBounds = (0 until 4).map { index ->
+            composeRule.onNodeWithTag("pack-booster-$index")
+                .fetchSemanticsNode()
+                .boundsInRoot
+        }
+        boosterBounds.forEach { bounds ->
+            assertTrue(
+                "Expected coachmark bounds $coachmarkBounds to contain booster bounds $bounds",
+                coachmarkBounds.left <= bounds.left &&
+                    coachmarkBounds.top <= bounds.top &&
+                    coachmarkBounds.right >= bounds.right &&
+                    coachmarkBounds.bottom >= bounds.bottom,
+            )
+        }
+        assertTrue(
+            "Expected booster coachmark to target the full booster group instead of one booster.",
+            coachmarkBounds.width > boosterBounds.first().width &&
+                coachmarkBounds.height > boosterBounds.first().height,
+        )
 
         composeRule.onNodeWithTag("pack-booster-0").performClick()
         composeRule.waitForIdle()

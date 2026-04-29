@@ -64,7 +64,7 @@ internal fun ExtensionBoosterStage(
     selectedBoosterTargetBounds: PackRevealBounds? = null,
     onSelectBooster: (Int) -> Unit,
     onSelectedBoosterBoundsChanged: (PackRevealBounds?) -> Unit,
-    onFirstBoosterBoundsChanged: (Rect?) -> Unit = {},
+    onBoosterCoachmarkBoundsChanged: (Rect?) -> Unit = {},
     backgroundOnly: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
@@ -194,7 +194,7 @@ internal fun ExtensionBoosterStage(
                                     }
                                 }
                             },
-                            onFirstBoosterBoundsChanged = onFirstBoosterBoundsChanged,
+                            onBoosterCoachmarkBoundsChanged = onBoosterCoachmarkBoundsChanged,
                             introProgress = boosterIntroProgress,
                             selectionProgress = boosterSelectionProgress,
                             modifier = Modifier
@@ -272,7 +272,7 @@ private fun BoosterField(
     isAwaitingPackResult: Boolean,
     onSelectBooster: (Int) -> Unit,
     onBoosterBoundsChanged: (Int, PackRevealBounds?) -> Unit,
-    onFirstBoosterBoundsChanged: (Rect?) -> Unit,
+    onBoosterCoachmarkBoundsChanged: (Rect?) -> Unit,
     introProgress: Float = 1f,
     selectionProgress: Float = 0f,
     modifier: Modifier = Modifier,
@@ -299,8 +299,8 @@ private fun BoosterField(
             0f
         }
         val introSequenceComplete = introProgress >= 0.99f
-        var firstBoosterCoachmarkReady by remember(extension.id) { mutableStateOf(false) }
-        var firstBoosterBounds by remember(extension.id) { mutableStateOf<Rect?>(null) }
+        var boosterCoachmarkReady by remember(extension.id) { mutableStateOf(false) }
+        var coachmarkBoosterBoundsByIndex by remember(extension.id) { mutableStateOf<Map<Int, Rect>>(emptyMap()) }
         val gridMetrics = calculatePackSelectionBoosterGridMetrics(
             availableWidth = maxWidth,
             availableHeight = maxHeight,
@@ -311,12 +311,19 @@ private fun BoosterField(
                 selectedBoosterIndex == null &&
                 !drawLocked &&
                 !isAwaitingPackResult
-            firstBoosterCoachmarkReady = canShowCoachmark
+            boosterCoachmarkReady = canShowCoachmark
         }
 
-        LaunchedEffect(firstBoosterCoachmarkReady, firstBoosterBounds) {
-            onFirstBoosterBoundsChanged(
-                if (firstBoosterCoachmarkReady) firstBoosterBounds else null,
+        LaunchedEffect(boosterCoachmarkReady, coachmarkBoosterBoundsByIndex) {
+            onBoosterCoachmarkBoundsChanged(
+                if (boosterCoachmarkReady) {
+                    coachmarkBoosterBoundsByIndex
+                        .takeIf { it.size == 4 }
+                        ?.values
+                        ?.unionBounds()
+                } else {
+                    null
+                },
             )
         }
 
@@ -377,8 +384,8 @@ private fun BoosterField(
                         .size(width = currentWidth, height = currentHeight)
                         .onGloballyPositioned { coordinates ->
                             val bounds = coordinates.boundsInRoot()
-                            if (index == 0) {
-                                firstBoosterBounds = bounds
+                            coachmarkBoosterBoundsByIndex = coachmarkBoosterBoundsByIndex.toMutableMap().also { current ->
+                                current[index] = bounds
                             }
                             onBoosterBoundsChanged(
                                 index,
@@ -416,6 +423,16 @@ private fun BoosterField(
             }
         }
     }
+}
+
+private fun Collection<Rect>.unionBounds(): Rect? {
+    if (isEmpty()) return null
+    return Rect(
+        left = minOf { it.left },
+        top = minOf { it.top },
+        right = maxOf { it.right },
+        bottom = maxOf { it.bottom },
+    )
 }
 
 @Composable

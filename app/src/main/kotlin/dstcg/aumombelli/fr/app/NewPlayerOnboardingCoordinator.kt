@@ -20,7 +20,14 @@ internal data class NewPlayerCoachmarkSpec(
     val target: NewPlayerOnboardingTarget,
     val title: String,
     val message: String,
+    val placement: NewPlayerCoachmarkPlacement = NewPlayerCoachmarkPlacement.AroundTarget,
+    val showTargetHighlight: Boolean = true,
 )
+
+internal enum class NewPlayerCoachmarkPlacement {
+    AroundTarget,
+    CenteredOnTarget,
+}
 
 internal enum class NewPlayerBlockingModalKind {
     WelcomeIntro,
@@ -245,6 +252,8 @@ internal class NewPlayerOnboardingCoordinator(
                         target = NewPlayerOnboardingTarget.PackSelectionBooster,
                         title = "Choisis un booster",
                         message = "Touche le booster de ton choix pour en révéler le contenu ⭐",
+                        placement = NewPlayerCoachmarkPlacement.CenteredOnTarget,
+                        showTargetHighlight = false,
                     )
                 } else {
                     null

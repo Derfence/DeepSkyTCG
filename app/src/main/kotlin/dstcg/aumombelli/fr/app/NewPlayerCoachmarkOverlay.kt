@@ -15,10 +15,15 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
@@ -26,10 +31,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import kotlin.math.max
 import kotlin.math.min
@@ -58,13 +64,25 @@ internal fun NewPlayerCoachmarkOverlay(
             .fillMaxSize()
             .testTag("new-player-coachmark-overlay"),
     ) {
-        val bubbleWidthPx = with(density) { 244.dp.toPx() }
-        val bubbleHeightPx = with(density) { 108.dp.toPx() }
         val haloPaddingPx = with(density) { 12.dp.toPx() }
         val rootWidthPx = with(density) { maxWidth.toPx() }
         val rootHeightPx = with(density) { maxHeight.toPx() }
         val horizontalMarginPx = with(density) { 16.dp.toPx() }
         val verticalMarginPx = with(density) { 20.dp.toPx() }
+        val availableBubbleWidthPx = max(0f, rootWidthPx - horizontalMarginPx * 2f)
+        val bubbleWidthPx = min(
+            with(density) { 320.dp.toPx() },
+            availableBubbleWidthPx,
+        ).coerceAtLeast(
+            min(with(density) { 244.dp.toPx() }, availableBubbleWidthPx),
+        )
+        var bubbleSize by remember(spec.target, spec.title, spec.message, bubbleWidthPx) {
+            mutableStateOf(IntSize.Zero)
+        }
+        val bubbleHeightPx = bubbleSize.height
+            .takeIf { it > 0 }
+            ?.toFloat()
+            ?: with(density) { 124.dp.toPx() }
         val showScrollDownHint = forceScrollDownHint ||
             (targetBounds != null && targetBounds.top >= rootHeightPx)
 
@@ -83,41 +101,53 @@ internal fun NewPlayerCoachmarkOverlay(
                     max(horizontalMarginPx, rootWidthPx - bubbleWidthPx - horizontalMarginPx),
                 )
             val bubbleAbove = targetBounds.top > rootHeightPx * 0.42f
-            val bubbleY = if (bubbleAbove) {
-                max(verticalMarginPx, targetBounds.top - bubbleHeightPx - verticalMarginPx)
-            } else {
-                min(rootHeightPx - bubbleHeightPx - verticalMarginPx, targetBounds.bottom + verticalMarginPx)
-            }
-
-            Box(
-                modifier = Modifier
-                    .size(
-                        width = with(density) { targetWidthPx.toDp() },
-                        height = with(density) { targetHeightPx.toDp() },
-                    )
-                    .graphicsLayer {
-                        translationX = targetBounds.left - haloPaddingPx
-                        translationY = targetBounds.top - haloPaddingPx
-                        alpha = 0.32f + (1f - pulseProgress.value) * 0.42f
-                        scaleX = 1f + pulseProgress.value * 0.08f
-                        scaleY = 1f + pulseProgress.value * 0.08f
+            val desiredBubbleY = when (spec.placement) {
+                NewPlayerCoachmarkPlacement.AroundTarget ->
+                    if (bubbleAbove) {
+                        targetBounds.top - bubbleHeightPx - verticalMarginPx
+                    } else {
+                        targetBounds.bottom + verticalMarginPx
                     }
-                    .background(
-                        brush = Brush.radialGradient(
-                            colors = listOf(
-                                Color(0x66FFF1A8),
-                                Color(0x2264C9FF),
-                                Color.Transparent,
-                            ),
-                        ),
-                    )
-                    .border(
-                        width = 2.dp,
-                        color = Color(0xFFFFE79A),
-                        shape = MaterialTheme.shapes.large,
-                    )
-                    .testTag("new-player-coachmark-target-${spec.target.name}"),
+
+                NewPlayerCoachmarkPlacement.CenteredOnTarget ->
+                    targetBounds.top + targetBounds.height / 2f - bubbleHeightPx / 2f
+            }
+            val bubbleY = desiredBubbleY.coerceIn(
+                minimumValue = verticalMarginPx,
+                maximumValue = max(verticalMarginPx, rootHeightPx - bubbleHeightPx - verticalMarginPx),
             )
+
+            if (spec.showTargetHighlight) {
+                Box(
+                    modifier = Modifier
+                        .size(
+                            width = with(density) { targetWidthPx.toDp() },
+                            height = with(density) { targetHeightPx.toDp() },
+                        )
+                        .graphicsLayer {
+                            translationX = targetBounds.left - haloPaddingPx
+                            translationY = targetBounds.top - haloPaddingPx
+                            alpha = 0.32f + (1f - pulseProgress.value) * 0.42f
+                            scaleX = 1f + pulseProgress.value * 0.08f
+                            scaleY = 1f + pulseProgress.value * 0.08f
+                        }
+                        .background(
+                            brush = Brush.radialGradient(
+                                colors = listOf(
+                                    Color(0x66FFF1A8),
+                                    Color(0x2264C9FF),
+                                    Color.Transparent,
+                                ),
+                            ),
+                        )
+                        .border(
+                            width = 2.dp,
+                            color = Color(0xFFFFE79A),
+                            shape = MaterialTheme.shapes.large,
+                        )
+                        .testTag("new-player-coachmark-target-${spec.target.name}"),
+                )
+            }
 
             Surface(
                 color = Color(0xEE0A1524),
@@ -125,7 +155,8 @@ internal fun NewPlayerCoachmarkOverlay(
                 shadowElevation = 10.dp,
                 shape = MaterialTheme.shapes.large,
                 modifier = Modifier
-                    .size(width = 244.dp, height = 108.dp)
+                    .width(with(density) { bubbleWidthPx.toDp() })
+                    .onSizeChanged { bubbleSize = it }
                     .graphicsLayer {
                         translationX = bubbleX
                         translationY = bubbleY
@@ -134,7 +165,6 @@ internal fun NewPlayerCoachmarkOverlay(
             ) {
                 Column(
                     modifier = Modifier
-                        .fillMaxSize()
                         .padding(horizontal = 16.dp, vertical = 14.dp),
                 ) {
                     Text(
@@ -215,5 +245,3 @@ private fun ScrollDownCoachmarkHint(
         }
     }
 }
-
-private fun androidx.compose.ui.unit.Dp.toPx(density: Density): Float = with(density) { toPx() }

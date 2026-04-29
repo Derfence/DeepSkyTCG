@@ -378,7 +378,7 @@ fun PackSelectionScreen(
                                     onOpenPack(extension.id)
                                 },
                                 onSelectedBoosterBoundsChanged = onSelectedBoosterBoundsChanged,
-                                onFirstBoosterBoundsChanged = { bounds ->
+                                onBoosterCoachmarkBoundsChanged = { bounds ->
                                     onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.PackSelectionBooster, bounds)
                                 },
                                 modifier = Modifier.fillMaxSize(),
