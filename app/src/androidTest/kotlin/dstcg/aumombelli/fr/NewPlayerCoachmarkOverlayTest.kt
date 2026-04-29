@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.app.NewPlayerCoachmarkOverlay
 import fr.aumombelli.dstcg.app.NewPlayerCoachmarkPlacement
 import fr.aumombelli.dstcg.app.NewPlayerCoachmarkSpec
+import fr.aumombelli.dstcg.app.NewPlayerCoachmarkTargetEffect
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
 import kotlin.math.abs
 import org.junit.Assert.assertTrue
@@ -127,7 +128,7 @@ class NewPlayerCoachmarkOverlayTest {
                         title = "Choisis un booster",
                         message = "Touche le booster de ton choix pour en révéler le contenu ⭐",
                         placement = NewPlayerCoachmarkPlacement.CenteredOnTarget,
-                        showTargetHighlight = false,
+                        targetEffect = NewPlayerCoachmarkTargetEffect.None,
                     ),
                     targetBounds = targetBounds,
                     modifier = Modifier.size(width = 360.dp, height = 640.dp),
@@ -151,6 +152,59 @@ class NewPlayerCoachmarkOverlayTest {
             "Expected text-only coachmark bubble center ($bubbleCenterX, $bubbleCenterY) to align with target center ($targetCenterX, $targetCenterY).",
             abs(bubbleCenterX - targetCenterX) <= 2f &&
                 abs(bubbleCenterY - targetCenterY) <= 2f,
+        )
+    }
+
+    @Test
+    fun touch_zone_coachmark_draws_tap_hint_and_places_text_slightly_over_target_bottom() {
+        lateinit var density: Density
+        lateinit var targetBounds: Rect
+
+        composeRule.setContent {
+            density = LocalDensity.current
+            targetBounds = with(density) {
+                Rect(
+                    left = 0.dp.toPx(),
+                    top = 0.dp.toPx(),
+                    right = 360.dp.toPx(),
+                    bottom = 320.dp.toPx(),
+                )
+            }
+            Box(modifier = Modifier.size(width = 360.dp, height = 640.dp)) {
+                NewPlayerCoachmarkOverlay(
+                    spec = NewPlayerCoachmarkSpec(
+                        target = NewPlayerOnboardingTarget.CraftingDarkenSkyMode,
+                        title = "Assombrir le ciel",
+                        message = "L'une des deux améliorations permet d'assombrir le ciel d'une carte.",
+                        placement = NewPlayerCoachmarkPlacement.OverlapTargetBottom,
+                        targetEffect = NewPlayerCoachmarkTargetEffect.TouchZone,
+                    ),
+                    targetBounds = targetBounds,
+                    modifier = Modifier.size(width = 360.dp, height = 640.dp),
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("new-player-coachmark-CraftingDarkenSkyMode").assertIsDisplayed()
+        composeRule.onNodeWithTag("new-player-coachmark-touch-zone-CraftingDarkenSkyMode").assertIsDisplayed()
+        composeRule.onNodeWithTag("new-player-coachmark-muted-zone-CraftingDarkenSkyMode").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("new-player-coachmark-target-CraftingDarkenSkyMode").assertCountEquals(0)
+        composeRule.waitForIdle()
+
+        val bubbleBounds = composeRule
+            .onNodeWithTag("new-player-coachmark-CraftingDarkenSkyMode", useUnmergedTree = true)
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val targetCenterX = targetBounds.left + targetBounds.width / 2f
+        val bubbleCenterX = bubbleBounds.left + bubbleBounds.width / 2f
+        assertTrue(
+            "Expected touch-zone coachmark bubble to stay horizontally centered on target.",
+            abs(bubbleCenterX - targetCenterX) <= 2f,
+        )
+        assertTrue(
+            "Expected touch-zone coachmark bubble top ${bubbleBounds.top} to overlap target bottom ${targetBounds.bottom} very slightly.",
+            bubbleBounds.top < targetBounds.bottom &&
+                targetBounds.bottom - bubbleBounds.top <= with(density) { 10.dp.toPx() },
         )
     }
 

@@ -21,12 +21,19 @@ internal data class NewPlayerCoachmarkSpec(
     val title: String,
     val message: String,
     val placement: NewPlayerCoachmarkPlacement = NewPlayerCoachmarkPlacement.AroundTarget,
-    val showTargetHighlight: Boolean = true,
+    val targetEffect: NewPlayerCoachmarkTargetEffect = NewPlayerCoachmarkTargetEffect.Highlight,
 )
 
 internal enum class NewPlayerCoachmarkPlacement {
     AroundTarget,
     CenteredOnTarget,
+    OverlapTargetBottom,
+}
+
+internal enum class NewPlayerCoachmarkTargetEffect {
+    Highlight,
+    None,
+    TouchZone,
 }
 
 internal enum class NewPlayerBlockingModalKind {
@@ -253,7 +260,7 @@ internal class NewPlayerOnboardingCoordinator(
                         title = "Choisis un booster",
                         message = "Touche le booster de ton choix pour en révéler le contenu ⭐",
                         placement = NewPlayerCoachmarkPlacement.CenteredOnTarget,
-                        showTargetHighlight = false,
+                        targetEffect = NewPlayerCoachmarkTargetEffect.None,
                     )
                 } else {
                     null
@@ -402,6 +409,8 @@ internal class NewPlayerOnboardingCoordinator(
                     target = NewPlayerOnboardingTarget.CraftingDarkenSkyMode,
                     title = "Assombrir le ciel",
                     message = "L'une des deux améliorations permet d'assombrir le ciel d'une carte.",
+                    placement = NewPlayerCoachmarkPlacement.OverlapTargetBottom,
+                    targetEffect = NewPlayerCoachmarkTargetEffect.TouchZone,
                 )
 
             else -> null

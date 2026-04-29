@@ -6,6 +6,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -16,6 +17,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.TouchApp
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -69,6 +73,7 @@ internal fun NewPlayerCoachmarkOverlay(
         val rootHeightPx = with(density) { maxHeight.toPx() }
         val horizontalMarginPx = with(density) { 16.dp.toPx() }
         val verticalMarginPx = with(density) { 20.dp.toPx() }
+        val targetBottomOverlapPx = with(density) { 8.dp.toPx() }
         val availableBubbleWidthPx = max(0f, rootWidthPx - horizontalMarginPx * 2f)
         val bubbleWidthPx = min(
             with(density) { 320.dp.toPx() },
@@ -111,48 +116,43 @@ internal fun NewPlayerCoachmarkOverlay(
 
                 NewPlayerCoachmarkPlacement.CenteredOnTarget ->
                     targetBounds.top + targetBounds.height / 2f - bubbleHeightPx / 2f
+
+                NewPlayerCoachmarkPlacement.OverlapTargetBottom ->
+                    targetBounds.bottom - targetBottomOverlapPx
             }
             val bubbleY = desiredBubbleY.coerceIn(
                 minimumValue = verticalMarginPx,
                 maximumValue = max(verticalMarginPx, rootHeightPx - bubbleHeightPx - verticalMarginPx),
             )
 
-            if (spec.showTargetHighlight) {
-                Box(
-                    modifier = Modifier
-                        .size(
-                            width = with(density) { targetWidthPx.toDp() },
-                            height = with(density) { targetHeightPx.toDp() },
-                        )
-                        .graphicsLayer {
-                            translationX = targetBounds.left - haloPaddingPx
-                            translationY = targetBounds.top - haloPaddingPx
-                            alpha = 0.32f + (1f - pulseProgress.value) * 0.42f
-                            scaleX = 1f + pulseProgress.value * 0.08f
-                            scaleY = 1f + pulseProgress.value * 0.08f
-                        }
-                        .background(
-                            brush = Brush.radialGradient(
-                                colors = listOf(
-                                    Color(0x66FFF1A8),
-                                    Color(0x2264C9FF),
-                                    Color.Transparent,
-                                ),
-                            ),
-                        )
-                        .border(
-                            width = 2.dp,
-                            color = Color(0xFFFFE79A),
-                            shape = MaterialTheme.shapes.large,
-                        )
-                        .testTag("new-player-coachmark-target-${spec.target.name}"),
-                )
+            when (spec.targetEffect) {
+                NewPlayerCoachmarkTargetEffect.Highlight ->
+                    TargetHighlight(
+                        targetName = spec.target.name,
+                        targetBounds = targetBounds,
+                        targetWidthPx = targetWidthPx,
+                        targetHeightPx = targetHeightPx,
+                        haloPaddingPx = haloPaddingPx,
+                        pulseProgress = pulseProgress.value,
+                    )
+
+                NewPlayerCoachmarkTargetEffect.TouchZone ->
+                    TouchZoneCoachmarkHint(
+                        targetName = spec.target.name,
+                        targetBounds = targetBounds,
+                        rootWidthPx = rootWidthPx,
+                        rootHeightPx = rootHeightPx,
+                        pulseProgress = pulseProgress.value,
+                    )
+
+                NewPlayerCoachmarkTargetEffect.None -> Unit
             }
 
             Surface(
                 color = Color(0xEE0A1524),
                 contentColor = Color.White,
-                shadowElevation = 10.dp,
+                shadowElevation = 16.dp,
+                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.22f)),
                 shape = MaterialTheme.shapes.large,
                 modifier = Modifier
                     .width(with(density) { bubbleWidthPx.toDp() })
@@ -181,6 +181,137 @@ internal fun NewPlayerCoachmarkOverlay(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun TargetHighlight(
+    targetName: String,
+    targetBounds: Rect,
+    targetWidthPx: Float,
+    targetHeightPx: Float,
+    haloPaddingPx: Float,
+    pulseProgress: Float,
+) {
+    val density = LocalDensity.current
+    Box(
+        modifier = Modifier
+            .size(
+                width = with(density) { targetWidthPx.toDp() },
+                height = with(density) { targetHeightPx.toDp() },
+            )
+            .graphicsLayer {
+                translationX = targetBounds.left - haloPaddingPx
+                translationY = targetBounds.top - haloPaddingPx
+                alpha = 0.32f + (1f - pulseProgress) * 0.42f
+                scaleX = 1f + pulseProgress * 0.08f
+                scaleY = 1f + pulseProgress * 0.08f
+            }
+            .background(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color(0x66FFF1A8),
+                        Color(0x2264C9FF),
+                        Color.Transparent,
+                    ),
+                ),
+            )
+            .border(
+                width = 2.dp,
+                color = Color(0xFFFFE79A),
+                shape = MaterialTheme.shapes.large,
+            )
+            .testTag("new-player-coachmark-target-$targetName"),
+    )
+}
+
+@Composable
+private fun TouchZoneCoachmarkHint(
+    targetName: String,
+    targetBounds: Rect,
+    rootWidthPx: Float,
+    rootHeightPx: Float,
+    pulseProgress: Float,
+) {
+    val density = LocalDensity.current
+    val mutedZoneHeightPx = (rootHeightPx - targetBounds.bottom).coerceAtLeast(0f)
+    if (mutedZoneHeightPx > 0f) {
+        Canvas(
+            modifier = Modifier
+                .size(
+                    width = with(density) { rootWidthPx.toDp() },
+                    height = with(density) { mutedZoneHeightPx.toDp() },
+                )
+                .graphicsLayer {
+                    translationY = targetBounds.bottom
+                }
+                .testTag("new-player-coachmark-muted-zone-$targetName"),
+        ) {
+            drawRect(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0x3307111B),
+                        Color(0x88030A13),
+                    ),
+                ),
+            )
+        }
+    }
+
+    val pressProgress = when {
+        pulseProgress < 0.28f -> pulseProgress / 0.28f
+        pulseProgress < 0.56f -> 1f - ((pulseProgress - 0.28f) / 0.28f)
+        else -> 0f
+    }
+    val touchIconSize = 42.dp
+    val touchIconBaselineOffsetPx = with(density) { touchIconSize.toPx() / 4f }
+    val pressOffsetPx = with(density) { 9.dp.toPx() }
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(
+                width = with(density) { targetBounds.width.toDp() },
+                height = with(density) { targetBounds.height.toDp() },
+            )
+            .graphicsLayer {
+                translationX = targetBounds.left
+                translationY = targetBounds.top
+            }
+            .testTag("new-player-coachmark-touch-zone-$targetName"),
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val touchCenter = androidx.compose.ui.geometry.Offset(size.width / 2f, size.height / 2f)
+            val rippleCount = 5
+            val maxVisiblePhase = 1f
+            val minExpansionAlpha = 0.12f
+            repeat(rippleCount) { index ->
+                val phase = pulseProgress + index / rippleCount.toFloat()
+                if (phase > maxVisiblePhase) return@repeat
+                val alpha = ((1f - phase / maxVisiblePhase) * 0.42f)
+                    .coerceAtLeast(minExpansionAlpha)
+                drawCircle(
+                    color = Color(0xFFFFE79A).copy(alpha = alpha),
+                    radius = size.minDimension * (0.08f + phase * 0.20f),
+                    center = touchCenter,
+                    style = Stroke(width = max(2.dp.toPx(), size.minDimension * 0.008f)),
+                )
+            }
+        }
+        Icon(
+            imageVector = Icons.Filled.TouchApp,
+            contentDescription = null,
+            tint = Color(0xFFFFE79A),
+            modifier = Modifier
+                .size(touchIconSize)
+                .graphicsLayer {
+                    translationY = touchIconBaselineOffsetPx + pressProgress * pressOffsetPx
+                    scaleX = 1f - pressProgress * 0.07f
+                    scaleY = 1f - pressProgress * 0.07f
+                    alpha = 0.92f
+                }
+                .testTag("new-player-coachmark-touch-icon-$targetName"),
+        )
     }
 }
 

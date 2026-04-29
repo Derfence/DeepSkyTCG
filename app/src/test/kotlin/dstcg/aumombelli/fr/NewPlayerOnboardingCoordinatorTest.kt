@@ -4,7 +4,9 @@ import androidx.compose.ui.geometry.Rect
 import fr.aumombelli.dstcg.app.AppSceneUiState
 import fr.aumombelli.dstcg.app.NewPlayerBlockingModalKind
 import fr.aumombelli.dstcg.app.NewPlayerBlockingModalSpec
+import fr.aumombelli.dstcg.app.NewPlayerCoachmarkPlacement
 import fr.aumombelli.dstcg.app.NewPlayerCoachmarkSpec
+import fr.aumombelli.dstcg.app.NewPlayerCoachmarkTargetEffect
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingCoordinator
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
 import fr.aumombelli.dstcg.model.CraftingCardCandidate
@@ -292,15 +294,15 @@ class NewPlayerOnboardingCoordinatorTest {
 
         coordinator.onCraftingOpened()
 
-        assertEquals(NewPlayerOnboardingStep.UseSkyDarkening, coordinator.uiState.currentStep)
-        assertEquals(
-            NewPlayerOnboardingTarget.CraftingDarkenSkyMode,
-            coordinator.activeCoachmark(
-                currentScene = AppScene.Crafting,
-                sceneState = craftingModeSceneState,
-                badgeCelebrationVisible = false,
-            )?.target,
+        val darkenSkyCoachmark = coordinator.activeCoachmark(
+            currentScene = AppScene.Crafting,
+            sceneState = craftingModeSceneState,
+            badgeCelebrationVisible = false,
         )
+        assertEquals(NewPlayerOnboardingStep.UseSkyDarkening, coordinator.uiState.currentStep)
+        assertEquals(NewPlayerOnboardingTarget.CraftingDarkenSkyMode, darkenSkyCoachmark?.target)
+        assertEquals(NewPlayerCoachmarkPlacement.OverlapTargetBottom, darkenSkyCoachmark?.placement)
+        assertEquals(NewPlayerCoachmarkTargetEffect.TouchZone, darkenSkyCoachmark?.targetEffect)
         assertEquals(
             NewPlayerOnboardingTarget.CraftingConfirm,
             coordinator.activeCoachmark(

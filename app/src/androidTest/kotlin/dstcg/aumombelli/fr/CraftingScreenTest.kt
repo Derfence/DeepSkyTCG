@@ -1,6 +1,7 @@
 package fr.aumombelli.dstcg
 
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -56,6 +57,8 @@ class CraftingScreenTest {
 
     @Test
     fun mode_menu_uses_two_half_screen_buttons_with_svg_slots_and_edge_copy() {
+        var reportedDarkenTargetBounds: Rect? = null
+
         composeRule.setContent {
             DstcgTheme {
                 CraftingScreen(
@@ -65,6 +68,11 @@ class CraftingScreenTest {
                     onBackHome = {},
                     onBackToModes = {},
                     onApplyCrafting = {},
+                    onCoachmarkTargetBoundsChanged = { target, bounds ->
+                        if (target == NewPlayerOnboardingTarget.CraftingDarkenSkyMode) {
+                            reportedDarkenTargetBounds = bounds
+                        }
+                    },
                 )
             }
         }
@@ -98,6 +106,18 @@ class CraftingScreenTest {
         assertEquals(agencyBounds, agencyGraphicBounds)
         assertTrue(darkenCopyBounds.top < darkenBounds.center.y)
         assertTrue(agencyCopyBounds.bottom > agencyBounds.center.y)
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            reportedDarkenTargetBounds != null
+        }
+        val darkenTargetBounds = reportedDarkenTargetBounds ?: error("Missing darken sky onboarding target bounds.")
+        assertEquals(darkenBounds.left, darkenTargetBounds.left, 1f)
+        assertEquals(darkenBounds.right, darkenTargetBounds.right, 1f)
+        assertEquals(darkenBounds.bottom, darkenTargetBounds.bottom, 1f)
+        assertTrue(
+            "Expected darken sky onboarding target to start below the copy top and before the copy bottom.",
+            darkenTargetBounds.top > darkenCopyBounds.top &&
+                darkenTargetBounds.top < darkenCopyBounds.bottom,
+        )
     }
 
     @Test

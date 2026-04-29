@@ -181,6 +181,26 @@ private fun CraftingModeMenu(
     onCoachmarkTargetBoundsChanged: (NewPlayerOnboardingTarget, Rect?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var darkenSkyBounds by remember { mutableStateOf<Rect?>(null) }
+    var darkenSkyDescriptionBounds by remember { mutableStateOf<Rect?>(null) }
+
+    LaunchedEffect(darkenSkyBounds, darkenSkyDescriptionBounds) {
+        val modeBounds = darkenSkyBounds ?: return@LaunchedEffect
+        val interactionTop = darkenSkyDescriptionBounds
+            ?.bottom
+            ?.coerceIn(modeBounds.top, modeBounds.bottom)
+            ?: modeBounds.top
+        onCoachmarkTargetBoundsChanged(
+            NewPlayerOnboardingTarget.CraftingDarkenSkyMode,
+            Rect(
+                left = modeBounds.left,
+                top = interactionTop,
+                right = modeBounds.right,
+                bottom = modeBounds.bottom,
+            ),
+        )
+    }
+
     Box(modifier = modifier) {
         Column(modifier = Modifier.fillMaxSize()) {
             CraftingModeHalfButton(
@@ -191,14 +211,14 @@ private fun CraftingModeMenu(
                     listOf(Color(0xFF091523), Color(0xFF132A42)),
                 ),
                 onClick = { onSelectMode(CraftingMode.DarkenSky) },
+                onDescriptionBoundsChanged = { bounds ->
+                    darkenSkyDescriptionBounds = bounds
+                },
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
                     .onGloballyPositioned { coordinates ->
-                        onCoachmarkTargetBoundsChanged(
-                            NewPlayerOnboardingTarget.CraftingDarkenSkyMode,
-                            coordinates.boundsInRoot(),
-                        )
+                        darkenSkyBounds = coordinates.boundsInRoot()
                     }
                     .testTag("crafting-mode-darken-sky"),
             )
@@ -240,6 +260,7 @@ private fun CraftingModeHalfButton(
     svgSlotTestTag: String,
     background: Brush,
     onClick: () -> Unit,
+    onDescriptionBoundsChanged: (Rect?) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -263,6 +284,7 @@ private fun CraftingModeHalfButton(
         CraftingModeCopy(
             mode = mode,
             placement = copyPlacement,
+            onDescriptionBoundsChanged = onDescriptionBoundsChanged,
         )
         CraftingModeActionHint(
             mode = mode,
@@ -682,6 +704,7 @@ private fun DrawScope.drawRocketLogo(
 private fun BoxScope.CraftingModeCopy(
     mode: CraftingMode,
     placement: CraftingModeCopyPlacement,
+    onDescriptionBoundsChanged: (Rect?) -> Unit = {},
 ) {
     val alignment = when (placement) {
         CraftingModeCopyPlacement.Top -> Alignment.TopEnd
@@ -740,7 +763,11 @@ private fun BoxScope.CraftingModeCopy(
                 color = Color(0xFFD3E3F3),
                 textAlign = textAlign,
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onGloballyPositioned { coordinates ->
+                        onDescriptionBoundsChanged(coordinates.boundsInRoot())
+                    },
             )
         }
     }
