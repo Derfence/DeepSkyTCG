@@ -335,6 +335,41 @@ class EquipmentScreenTest {
     }
 
     @Test
+    fun active_equipment_card_uses_color_indicator_on_card_frame() {
+        composeRule.setContent {
+            EquipmentScreen(
+                state = EquipmentUiState(
+                    isLoading = false,
+                    sections = listOf(
+                        testEquipmentSection(
+                            type = EquipmentType.Observatory,
+                            statusLabel = "3 packs actifs",
+                            cards = listOf(
+                                testEquipmentInventoryCard(
+                                    definition = testEquipmentCardDefinition(
+                                        id = "observatory-active",
+                                        type = EquipmentType.Observatory,
+                                        displayName = "Observatoire actif",
+                                        level = 2,
+                                    ),
+                                    activationCount = 1,
+                                    isActive = true,
+                                    packsRemaining = 3,
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+                onRefresh = {},
+                onActivateEquipment = {},
+            )
+        }
+
+        composeRule.onNodeWithTag("equipment-card-icon-observatory-active").assertIsDisplayed()
+        composeRule.onNodeWithTag("equipment-card-active-indicator-observatory-active").assertIsDisplayed()
+    }
+
+    @Test
     fun equipment_activation_target_is_cleared_when_activation_starts() {
         var state by mutableStateOf(
             EquipmentUiState(
@@ -613,12 +648,12 @@ class EquipmentScreenTest {
 
         EquipmentType.Telescope -> EquipmentCategoryVisualUi(
             icon = EquipmentCategoryIconUi.Telescope,
-            benefitLabel = "Chance holo",
+            benefitLabel = "Chance holographique",
         )
 
         EquipmentType.Mount -> EquipmentCategoryVisualUi(
             icon = EquipmentCategoryIconUi.Mount,
-            benefitLabel = "Promotion de rarete",
+            benefitLabel = "Promotion de rareté",
         )
     }
 }

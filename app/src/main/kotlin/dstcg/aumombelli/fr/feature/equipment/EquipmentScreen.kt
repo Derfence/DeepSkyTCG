@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.aspectRatio
@@ -507,6 +508,7 @@ private fun EquipmentInventoryCard(
             card.activationEnabled &&
             !isActivating
     val visual = card.definition.type.toCategoryVisualUi()
+    val activeIndicatorVisible = card.isActive && card.packsRemaining != null
 
     DisposableEffect(reportOnboardingTargetBounds) {
         onDispose {
@@ -517,8 +519,10 @@ private fun EquipmentInventoryCard(
         }
     }
 
+    val cardShape = RoundedCornerShape(26.dp)
+
     Surface(
-        shape = RoundedCornerShape(26.dp),
+        shape = cardShape,
         color = Color.Transparent,
         modifier = Modifier
             .width(236.dp)
@@ -528,7 +532,7 @@ private fun EquipmentInventoryCard(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .clip(RoundedCornerShape(26.dp))
+                .clip(cardShape)
                 .background(palette.cardBrush)
                 .clickable { onPreviewEquipment(card.definition.id) },
         ) {
@@ -554,23 +558,10 @@ private fun EquipmentInventoryCard(
                     .fillMaxSize()
                     .padding(16.dp),
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    EquipmentLevelPill(
-                        text = "Niveau ${card.definition.level}",
-                        palette = palette,
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-                    if (card.isActive && card.packsRemaining != null) {
-                        EquipmentLevelPill(
-                            text = "Actif",
-                            palette = palette,
-                        )
-                    }
-                }
+                EquipmentLevelPill(
+                    text = "Niveau ${card.definition.level}",
+                    palette = palette,
+                )
 
                 Text(
                     text = card.definition.displayName,
@@ -653,8 +644,43 @@ private fun EquipmentInventoryCard(
                     }
                 }
             }
+            if (activeIndicatorVisible) {
+                EquipmentActiveCardHalo(
+                    palette = palette,
+                    shape = cardShape,
+                    modifier = Modifier
+                        .matchParentSize()
+                        .testTag("equipment-card-active-indicator-${card.definition.id}"),
+                )
+            }
         }
     }
+}
+
+@Composable
+private fun EquipmentActiveCardHalo(
+    palette: EquipmentCategoryPalette,
+    shape: RoundedCornerShape,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .background(
+                color = palette.accent.copy(alpha = 0.10f),
+                shape = shape,
+            )
+            .border(
+                width = 3.dp,
+                color = palette.accent,
+                shape = shape,
+            )
+            .padding(5.dp)
+            .border(
+                width = 1.dp,
+                color = palette.accent.copy(alpha = 0.55f),
+                shape = RoundedCornerShape(21.dp),
+            ),
+    )
 }
 
 @Composable

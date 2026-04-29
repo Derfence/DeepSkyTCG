@@ -128,15 +128,41 @@ internal fun DrawScope.drawEquipmentTelescopeGlyph(
         val focuserWidth = bodyWidth * 0.10f
         val focuserHeight = bodyHeight * 0.22f
         val focuserTopLeft = Offset(
-            spiderCenter.x - bodyWidth * 0.14f,
-            bodyTopLeft.y - focuserHeight * 0.55f,
+            spiderCenter.x - bodyWidth * 0.3f,
+            bodyTopLeft.y + (bodyHeight - focuserHeight) * 0.5f,
         )
         val focuserCorner = CornerRadius(focuserWidth * 0.25f, focuserWidth * 0.25f)
         drawRoundRect(
-            color = strokeColor,
+            color = Color.Black.copy(alpha = 0.34f),
             topLeft = focuserTopLeft,
             size = Size(focuserWidth, focuserHeight),
             cornerRadius = focuserCorner,
+        )
+        val finderShoeWidth = bodyWidth * 0.10f
+        val finderShoeHeight = bodyHeight * 0.22f
+        val finderShoeTopLeft = Offset(
+            spiderCenter.x - bodyWidth * 0.3f,
+            bodyTopLeft.y - finderShoeHeight * 0.9f,
+        )
+        val finderShoeCorner = CornerRadius(finderShoeWidth * 0.25f, finderShoeWidth * 0.25f)
+        drawRoundRect(
+            color = strokeColor,
+            topLeft = finderShoeTopLeft,
+            size = Size(finderShoeWidth, finderShoeHeight),
+            cornerRadius = finderShoeCorner,
+        )
+        val finderWidth = bodyWidth * 0.3f
+        val finderHeight = bodyHeight * 0.22f
+        val finderTopLeft = Offset(
+            spiderCenter.x - bodyWidth * 0.3f - finderWidth * 0.3f,
+            bodyTopLeft.y - finderHeight * 0.9f - finderHeight * 0.8f,
+        )
+        val finderCorner = CornerRadius(finderWidth * 0.25f, finderWidth * 0.25f)
+        drawRoundRect(
+            color = strokeColor,
+            topLeft = finderTopLeft,
+            size = Size(finderWidth, finderHeight),
+            cornerRadius = finderCorner,
         )
     }
 }
