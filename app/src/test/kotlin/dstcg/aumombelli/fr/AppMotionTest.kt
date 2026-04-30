@@ -18,7 +18,7 @@ import fr.aumombelli.dstcg.ui.motion.packSelectionBoosterIdlePose
 import fr.aumombelli.dstcg.ui.motion.PackRevealBounds
 import fr.aumombelli.dstcg.ui.motion.pickSkyBackdropVariant
 import fr.aumombelli.dstcg.ui.motion.projectExtensionPattern
-import fr.aumombelli.dstcg.ui.motion.summarizePackOpening
+import fr.aumombelli.dstcg.model.summarizePackOpening
 import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.model.toDisplayVariant
 import kotlin.math.abs

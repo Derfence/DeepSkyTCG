@@ -40,6 +40,8 @@ import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.app.NewPlayerBlockingModal
 import fr.aumombelli.dstcg.app.NewPlayerBlockingModalPage
 import fr.aumombelli.dstcg.model.TradeCardCandidate
+import fr.aumombelli.dstcg.model.firstTradeableVariant
+import fr.aumombelli.dstcg.model.hasTradeableVariant
 import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.ui.component.AstroCardThumbnail
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
@@ -77,7 +79,7 @@ fun LibraryScreen(
         } else {
             state.sections.mapNotNull { section ->
                 val cards = section.cards.filter { card ->
-                    card.availableVariants.any { variant -> variant.count >= 2 }
+                    card.hasTradeableVariant()
                 }
                 section.copy(cards = cards).takeIf { cards.isNotEmpty() }
             }
@@ -225,7 +227,7 @@ fun LibraryScreen(
                             {
                                 previewCardId = card.definition.id
                                 selectedVariantKey = if (showExchangeableOnly) {
-                                    card.availableVariants.firstOrNull { it.count >= 2 }?.key
+                                    card.firstTradeableVariant()?.key
                                 } else {
                                     card.availableVariants.firstOrNull()?.key
                                 }

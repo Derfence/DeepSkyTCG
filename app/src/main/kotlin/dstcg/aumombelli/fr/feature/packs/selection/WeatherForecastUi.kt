@@ -51,7 +51,7 @@ internal fun buildWeatherForecastDayUiModels(
         return emptyList()
     }
 
-    val startDate = LocalDate.ofInstant(now, ZoneOffset.UTC)
+    val startDate = now.atZone(ZoneOffset.UTC).toLocalDate()
     return (0 until dayCount).map { dayOffset ->
         val dateUtc = startDate.plusDays(dayOffset.toLong())
         val weatherState = weatherPolicy.weatherAt(dateUtc.atStartOfDay(ZoneOffset.UTC).toInstant())

@@ -35,6 +35,8 @@ data class TradeCardCandidate(
     val variant: DisplayCardVariant,
 )
 
+const val MINIMUM_TRADE_VARIANT_COUNT: Int = 2
+
 sealed interface TradeValidationResult {
     data object Valid : TradeValidationResult
 
@@ -53,7 +55,17 @@ fun OwnedCollection.tradeCountFor(ref: TradeCardRef): Int =
         ?.count
         ?: 0
 
-fun OwnedCollection.canTradeAway(ref: TradeCardRef): Boolean = tradeCountFor(ref) >= 2
+fun OwnedCollection.canTradeAway(ref: TradeCardRef): Boolean =
+    tradeCountFor(ref) >= MINIMUM_TRADE_VARIANT_COUNT
+
+fun OwnedVariantCount.canTradeAway(): Boolean = count >= MINIMUM_TRADE_VARIANT_COUNT
+
+fun DisplayCardVariant.canTradeAway(): Boolean = count >= MINIMUM_TRADE_VARIANT_COUNT
+
+fun LibraryCardItem.hasTradeableVariant(): Boolean = availableVariants.any(DisplayCardVariant::canTradeAway)
+
+fun LibraryCardItem.firstTradeableVariant(): DisplayCardVariant? =
+    availableVariants.firstOrNull(DisplayCardVariant::canTradeAway)
 
 fun OwnedCollection.applyTrade(
     outgoing: TradeCardRef,

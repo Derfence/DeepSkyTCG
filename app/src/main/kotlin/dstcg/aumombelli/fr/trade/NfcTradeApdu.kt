@@ -18,9 +18,17 @@ internal object NfcTradeApdu {
         byteArrayOf(0x00, 0xA4.toByte(), 0x04, 0x00, aid.size.toByte()) + aid + byteArrayOf(0x00)
 
     fun isSelectAid(command: ByteArray): Boolean {
-        if (command.size < 5 || command[0] != 0x00.toByte() || command[1] != 0xA4.toByte()) return false
+        if (
+            command.size < 6 ||
+            command[0] != 0x00.toByte() ||
+            command[1] != 0xA4.toByte() ||
+            command[2] != 0x04.toByte() ||
+            command[3] != 0x00.toByte()
+        ) {
+            return false
+        }
         val length = command[4].toInt() and 0xFF
-        if (command.size < 5 + length) return false
+        if (command.size != 6 + length || command.last() != 0x00.toByte()) return false
         return command.copyOfRange(5, 5 + length).contentEquals(aid)
     }
 
@@ -36,9 +44,17 @@ internal object NfcTradeApdu {
     }
 
     fun payloadFromCommand(command: ByteArray): ByteArray? {
-        if (command.size < 6 || command[0] != 0x80.toByte() || command[1] != 0x10.toByte()) return null
+        if (
+            command.size < 6 ||
+            command[0] != 0x80.toByte() ||
+            command[1] != 0x10.toByte() ||
+            command[2] != 0x00.toByte() ||
+            command[3] != 0x00.toByte()
+        ) {
+            return null
+        }
         val length = command[4].toInt() and 0xFF
-        if (command.size < 5 + length) return null
+        if (command.size != 6 + length || command.last() != 0x00.toByte()) return null
         return command.copyOfRange(5, 5 + length)
     }
 

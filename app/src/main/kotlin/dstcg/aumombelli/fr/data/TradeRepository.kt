@@ -8,6 +8,7 @@ import fr.aumombelli.dstcg.model.TradeCardRef
 import fr.aumombelli.dstcg.model.TradeValidationResult
 import fr.aumombelli.dstcg.model.VariantProfile
 import fr.aumombelli.dstcg.model.applyTrade
+import fr.aumombelli.dstcg.model.canTradeAway
 import fr.aumombelli.dstcg.model.raritySortPriority
 import fr.aumombelli.dstcg.model.toDisplayVariant
 import fr.aumombelli.dstcg.model.validateTradePair
@@ -127,7 +128,7 @@ private fun buildTradeCandidates(
         val extension = extensionsById[card.extensionId] ?: return@flatMap emptyList()
         val variantProfile = variantProfilesById[card.variantProfileId] ?: return@flatMap emptyList()
         entry.variants
-            .filter { it.count >= 2 }
+            .filter { it.canTradeAway() }
             .map { variantCount ->
                 TradeCardCandidate(
                     card = card,

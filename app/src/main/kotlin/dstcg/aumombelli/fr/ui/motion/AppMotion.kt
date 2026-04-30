@@ -1,7 +1,6 @@
 package fr.aumombelli.dstcg.ui.motion
 
 import androidx.compose.runtime.Immutable
-import fr.aumombelli.dstcg.model.DisplayCard
 import fr.aumombelli.dstcg.model.raritySortPriority
 import kotlin.math.PI
 import kotlin.math.min
@@ -77,11 +76,6 @@ data class ExtensionPatternProjection(
         y = originY + (maxY - point.y) * scale,
     )
 }
-
-data class PackOpeningSummary(
-    val highestRarityLabel: String,
-    val hasHolographicCard: Boolean,
-)
 
 internal data class PackSelectionBoosterIdlePose(
     val translationYDp: Float = 0f,
@@ -425,20 +419,6 @@ fun extensionPointReveal(
     } else {
         adjacentReveals.maxOrNull() ?: 0f
     }
-}
-
-fun summarizePackOpening(displayCards: List<DisplayCard>): PackOpeningSummary? {
-    if (displayCards.isEmpty()) return null
-
-    val highestRarityLabel = displayCards
-        .maxBy { raritySortPriority(it.definition.rarityLabel) }
-        .definition
-        .rarityLabel
-
-    return PackOpeningSummary(
-        highestRarityLabel = highestRarityLabel,
-        hasHolographicCard = displayCards.any { it.activeVariant.isHolographic },
-    )
 }
 
 fun burstRarityLabelsUpTo(highestRarityLabel: String?): List<String> {

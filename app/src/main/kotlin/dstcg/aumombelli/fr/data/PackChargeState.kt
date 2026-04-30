@@ -4,7 +4,6 @@ import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.StandaloneProgress
 import java.time.Duration
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 import kotlin.math.ceil
@@ -342,7 +341,8 @@ private fun Long.scaledUnitsPerSecond(scaledRechargeMultiplier: Long): Double =
 private fun Instant.normalizedRechargeInstant(): Instant = truncatedTo(ChronoUnit.SECONDS)
 
 private fun Instant.nextUtcDayStart(): Instant =
-    LocalDate.ofInstant(this, ZoneOffset.UTC)
+    atZone(ZoneOffset.UTC)
+        .toLocalDate()
         .plusDays(1)
         .atStartOfDay(ZoneOffset.UTC)
         .toInstant()

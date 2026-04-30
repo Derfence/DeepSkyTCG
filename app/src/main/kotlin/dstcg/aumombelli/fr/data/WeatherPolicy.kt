@@ -56,7 +56,7 @@ object DeterministicWeatherCalendar : WeatherPolicy {
     private val anchorDate: LocalDate = LocalDate.of(2026, 1, 1)
 
     override fun weatherAt(instant: Instant): WeatherState =
-        weatherOn(LocalDate.ofInstant(instant, ZoneOffset.UTC))
+        weatherOn(instant.atZone(ZoneOffset.UTC).toLocalDate())
 
     /**
      * Resolves the weather for a UTC calendar day.

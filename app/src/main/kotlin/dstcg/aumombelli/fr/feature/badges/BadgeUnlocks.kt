@@ -1,5 +1,6 @@
 package fr.aumombelli.dstcg.feature.badges
 
+import fr.aumombelli.dstcg.domain.badges.buildNewlyUnlockedBadgeIds as buildNewlyUnlockedDomainBadgeIds
 import fr.aumombelli.dstcg.model.CardDefinition
 import fr.aumombelli.dstcg.model.EquipmentCardDefinition
 import fr.aumombelli.dstcg.model.ExtensionDefinition
@@ -14,7 +15,7 @@ internal fun buildNewlyUnlockedBadges(
     beforeProgress: StandaloneProgress,
     afterProgress: StandaloneProgress,
 ): List<BadgeItem> {
-    val newlyUnlockedIds = buildNewlyUnlockedBadgeIds(
+    val newlyUnlockedIds = buildNewlyUnlockedDomainBadgeIds(
         extensions = extensions,
         cards = cards,
         equipmentCards = equipmentCards,
@@ -41,23 +42,14 @@ internal fun buildNewlyUnlockedBadgeIds(
     variantProfiles: List<VariantProfile>,
     beforeProgress: StandaloneProgress,
     afterProgress: StandaloneProgress,
-): Set<String> {
-    val beforeUnlockedIds = buildUnlockedBadgeIds(
-        extensions = extensions,
-        cards = cards,
-        equipmentCards = equipmentCards,
-        variantProfiles = variantProfiles,
-        progress = beforeProgress,
-    )
-
-    return buildUnlockedBadgeIds(
-        extensions = extensions,
-        cards = cards,
-        equipmentCards = equipmentCards,
-        variantProfiles = variantProfiles,
-        progress = afterProgress,
-    ).filterNotTo(mutableSetOf()) { badgeId -> badgeId in beforeUnlockedIds }
-}
+): Set<String> = buildNewlyUnlockedDomainBadgeIds(
+    extensions = extensions,
+    cards = cards,
+    equipmentCards = equipmentCards,
+    variantProfiles = variantProfiles,
+    beforeProgress = beforeProgress,
+    afterProgress = afterProgress,
+)
 
 internal fun sortBadgeCelebrationItems(badges: List<BadgeItem>): List<BadgeItem> = badges.sortedWith(
     compareByDescending<BadgeItem> { badgeRequirementPriority(it.requirementType) }
@@ -87,20 +79,6 @@ private fun skyQualityCelebrationPriority(skyQualityCode: String?): Int = when (
     "city" -> 1
     else -> 0
 }
-
-private fun buildUnlockedBadgeIds(
-    extensions: List<ExtensionDefinition>,
-    cards: List<CardDefinition>,
-    equipmentCards: List<EquipmentCardDefinition>,
-    variantProfiles: List<VariantProfile>,
-    progress: StandaloneProgress,
-): Set<String> = buildUnlockedBadges(
-    extensions = extensions,
-    cards = cards,
-    equipmentCards = equipmentCards,
-    variantProfiles = variantProfiles,
-    progress = progress,
-).mapTo(mutableSetOf()) { badge -> badge.id }
 
 private fun buildUnlockedBadges(
     extensions: List<ExtensionDefinition>,

@@ -33,6 +33,68 @@ internal data class NfcTradePacket(
     val reason: String? = null,
 )
 
+internal enum class NfcTradeCardPresence {
+    Required,
+    Forbidden,
+    Any,
+}
+
+internal data class NfcTradePacketExpectation(
+    val expectedType: String,
+    val expectedCatalogFingerprint: String,
+    val expectedTradeId: String? = null,
+    val expectedNonce: String? = null,
+    val cardPresence: NfcTradeCardPresence = NfcTradeCardPresence.Forbidden,
+)
+
+internal fun NfcTradePacket.commonValidationErrorFor(expectation: NfcTradePacketExpectation): String? {
+    if (protocolVersion != NfcTradeProtocolVersion) {
+        return "Version d'echange incompatible."
+    }
+    if (catalogFingerprint != expectation.expectedCatalogFingerprint) {
+        return "Catalogues incompatibles."
+    }
+    if (tradeId.isBlank()) {
+        return "Identifiant d'echange NFC invalide."
+    }
+    val expectedTradeId = expectation.expectedTradeId
+    if (expectedTradeId != null && tradeId != expectedTradeId) {
+        return "Echange NFC inconnu."
+    }
+    if (nonce.isBlank()) {
+        return "Jeton NFC invalide."
+    }
+    val expectedNonce = expectation.expectedNonce
+    if (expectedNonce != null && nonce != expectedNonce) {
+        return "Jeton NFC inattendu."
+    }
+    return null
+}
+
+internal fun NfcTradePacket.validationErrorFor(expectation: NfcTradePacketExpectation): String? {
+    commonValidationErrorFor(expectation)?.let { return it }
+    if (type != expectation.expectedType) {
+        return "Message NFC inattendu."
+    }
+    return when (expectation.cardPresence) {
+        NfcTradeCardPresence.Required -> {
+            if (card == null) "Carte distante absente." else null
+        }
+        NfcTradeCardPresence.Forbidden -> {
+            if (card != null) "Carte distante inattendue." else null
+        }
+        NfcTradeCardPresence.Any -> null
+    }
+}
+
+internal fun NfcTradePacket.failureResponse(message: String): NfcTradePacket =
+    copy(
+        type = NfcTradeTypeFailure,
+        ok = false,
+        reason = message,
+        card = null,
+    )
+
 internal object NfcTradeCodec {
     private val json = Json {
         encodeDefaults = false

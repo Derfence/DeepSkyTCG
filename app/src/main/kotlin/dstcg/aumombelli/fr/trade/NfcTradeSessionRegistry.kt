@@ -20,11 +20,8 @@ internal object NfcTradeSessionRegistry {
     }
 
     suspend fun dispatch(packet: NfcTradePacket): NfcTradePacket =
-        handler?.handleIncoming(packet) ?: packet.copy(
-            type = NfcTradeTypeFailure,
-            ok = false,
-            reason = "Aucune session d'echange active.",
-        )
+        handler?.handleIncoming(packet)
+            ?: packet.failureResponse("Aucune session d'echange active.")
 
     fun notifyDeactivated(reason: Int) {
         handler?.onNfcDeactivated(reason)

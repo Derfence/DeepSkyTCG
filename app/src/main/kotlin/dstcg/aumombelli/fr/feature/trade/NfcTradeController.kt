@@ -11,9 +11,10 @@ import fr.aumombelli.dstcg.model.TradeCardRef
 import fr.aumombelli.dstcg.model.TradeValidationResult
 import fr.aumombelli.dstcg.model.isValid
 import fr.aumombelli.dstcg.trade.NfcTradeApdu
+import fr.aumombelli.dstcg.trade.NfcTradeCardPresence
 import fr.aumombelli.dstcg.trade.NfcTradeCodec
 import fr.aumombelli.dstcg.trade.NfcTradePacket
-import fr.aumombelli.dstcg.trade.NfcTradeProtocolVersion
+import fr.aumombelli.dstcg.trade.NfcTradePacketExpectation
 import fr.aumombelli.dstcg.trade.NfcTradeSessionHandler
 import fr.aumombelli.dstcg.trade.NfcTradeSessionRegistry
 import fr.aumombelli.dstcg.trade.NfcTradeTypeAck
@@ -22,6 +23,9 @@ import fr.aumombelli.dstcg.trade.NfcTradeTypeCommitted
 import fr.aumombelli.dstcg.trade.NfcTradeTypeFailure
 import fr.aumombelli.dstcg.trade.NfcTradeTypeHello
 import fr.aumombelli.dstcg.trade.NfcTradeTypeMatch
+import fr.aumombelli.dstcg.trade.commonValidationErrorFor
+import fr.aumombelli.dstcg.trade.failureResponse
+import fr.aumombelli.dstcg.trade.validationErrorFor
 import java.security.SecureRandom
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
@@ -88,18 +92,19 @@ internal class NfcTradeController(
     }
 
     override suspend fun handleIncoming(packet: NfcTradePacket): NfcTradePacket {
-        if (packet.protocolVersion != NfcTradeProtocolVersion) {
-            return packet.failure("Version d'echange incompatible.")
-        }
-        if (packet.catalogFingerprint != catalogFingerprint) {
-            return packet.failure("Catalogues incompatibles.")
-        }
+        packet.commonValidationErrorFor(
+            NfcTradePacketExpectation(
+                expectedType = packet.type,
+                expectedCatalogFingerprint = catalogFingerprint,
+                cardPresence = NfcTradeCardPresence.Any,
+            ),
+        )?.let { error -> return packet.failureResponse(error) }
 
         return when (packet.type) {
             NfcTradeTypeHello -> handleHello(packet)
             NfcTradeTypeCommit -> handleCommit(packet)
             NfcTradeTypeAck -> handleAck(packet)
-            else -> packet.failure("Message NFC inattendu.")
+            else -> packet.failureResponse("Message NFC inattendu.")
         }
     }
 
@@ -158,10 +163,18 @@ internal class NfcTradeController(
                     card = localCard,
                 )
                 val match = transceivePacket(hello)
-                if (match.type == NfcTradeTypeFailure || !match.ok) {
-                    error(match.reason ?: "Echange refuse.")
-                }
+                    .requireExpectedResponse(
+                        expectedType = NfcTradeTypeMatch,
+                        expectedTradeId = tradeId,
+                        expectedFailureNonce = nonce,
+                        cardPresence = NfcTradeCardPresence.Required,
+                        failureMessage = "Echange refuse.",
+                    )
                 val remoteCard = checkNotNull(match.card) { "Carte distante absente." }
+                val remoteNonce = match.nonce
+                if (remoteNonce == nonce) {
+                    error("Jeton NFC distant invalide.")
+                }
                 val validation = tradeGateway.validateTrade(
                     localOutgoing = localCard,
                     remoteOutgoing = remoteCard,
@@ -170,17 +183,21 @@ internal class NfcTradeController(
                     error((validation as TradeValidationResult.Invalid).message)
                 }
 
-                val commitResponse = transceivePacket(
+                transceivePacket(
                     NfcTradePacket(
                         type = NfcTradeTypeCommit,
                         tradeId = tradeId,
                         catalogFingerprint = catalogFingerprint,
-                        nonce = nonce,
+                        nonce = remoteNonce,
                     ),
+                ).requireExpectedResponse(
+                    expectedType = NfcTradeTypeCommitted,
+                    expectedTradeId = tradeId,
+                    expectedSuccessNonce = nonce,
+                    expectedFailureNonce = remoteNonce,
+                    cardPresence = NfcTradeCardPresence.Forbidden,
+                    failureMessage = "Validation distante impossible.",
                 )
-                if (commitResponse.type == NfcTradeTypeFailure || !commitResponse.ok) {
-                    error(commitResponse.reason ?: "Validation distante impossible.")
-                }
 
                 val localApplyResult = tradeGateway.applyTrade(
                     tradeId = tradeId,
@@ -196,8 +213,15 @@ internal class NfcTradeController(
                         type = NfcTradeTypeAck,
                         tradeId = tradeId,
                         catalogFingerprint = catalogFingerprint,
-                        nonce = nonce,
+                        nonce = remoteNonce,
                     ),
+                ).requireExpectedResponse(
+                    expectedType = NfcTradeTypeAck,
+                    expectedTradeId = tradeId,
+                    expectedSuccessNonce = nonce,
+                    expectedFailureNonce = remoteNonce,
+                    cardPresence = NfcTradeCardPresence.Forbidden,
+                    failureMessage = "Confirmation distante impossible.",
                 )
                 emit(NfcTradeControllerEvent.Succeeded)
             }
@@ -207,26 +231,35 @@ internal class NfcTradeController(
     }
 
     private suspend fun handleHello(packet: NfcTradePacket): NfcTradePacket {
+        packet.validationErrorFor(
+            NfcTradePacketExpectation(
+                expectedType = NfcTradeTypeHello,
+                expectedCatalogFingerprint = catalogFingerprint,
+                cardPresence = NfcTradeCardPresence.Required,
+            ),
+        )?.let { error -> return packet.failureResponse(error) }
         emit(NfcTradeControllerEvent.Exchanging)
-        val remoteCard = packet.card ?: return packet.failure("Carte distante absente.")
+        val remoteCard = checkNotNull(packet.card)
         val validation = tradeGateway.validateTrade(
             localOutgoing = localCard,
             remoteOutgoing = remoteCard,
         )
         if (validation is TradeValidationResult.Invalid) {
             emit(NfcTradeControllerEvent.Failed(validation.message))
-            return packet.failure(validation.message)
+            return packet.failureResponse(validation.message)
         }
+        val localNonce = randomNonce(excluding = packet.nonce)
         activeCardSideTrade = ActiveRemoteTrade(
             tradeId = packet.tradeId,
             remoteCard = remoteCard,
             remoteNonce = packet.nonce,
+            localNonce = localNonce,
         )
         return NfcTradePacket(
             type = NfcTradeTypeMatch,
             tradeId = packet.tradeId,
             catalogFingerprint = catalogFingerprint,
-            nonce = randomNonce(),
+            nonce = localNonce,
             card = localCard,
         )
     }
@@ -234,8 +267,17 @@ internal class NfcTradeController(
     private suspend fun handleCommit(packet: NfcTradePacket): NfcTradePacket {
         val activeTrade = activeCardSideTrade
         if (activeTrade == null || activeTrade.tradeId != packet.tradeId) {
-            return packet.failure("Echange NFC inconnu.")
+            return packet.failureResponse("Echange NFC inconnu.")
         }
+        packet.validationErrorFor(
+            NfcTradePacketExpectation(
+                expectedType = NfcTradeTypeCommit,
+                expectedCatalogFingerprint = catalogFingerprint,
+                expectedTradeId = activeTrade.tradeId,
+                expectedNonce = activeTrade.localNonce,
+                cardPresence = NfcTradeCardPresence.Forbidden,
+            ),
+        )?.let { error -> return packet.failureResponse(error) }
         val result = tradeGateway.applyTrade(
             tradeId = activeTrade.tradeId,
             outgoing = localCard,
@@ -243,7 +285,7 @@ internal class NfcTradeController(
         )
         if (result is TradeValidationResult.Invalid) {
             emit(NfcTradeControllerEvent.Failed(result.message))
-            return packet.failure(result.message)
+            return packet.failureResponse(result.message)
         }
         return NfcTradePacket(
             type = NfcTradeTypeCommitted,
@@ -254,11 +296,62 @@ internal class NfcTradeController(
     }
 
     private fun handleAck(packet: NfcTradePacket): NfcTradePacket {
-        if (activeCardSideTrade?.tradeId == packet.tradeId) {
-            activeCardSideTrade = null
-            emit(NfcTradeControllerEvent.Succeeded)
+        val activeTrade = activeCardSideTrade
+        if (activeTrade == null || activeTrade.tradeId != packet.tradeId) {
+            return packet.failureResponse("Echange NFC inconnu.")
         }
-        return packet.copy(type = NfcTradeTypeAck)
+        packet.validationErrorFor(
+            NfcTradePacketExpectation(
+                expectedType = NfcTradeTypeAck,
+                expectedCatalogFingerprint = catalogFingerprint,
+                expectedTradeId = activeTrade.tradeId,
+                expectedNonce = activeTrade.localNonce,
+                cardPresence = NfcTradeCardPresence.Forbidden,
+            ),
+        )?.let { error -> return packet.failureResponse(error) }
+        activeCardSideTrade = null
+        emit(NfcTradeControllerEvent.Succeeded)
+        return NfcTradePacket(
+            type = NfcTradeTypeAck,
+            tradeId = packet.tradeId,
+            catalogFingerprint = catalogFingerprint,
+            nonce = activeTrade.remoteNonce,
+        )
+    }
+
+    private fun NfcTradePacket.requireExpectedResponse(
+        expectedType: String,
+        expectedTradeId: String,
+        expectedSuccessNonce: String? = null,
+        expectedFailureNonce: String? = null,
+        cardPresence: NfcTradeCardPresence,
+        failureMessage: String,
+    ): NfcTradePacket {
+        if (type == NfcTradeTypeFailure) {
+            validationErrorFor(
+                NfcTradePacketExpectation(
+                    expectedType = NfcTradeTypeFailure,
+                    expectedCatalogFingerprint = this@NfcTradeController.catalogFingerprint,
+                    expectedTradeId = expectedTradeId,
+                    expectedNonce = expectedFailureNonce,
+                    cardPresence = NfcTradeCardPresence.Forbidden,
+                ),
+            )?.let { validationError -> error(validationError) }
+            error(reason ?: failureMessage)
+        }
+        validationErrorFor(
+            NfcTradePacketExpectation(
+                expectedType = expectedType,
+                expectedCatalogFingerprint = this@NfcTradeController.catalogFingerprint,
+                expectedTradeId = expectedTradeId,
+                expectedNonce = expectedSuccessNonce,
+                cardPresence = cardPresence,
+            ),
+        )?.let { validationError -> error(validationError) }
+        if (!ok) {
+            error(reason ?: failureMessage)
+        }
+        return this
     }
 
     private fun emit(event: NfcTradeControllerEvent) {
@@ -267,18 +360,14 @@ internal class NfcTradeController(
         }
     }
 
-    private fun randomNonce(): String {
-        val bytes = ByteArray(8)
-        secureRandom.nextBytes(bytes)
-        return bytes.joinToString(separator = "") { byte -> "%02x".format(byte) }
+    private fun randomNonce(excluding: String? = null): String {
+        while (true) {
+            val bytes = ByteArray(8)
+            secureRandom.nextBytes(bytes)
+            val nonce = bytes.joinToString(separator = "") { byte -> "%02x".format(byte) }
+            if (nonce != excluding) return nonce
+        }
     }
-
-    private fun NfcTradePacket.failure(message: String): NfcTradePacket =
-        copy(
-            type = NfcTradeTypeFailure,
-            ok = false,
-            reason = message,
-        )
 
     private fun ByteArray.requireSuccessPayload(): ByteArray =
         NfcTradeApdu.responsePayload(this) ?: error("Service d'echange NFC introuvable.")
@@ -302,6 +391,7 @@ internal class NfcTradeController(
         val tradeId: String,
         val remoteCard: TradeCardRef,
         val remoteNonce: String,
+        val localNonce: String,
     )
 
     private companion object {

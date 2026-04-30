@@ -1,6 +1,6 @@
 package fr.aumombelli.dstcg.data
 
-import fr.aumombelli.dstcg.feature.badges.buildNewlyUnlockedBadgeIds
+import fr.aumombelli.dstcg.domain.badges.buildNewlyUnlockedBadgeIds
 import fr.aumombelli.dstcg.model.StandaloneProgress
 
 class HomeMenuNoveltyEvaluator(

@@ -18,6 +18,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import fr.aumombelli.dstcg.model.LibraryCardItem
 import fr.aumombelli.dstcg.model.TradeCardCandidate
+import fr.aumombelli.dstcg.model.canTradeAway
 import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.ui.component.AstroCardDetailsSurface
 import fr.aumombelli.dstcg.ui.component.AstroCardFullscreenCloseButton
@@ -38,7 +39,7 @@ internal fun CardPreviewDialog(
     val libraryItem = item ?: return
     val displayCard = libraryItem.toDisplayCard(selectedVariantKey) ?: return
     val activeVariant = displayCard.activeVariant
-    val tradeCandidate = if (activeVariant.count >= 2) {
+    val tradeCandidate = if (activeVariant.canTradeAway()) {
         TradeCardCandidate(
             card = libraryItem.definition,
             extensionName = libraryItem.extensionName,
