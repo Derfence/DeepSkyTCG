@@ -1,3 +1,7 @@
+# Sources d'illustrations de cartes
+
+[Documentation catalogue et assets](../../docs/catalog-assets.md)
+
 Raw card art working files live here so they are not packaged into the Android APK.
 
 Structure:

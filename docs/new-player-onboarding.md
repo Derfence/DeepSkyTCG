@@ -1,138 +1,48 @@
-# Onboarding Nouveaux Joueurs
+# Onboarding nouveaux joueurs
 
-## Objectif
+[← Index documentation](README.md) | [Parcours actif](flows/new-player-onboarding.md) | [Tags UI](flows/onboarding-ui-tags.md)
 
-Le standalone guide maintenant le premier parcours joueur avec un onboarding obligatoire sur les etapes guidees, puis une pause libre apres `Badges`.
+Cette page reste la porte d'entree stable pour l'onboarding. Elle fait partie de la refonte et garde le chemin historique `docs/new-player-onboarding.md`, pendant que le detail vivant est reparti en fichiers plus petits.
 
-La sequence persistante est :
+## A lire ici
 
-1. `OpenFirstPackMenu`
-2. `SelectFirstExtension`
-3. `SelectFirstBooster`
-4. `ViewLibrary`
-5. `ViewBadges`
-6. `OpenSecondPackMenu`
-7. `ViewEquipmentMenu`
-8. `ActivateFirstEquipment`
-9. `Completed`
+| Besoin | Page |
+| --- | --- |
+| Comprendre le parcours joueur de bout en bout | [Parcours actif](flows/new-player-onboarding.md) |
+| Retrouver les tags Compose, modales et tests | [Tags UI](flows/onboarding-ui-tags.md) |
+| Comprendre les ecrans traverses | [Accueil](features/home.md), [Packs](features/packs.md), [Bibliotheque et badges](features/library-badges.md), [Equipements](features/equipment.md), [Artisanat](features/crafting.md) |
 
-Chaque etape est stockee dans la progression locale securisee et rejouee jusqu'a completion.
-Toutes les actions hors parcours deviennent des no-op silencieux pendant les etapes guidees, sans changement visuel.
-Les hints d'onboarding n'apparaissent qu'une fois les animations de transition terminees et la scene stabilisee.
+## Figure de parcours
 
-## Parcours
+```text
+Accueil
+  -> Packs
+  -> Ouverture
+  -> Bibliotheque
+  -> Badges
+  -> Pause libre
+  -> Equipements
+  -> Artisanat
+  -> Completed
+```
 
-### 1. Premier pack
+## Ce que le parcours garantit
 
-- A l'accueil, un coachmark cible la grande carte `Ouvrir un pack`.
-- Dans la selection de packs, un coachmark cible le premier bouton `Observer` disponible.
-- Ce coachmark disparait des le clic sur l'extension pour ne pas accompagner l'animation d'ouverture.
-- Une fois l'extension ouverte, un coachmark cible le premier booster seulement apres la fin de l'introduction visuelle des quatre boosters.
-- Ce coachmark disparait des le clic sur un booster pour ne pas suivre l'animation de selection.
-- Chaque coachmark attend la fin du mouvement de transition avant d'apparaitre.
-- Le tout premier pack ouvert pendant ce chapitre ne contient que des cartes `Common`.
+- une intro bloquante au premier lancement ;
+- un premier pack simple, sans equipement, holo ni tampon ;
+- une visite bibliotheque avec pedagogie des variantes ;
+- une celebration de badge differee tant que le joueur doit d'abord voir sa bibliotheque ;
+- une pause libre apres `Badges`, puis un deuxieme tirage garantissant une carte d'equipement ;
+- une activation d'equipement guidee ;
+- une pause jusqu'a l'eligibilite de l'artisanat, puis le guidage `DarkenSky`.
 
-### 2. Retour apres le premier pack
+## Decoupage refondu
 
-- Le hint vertical existant dans `PackOpeningScreen` reste en place.
-- Quand le swipe est debloque, un petit nudge vertical recommence sur la carte courante.
-- Le libelle explicite n'apparait qu'au moment de ce premier nudge du tout premier pack ouvert, puis reste visible pendant cette navigation guidee dans `PackOpeningScreen` :
-  `Glisse vers le haut pour revenir a l'accueil.`
-- Ce libelle est superpose au-dessus des cartes et ne doit jamais repousser leur layout vers le bas.
-- Au retour accueil, la priorite va a `Bibliotheque`.
-- Si un badge vient d'etre debloque, sa celebration reste memoiree mais differee tant que l'etape `ViewLibrary` n'est pas terminee.
+Cette page historique a ete scindee pour garder des fichiers plus lisibles :
 
-### 3. Bibliotheque puis badges
+- [flows/new-player-onboarding.md](flows/new-player-onboarding.md) decrit le parcours, les pauses silencieuses, les reprises et les regles de tirage speciales.
+- [flows/onboarding-ui-tags.md](flows/onboarding-ui-tags.md) liste les tags Compose, cibles de coachmark, modales et tests associes.
 
-- Au premier retour accueil apres ouverture d'un pack, le coachmark cible `Bibliotheque`.
-- La transition `Accueil -> Bibliotheque` utilise un portail-livre frontal :
-  - le livre se deplace d'abord seul ;
-  - puis la couverture avant se replie par la tranche gauche, pendant que la quatrieme de couverture reste en place ;
-  - les pages droites se revelent sous la couverture des le debut de l'ouverture ;
-  - les pages gauches n'apparaissent qu'avec l'ouverture du verso ;
-  - les pages restent legerement plus petites que les couvertures et gardent un petit decor d'etoiles imprimees.
-- Lors de la premiere visite bibliotheque, un micro-hint local s'affiche :
-  `Touche une carte obtenue pour l'ouvrir.`
-- Les cartes affichees dans les panneaux pedagogiques de variantes sont maintenant tirees aleatoirement dans le vrai catalogue, par rarete, donc l'ensemble d'exemples peut changer d'un joueur a l'autre.
-- Si cette visite suit l'obtention de nouvelles cartes, leurs vignettes affichent aussi l'indicateur de nouveaute a trois etoiles pendant cette ouverture de la bibliotheque.
-- Cet indicateur local disparait apres cette visite, meme si le joueur referme aussitot l'ecran.
-- Quand le joueur revient a l'accueil, la celebration de badge differee est rejouee si elle est encore en memoire.
-- Cette celebration demarre au centre de l'ecran, avec son libelle immediatement au-dessus du badge a l'apparition ; le libelle reste fixe pendant que le badge vient ensuite se ranger juste au-dessus du bouton `Badges` de l'accueil.
-- Apres cette celebration, un coachmark cible `Badges` tant que le carnet n'a pas ete ouvert.
+Les changements deja presents dans cette page ont ete conserves dans ces deux nouvelles pages.
 
-### 4. Pause libre puis chapitre equipement
-
-- L'ouverture du carnet `Badges` ne termine plus l'onboarding ; elle debloque l'etape `OpenSecondPackMenu`.
-- `OpenSecondPackMenu` est une pause silencieuse :
-  - aucun coachmark n'est affiche ;
-  - aucun blocage supplementaire n'est applique ;
-  - `Home`, `Bibliotheque`, `Badges`, `Packs` et le retour arriere Android redeviennent normaux ;
-  - `Equipements` reste simplement absent tant que la premiere carte d'equipement n'a pas encore ete obtenue.
-- Le premier pack effectivement ouvert apres cette pause devient le deuxieme tirage d'onboarding.
-- Pendant ce tirage special :
-  - aucun coachmark n'est ajoute dans `PackSelection` ;
-  - les cartes astronomiques sont plafonnees a `Uncommon` ;
-  - les remplacements aleatoires d'equipement sont desactives ;
-  - exactement un slot est remplace par une carte d'equipement `level == 1`, choisie selon `dropWeight` ;
-  - un slot `Common` est privilegie ; sinon le slot de plus faible rarete finale est remplace ;
-  - le premier tirage reste force sans equipement, meme si `EquipmentChancePercent` vaut `100`.
-- De retour accueil, un coachmark cible `Equipements` au moment ou le bouton devient visible avec la premiere carte obtenue.
-- Une fois le menu ouvert, un dernier coachmark cible le premier bouton `Activer` eligible.
-- Si ce bouton `Activer` est encore hors viewport vers le bas, la bulle de texte est remplacee par une fleche vers le bas.
-- Des que le bouton devient visible a l'ecran, la fleche disparait et la bulle de texte normale revient.
-- L'onboarding se termine a la premiere activation reussie.
-
-## Persistance et reprise
-
-- Le champ persiste dans la progression est `newPlayerOnboardingStep`.
-- Un reset de progression remet toujours l'etape a `OpenFirstPackMenu`.
-- Les anciennes sauvegardes sans champ d'onboarding sont migrees ainsi :
-  - collection vide et `openedPackCount == 0` : `OpenFirstPackMenu`
-  - collection non vide ou `openedPackCount > 0` : `Completed`
-- Si l'application est relancee entre le premier pack et la bibliotheque, le guidage reprend depuis l'etape persistante. La celebration de badge etant transitoire, le fallback reste le coachmark `Badges`.
-- Si l'application est relancee pendant le chapitre equipement, le guidage reprend sur la pause libre `OpenSecondPackMenu`, `ViewEquipmentMenu` ou `ActivateFirstEquipment` selon l'etape sauvegardee.
-
-## Cibles et tags UI
-
-### Coachmarks globaux
-
-- `new-player-coachmark-HomeOpenPack`
-- `new-player-coachmark-PackSelectionExtension`
-- `new-player-coachmark-PackSelectionBooster`
-- `new-player-coachmark-HomeLibrary`
-- `new-player-coachmark-HomeBadges`
-- `new-player-coachmark-HomeEquipment`
-- `new-player-coachmark-EquipmentActivation`
-
-### Cibles mises en evidence
-
-- `new-player-coachmark-target-HomeOpenPack`
-- `new-player-coachmark-target-PackSelectionExtension`
-- `new-player-coachmark-target-PackSelectionBooster`
-- `new-player-coachmark-target-HomeLibrary`
-- `new-player-coachmark-target-HomeBadges`
-- `new-player-coachmark-target-HomeEquipment`
-- `new-player-coachmark-target-EquipmentActivation`
-
-### Hints locaux
-
-- `library-onboarding-hint`
-- `pack-opening-swipe-hint-label`
-
-## Validation
-
-La couverture ajoutee ou mise a jour comprend :
-
-- `ProgressRepositoryTest`
-- `NewPlayerOnboardingCoordinatorTest`
-- `LocalPackEngineEquipmentTest`
-- `PackRepositoryTest`
-- `LibraryViewModelTest`
-- `LocalEndToEndTest`
-- `AstroCardThumbnailTest`
-- `LibraryScreenTest`
-- `HomeMenuNoveltyIntegrationTest`
-- `PackOpeningScreenTest`
-- `NewPlayerOnboardingInteractionPolicyTest`
-
-Les tests relies a un device Android restent a executer via `connectedDebugAndroidTest` depuis Windows avec un emulateur ou un appareil ADB disponible.
+[← Index documentation](README.md)

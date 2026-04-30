@@ -1,13 +1,38 @@
-# Propositions de logo
+# Logos et assets de marque
 
-Ces concepts reprennent la palette deja presente dans l'application :
+[Documentation design visuel](../../docs/visual-design.md)
+
+Ces fichiers conservent les explorations et les assets retenus pour l'application. La palette de reference reste :
 
 - `MidnightBlue` `#0C1424`
 - `AuroraTeal` `#68E1D2`
 - `EmberGold` `#F6B73C`
 - `Frost` `#EAF3FF`
 
-## Concepts
+## Assets retenus et recents
+
+```text
+artwork/logo-concepts/
+  17-badge-logo.svg                         -> icone et badge principal
+  19-badge-plus-texte-deep-sky-blanc.svg    -> lockup sombre utilise au lancement
+  21-badge-logo-blanc.svg                   -> logo blanc pour badges generaux
+  22-tampon.svg                             -> tampon applique aux cartes
+```
+
+- `17-badge-logo.svg` : badge de marque retenu pour les exports Android et les usages compacts.
+- `19-badge-plus-texte-deep-sky-blanc.svg` : lockup sombre branche dans l'interface de lancement.
+- `21-badge-logo-blanc.svg` : version SVG blanche embarquee dans `app/src/main/assets/branding/21-badge-logo-blanc.svg`.
+- `22-tampon.svg` : tampon final embarque dans `app/src/main/assets/branding/22-tampon.svg`.
+
+Exports Android associes :
+
+- `app/src/main/res/drawable-nodpi/logo_badge_17.png`
+- `app/src/main/res/drawable-nodpi/ic_launcher_badge_17.png`
+- `app/src/main/res/drawable-nodpi/logo_lockup_19.png`
+
+## Anciens concepts exploratoires
+
+Les fichiers `01` a `04` sont conserves comme historique de recherche visuelle. Ils ne sont plus la recommandation active.
 
 ### 1. `01-round-badge-border.svg`
 
@@ -24,11 +49,3 @@ Version non ronde inspiree d'une carte a collectionner. Elle met davantage en av
 ### 4. `04-wordmark-lockup.svg`
 
 Version avec le nom complet. Elle fonctionne mieux pour un splash screen, la page Play Store, un header GitHub ou une ecran titre.
-
-## Recommandation
-
-Si on doit choisir une direction principale tout de suite :
-
-1. prendre `01-round-badge-border.svg` pour l'icone de l'application ;
-2. garder `04-wordmark-lockup.svg` pour les supports ou le nom doit etre visible ;
-3. reutiliser certains codes du `03-card-frame-emblem.svg` pour les badges, packs ou achievements.
