@@ -71,6 +71,37 @@ class DstcgAppBackNavigationTest {
     }
 
     @Test
+    fun visible_back_from_library_returns_to_home() {
+        setAppContent(backNavigationTestAppContainer())
+        startAndReachHome()
+
+        composeRule.onNodeWithTag("home-library").performClick()
+        advanceBy(2_700)
+        composeRule.onNodeWithTag("library-grid").assertIsDisplayed()
+        composeRule.onNodeWithTag("library-back").performClick()
+
+        advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
+    }
+
+    @Test
+    fun visible_back_from_library_follows_title_during_opening_and_closing() {
+        setAppContent(backNavigationTestAppContainer())
+        startAndReachHome()
+
+        composeRule.onNodeWithTag("home-library").performClick()
+        advanceBy(1_700)
+        composeRule.onNodeWithTag("library-grid").assertIsDisplayed()
+        composeRule.onNodeWithTag("library-back").assertIsDisplayed()
+
+        advanceUntilTagGone("app-transition-book", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("library-back").performClick()
+        advanceBy(120)
+        composeRule.onNodeWithTag("library-back").assertIsDisplayed()
+
+        advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
+    }
+
+    @Test
     fun android_back_from_equipment_returns_to_home() {
         setAppContent(backNavigationTestAppContainer())
         startAndReachHome()
@@ -82,6 +113,19 @@ class DstcgAppBackNavigationTest {
         composeRule.onNodeWithTag("equipment-section-observatory").assertIsDisplayed()
 
         pressAndroidBack()
+        advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
+    }
+
+    @Test
+    fun visible_back_from_equipment_returns_to_home() {
+        setAppContent(backNavigationTestAppContainer())
+        startAndReachHome()
+
+        composeRule.onNodeWithTag("home-equipment").performClick()
+        advanceUntilTagDisplayed("equipment-screen", timeoutMillis = 10_000)
+        advanceUntilTagGone("app-transition-equipment", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("equipment-back").performClick()
+
         advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
     }
 
@@ -110,6 +154,19 @@ class DstcgAppBackNavigationTest {
     }
 
     @Test
+    fun visible_back_from_badge_book_returns_to_home() {
+        setAppContent(backNavigationTestAppContainer())
+        startAndReachHome()
+
+        composeRule.onNodeWithTag("home-badges").performClick()
+        advanceBy(2_800)
+        composeRule.onNodeWithTag("badge-book-scroll").assertIsDisplayed()
+        composeRule.onNodeWithTag("badge-book-back").performClick()
+
+        advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
+    }
+
+    @Test
     fun android_back_from_pack_selection_returns_to_extension_list_then_home() {
         setAppContent(backNavigationTestAppContainer())
         startAndReachHome()
@@ -121,12 +178,33 @@ class DstcgAppBackNavigationTest {
         composeRule.onNodeWithTag("pack-booster-0").assertIsDisplayed()
 
         pressAndroidBack()
+        advanceUntilTagGone("pack-booster-0", timeoutMillis = 10_000)
         advanceUntilTagDisplayed("pack-extension-enter-astronomes-en-herbe", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").assertIsDisplayed()
 
         pressAndroidBack()
         advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
+    }
+
+    @Test
+    fun visible_back_from_pack_selection_returns_to_extension_list_then_home() {
+        setAppContent(backNavigationTestAppContainer())
+        startAndReachHome()
+
+        composeRule.onNodeWithTag("home-open-pack").performClick()
+        advanceUntilTagEnabled("pack-extension-enter-astronomes-en-herbe", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").performClick()
+        advanceUntilTagEnabled("pack-booster-0", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("pack-booster-0").assertIsDisplayed()
+
+        composeRule.onNodeWithTag("pack-back").performClick()
+        advanceUntilTagGone("pack-booster-0", timeoutMillis = 10_000)
+        advanceUntilTagDisplayed("pack-extension-enter-astronomes-en-herbe", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").assertIsDisplayed()
+
+        composeRule.onNodeWithTag("pack-back").performClick()
+        advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
     }
 
     @Test
@@ -145,6 +223,22 @@ class DstcgAppBackNavigationTest {
         pressAndroidBack()
         advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
+    }
+
+    @Test
+    fun visible_close_from_pack_opening_returns_to_home() {
+        setAppContent(backNavigationTestAppContainer())
+        startAndReachHome()
+
+        composeRule.onNodeWithTag("home-open-pack").performClick()
+        advanceUntilTagEnabled("pack-extension-enter-astronomes-en-herbe", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").performClick()
+        advanceUntilTagEnabled("pack-booster-0", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("pack-booster-0").performClick()
+        advanceUntilTagDisplayed("pack-opening-current-card-surface", timeoutMillis = 15_000)
+
+        composeRule.onNodeWithTag("pack-opening-close").performClick()
+        advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
     }
 
     @Test

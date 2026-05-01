@@ -48,16 +48,22 @@ internal fun LibraryScene(
         }
     }
 
-    BackHandler(
-        enabled = !sceneState.transitionLocked &&
-            onboardingStep != NewPlayerOnboardingStep.LearnLibraryVariants,
-    ) {
-        scope.launch { transitions.animateLibraryToHome() }
+    val libraryBackVisible = onboardingStep != NewPlayerOnboardingStep.LearnLibraryVariants
+    val libraryBackAllowed = libraryBackVisible && !sceneState.transitionLocked
+    val navigateBackToHome: () -> Unit = {
+        if (libraryBackAllowed) {
+            scope.launch { transitions.animateLibraryToHome() }
+        }
+    }
+
+    BackHandler(enabled = libraryBackAllowed) {
+        navigateBackToHome()
     }
 
     LibraryScreen(
         state = uiState,
         onRefresh = libraryViewModel::refresh,
+        onBack = if (libraryBackVisible) navigateBackToHome else null,
         onOpenTrade = { candidate ->
             if (onboardingStep != NewPlayerOnboardingStep.LearnLibraryVariants) {
                 selectedTradeCandidate.value = candidate

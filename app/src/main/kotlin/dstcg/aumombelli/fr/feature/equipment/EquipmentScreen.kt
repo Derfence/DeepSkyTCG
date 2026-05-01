@@ -41,6 +41,7 @@ fun EquipmentScreen(
     onOnboardingActivationBoundsChanged: (Rect?) -> Unit = {},
     onOnboardingActivationScrollHintChanged: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier,
+    onBack: (() -> Unit)? = null,
 ) {
     val cardsById = remember(state.sections) {
         state.sections
@@ -134,6 +135,7 @@ fun EquipmentScreen(
                 EquipmentHeader(
                     errorMessage = state.errorMessage,
                     onRefresh = onRefresh,
+                    onBack = onBack,
                 )
             }
 

@@ -37,13 +37,21 @@ internal fun BadgeBookScene(
         }
     }
 
-    BackHandler(enabled = !sceneState.transitionLocked) {
-        scope.launch { transitions.animateBadgeBookToHome() }
+    val badgeBookBackAllowed = !sceneState.transitionLocked
+    val navigateBackToHome: () -> Unit = {
+        if (badgeBookBackAllowed) {
+            scope.launch { transitions.animateBadgeBookToHome() }
+        }
+    }
+
+    BackHandler(enabled = badgeBookBackAllowed) {
+        navigateBackToHome()
     }
 
     BadgeBookScreen(
         state = uiState,
         onRefresh = badgeBookViewModel::refresh,
+        onBack = navigateBackToHome,
         contentVisible = sceneState.badgeBookContentVisible,
     )
 }

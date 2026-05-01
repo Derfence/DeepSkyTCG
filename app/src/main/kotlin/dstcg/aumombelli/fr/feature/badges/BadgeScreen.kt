@@ -42,6 +42,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import fr.aumombelli.dstcg.ui.component.SceneNavigationButton
+import fr.aumombelli.dstcg.ui.component.SceneNavigationIcon
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
 import kotlinx.coroutines.delay
 
@@ -50,6 +52,7 @@ fun BadgeBookScreen(
     state: BadgeBookUiState,
     onRefresh: () -> Unit,
     contentVisible: Boolean = true,
+    onBack: (() -> Unit)? = null,
 ) {
     val contentAlpha by animateFloatAsState(
         targetValue = if (contentVisible) 1f else 0f,
@@ -113,12 +116,26 @@ fun BadgeBookScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text(
-                        text = "Carnet de badges",
-                        color = Color.White,
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        onBack?.let { back ->
+                            SceneNavigationButton(
+                                icon = SceneNavigationIcon.Back,
+                                onClick = back,
+                                contentDescription = "Retour",
+                                testTag = "badge-book-back",
+                            )
+                        }
+                        Text(
+                            text = "Carnet de badges",
+                            color = Color.White,
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
                     if (state.errorMessage != null) {
                         Button(
                             onClick = onRefresh,

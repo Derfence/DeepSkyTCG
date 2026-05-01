@@ -22,6 +22,7 @@ import fr.aumombelli.dstcg.ui.screen.LibraryScreen
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.viewmodel.LibraryUiState
 import kotlin.math.abs
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -29,6 +30,24 @@ import org.junit.Test
 class LibraryScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun back_button_is_visible_only_with_callback_and_invokes_it() {
+        var backClicks = 0
+
+        composeRule.setContent {
+            LibraryScreen(
+                state = LibraryUiState(isLoading = false),
+                onRefresh = {},
+                onBack = { backClicks += 1 },
+            )
+        }
+
+        composeRule.onNodeWithTag("library-back").assertIsDisplayed()
+        composeRule.onNodeWithTag("library-back").performClick()
+
+        assertEquals(1, backClicks)
+    }
 
     @Test
     fun owned_card_opens_preview_then_fullscreen_and_returns_to_library() {

@@ -44,6 +44,30 @@ class PackSelectionScreenTest {
     val composeRule = createComposeRule()
 
     @Test
+    fun back_button_is_visible_only_with_callback_and_invokes_it() {
+        var backClicks = 0
+
+        composeRule.setContent {
+            PackSelectionScreen(
+                state = PackSelectionUiState(isLoading = false),
+                onRefresh = {},
+                onSelectExtension = {},
+                onSelectBooster = {},
+                onOpenPack = {},
+                onPackRevealReady = {},
+                packReadySignal = 0,
+                showBackground = false,
+                onBack = { backClicks += 1 },
+            )
+        }
+
+        composeRule.onNodeWithTag("pack-back").assertIsDisplayed()
+        composeRule.onNodeWithTag("pack-back").performClick()
+
+        assertEquals(1, backClicks)
+    }
+
+    @Test
     fun selected_extension_draws_constellation_and_centers_chosen_booster_before_reveal() {
         var packReadySignal by mutableIntStateOf(0)
         var revealReady = false

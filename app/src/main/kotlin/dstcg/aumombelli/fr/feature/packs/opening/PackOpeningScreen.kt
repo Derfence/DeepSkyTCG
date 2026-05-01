@@ -43,6 +43,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.performance.LocalAppPerformanceProfile
+import fr.aumombelli.dstcg.ui.component.SceneNavigationButton
+import fr.aumombelli.dstcg.ui.component.SceneNavigationIcon
 import fr.aumombelli.dstcg.ui.motion.PackRevealBounds
 import fr.aumombelli.dstcg.ui.motion.RarityBurstOverlay
 import fr.aumombelli.dstcg.ui.motion.HolographicArrivalCelebrationOverlay
@@ -69,6 +71,7 @@ fun PackOpeningScreen(
     initialBoosterBounds: PackRevealBounds? = null,
     initialBoosterDecorSeed: Any? = Unit,
     modifier: Modifier = Modifier,
+    onDismissRequest: (() -> Unit)? = null,
 ) {
     val packResult = state.packResult
     val displayCards = state.displayCards
@@ -546,6 +549,21 @@ fun PackOpeningScreen(
             progress = burstProgress.value,
             originBounds = null,
         )
+
+        if (cardsVisible && revealItems.isNotEmpty()) {
+            onDismissRequest?.let { dismiss ->
+                SceneNavigationButton(
+                    icon = SceneNavigationIcon.Close,
+                    onClick = dismiss,
+                    contentDescription = "Fermer",
+                    testTag = "pack-opening-close",
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .dstcgContentInsetsPadding()
+                        .padding(top = 8.dp, end = 8.dp),
+                )
+            }
+        }
 
         val fullscreenCard = fullscreenPage
             ?.let(revealItems::getOrNull)

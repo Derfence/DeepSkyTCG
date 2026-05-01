@@ -8,10 +8,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +26,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.key
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -40,6 +44,8 @@ import fr.aumombelli.dstcg.feature.packs.opening.PackOpeningRevealSlotProbe
 import fr.aumombelli.dstcg.performance.LocalAppPerformanceProfile
 import fr.aumombelli.dstcg.ui.motion.MotionCard
 import fr.aumombelli.dstcg.ui.motion.PackRevealBounds
+import fr.aumombelli.dstcg.ui.component.SceneNavigationButton
+import fr.aumombelli.dstcg.ui.component.SceneNavigationIcon
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
 import kotlinx.coroutines.delay
 import kotlin.math.roundToLong
@@ -61,6 +67,8 @@ fun PackSelectionScreen(
     extensionListVisible: Boolean = true,
     interactionsEnabled: Boolean = true,
     backgroundOnly: Boolean = false,
+    reserveBackButtonSpace: Boolean = false,
+    onBack: (() -> Unit)? = null,
 ) {
     val performanceProfile = LocalAppPerformanceProfile.current
     val shouldTickChargeStatus = state.rechargeState.availableDrawCount < state.maxStoredDraws
@@ -248,17 +256,35 @@ fun PackSelectionScreen(
                     .dstcgContentInsetsPadding(includeBottom = true)
                     .padding(16.dp),
             ) {
-                Text(
-                    text = "Ouvrir un pack",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    modifier = Modifier
-                        .graphicsLayer {
-                            alpha = stageTextAlpha
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.graphicsLayer {
+                        alpha = stageTextAlpha
+                    },
+                ) {
+                    onBack?.let { back ->
+                        key(state.selectedExtensionId) {
+                            SceneNavigationButton(
+                                icon = SceneNavigationIcon.Back,
+                                onClick = back,
+                                contentDescription = "Retour",
+                                testTag = "pack-back",
+                            )
                         }
-                        .testTag("pack-title"),
-                )
+                    } ?: run {
+                        if (reserveBackButtonSpace) {
+                            Spacer(modifier = Modifier.size(48.dp))
+                        }
+                    }
+                    Text(
+                        text = "Ouvrir un pack",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        modifier = Modifier.testTag("pack-title"),
+                    )
+                }
 
                 PackChargeStatus(
                     availableDrawCount = liveChargeStatus.availableDrawCount,

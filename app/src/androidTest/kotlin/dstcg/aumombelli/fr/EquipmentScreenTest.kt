@@ -27,6 +27,7 @@ import fr.aumombelli.dstcg.feature.equipment.EquipmentSectionUi
 import fr.aumombelli.dstcg.feature.equipment.EquipmentUiState
 import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.ui.screen.EquipmentScreen
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -35,6 +36,25 @@ import org.junit.Test
 class EquipmentScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun back_button_is_visible_only_with_callback_and_invokes_it() {
+        var backClicks = 0
+
+        composeRule.setContent {
+            EquipmentScreen(
+                state = EquipmentUiState(isLoading = false),
+                onRefresh = {},
+                onActivateEquipment = {},
+                onBack = { backClicks += 1 },
+            )
+        }
+
+        composeRule.onNodeWithTag("equipment-back").assertIsDisplayed()
+        composeRule.onNodeWithTag("equipment-back").performClick()
+
+        assertEquals(1, backClicks)
+    }
 
     @Test
     fun equipment_screen_renders_visual_sections_and_active_summary() {
@@ -365,8 +385,13 @@ class EquipmentScreenTest {
             )
         }
 
-        composeRule.onNodeWithTag("equipment-card-icon-observatory-active").assertIsDisplayed()
-        composeRule.onNodeWithTag("equipment-card-active-indicator-observatory-active").assertIsDisplayed()
+        composeRule.onNodeWithTag("equipment-list")
+            .performScrollToNode(hasTestTag("equipment-section-observatory"))
+        composeRule.onNodeWithTag("equipment-cards-observatory").performScrollToIndex(0)
+        composeRule.onAllNodesWithTag("equipment-card-icon-observatory-active", useUnmergedTree = true)
+            .assertCountEquals(1)
+        composeRule.onAllNodesWithTag("equipment-card-active-indicator-observatory-active", useUnmergedTree = true)
+            .assertCountEquals(1)
     }
 
     @Test

@@ -23,6 +23,26 @@ class BadgeBookScreenTest {
     val composeRule = createComposeRule()
 
     @Test
+    fun back_button_is_visible_only_with_callback_and_invokes_it() {
+        var backClicks = 0
+
+        composeRule.setContent {
+            DstcgTheme {
+                BadgeBookScreen(
+                    state = BadgeBookUiState(isLoading = false),
+                    onRefresh = {},
+                    onBack = { backClicks += 1 },
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("badge-book-back").assertIsDisplayed()
+        composeRule.onNodeWithTag("badge-book-back").performClick()
+
+        assertEquals(1, backClicks)
+    }
+
+    @Test
     fun clicking_a_badge_opens_detail_with_progress_and_description() {
         composeRule.mainClock.autoAdvance = false
         composeRule.setContent {

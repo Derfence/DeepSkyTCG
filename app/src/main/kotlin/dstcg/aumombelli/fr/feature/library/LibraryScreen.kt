@@ -30,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -44,6 +45,8 @@ import fr.aumombelli.dstcg.model.firstTradeableVariant
 import fr.aumombelli.dstcg.model.hasTradeableVariant
 import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.ui.component.AstroCardThumbnail
+import fr.aumombelli.dstcg.ui.component.SceneNavigationButton
+import fr.aumombelli.dstcg.ui.component.SceneNavigationIcon
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
 import kotlinx.coroutines.delay
 
@@ -58,6 +61,7 @@ fun LibraryScreen(
     onOnboardingHintConsumed: () -> Unit = {},
     showOnboardingVariantWalkthrough: Boolean = false,
     onOnboardingVariantWalkthroughCompleted: () -> Unit = {},
+    onBack: (() -> Unit)? = null,
 ) {
     val contentAlpha by animateFloatAsState(
         targetValue = if (contentVisible) 1f else 0f,
@@ -132,14 +136,29 @@ fun LibraryScreen(
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth(),
                     ) {
-                        Text(
-                            text = "Bibliothèque",
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                        )
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f),
+                        ) {
+                            onBack?.let { back ->
+                                SceneNavigationButton(
+                                    icon = SceneNavigationIcon.Back,
+                                    onClick = back,
+                                    contentDescription = "Retour",
+                                    testTag = "library-back",
+                                )
+                            }
+                            Text(
+                                text = "Bibliothèque",
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                            )
+                        }
                         FilterChip(
                             selected = showExchangeableOnly,
                             onClick = { showExchangeableOnly = !showExchangeableOnly },

@@ -14,10 +14,12 @@ fun LibraryScreen(
     onOnboardingHintConsumed: () -> Unit = {},
     showOnboardingVariantWalkthrough: Boolean = false,
     onOnboardingVariantWalkthroughCompleted: () -> Unit = {},
+    onBack: (() -> Unit)? = null,
 ) {
     LibraryFeatureScreen(
         state = state,
         onRefresh = onRefresh,
+        onBack = onBack,
         contentVisible = contentVisible,
         interactionsEnabled = interactionsEnabled,
         showOnboardingHint = showOnboardingHint,

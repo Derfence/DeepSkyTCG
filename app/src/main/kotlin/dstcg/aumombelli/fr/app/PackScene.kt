@@ -69,21 +69,33 @@ internal fun PackScene(
         }
     }
 
-    if (sceneState.currentScene == AppScene.PackSelection) {
-        BackHandler(
-            enabled = !sceneState.transitionLocked &&
-                !uiState.isAwaitingPackResult &&
-                NewPlayerOnboardingInteractionPolicy.allowsPackSelectionBack(onboardingStep),
-        ) {
-            if (uiState.selectedExtensionId != null) {
+    val packSelectionBackVisible = sceneState.currentScene == AppScene.PackSelection &&
+        NewPlayerOnboardingInteractionPolicy.allowsPackSelectionBack(onboardingStep)
+    val packSelectionBackAllowed = packSelectionBackVisible &&
+        !sceneState.transitionLocked &&
+        !uiState.isAwaitingPackResult
+    val navigateBackFromPackSelection: () -> Unit = {
+        if (packSelectionBackAllowed) {
+            if (packViewModel.uiState.value.selectedExtensionId != null) {
                 packViewModel.clearExtensionSelection()
             } else {
                 scope.launch { transitions.animatePackSelectionToHome() }
             }
         }
+    }
+    val packOpeningDismissAllowed = sceneState.currentScene == AppScene.PackOpening &&
+        sceneState.packOpeningExitSignal == 0
+    val requestPackOpeningExit: () -> Unit = {
+        updateSceneState { it.requestPackOpeningExit() }
+    }
+
+    if (sceneState.currentScene == AppScene.PackSelection) {
+        BackHandler(enabled = packSelectionBackAllowed) {
+            navigateBackFromPackSelection()
+        }
     } else {
-        BackHandler(enabled = sceneState.packOpeningExitSignal == 0) {
-            updateSceneState { it.requestPackOpeningExit() }
+        BackHandler(enabled = packOpeningDismissAllowed) {
+            requestPackOpeningExit()
         }
     }
 
@@ -128,6 +140,7 @@ internal fun PackScene(
                 sceneState.packExtensionListVisible,
             interactionsEnabled = !sceneState.transitionLocked && sceneState.currentScene == AppScene.PackSelection,
             backgroundOnly = sceneState.currentScene == AppScene.PackOpening,
+            onBack = if (packSelectionBackVisible) navigateBackFromPackSelection else null,
         )
     }
 
@@ -153,6 +166,7 @@ internal fun PackScene(
             showPersistentDismissHint = showPersistentDismissHint,
             initialBoosterBounds = sceneState.selectedPackRevealBounds,
             initialBoosterDecorSeed = uiState.selectedBoosterIndex,
+            onDismissRequest = if (packOpeningDismissAllowed) requestPackOpeningExit else null,
             dismissSignal = sceneState.packOpeningExitSignal,
             onDone = {
                 scope.launch { transitions.finishPackOpeningToHome() }

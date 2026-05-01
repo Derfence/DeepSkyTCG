@@ -52,6 +52,51 @@ class PackOpeningScreenTest {
     val composeRule = createComposeRule()
 
     @Test
+    fun close_button_waits_for_first_card_and_invokes_callback() {
+        val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
+        val packResult = DrawPackResponse.fromCards(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
+            cards = listOf(testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox")),
+        )
+        var dismissClicks = 0
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackOpeningScreen(
+                state = PackOpeningUiState(
+                    packResult = packResult,
+                    displayCards = listOf(
+                        firstCard.toDisplayCard(
+                            extensionName = "Astronomes en herbe",
+                            activeVariant = packResult.cards[0].variant.toDisplayVariant(),
+                        ),
+                    ),
+                ),
+                onDone = {},
+                onDismissRequest = { dismissClicks += 1 },
+            )
+        }
+
+        composeRule.mainClock.advanceTimeBy(PACK_OPENING_INITIAL_BOOSTER_ASSERTION_MS)
+        composeRule.runOnIdle { }
+        composeRule.onAllNodesWithTag("pack-opening-close").assertCountEquals(0)
+
+        composeRule.mainClock.advanceTimeBy(
+            PACK_OPENING_REVEAL_SETTLE_MS - PACK_OPENING_INITIAL_BOOSTER_ASSERTION_MS,
+        )
+        composeRule.runOnIdle { }
+        composeRule.onNodeWithTag("pack-opening-close").assertIsDisplayed()
+        composeRule.onNodeWithTag("pack-opening-close").performClick()
+
+        assertEquals(1, dismissClicks)
+    }
+
+    @Test
     fun pack_opening_reveals_cards_supports_swipe_and_fullscreen() {
         val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
         val secondCard = testCardDefinition("ALP-002", name = "Galaxie d'Andromede")

@@ -60,16 +60,22 @@ internal fun EquipmentScene(
         }
     }
 
-    BackHandler(
-        enabled = !sceneState.transitionLocked &&
-            NewPlayerOnboardingInteractionPolicy.allowsEquipmentBack(onboardingStep),
-    ) {
-        scope.launch { transitions.animateEquipmentToHome() }
+    val equipmentBackVisible = NewPlayerOnboardingInteractionPolicy.allowsEquipmentBack(onboardingStep)
+    val equipmentBackAllowed = equipmentBackVisible && !sceneState.transitionLocked
+    val navigateBackToHome: () -> Unit = {
+        if (equipmentBackAllowed) {
+            scope.launch { transitions.animateEquipmentToHome() }
+        }
+    }
+
+    BackHandler(enabled = equipmentBackAllowed) {
+        navigateBackToHome()
     }
 
     EquipmentScreen(
         state = uiState,
         onRefresh = equipmentViewModel::refresh,
+        onBack = if (equipmentBackVisible) navigateBackToHome else null,
         onActivateEquipment = { cardId ->
             if (NewPlayerOnboardingInteractionPolicy.allowsEquipmentActivation(onboardingStep)) {
                 equipmentViewModel.activateEquipment(cardId)

@@ -26,22 +26,39 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import fr.aumombelli.dstcg.ui.component.SceneNavigationButton
+import fr.aumombelli.dstcg.ui.component.SceneNavigationIcon
 
 @Composable
 internal fun EquipmentHeader(
     errorMessage: String?,
     onRefresh: () -> Unit,
+    onBack: (() -> Unit)? = null,
 ) {
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = Modifier.fillMaxWidth(),
     ) {
-        Text(
-            text = "Equipements",
-            color = Color.White,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-        )
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            onBack?.let { back ->
+                SceneNavigationButton(
+                    icon = SceneNavigationIcon.Back,
+                    onClick = back,
+                    contentDescription = "Retour",
+                    testTag = "equipment-back",
+                )
+            }
+            Text(
+                text = "Equipements",
+                color = Color.White,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+            )
+        }
         Text(
             text = "Chaque categorie agit comme un module specialise. Active une carte pour influencer les prochains packs, un type a la fois.",
             color = Color(0xFFD0E0F2),
