@@ -1,6 +1,7 @@
 package fr.aumombelli.dstcg.data
 
 import android.content.Context
+import fr.aumombelli.dstcg.model.AstronomyDetails
 import fr.aumombelli.dstcg.model.CardDefinition
 import fr.aumombelli.dstcg.model.EquipmentCardDefinition
 import fr.aumombelli.dstcg.model.EquipmentSettingsDefinition
@@ -10,13 +11,27 @@ import fr.aumombelli.dstcg.model.VariantProfile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.modules.subclass
 
 class GameCatalogRepository(
     private val context: Context,
 ) : CatalogGateway {
+    private val astronomyDetailsSerializersModule = SerializersModule {
+        polymorphic(AstronomyDetails::class) {
+            subclass(fr.aumombelli.dstcg.model.DeepSkyDetails::class)
+            subclass(fr.aumombelli.dstcg.model.StarDetails::class)
+            subclass(fr.aumombelli.dstcg.model.ConstellationDetails::class)
+            subclass(fr.aumombelli.dstcg.model.SkyEventDetails::class)
+            subclass(fr.aumombelli.dstcg.model.SolarSystemDetails::class)
+        }
+    }
+
     private val json = Json {
         ignoreUnknownKeys = true
         classDiscriminator = "detailType"
+        serializersModule = astronomyDetailsSerializersModule
     }
     @Volatile
     private var extensionsCache: List<ExtensionDefinition>? = null

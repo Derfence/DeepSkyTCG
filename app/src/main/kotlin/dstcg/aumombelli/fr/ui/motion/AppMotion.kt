@@ -51,6 +51,7 @@ enum class AppScene {
 enum class ExtensionAnimationStyle {
     NeutralSky,
     BigDipper,
+    Planet,
 }
 
 data class FractionalPoint(
@@ -339,6 +340,35 @@ fun extensionAnimationSpec(extensionId: String): ExtensionAnimationSpec = when (
             4 to 5,
             5 to 6,
             6 to 3,
+        ),
+    )
+    "systeme-solaire" -> ExtensionAnimationSpec(
+        style = ExtensionAnimationStyle.Planet,
+        starPattern = listOf(
+            FractionalPoint(0.090f, 0.545f), // Pointe gauche de l’anneau
+            FractionalPoint(0.260f, 0.355f), // Anneau haut-gauche
+            FractionalPoint(0.470f, 0.245f), // Haut de la planète
+            FractionalPoint(0.735f, 0.285f), // Anneau haut-droit
+            FractionalPoint(0.940f, 0.445f), // Pointe droite de l’anneau
+            FractionalPoint(0.790f, 0.645f), // Anneau bas-droit
+            FractionalPoint(0.555f, 0.815f), // Bas de la planète
+            FractionalPoint(0.285f, 0.735f), // Anneau bas-gauche
+            FractionalPoint(0.355f, 0.470f), // Bord gauche du noyau
+            FractionalPoint(0.665f, 0.545f), // Bord droit du noyau
+        ),
+        lineConnections = listOf(
+            0 to 1,
+            1 to 2,
+            2 to 3,
+            3 to 4,
+            4 to 5,
+            5 to 6,
+            6 to 7,
+            7 to 0,
+            8 to 2,
+            2 to 9,
+            9 to 6,
+            6 to 8,
         ),
     )
     else -> ExtensionAnimationSpec(style = ExtensionAnimationStyle.NeutralSky)

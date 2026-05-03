@@ -62,6 +62,13 @@ fun AnimatedExtensionPackCard(
                 )
             }
 
+            ExtensionAnimationStyle.Planet -> {
+                lineProgress.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
+                )
+            }
+
             ExtensionAnimationStyle.NeutralSky -> {
                 neutralProgress.animateTo(
                     targetValue = 1f,
@@ -73,6 +80,7 @@ fun AnimatedExtensionPackCard(
 
     val revealProgress = revealProgressOverride ?: when (spec.style) {
         ExtensionAnimationStyle.BigDipper -> lineProgress.value
+        ExtensionAnimationStyle.Planet -> lineProgress.value
         ExtensionAnimationStyle.NeutralSky -> neutralProgress.value
     }
 
@@ -138,7 +146,7 @@ private fun AnimatedExtensionPackCardContent(
             modifier = Modifier.fillMaxSize(),
         )
 
-        if (spec.style == ExtensionAnimationStyle.BigDipper) {
+        if (spec.style == ExtensionAnimationStyle.BigDipper || spec.style == ExtensionAnimationStyle.Planet) {
             ExtensionConstellationOverlay(
                 spec = spec,
                 lineProgress = lineProgress,

@@ -102,3 +102,11 @@ data class ConstellationDetails(
 data class SkyEventDetails(
     val visualSize: VisualSize? = null,
 ) : AstronomyDetails()
+
+@Serializable
+@SerialName("solar_system")
+data class SolarSystemDetails(
+    val distance: LightYearMeasurement? = null,
+    val realSize: LightYearMeasurement? = null,
+    val absoluteMagnitude: AbsoluteMagnitudeMeasurement? = null,
+) : AstronomyDetails()

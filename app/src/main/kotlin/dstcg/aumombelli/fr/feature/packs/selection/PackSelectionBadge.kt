@@ -48,6 +48,12 @@ internal fun ExtensionAnimatedBadge(
                     animationSpec = tween(durationMillis = 520, easing = FastOutSlowInEasing),
                 )
             }
+            ExtensionAnimationStyle.Planet -> {
+                lineProgress.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(durationMillis = 520, easing = FastOutSlowInEasing),
+                )
+            }
             ExtensionAnimationStyle.NeutralSky -> {
                 emblemAlpha.animateTo(
                     targetValue = 1f,
@@ -61,7 +67,7 @@ internal fun ExtensionAnimatedBadge(
         contentAlignment = Alignment.Center,
         modifier = modifier,
     ) {
-        if (spec.style == ExtensionAnimationStyle.BigDipper) {
+        if (spec.style == ExtensionAnimationStyle.BigDipper || spec.style == ExtensionAnimationStyle.Planet) {
             Canvas(
                 modifier = Modifier.fillMaxSize(),
             ) {

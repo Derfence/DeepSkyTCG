@@ -1422,7 +1422,7 @@
     "id": "aeh-mira",
     "extensionId": "astronomes-en-herbe",
     "name": "Mira",
-    "rarityLabel": "Rare",
+    "rarityLabel": "Uncommon",
     "cardRarityMultiplier": 1,
     "imageRef": "mira",
     "variantProfileId": "observation-default",
@@ -1482,7 +1482,7 @@
     "id": "aeh-ngc7000",
     "extensionId": "astronomes-en-herbe",
     "name": "Nébuleuse de l'Amerique du Nord",
-    "rarityLabel": "Rare",
+    "rarityLabel": "Uncommon",
     "cardRarityMultiplier": 1,
     "imageRef": "ngc7000_north_america",
     "variantProfileId": "observation-default",
@@ -1708,6 +1708,1419 @@
           "angularHeight": { "degrees": 8, "arcMinutes": 0, "arcSeconds": 0, "label": "8°00′00″" },
           "label": "23,23 × 15,48 (12°00′00″ × 8°00′00″)"
         }
+      }
+    }
+  },
+  {
+    "id": "ss-mercury",
+    "extensionId": "systeme-solaire",
+    "name": "Mercure",
+    "rarityLabel": "Rare",
+    "cardRarityMultiplier": 1,
+    "imageRef": "planet_mercury",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Mercure",
+      "primaryCatalogName": "Planète",
+      "catalogNumber": "1",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Planète tellurique",
+      "constellation": "Variable",
+      "mainSeason": "Toute l'année",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Plus petite planète du Système solaire et la plus proche du Soleil, Mercure présente de grands écarts de température.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 0.39, "label": "0,39 UA du Soleil" },
+        "realSize": { "lightYears": 4879.0, "label": "4 879 km" },
+        "absoluteMagnitude": { "value": -2.0, "label": "mag. -2,0 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-venus",
+    "extensionId": "systeme-solaire",
+    "name": "Vénus",
+    "rarityLabel": "Rare",
+    "cardRarityMultiplier": 1,
+    "imageRef": "planet_venus",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Vénus",
+      "primaryCatalogName": "Planète",
+      "catalogNumber": "2",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Planète tellurique",
+      "constellation": "Variable",
+      "mainSeason": "Toute l'année",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Planète très brillante au ciel du soir ou du matin, enveloppée d’une épaisse atmosphère riche en dioxyde de carbone.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 0.72, "label": "0,72 UA du Soleil" },
+        "realSize": { "lightYears": 12104.0, "label": "12 104 km" },
+        "absoluteMagnitude": { "value": -4.9, "label": "mag. -4,9 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-earth",
+    "extensionId": "systeme-solaire",
+    "name": "Terre",
+    "rarityLabel": "Epic",
+    "cardRarityMultiplier": 1,
+    "imageRef": "planet_earth",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Terre",
+      "primaryCatalogName": "Planète",
+      "catalogNumber": "3",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Planète tellurique",
+      "constellation": "Variable",
+      "mainSeason": "Toute l'année",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Notre planète, seule connue pour abriter la vie, avec des océans liquides et une atmosphère protectrice.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 1.0, "label": "1 UA du Soleil" },
+        "realSize": { "lightYears": 12742.0, "label": "12 742 km" }
+      }
+    }
+  },
+  {
+    "id": "ss-mars",
+    "extensionId": "systeme-solaire",
+    "name": "Mars",
+    "rarityLabel": "Epic",
+    "cardRarityMultiplier": 1,
+    "imageRef": "planet_mars",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Mars",
+      "primaryCatalogName": "Planète",
+      "catalogNumber": "4",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Planète tellurique",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Planète rouge aux calottes polaires, aux volcans géants et aux traces d’anciens écoulements d’eau.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 1.52, "label": "1,52 UA du Soleil" },
+        "realSize": { "lightYears": 6779.0, "label": "6 779 km" },
+        "absoluteMagnitude": { "value": -2.9, "label": "mag. -2,9 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-jupiter",
+    "extensionId": "systeme-solaire",
+    "name": "Jupiter",
+    "rarityLabel": "Epic",
+    "cardRarityMultiplier": 1,
+    "imageRef": "planet_jupiter",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Jupiter",
+      "primaryCatalogName": "Planète",
+      "catalogNumber": "5",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Géante gazeuse",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Plus grande planète du Système solaire, Jupiter domine par ses bandes nuageuses et ses nombreux satellites.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 5.2, "label": "5,2 UA du Soleil" },
+        "realSize": { "lightYears": 139820.0, "label": "139 820 km" },
+        "absoluteMagnitude": { "value": -2.9, "label": "mag. -2,9 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-saturn",
+    "extensionId": "systeme-solaire",
+    "name": "Saturne",
+    "rarityLabel": "Epic",
+    "cardRarityMultiplier": 1,
+    "imageRef": "planet_saturn",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Saturne",
+      "primaryCatalogName": "Planète",
+      "catalogNumber": "6",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Géante gazeuse annelée",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Géante gazeuse célèbre pour son vaste système d’anneaux et ses nombreuses lunes glacées.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 9.58, "label": "9,58 UA du Soleil" },
+        "realSize": { "lightYears": 116460.0, "label": "116 460 km" },
+        "absoluteMagnitude": { "value": -0.5, "label": "mag. -0,5 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-uranus",
+    "extensionId": "systeme-solaire",
+    "name": "Uranus",
+    "rarityLabel": "Rare",
+    "cardRarityMultiplier": 1,
+    "imageRef": "planet_uranus",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Uranus",
+      "primaryCatalogName": "Planète",
+      "catalogNumber": "7",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Géante de glace",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Géante de glace inclinée sur le côté, à l’atmosphère bleu-vert dominée par l’hydrogène, l’hélium et le méthane.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 19.2, "label": "19,2 UA du Soleil" },
+        "realSize": { "lightYears": 50724.0, "label": "50 724 km" },
+        "absoluteMagnitude": { "value": 5.3, "label": "mag. 5,3 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-neptune",
+    "extensionId": "systeme-solaire",
+    "name": "Neptune",
+    "rarityLabel": "Rare",
+    "cardRarityMultiplier": 1,
+    "imageRef": "planet_neptune",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Neptune",
+      "primaryCatalogName": "Planète",
+      "catalogNumber": "8",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Géante de glace",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Planète géante de glace lointaine, connue pour ses vents extrêmement rapides et sa couleur bleue profonde.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 30.06, "label": "30,06 UA du Soleil" },
+        "realSize": { "lightYears": 49244.0, "label": "49 244 km" },
+        "absoluteMagnitude": { "value": 7.7, "label": "mag. 7,7 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-ceres",
+    "extensionId": "systeme-solaire",
+    "name": "Cérès",
+    "rarityLabel": "Common",
+    "cardRarityMultiplier": 1,
+    "imageRef": "dwarf_ceres",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Cérès",
+      "primaryCatalogName": "Planète naine",
+      "catalogNumber": "1",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Planète naine",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Plus grand objet de la ceinture d’astéroïdes, Cérès est une planète naine visitée par la sonde Dawn.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 2.77, "label": "2,77 UA du Soleil" },
+        "realSize": { "lightYears": 940.0, "label": "940 km" },
+        "absoluteMagnitude": { "value": 6.7, "label": "mag. 6,7 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-pluto",
+    "extensionId": "systeme-solaire",
+    "name": "Pluton",
+    "rarityLabel": "Uncommon",
+    "cardRarityMultiplier": 1,
+    "imageRef": "dwarf_pluto",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Pluton",
+      "primaryCatalogName": "Planète naine",
+      "catalogNumber": "2",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Planète naine",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Planète naine glacée de la ceinture de Kuiper, célèbre pour son survol par New Horizons et ses terrains contrastés.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 39.48, "label": "39,48 UA du Soleil" },
+        "realSize": { "lightYears": 2377.0, "label": "2 377 km" },
+        "absoluteMagnitude": { "value": 13.7, "label": "mag. 13,7 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-makemake",
+    "extensionId": "systeme-solaire",
+    "name": "Makémaké",
+    "rarityLabel": "Common",
+    "cardRarityMultiplier": 1,
+    "imageRef": "dwarf_makemake",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Makémaké",
+      "primaryCatalogName": "Planète naine",
+      "catalogNumber": "4",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Planète naine",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Planète naine lointaine de la ceinture de Kuiper, recouverte de glaces très froides riches en méthane.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 45.79, "label": "45,79 UA du Soleil" },
+        "realSize": { "lightYears": 1430.0, "label": "~1 430 km" },
+        "absoluteMagnitude": { "value": 16.7, "label": "mag. 16,7 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-eris",
+    "extensionId": "systeme-solaire",
+    "name": "Éris",
+    "rarityLabel": "Common",
+    "cardRarityMultiplier": 1,
+    "imageRef": "dwarf_eris",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Éris",
+      "primaryCatalogName": "Planète naine",
+      "catalogNumber": "5",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Planète naine",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Planète naine très lointaine dont la découverte a contribué à redéfinir le statut de Pluton.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 67.67, "label": "67,67 UA du Soleil" },
+        "realSize": { "lightYears": 2326.0, "label": "2 326 km" },
+        "absoluteMagnitude": { "value": 18.7, "label": "mag. 18,7 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-moon",
+    "extensionId": "systeme-solaire",
+    "name": "Lune",
+    "rarityLabel": "Epic",
+    "cardRarityMultiplier": 1,
+    "imageRef": "moon_earth",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Lune",
+      "primaryCatalogName": "Satellite",
+      "catalogNumber": "Luna",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Satellite naturel",
+      "constellation": "Variable",
+      "mainSeason": "Toute l'année",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Satellite naturel de la Terre, la Lune rythme les phases visibles et domine le ciel nocturne lorsqu’elle est pleine.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 384400.0, "label": "384 400 km de la Terre" },
+        "realSize": { "lightYears": 3475.0, "label": "3 475 km" },
+        "absoluteMagnitude": { "value": -12.7, "label": "mag. -12,7 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-phobos",
+    "extensionId": "systeme-solaire",
+    "name": "Phobos",
+    "rarityLabel": "Rare",
+    "cardRarityMultiplier": 1,
+    "imageRef": "moon_phobos",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Phobos",
+      "primaryCatalogName": "Satellite",
+      "catalogNumber": "M I",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Satellite naturel martien",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Plus grand des deux satellites de Mars, Phobos orbite très près de la planète rouge.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 9376.0, "label": "9 376 km de Mars" },
+        "realSize": { "lightYears": 22.5, "label": "~22,5 km" },
+        "absoluteMagnitude": { "value": 11.3, "label": "mag. 11,3 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-deimos",
+    "extensionId": "systeme-solaire",
+    "name": "Déimos",
+    "rarityLabel": "Uncommon",
+    "cardRarityMultiplier": 1,
+    "imageRef": "moon_deimos",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Déimos",
+      "primaryCatalogName": "Satellite",
+      "catalogNumber": "M II",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Satellite naturel martien",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Petit satellite externe de Mars, Déimos ressemble à un astéroïde sombre et irrégulier.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 23463.0, "label": "23 463 km de Mars" },
+        "realSize": { "lightYears": 12.4, "label": "~12,4 km" },
+        "absoluteMagnitude": { "value": 12.4, "label": "mag. 12,4 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-io",
+    "extensionId": "systeme-solaire",
+    "name": "Io",
+    "rarityLabel": "Rare",
+    "cardRarityMultiplier": 1,
+    "imageRef": "moon_io",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Io",
+      "primaryCatalogName": "Satellite",
+      "catalogNumber": "J I",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Satellite galiléen",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Lune galiléenne très volcanique, Io est sans doute le monde le plus actif géologiquement du Système solaire.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 421700.0, "label": "421 700 km de Jupiter" },
+        "realSize": { "lightYears": 3643.0, "label": "3 643 km" },
+        "absoluteMagnitude": { "value": 5.0, "label": "mag. 5,0 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-europa",
+    "extensionId": "systeme-solaire",
+    "name": "Europe",
+    "rarityLabel": "Rare",
+    "cardRarityMultiplier": 1,
+    "imageRef": "moon_europa",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Europe",
+      "primaryCatalogName": "Satellite",
+      "catalogNumber": "J II",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Satellite galiléen",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Lune galiléenne glacée, Europe pourrait abriter un océan liquide sous sa croûte de glace.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 671100.0, "label": "671 100 km de Jupiter" },
+        "realSize": { "lightYears": 3122.0, "label": "3 122 km" },
+        "absoluteMagnitude": { "value": 5.3, "label": "mag. 5,3 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-ganymede",
+    "extensionId": "systeme-solaire",
+    "name": "Ganymède",
+    "rarityLabel": "Uncommon",
+    "cardRarityMultiplier": 1,
+    "imageRef": "moon_ganymede",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Ganymède",
+      "primaryCatalogName": "Satellite",
+      "catalogNumber": "J III",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Satellite galiléen",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Plus grande lune du Système solaire, Ganymède est même plus grande que la planète Mercure.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 1070400.0, "label": "1 070 400 km de Jupiter" },
+        "realSize": { "lightYears": 5268.0, "label": "5 268 km" },
+        "absoluteMagnitude": { "value": 4.6, "label": "mag. 4,6 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-callisto",
+    "extensionId": "systeme-solaire",
+    "name": "Callisto",
+    "rarityLabel": "Uncommon",
+    "cardRarityMultiplier": 1,
+    "imageRef": "moon_callisto",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Callisto",
+      "primaryCatalogName": "Satellite",
+      "catalogNumber": "J IV",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Satellite galiléen",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Lune galiléenne très cratérisée, Callisto conserve une surface ancienne marquée par les impacts.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 1882700.0, "label": "1 882 700 km de Jupiter" },
+        "realSize": { "lightYears": 4821.0, "label": "4 821 km" },
+        "absoluteMagnitude": { "value": 5.7, "label": "mag. 5,7 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-titan",
+    "extensionId": "systeme-solaire",
+    "name": "Titan",
+    "rarityLabel": "Rare",
+    "cardRarityMultiplier": 1,
+    "imageRef": "moon_titan",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Titan",
+      "primaryCatalogName": "Satellite",
+      "catalogNumber": "S VI",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Satellite naturel",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Plus grande lune de Saturne, Titan possède une atmosphère dense et des lacs d’hydrocarbures.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 1221870.0, "label": "1 221 870 km de Saturne" },
+        "realSize": { "lightYears": 5150.0, "label": "5 150 km" },
+        "absoluteMagnitude": { "value": 8.2, "label": "mag. 8,2 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-enceladus",
+    "extensionId": "systeme-solaire",
+    "name": "Encelade",
+    "rarityLabel": "Uncommon",
+    "cardRarityMultiplier": 1,
+    "imageRef": "moon_enceladus",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Encelade",
+      "primaryCatalogName": "Satellite",
+      "catalogNumber": "S II",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Satellite naturel",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Petite lune glacée de Saturne, Encelade projette des panaches issus d’un océan souterrain probable.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 237948.0, "label": "237 948 km de Saturne" },
+        "realSize": { "lightYears": 504.0, "label": "504 km" },
+        "absoluteMagnitude": { "value": 11.7, "label": "mag. 11,7 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-mimas",
+    "extensionId": "systeme-solaire",
+    "name": "Mimas",
+    "rarityLabel": "Common",
+    "cardRarityMultiplier": 1,
+    "imageRef": "moon_mimas",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Mimas",
+      "primaryCatalogName": "Satellite",
+      "catalogNumber": "S I",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Satellite naturel",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Lune de Saturne reconnaissable à son immense cratère Herschel, qui lui donne un aspect très marqué.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 185539.0, "label": "185 539 km de Saturne" },
+        "realSize": { "lightYears": 396.0, "label": "396 km" },
+        "absoluteMagnitude": { "value": 12.9, "label": "mag. 12,9 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-rhea",
+    "extensionId": "systeme-solaire",
+    "name": "Rhéa",
+    "rarityLabel": "Common",
+    "cardRarityMultiplier": 1,
+    "imageRef": "moon_rhea",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Rhéa",
+      "primaryCatalogName": "Satellite",
+      "catalogNumber": "S V",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Satellite naturel",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Deuxième plus grande lune de Saturne, Rhéa est un monde glacé et fortement cratérisé.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 527108.0, "label": "527 108 km de Saturne" },
+        "realSize": { "lightYears": 1528.0, "label": "1 528 km" },
+        "absoluteMagnitude": { "value": 9.7, "label": "mag. 9,7 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-dione",
+    "extensionId": "systeme-solaire",
+    "name": "Dioné",
+    "rarityLabel": "Common",
+    "cardRarityMultiplier": 1,
+    "imageRef": "moon_dione",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Dioné",
+      "primaryCatalogName": "Satellite",
+      "catalogNumber": "S IV",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Satellite naturel",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Lune glacée de Saturne, Dioné montre des falaises claires et une surface marquée par de nombreux impacts.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 377400.0, "label": "377 400 km de Saturne" },
+        "realSize": { "lightYears": 1123.0, "label": "1 123 km" },
+        "absoluteMagnitude": { "value": 10.4, "label": "mag. 10,4 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-tethys",
+    "extensionId": "systeme-solaire",
+    "name": "Téthys",
+    "rarityLabel": "Common",
+    "cardRarityMultiplier": 1,
+    "imageRef": "moon_tethys",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Téthys",
+      "primaryCatalogName": "Satellite",
+      "catalogNumber": "S III",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Satellite naturel",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Lune glacée de Saturne, Téthys est dominée par le grand bassin d’impact Odysseus.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 294619.0, "label": "294 619 km de Saturne" },
+        "realSize": { "lightYears": 1062.0, "label": "1 062 km" },
+        "absoluteMagnitude": { "value": 10.2, "label": "mag. 10,2 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-iapetus",
+    "extensionId": "systeme-solaire",
+    "name": "Japet",
+    "rarityLabel": "Common",
+    "cardRarityMultiplier": 1,
+    "imageRef": "moon_iapetus",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Japet",
+      "primaryCatalogName": "Satellite",
+      "catalogNumber": "S VIII",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Satellite naturel",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Lune bicolore de Saturne, Japet possède une face très sombre et une face beaucoup plus claire.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 3560820.0, "label": "3 560 820 km de Saturne" },
+        "realSize": { "lightYears": 1469.0, "label": "1 469 km" },
+        "absoluteMagnitude": { "value": 10.2, "label": "mag. 10,2 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-hyperion",
+    "extensionId": "systeme-solaire",
+    "name": "Hypérion",
+    "rarityLabel": "Common",
+    "cardRarityMultiplier": 1,
+    "imageRef": "moon_hyperion",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Hypérion",
+      "primaryCatalogName": "Satellite",
+      "catalogNumber": "S VII",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Satellite naturel chaotique",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Lune irrégulière de Saturne, Hypérion tourne de manière chaotique et présente une surface poreuse.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 1481100.0, "label": "1 481 100 km de Saturne" },
+        "realSize": { "lightYears": 270.0, "label": "~270 km" },
+        "absoluteMagnitude": { "value": 14.2, "label": "mag. 14,2 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-phoebe",
+    "extensionId": "systeme-solaire",
+    "name": "Phœbé",
+    "rarityLabel": "Common",
+    "cardRarityMultiplier": 1,
+    "imageRef": "moon_phoebe",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Phœbé",
+      "primaryCatalogName": "Satellite",
+      "catalogNumber": "S IX",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Satellite naturel irrégulier",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Satellite irrégulier de Saturne, Phœbé orbite loin de la planète et dans le sens rétrograde.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 12947918.0, "label": "12 947 918 km de Saturne" },
+        "realSize": { "lightYears": 213.0, "label": "~213 km" },
+        "absoluteMagnitude": { "value": 16.5, "label": "mag. 16,5 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-titania",
+    "extensionId": "systeme-solaire",
+    "name": "Titania",
+    "rarityLabel": "Common",
+    "cardRarityMultiplier": 1,
+    "imageRef": "moon_titania",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Titania",
+      "primaryCatalogName": "Satellite",
+      "catalogNumber": "U III",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Satellite naturel",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Plus grande lune d’Uranus, Titania présente des vallées et des fractures sur sa surface glacée.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 435910.0, "label": "435 910 km de Uranus" },
+        "realSize": { "lightYears": 1578.0, "label": "1 578 km" },
+        "absoluteMagnitude": { "value": 13.9, "label": "mag. 13,9 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-ariel",
+    "extensionId": "systeme-solaire",
+    "name": "Ariel",
+    "rarityLabel": "Common",
+    "cardRarityMultiplier": 1,
+    "imageRef": "moon_ariel",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Ariel",
+      "primaryCatalogName": "Satellite",
+      "catalogNumber": "U I",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Satellite naturel",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Lune brillante d’Uranus, Ariel possède des canyons et des terrains relativement jeunes.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 190900.0, "label": "190 900 km de Uranus" },
+        "realSize": { "lightYears": 1158.0, "label": "1 158 km" },
+        "absoluteMagnitude": { "value": 14.2, "label": "mag. 14,2 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-umbriel",
+    "extensionId": "systeme-solaire",
+    "name": "Umbriel",
+    "rarityLabel": "Common",
+    "cardRarityMultiplier": 1,
+    "imageRef": "moon_umbriel",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Umbriel",
+      "primaryCatalogName": "Satellite",
+      "catalogNumber": "U II",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Satellite naturel",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Lune sombre d’Uranus, Umbriel est très cratérisée et moins réfléchissante que ses voisines.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 266000.0, "label": "266 000 km de Uranus" },
+        "realSize": { "lightYears": 1169.0, "label": "1 169 km" },
+        "absoluteMagnitude": { "value": 15.3, "label": "mag. 15,3 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-miranda",
+    "extensionId": "systeme-solaire",
+    "name": "Miranda",
+    "rarityLabel": "Common",
+    "cardRarityMultiplier": 1,
+    "imageRef": "moon_miranda",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Miranda",
+      "primaryCatalogName": "Satellite",
+      "catalogNumber": "U V",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Satellite naturel",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Petite lune d’Uranus, Miranda est célèbre pour ses terrains très contrastés et ses grandes falaises.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 129900.0, "label": "129 900 km de Uranus" },
+        "realSize": { "lightYears": 472.0, "label": "472 km" },
+        "absoluteMagnitude": { "value": 16.6, "label": "mag. 16,6 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-triton",
+    "extensionId": "systeme-solaire",
+    "name": "Triton",
+    "rarityLabel": "Common",
+    "cardRarityMultiplier": 1,
+    "imageRef": "moon_triton",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Triton",
+      "primaryCatalogName": "Satellite",
+      "catalogNumber": "N I",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Satellite naturel",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Grande lune de Neptune, Triton orbite en sens rétrograde et montre des traces d’activité cryovolcanique.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 354759.0, "label": "354 759 km de Neptune" },
+        "realSize": { "lightYears": 2707.0, "label": "2 707 km" },
+        "absoluteMagnitude": { "value": 13.5, "label": "mag. 13,5 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-nereid",
+    "extensionId": "systeme-solaire",
+    "name": "Néréide",
+    "rarityLabel": "Common",
+    "cardRarityMultiplier": 1,
+    "imageRef": "moon_nereid",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Néréide",
+      "primaryCatalogName": "Satellite",
+      "catalogNumber": "N II",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Satellite naturel",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Satellite irrégulier de Neptune, Néréide suit une orbite très allongée autour de la planète.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 5513400.0, "label": "5 513 400 km de Neptune" },
+        "realSize": { "lightYears": 340.0, "label": "~340 km" },
+        "absoluteMagnitude": { "value": 18.7, "label": "mag. 18,7 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-amalthea",
+    "extensionId": "systeme-solaire",
+    "name": "Amalthée",
+    "rarityLabel": "Common",
+    "cardRarityMultiplier": 1,
+    "imageRef": "moon_amalthea",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Amalthée",
+      "primaryCatalogName": "Satellite",
+      "catalogNumber": "J V",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Satellite naturel intérieur",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Petite lune intérieure de Jupiter, Amalthée est rougeâtre et orbite à l’intérieur du système galiléen.",
+      "details": {
+        "detailType": "solar_system",
+        "distance": { "lightYears": 181400.0, "label": "181 400 km de Jupiter" },
+        "realSize": { "lightYears": 167.0, "label": "~167 km" },
+        "absoluteMagnitude": { "value": 14.1, "label": "mag. 14,1 max." }
+      }
+    }
+  },
+  {
+    "id": "ss-great-red-spot",
+    "extensionId": "systeme-solaire",
+    "name": "Grande Tache rouge",
+    "rarityLabel": "Uncommon",
+    "cardRarityMultiplier": 1,
+    "imageRef": "feature_great_red_spot",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Grande Tâche rouge",
+      "primaryCatalogName": "Phénomène",
+      "catalogNumber": "JUP-GRS",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Anticyclone géant",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Immense anticyclone de l’atmosphère de Jupiter, la Grande Tache rouge est observée depuis plusieurs siècles.",
+      "details": {
+        "detailType": "solar_system",
+        "realSize": { "lightYears": 16000.0, "label": "~16 000 km" }
+      }
+    }
+  },
+  {
+    "id": "ss-jupiter-rings",
+    "extensionId": "systeme-solaire",
+    "name": "Anneaux de Jupiter",
+    "rarityLabel": "Uncommon",
+    "cardRarityMultiplier": 1,
+    "imageRef": "feature_jupiter_rings",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Anneaux de Jupiter",
+      "primaryCatalogName": "Phénomène",
+      "catalogNumber": "JUP-RING",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Système d’anneaux",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Système d’anneaux ténus et sombres autour de Jupiter, beaucoup plus discret que les anneaux de Saturne.",
+      "details": {
+        "detailType": "solar_system",
+        "realSize": { "lightYears": 100000.0, "label": "~100 000 km" }
+      }
+    }
+  },
+  {
+    "id": "ss-jupiter-auroras",
+    "extensionId": "systeme-solaire",
+    "name": "Aurores de Jupiter",
+    "rarityLabel": "Rare",
+    "cardRarityMultiplier": 1,
+    "imageRef": "feature_jupiter_auroras",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Aurores de Jupiter",
+      "primaryCatalogName": "Phénomène",
+      "catalogNumber": "JUP-AUR",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Aurores polaires",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Aurores polaires intenses alimentées par le champ magnétique de Jupiter et par son environnement de particules.",
+      "details": {
+        "detailType": "solar_system",
+        "realSize": { "lightYears": 20000.0, "label": "~20 000 km" }
+      }
+    }
+  },
+  {
+    "id": "ss-saturn-auroras",
+    "extensionId": "systeme-solaire",
+    "name": "Aurores de Saturne",
+    "rarityLabel": "Rare",
+    "cardRarityMultiplier": 1,
+    "imageRef": "feature_saturn_auroras",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Aurores de Saturne",
+      "primaryCatalogName": "Phénomène",
+      "catalogNumber": "SAT-AUR",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Aurores polaires",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Aurores polaires de Saturne, produites par l’interaction entre le vent solaire et sa magnétosphère.",
+      "details": {
+        "detailType": "solar_system",
+        "realSize": { "lightYears": 20000.0, "label": "~20 000 km" }
+      }
+    }
+  },
+  {
+    "id": "ss-saturn-hexagon",
+    "extensionId": "systeme-solaire",
+    "name": "Hexagone de Saturne",
+    "rarityLabel": "Common",
+    "cardRarityMultiplier": 1,
+    "imageRef": "feature_saturn_hexagon",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Hexagone de Saturne",
+      "primaryCatalogName": "Phénomène",
+      "catalogNumber": "SAT-HEX",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Structure atmosphérique",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Structure nuageuse hexagonale autour du pôle nord de Saturne, liée à un courant-jet atmosphérique.",
+      "details": {
+        "detailType": "solar_system",
+        "realSize": { "lightYears": 30000.0, "label": "~30 000 km" }
+      }
+    }
+  },
+  {
+    "id": "ss-enceladus-geysers",
+    "extensionId": "systeme-solaire",
+    "name": "Geysers d’Encelade",
+    "rarityLabel": "Uncommon",
+    "cardRarityMultiplier": 1,
+    "imageRef": "feature_enceladus_geysers",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Geysers d’Encelade",
+      "primaryCatalogName": "Phénomène",
+      "catalogNumber": "ENC-GEY",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Panaches cryovolcaniques",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Panaches de glace et de vapeur projetés près du pôle sud d’Encelade, reliés à son océan interne.",
+      "details": {
+        "detailType": "solar_system",
+        "realSize": { "lightYears": 500.0, "label": "~500 km" }
+      }
+    }
+  },
+  {
+    "id": "ss-titan-seas",
+    "extensionId": "systeme-solaire",
+    "name": "Mers de Titan",
+    "rarityLabel": "Common",
+    "cardRarityMultiplier": 1,
+    "imageRef": "feature_titan_seas",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Mers de Titan",
+      "primaryCatalogName": "Phénomène",
+      "catalogNumber": "TIT-SEA",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Mers d’hydrocarbures",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Mers et lacs d’hydrocarbures liquides à la surface de Titan, surtout près de ses régions polaires.",
+      "details": {
+        "detailType": "solar_system",
+        "realSize": { "lightYears": 1170.0, "label": "~1 170 km" }
+      }
+    }
+  },
+  {
+    "id": "ss-olympus-mons",
+    "extensionId": "systeme-solaire",
+    "name": "Olympus Mons",
+    "rarityLabel": "Uncommon",
+    "cardRarityMultiplier": 1,
+    "imageRef": "feature_olympus_mons",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Mont Olympe",
+      "primaryCatalogName": "Relief",
+      "catalogNumber": "MAR-OLY",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Volcan bouclier",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Plus haut volcan connu du Système solaire, Olympus Mons domine la surface martienne.",
+      "details": {
+        "detailType": "solar_system",
+        "realSize": { "lightYears": 600.0, "label": "~600 km" }
+      }
+    }
+  },
+  {
+    "id": "ss-valles-marineris",
+    "extensionId": "systeme-solaire",
+    "name": "Valles Marineris",
+    "rarityLabel": "Common",
+    "cardRarityMultiplier": 1,
+    "imageRef": "feature_valles_marineris",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Valles Marineris",
+      "primaryCatalogName": "Relief",
+      "catalogNumber": "MAR-VAL",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Système de canyons",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Gigantesque système de canyons martiens, bien plus long et profond que le Grand Canyon terrestre.",
+      "details": {
+        "detailType": "solar_system",
+        "realSize": { "lightYears": 4000.0, "label": "~4 000 km" }
+      }
+    }
+  },
+  {
+    "id": "ss-mars-polar-caps",
+    "extensionId": "systeme-solaire",
+    "name": "Calottes polaires martiennes",
+    "rarityLabel": "Rare",
+    "cardRarityMultiplier": 1,
+    "imageRef": "feature_mars_polar_caps",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Calottes polaires martiennes",
+      "primaryCatalogName": "Relief",
+      "catalogNumber": "MAR-POL",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Calottes polaires",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Calottes de glace d’eau et de dioxyde de carbone visibles aux pôles de Mars, changeant avec les saisons.",
+      "details": {
+        "detailType": "solar_system",
+        "realSize": { "lightYears": 1000.0, "label": "~1 000 km" }
+      }
+    }
+  },
+  {
+    "id": "ss-mercury-caloris",
+    "extensionId": "systeme-solaire",
+    "name": "Bassin Caloris",
+    "rarityLabel": "Common",
+    "cardRarityMultiplier": 1,
+    "imageRef": "feature_caloris_basin",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Bassin Caloris",
+      "primaryCatalogName": "Relief",
+      "catalogNumber": "MER-CAL",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Bassin d’impact",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Grand bassin d’impact de Mercure, formé par une collision majeure au début de l’histoire de la planète.",
+      "details": {
+        "detailType": "solar_system",
+        "realSize": { "lightYears": 1550.0, "label": "~1 550 km" }
+      }
+    }
+  },
+  {
+    "id": "ss-pluto-heart",
+    "extensionId": "systeme-solaire",
+    "name": "Tombaugh Region",
+    "rarityLabel": "Common",
+    "cardRarityMultiplier": 1,
+    "imageRef": "feature_tombaugh_region",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Région Tombaugh",
+      "primaryCatalogName": "Relief",
+      "catalogNumber": "PLU-HEA",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Plaine glacée",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Grande région claire en forme de cœur sur Pluton, dont une partie correspond à la plaine glacée Sputnik Planitia.",
+      "details": {
+        "detailType": "solar_system",
+        "realSize": { "lightYears": 1600.0, "label": "~1 600 km" }
+      }
+    }
+  },
+  {
+    "id": "ss-ceres-occator",
+    "extensionId": "systeme-solaire",
+    "name": "Taches d’Occator",
+    "rarityLabel": "Common",
+    "cardRarityMultiplier": 1,
+    "imageRef": "feature_occator_bright_spots",
+    "variantProfileId": "observation-default",
+    "astronomy": {
+      "commonName": "Tâches d’Occator",
+      "primaryCatalogName": "Relief",
+      "catalogNumber": "CER-OCC",
+      "objectFamily": "solar_system",
+      "objectTypeLabel": "Dépôts brillants",
+      "constellation": "Variable",
+      "mainSeason": "Variable",
+      "coordinates": {
+        "rightAscension": { "hours": 0, "minutes": 0, "seconds": 0.0, "label": "AD variable" },
+        "declination": { "sign": "+", "degrees": 0, "arcMinutes": 0, "arcSeconds": 0, "label": "Dec variable" },
+        "label": "Position variable selon la date"
+      },
+      "shortDescription": "Dépôts brillants du cratère Occator, probablement riches en sels laissés par une activité géologique passée.",
+      "details": {
+        "detailType": "solar_system",
+        "realSize": { "lightYears": 92.0, "label": "~92 km" }
       }
     }
   }

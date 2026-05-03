@@ -89,6 +89,15 @@ class AppMotionTest {
     }
 
     @Test
+    fun `extension animation resolves planet for systeme-solaire`() {
+        val systemeSolaireSpec = extensionAnimationSpec("systeme-solaire")
+
+        assertEquals(ExtensionAnimationStyle.Planet, systemeSolaireSpec.style)
+        assertEquals(10, systemeSolaireSpec.starPattern.size)
+        assertEquals(12, systemeSolaireSpec.lineConnections.size)
+    }
+
+    @Test
     fun `extension pattern projection preserves geometry on non square canvas`() {
         val spec = extensionAnimationSpec("astronomes-en-herbe")
         val projection = projectExtensionPattern(

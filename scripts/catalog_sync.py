@@ -44,6 +44,7 @@ SUPPORTED_FINISH_CODES = ["standard", "stamped"]
 WEIGHT_SCALE = Decimal("1000000")
 SUPPORTED_EQUIPMENT_TYPES = ["observatory", "telescope", "mount"]
 SUPPORTED_EQUIPMENT_BONUS_UNITS = ["rarityBoost", "holographicSkyPercent", "rechargeMultiplier"]
+SUPPORTED_DETAIL_TYPES = ["deep_sky", "star", "constellation", "sky_event", "solar_system"]
 
 CATALOGUE_FIELDS = [
     "rowType",
@@ -1090,36 +1091,28 @@ def parse_catalogue_card_row(
             f"Catalogue row {row_number}: 'cardRarityMultiplier' must be strictly positive.",
         )
 
-    right_ascension = {
-        "hours": parse_int(row, "rightAscensionHours", row_number, "Catalogue", required=True),
-        "minutes": parse_int(row, "rightAscensionMinutes", row_number, "Catalogue", required=True),
-        "seconds": parse_float(row, "rightAscensionSeconds", row_number, "Catalogue", required=True),
-    }
-    right_ascension["label"] = optional_text(row, "rightAscensionLabel") or format_right_ascension_label(
-        right_ascension["hours"],
-        right_ascension["minutes"],
-        right_ascension["seconds"],
-    )
-
-    declination = {
-        "sign": require_sign(row, "declinationSign", row_number, "Catalogue"),
-        "degrees": parse_int(row, "declinationDegrees", row_number, "Catalogue", required=True),
-        "arcMinutes": parse_int(row, "declinationArcMinutes", row_number, "Catalogue", required=True),
-        "arcSeconds": parse_int(row, "declinationArcSeconds", row_number, "Catalogue", required=True),
-    }
-    declination["label"] = optional_text(row, "declinationLabel") or format_declination_label(
-        declination["sign"],
-        declination["degrees"],
-        declination["arcMinutes"],
-        declination["arcSeconds"],
-    )
-
-    coordinates_label = optional_text(row, "coordinatesLabel") or (
-        f"{right_ascension['label']} ; Dec {declination['label']}"
-    )
-
     detail_type = require_text(row, "detailType", row_number, "Catalogue")
+    coordinates = build_coordinates(
+        row,
+        row_number,
+        "Catalogue",
+        allow_variable=detail_type == "solar_system",
+    )
     details = build_details(row, row_number, "Catalogue", detail_type)
+
+    constellation = optional_text(row, "constellation")
+    if constellation is None:
+        if detail_type == "solar_system":
+            constellation = "Variable"
+        else:
+            constellation = require_text(row, "constellation", row_number, "Catalogue")
+
+    main_season = optional_text(row, "mainSeason")
+    if main_season is None:
+        if detail_type == "solar_system":
+            main_season = "Variable"
+        else:
+            main_season = require_text(row, "mainSeason", row_number, "Catalogue")
 
     return {
         "id": card_id,
@@ -1135,13 +1128,9 @@ def parse_catalogue_card_row(
             "catalogNumber": catalog_number,
             "objectFamily": require_text(row, "objectFamily", row_number, "Catalogue"),
             "objectTypeLabel": require_text(row, "objectTypeLabel", row_number, "Catalogue"),
-            "constellation": require_text(row, "constellation", row_number, "Catalogue"),
-            "mainSeason": require_text(row, "mainSeason", row_number, "Catalogue"),
-            "coordinates": {
-                "rightAscension": right_ascension,
-                "declination": declination,
-                "label": coordinates_label,
-            },
+            "constellation": constellation,
+            "mainSeason": main_season,
+            "coordinates": coordinates,
             "shortDescription": require_text(row, "shortDescription", row_number, "Catalogue"),
             "details": details,
         },
@@ -2870,6 +2859,109 @@ def find_duplicates(values: list[str]) -> set[str]:
     return duplicates
 
 
+def build_coordinates(
+    row: dict[str, str],
+    row_number: int,
+    sheet_name: str,
+    allow_variable: bool,
+) -> dict[str, Any]:
+    right_ascension, has_fixed_right_ascension = build_right_ascension(
+        row,
+        row_number,
+        sheet_name,
+        allow_variable=allow_variable,
+    )
+    declination, has_fixed_declination = build_declination(
+        row,
+        row_number,
+        sheet_name,
+        allow_variable=allow_variable,
+    )
+    has_fixed_coordinates = has_fixed_right_ascension and has_fixed_declination
+    coordinates_label = optional_text(row, "coordinatesLabel")
+    if coordinates_label is None:
+        if allow_variable and not has_fixed_coordinates:
+            coordinates_label = "Position apparente variable"
+        else:
+            coordinates_label = f"{right_ascension['label']} ; Dec {declination['label']}"
+
+    return {
+        "rightAscension": right_ascension,
+        "declination": declination,
+        "label": coordinates_label,
+    }
+
+
+def build_right_ascension(
+    row: dict[str, str],
+    row_number: int,
+    sheet_name: str,
+    allow_variable: bool,
+) -> tuple[dict[str, Any], bool]:
+    coordinate_fields = [
+        "rightAscensionHours",
+        "rightAscensionMinutes",
+        "rightAscensionSeconds",
+    ]
+    has_numeric_coordinate = any(optional_text(row, field) is not None for field in coordinate_fields)
+    if allow_variable and not has_numeric_coordinate:
+        return {
+            "hours": 0,
+            "minutes": 0,
+            "seconds": 0.0,
+            "label": optional_text(row, "rightAscensionLabel") or "AD variable",
+        }, False
+
+    right_ascension = {
+        "hours": parse_int(row, "rightAscensionHours", row_number, sheet_name, required=True),
+        "minutes": parse_int(row, "rightAscensionMinutes", row_number, sheet_name, required=True),
+        "seconds": parse_float(row, "rightAscensionSeconds", row_number, sheet_name, required=True),
+    }
+    right_ascension["label"] = optional_text(row, "rightAscensionLabel") or format_right_ascension_label(
+        right_ascension["hours"],
+        right_ascension["minutes"],
+        right_ascension["seconds"],
+    )
+    return right_ascension, True
+
+
+def build_declination(
+    row: dict[str, str],
+    row_number: int,
+    sheet_name: str,
+    allow_variable: bool,
+) -> tuple[dict[str, Any], bool]:
+    coordinate_fields = [
+        "declinationSign",
+        "declinationDegrees",
+        "declinationArcMinutes",
+        "declinationArcSeconds",
+    ]
+    has_numeric_coordinate = any(optional_text(row, field) is not None for field in coordinate_fields)
+    if allow_variable and not has_numeric_coordinate:
+        return {
+            "sign": "+",
+            "degrees": 0,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": optional_text(row, "declinationLabel") or "Dec variable",
+        }, False
+
+    declination = {
+        "sign": require_sign(row, "declinationSign", row_number, sheet_name),
+        "degrees": parse_int(row, "declinationDegrees", row_number, sheet_name, required=True),
+        "arcMinutes": parse_int(row, "declinationArcMinutes", row_number, sheet_name, required=True),
+        "arcSeconds": parse_int(row, "declinationArcSeconds", row_number, sheet_name, required=True),
+    }
+    declination["label"] = optional_text(row, "declinationLabel") or format_declination_label(
+        declination["sign"],
+        declination["degrees"],
+        declination["arcMinutes"],
+        declination["arcSeconds"],
+    )
+    return declination, True
+
+
 def build_details(
     row: dict[str, str],
     row_number: int,
@@ -2936,6 +3028,42 @@ def build_details(
             "visualSize": build_visual_size(row, row_number, sheet_name, required=True),
         }
 
+    if detail_type == "solar_system":
+        details: dict[str, Any] = {
+            "detailType": detail_type,
+        }
+        distance = build_catalogue_measurement(
+            row,
+            row_number,
+            sheet_name=sheet_name,
+            value_field="distanceLightYears",
+            label_field="distanceLabel",
+            value_key="lightYears",
+            required=False,
+            default_label_formatter=lambda value: f"{format_french_number(value)} UA",
+        )
+        real_size = build_catalogue_measurement(
+            row,
+            row_number,
+            sheet_name=sheet_name,
+            value_field="realSizeLightYears",
+            label_field="realSizeLabel",
+            value_key="lightYears",
+            required=False,
+            default_label_formatter=lambda value: f"{format_french_number(value)} km",
+        )
+        visual_size = build_visual_size(row, row_number, sheet_name, required=False)
+        absolute_magnitude = build_absolute_magnitude(row, row_number, sheet_name, required=False)
+        if distance is not None:
+            details["distance"] = distance
+        if real_size is not None:
+            details["realSize"] = real_size
+        if visual_size is not None:
+            details["visualSize"] = visual_size
+        if absolute_magnitude is not None:
+            details["absoluteMagnitude"] = absolute_magnitude
+        return details
+
     if detail_type == "sky_event":
         details = {
             "detailType": detail_type,
@@ -2947,7 +3075,7 @@ def build_details(
 
     raise CatalogSheetError(
         f"{sheet_name} row {row_number}: unsupported detailType '{detail_type}'. "
-        "Use deep_sky, star, constellation or sky_event.",
+        f"Use {', '.join(SUPPORTED_DETAIL_TYPES)}.",
     )
 
 
@@ -2959,12 +3087,34 @@ def build_light_year_measurement(
     label_field: str,
     required: bool,
 ) -> dict[str, Any] | None:
+    return build_catalogue_measurement(
+        row,
+        row_number,
+        sheet_name=sheet_name,
+        value_field=value_field,
+        label_field=label_field,
+        value_key="lightYears",
+        required=required,
+        default_label_formatter=format_light_year_label,
+    )
+
+
+def build_catalogue_measurement(
+    row: dict[str, str],
+    row_number: int,
+    sheet_name: str,
+    value_field: str,
+    label_field: str,
+    value_key: str,
+    required: bool,
+    default_label_formatter,
+) -> dict[str, Any] | None:
     value = parse_float(row, value_field, row_number, sheet_name, required=required)
     if value is None:
         return None
-    label = optional_text(row, label_field) or format_light_year_label(value)
+    label = optional_text(row, label_field) or default_label_formatter(value)
     return {
-        "lightYears": value,
+        value_key: value,
         "label": label,
     }
 

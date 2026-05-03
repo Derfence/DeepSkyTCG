@@ -33,6 +33,7 @@ import fr.aumombelli.dstcg.model.ConstellationDetails
 import fr.aumombelli.dstcg.model.DeepSkyDetails
 import fr.aumombelli.dstcg.model.DisplayCard
 import fr.aumombelli.dstcg.model.DisplayCardVariant
+import fr.aumombelli.dstcg.model.SolarSystemDetails
 import fr.aumombelli.dstcg.model.LibraryCardItem
 import fr.aumombelli.dstcg.model.SkyEventDetails
 import fr.aumombelli.dstcg.model.StarDetails
@@ -411,6 +412,10 @@ internal fun measurementItems(details: AstronomyDetails): List<Pair<String, Stri
     is SkyEventDetails -> details.visualSize?.let {
         listOf("Taille visuelle" to it.label)
     } ?: emptyList()
+    is SolarSystemDetails -> buildList {
+        details.distance?.let { add("Distance" to it.label) }
+        details.realSize?.let { add("Taille reelle" to it.label) }
+    }
 }
 
 internal fun buildVariantLine(variant: DisplayCardVariant): String = buildString {
