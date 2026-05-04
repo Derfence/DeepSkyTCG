@@ -49,6 +49,19 @@ class PackCardDecorTest {
     }
 
     @Test
+    fun epic_boosted_pack_has_one_extra_epic_star() {
+        val normalEpicCount = packCardDecorSpec(seed = 42, isEpicBoosted = false)
+            .rarityStars
+            .count { it.rarityLabel == "Epic" }
+        val boostedEpicCount = packCardDecorSpec(seed = 42, isEpicBoosted = true)
+            .rarityStars
+            .count { it.rarityLabel == "Epic" }
+
+        assertEquals(1, normalEpicCount)
+        assertEquals(2, boostedEpicCount)
+    }
+
+    @Test
     fun sawtooth_edge_alternates_between_baseline_and_tip_for_each_tooth() {
         val points = buildPackSawtoothEdgePoints(
             width = 220f,

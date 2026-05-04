@@ -6,6 +6,7 @@ import fr.aumombelli.dstcg.data.CatalogGateway
 import fr.aumombelli.dstcg.data.DEFAULT_MAX_STORED_DRAWS
 import fr.aumombelli.dstcg.data.DEFAULT_DRAW_COOLDOWN
 import fr.aumombelli.dstcg.data.DeterministicWeatherCalendar
+import fr.aumombelli.dstcg.data.EpicBoostManager
 import fr.aumombelli.dstcg.data.LoadedProgress
 import fr.aumombelli.dstcg.data.PackGateway
 import fr.aumombelli.dstcg.data.ProgressGateway
@@ -54,6 +55,7 @@ data class PackSelectionUiState(
     val trustedElapsedRealtimeMs: Long = 0L,
     val selectedExtensionId: String? = null,
     val selectedBoosterIndex: Int? = null,
+    val epicBoostBoosterIndex: Int? = null,
     val isAwaitingPackResult: Boolean = false,
     val errorMessage: String? = null,
 )
@@ -73,6 +75,7 @@ class PackViewModel(
     private val _uiState = MutableStateFlow(PackSelectionUiState())
     val uiState: StateFlow<PackSelectionUiState> = _uiState.asStateFlow()
     private var isPackRequestInFlight: Boolean = false
+    private val epicBoostManager = EpicBoostManager(gameSettings.entropySource)
 
     private val _events = MutableSharedFlow<PackEvent>()
     val events: SharedFlow<PackEvent> = _events.asSharedFlow()
@@ -87,6 +90,7 @@ class PackViewModel(
                 isLoading = true,
                 selectedExtensionId = null,
                 selectedBoosterIndex = null,
+                epicBoostBoosterIndex = null,
                 isAwaitingPackResult = false,
                 errorMessage = null,
             )
@@ -118,10 +122,12 @@ class PackViewModel(
     }
 
     fun selectExtension(extensionId: String) {
+        val epicBoostBoosterIndex = epicBoostManager.rollEpicBoostBoosterIndex()
         _uiState.update {
             it.copy(
                 selectedExtensionId = extensionId,
                 selectedBoosterIndex = null,
+                epicBoostBoosterIndex = epicBoostBoosterIndex,
                 errorMessage = null,
             )
         }
@@ -132,6 +138,7 @@ class PackViewModel(
             it.copy(
                 selectedExtensionId = null,
                 selectedBoosterIndex = null,
+                epicBoostBoosterIndex = null,
                 isAwaitingPackResult = false,
                 errorMessage = null,
             )
@@ -154,6 +161,9 @@ class PackViewModel(
         }
 
         isPackRequestInFlight = true
+        val currentState = _uiState.value
+        val isEpicBoosted = currentState.selectedBoosterIndex != null &&
+            currentState.selectedBoosterIndex == currentState.epicBoostBoosterIndex
         viewModelScope.launch {
             _uiState.update {
                 it.copy(
@@ -165,7 +175,7 @@ class PackViewModel(
             try {
                 runCatching {
                     val beforeProgress = progressRepository.loadProgress().requireUsableProgress().progress
-                    packRepository.openPack(extensionId)
+                    packRepository.openPack(extensionId, isEpicBoosted)
                     val gameBalance = catalogRepository.loadGameBalance().validated()
                     val equipmentCards = catalogRepository.loadEquipmentCards()
                     val loadedProgress = progressRepository.loadProgress().requireUsableProgress()

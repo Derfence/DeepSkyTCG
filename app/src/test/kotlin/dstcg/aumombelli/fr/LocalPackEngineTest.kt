@@ -275,6 +275,60 @@ class LocalPackEngineTest {
 
         assertEquals("Aucune carte n'a ete trouvee pour cette extension.", exception.message)
     }
+
+    @Test
+    fun `draw pack uses Epic boosted rarity distribution when selected pack is boosted`() = runTest {
+        val catalogGateway = FakeCatalogGateway().apply {
+            cards = allRarityCards()
+            variantProfiles = listOf(localPackProfile())
+            gameBalance = localPackBalance(cardsPerDraw = 1)
+        }
+        val engine = LocalPackEngine(
+            catalogRepository = catalogGateway,
+            settings = queuedGameSettings(950_000),
+        )
+
+        val response = engine.drawPack(
+            extensionId = "astronomes-en-herbe",
+            progress = testProgress(testRechargeState()),
+            now = fixedNow,
+            isEpicBoosted = true,
+        )
+
+        assertEquals(true, response.isEpicBoosted)
+        assertEquals(listOf("Epic"), response.cards.map { it.rarityLabel })
+    }
+
+    @Test
+    fun `draw pack keeps base rarity distribution when selected pack is not boosted`() = runTest {
+        val catalogGateway = FakeCatalogGateway().apply {
+            cards = allRarityCards()
+            variantProfiles = listOf(localPackProfile())
+            gameBalance = localPackBalance(cardsPerDraw = 1)
+        }
+        val engine = LocalPackEngine(
+            catalogRepository = catalogGateway,
+            settings = queuedGameSettings(950_000),
+        )
+
+        val response = engine.drawPack(
+            extensionId = "astronomes-en-herbe",
+            progress = testProgress(testRechargeState()),
+            now = fixedNow,
+            isEpicBoosted = false,
+        )
+
+        assertEquals(false, response.isEpicBoosted)
+        assertEquals(listOf("Common"), response.cards.map { it.rarityLabel })
+    }
+
+    private fun allRarityCards() = listOf(
+        testCardDefinition(id = "C-1", rarityLabel = "Common", variantProfileId = "local-pack-profile"),
+        testCardDefinition(id = "U-1", rarityLabel = "Uncommon", variantProfileId = "local-pack-profile"),
+        testCardDefinition(id = "R-1", rarityLabel = "Rare", variantProfileId = "local-pack-profile"),
+        testCardDefinition(id = "E-1", rarityLabel = "Epic", variantProfileId = "local-pack-profile"),
+    )
+
     private fun localPackProfile(): VariantProfile = VariantProfile(
         id = "local-pack-profile",
         skyQualities = listOf(

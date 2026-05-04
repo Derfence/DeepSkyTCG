@@ -19,6 +19,7 @@ internal fun BoosterCover(
     scale: Float,
     exitProgress: Float,
     decorSeed: Any? = Unit,
+    isEpicBoosted: Boolean = false,
     onBoundsChanged: (PackRevealBounds?) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -46,6 +47,7 @@ internal fun BoosterCover(
                 revealProgressOverride = 1f,
                 decorSeed = decorSeed,
                 showContainerChrome = false,
+                isEpicBoosted = isEpicBoosted,
             )
         }
     }

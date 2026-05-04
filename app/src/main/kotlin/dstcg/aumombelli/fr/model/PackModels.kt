@@ -5,6 +5,7 @@ data class DrawPackResponse(
     val drawnAt: String,
     val rechargeState: PackRechargeState,
     val revealSlots: List<PackRevealSlot>,
+    val isEpicBoosted: Boolean = false,
 ) {
     companion object {
         fun fromCards(

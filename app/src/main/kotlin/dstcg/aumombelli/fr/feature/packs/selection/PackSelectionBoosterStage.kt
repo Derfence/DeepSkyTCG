@@ -59,6 +59,7 @@ internal fun ExtensionBoosterStage(
     boosterSelectionProgress: Float,
     drawLocked: Boolean,
     selectedBoosterIndex: Int?,
+    epicBoostBoosterIndex: Int?,
     isAwaitingPackResult: Boolean,
     screenBounds: Rect? = null,
     selectedBoosterTargetBounds: PackRevealBounds? = null,
@@ -182,6 +183,7 @@ internal fun ExtensionBoosterStage(
                         BoosterField(
                             extension = extension,
                             selectedBoosterIndex = selectedBoosterIndex,
+                            epicBoostBoosterIndex = epicBoostBoosterIndex,
                             drawLocked = drawLocked,
                             isAwaitingPackResult = isAwaitingPackResult,
                             onSelectBooster = onSelectBooster,
@@ -216,6 +218,7 @@ internal fun ExtensionBoosterStage(
                             SelectedBoosterOverlay(
                                 extensionId = extension.id,
                                 boosterIndex = selectedBoosterIndex,
+                                epicBoostBoosterIndex = epicBoostBoosterIndex,
                                 startBounds = selectedStartBounds,
                                 targetBounds = selectedBoosterTargetBounds,
                                 selectionProgress = boosterSelectionProgress,
@@ -268,6 +271,7 @@ private fun OverflowTopAlignedHero(
 private fun BoosterField(
     extension: ExtensionDefinition,
     selectedBoosterIndex: Int?,
+    epicBoostBoosterIndex: Int?,
     drawLocked: Boolean,
     isAwaitingPackResult: Boolean,
     onSelectBooster: (Int) -> Unit,
@@ -418,6 +422,7 @@ private fun BoosterField(
                         animationsEnabled = introReveal > 0f,
                         decorSeed = index,
                         showContainerChrome = false,
+                        isEpicBoosted = epicBoostBoosterIndex == index,
                     )
                 }
             }
@@ -439,6 +444,7 @@ private fun Collection<Rect>.unionBounds(): Rect? {
 private fun SelectedBoosterOverlay(
     extensionId: String,
     boosterIndex: Int,
+    epicBoostBoosterIndex: Int?,
     startBounds: PackRevealBounds,
     targetBounds: PackRevealBounds,
     selectionProgress: Float,
@@ -477,5 +483,6 @@ private fun SelectedBoosterOverlay(
         revealProgressOverride = 1f,
         decorSeed = boosterIndex,
         showContainerChrome = false,
+        isEpicBoosted = epicBoostBoosterIndex == boosterIndex,
     )
 }

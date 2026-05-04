@@ -36,10 +36,14 @@ fun AnimatedExtensionPackCard(
     revealProgressOverride: Float? = null,
     decorSeed: Any? = Unit,
     showContainerChrome: Boolean = true,
+    isEpicBoosted: Boolean = false,
 ) {
     val spec = remember(extensionId) { extensionAnimationSpec(extensionId) }
-    val decorSpec = remember(extensionId, decorSeed) {
-        packCardDecorSpec(seed = extensionId.hashCode() * 31 + (decorSeed?.hashCode() ?: 0))
+    val decorSpec = remember(extensionId, decorSeed, isEpicBoosted) {
+        packCardDecorSpec(
+            seed = extensionId.hashCode() * 31 + (decorSeed?.hashCode() ?: 0),
+            isEpicBoosted = isEpicBoosted,
+        )
     }
     val lineProgress = remember(extensionId, animationKey) { Animatable(0f) }
     val neutralProgress = remember(extensionId, animationKey) { Animatable(0f) }
@@ -113,9 +117,13 @@ internal fun GenericPackCardShell(
     revealProgress: Float = 1f,
     modifier: Modifier = Modifier,
     contentPadding: Dp = 14.dp,
+    isEpicBoosted: Boolean = false,
 ) {
-    val decorSpec = remember(decorSeed) {
-        packCardDecorSpec(seed = decorSeed?.hashCode() ?: 0)
+    val decorSpec = remember(decorSeed, isEpicBoosted) {
+        packCardDecorSpec(
+            seed = decorSeed?.hashCode() ?: 0,
+            isEpicBoosted = isEpicBoosted,
+        )
     }
 
     PackCardShellCanvas(

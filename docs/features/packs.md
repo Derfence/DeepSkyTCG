@@ -13,7 +13,7 @@ Joueur
   v
 PackSelection
   |
-  | drawPack(extensionId, progress, trustedNow)
+  | drawPack(extensionId, progress, trustedNow, isEpicBoosted)
   v
 LocalPackEngine
   |
@@ -46,6 +46,14 @@ Les variantes sont tirees au runtime depuis `variant_profiles.json` et `game_bal
 
 Les premieres ouvertures de l'onboarding protegent les variantes premium : pas d'holographique ni de tamponne.
 
+## Boost Epic
+
+Quand le joueur selectionne une extension, un roll local a 10% peut choisir l'un des quatre boosters affiches. Ce booster montre une etoile `Epic` supplementaire sur sa cover.
+
+Si ce booster est ouvert, la probabilite de rarete `Epic` gagne 3 points. Les autres raretes sont reduites proportionnellement pour conserver une somme de probabilites egale a 1.
+
+Il n'y a pas de garde anti-farming : revenir en arriere puis selectionner a nouveau une extension relance bien une chance de boost.
+
 ## Presentation
 
 - Selection d'extension avec boosters animes.
@@ -63,5 +71,6 @@ Les premieres ouvertures de l'onboarding protegent les variantes premium : pas d
 - `PackSelectionScreenTest`
 - `PackOpeningScreenTest`
 - `PackOpeningViewModelTest`
+- `EpicBoostManagerTest`
 
 [← Index documentation](../README.md)

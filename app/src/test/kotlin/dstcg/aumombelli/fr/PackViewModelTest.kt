@@ -2,6 +2,8 @@ package fr.aumombelli.dstcg
 
 import fr.aumombelli.dstcg.feature.packs.selection.PackEvent
 import fr.aumombelli.dstcg.feature.packs.selection.buildLiveChargeStatus
+import fr.aumombelli.dstcg.data.EntropySource
+import fr.aumombelli.dstcg.data.StandaloneGameSettings
 import fr.aumombelli.dstcg.model.DrawPackResponse
 import fr.aumombelli.dstcg.model.ActiveEquipmentEffect
 import fr.aumombelli.dstcg.model.EquipmentType
@@ -42,6 +44,7 @@ class PackViewModelTest {
 
         assertEquals(null, viewModel.uiState.value.selectedExtensionId)
         assertEquals(null, viewModel.uiState.value.selectedBoosterIndex)
+        assertEquals(null, viewModel.uiState.value.epicBoostBoosterIndex)
         assertEquals(false, viewModel.uiState.value.isAwaitingPackResult)
         assertEquals(null, viewModel.uiState.value.errorMessage)
     }
@@ -142,6 +145,7 @@ class PackViewModelTest {
         assertEquals(true, viewModel.uiState.value.isLoading)
         assertEquals(null, viewModel.uiState.value.selectedExtensionId)
         assertEquals(null, viewModel.uiState.value.selectedBoosterIndex)
+        assertEquals(null, viewModel.uiState.value.epicBoostBoosterIndex)
         assertEquals(false, viewModel.uiState.value.isAwaitingPackResult)
         assertEquals(null, viewModel.uiState.value.errorMessage)
     }
@@ -175,7 +179,7 @@ class PackViewModelTest {
         }
         val packGateway = FakePackGateway().apply {
             openPackResponse = response
-            onOpenPack = {
+            onOpenPack = { _, _ ->
                 progressGateway.progress = StandaloneProgress(
                     collection = ownedCollectionOf("ALP-001" to 2, "ALP-002" to 1),
                     rechargeState = response.rechargeState,
@@ -201,7 +205,7 @@ class PackViewModelTest {
         advanceUntilIdle()
 
         assertEquals(PackEvent.PackReadyForReveal(), event.await())
-        assertEquals(listOf("core-alpha"), packGateway.openPackCalls)
+        assertEquals(listOf("core-alpha" to false), packGateway.openPackCalls)
         assertEquals(2, viewModel.uiState.value.currentCollection.cards["ALP-001"]?.totalOwned)
         assertEquals(1, viewModel.uiState.value.currentCollection.cards["ALP-002"]?.totalOwned)
         assertEquals(9, viewModel.uiState.value.availableDrawCount)
@@ -210,6 +214,36 @@ class PackViewModelTest {
         assertEquals("core-alpha", viewModel.uiState.value.selectedExtensionId)
         assertEquals(2, viewModel.uiState.value.selectedBoosterIndex)
         assertEquals(false, viewModel.uiState.value.isAwaitingPackResult)
+    }
+
+    @Test
+    fun `open pack forwards Epic Boost when selected booster is boosted`() = runTest {
+        val response = DrawPackResponse.fromCards(
+            extensionId = "core-alpha",
+            drawnAt = "2026-03-23T12:00:00Z",
+            rechargeState = testRechargeState(availableDrawCount = 9),
+            cards = emptyList(),
+        )
+        val packGateway = FakePackGateway().apply {
+            openPackResponse = response
+        }
+        val viewModel = PackViewModel(
+            catalogRepository = FakeCatalogGateway().apply {
+                extensions = listOf(ExtensionDefinition("core-alpha", "Core Alpha", "cover"))
+            },
+            progressRepository = FakeProgressGateway(),
+            packRepository = packGateway,
+            gameSettings = queuedEpicBoostGameSettings(0, 2),
+        )
+        advanceUntilIdle()
+
+        viewModel.selectExtension("core-alpha")
+        viewModel.selectBooster(2)
+        viewModel.openPack("core-alpha")
+        advanceUntilIdle()
+
+        assertEquals(2, viewModel.uiState.value.epicBoostBoosterIndex)
+        assertEquals(listOf("core-alpha" to true), packGateway.openPackCalls)
     }
 
     @Test
@@ -230,7 +264,7 @@ class PackViewModelTest {
         }
         val packGateway = FakePackGateway().apply {
             openPackResponse = response
-            onOpenPack = {
+            onOpenPack = { _, _ ->
                 progressGateway.progress = StandaloneProgress(
                     collection = ownedCollectionOf("ALP-001" to 1),
                     rechargeState = response.rechargeState,
@@ -277,7 +311,7 @@ class PackViewModelTest {
         }
         val packGateway = FakePackGateway().apply {
             openPackResponse = response
-            onOpenPack = {
+            onOpenPack = { _, _ ->
                 progressGateway.progress = StandaloneProgress(
                     collection = ownedCollectionOf(),
                     rechargeState = response.rechargeState,
@@ -330,5 +364,22 @@ class PackViewModelTest {
         assertEquals(null, viewModel.uiState.value.selectedBoosterIndex)
         assertEquals(false, viewModel.uiState.value.isAwaitingPackResult)
         assertEquals("Impossible d'ouvrir le pack.", viewModel.uiState.value.errorMessage)
+    }
+
+    private fun queuedEpicBoostGameSettings(vararg values: Int): StandaloneGameSettings = StandaloneGameSettings(
+        timeSource = gameSettings.timeSource,
+        entropySource = QueuedEntropySource(values.toList()),
+    )
+
+    private class QueuedEntropySource(
+        private val values: List<Int>,
+    ) : EntropySource {
+        private var index = 0
+
+        override fun nextInt(bound: Int): Int {
+            val value = values.getOrNull(index) ?: 0
+            index += 1
+            return value.mod(bound.coerceAtLeast(1))
+        }
     }
 }

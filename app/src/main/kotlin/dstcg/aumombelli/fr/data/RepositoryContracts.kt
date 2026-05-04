@@ -59,7 +59,7 @@ interface EquipmentGateway {
 interface PackGateway {
     fun currentPackResult(): StateFlow<DrawPackResponse?>
     fun clearCurrentPackResult()
-    suspend fun openPack(extensionId: String): DrawPackResponse
+    suspend fun openPack(extensionId: String, isEpicBoosted: Boolean = false): DrawPackResponse
 }
 
 interface TradeGateway {

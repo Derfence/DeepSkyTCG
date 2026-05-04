@@ -32,13 +32,14 @@ class PackRepository(
         currentPackResult.value = null
     }
 
-    override suspend fun openPack(extensionId: String): DrawPackResponse = openPackMutex.withLock {
+    override suspend fun openPack(extensionId: String, isEpicBoosted: Boolean): DrawPackResponse = openPackMutex.withLock {
         val loadedProgress = progressRepository.loadProgress().requireUsableProgress()
         val progress = loadedProgress.progress
         val packResponse = localPackEngine.drawPack(
             extensionId = extensionId,
             progress = progress,
             now = loadedProgress.trustedNow,
+            isEpicBoosted = isEpicBoosted,
         )
         val mergedCollection = collectionRepository.mergeCards(progress.collection, packResponse.cards)
         val mergedEquipmentInventory = progress.equipmentInventory.addRewards(packResponse.equipmentCards)

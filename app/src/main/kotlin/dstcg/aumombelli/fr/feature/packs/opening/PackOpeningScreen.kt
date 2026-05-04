@@ -262,6 +262,7 @@ fun PackOpeningScreen(
                         scale = scale.value,
                         exitProgress = packExitProgress,
                         decorSeed = boosterDecorSeed,
+                        isEpicBoosted = packResult.isEpicBoosted,
                         onBoundsChanged = { bounds ->
                             transitionBoosterBounds = bounds
                         },

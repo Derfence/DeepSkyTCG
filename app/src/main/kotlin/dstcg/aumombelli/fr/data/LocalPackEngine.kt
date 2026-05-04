@@ -43,6 +43,7 @@ class LocalPackEngine(
         extensionId: String,
         progress: StandaloneProgress,
         now: Instant,
+        isEpicBoosted: Boolean = false,
     ): DrawPackResponse {
         val cards = catalogRepository.loadCards()
         val variantProfiles = catalogRepository.loadVariantProfiles()
@@ -100,8 +101,13 @@ class LocalPackEngine(
         val astronomyRarityCap = resolveAstronomyRarityCap(progress)
         val astronomyVariantDrawPolicy = resolveAstronomyVariantDrawPolicy(progress)
         val drawnAt = now.toString()
+        val rarityWeights = if (isEpicBoosted) {
+            extensionPlan.epicBoostedRarityWeights
+        } else {
+            extensionPlan.rarityWeights
+        }
         val plannedRevealSlots = List(drawConfig.cardsPerDraw) { slotIndex ->
-            val baseRarity = drawRandomizer.pickWeighted(extensionPlan.rarityWeights) { it.weight }.code
+            val baseRarity = drawRandomizer.pickWeighted(rarityWeights) { it.weight }.code
             PlannedRevealSlot(
                 slotIndex = slotIndex,
                 rarityLabel = drawRandomizer.clampAstronomyRarity(
@@ -174,6 +180,7 @@ class LocalPackEngine(
             drawnAt = drawnAt,
             rechargeState = updatedChargeState,
             revealSlots = revealSlots,
+            isEpicBoosted = isEpicBoosted,
         )
     }
 }

@@ -23,37 +23,23 @@ internal data class PackCardDecorSpec(
 
 internal val DefaultPackCardDecorSpec = packCardDecorSpec(seed = 0)
 
-internal fun packCardDecorSpec(seed: Int): PackCardDecorSpec = PackCardDecorSpec(
-    rarityStars = buildPackRarityStarSpecs(seed = seed),
+internal fun packCardDecorSpec(seed: Int, isEpicBoosted: Boolean = false): PackCardDecorSpec = PackCardDecorSpec(
+    rarityStars = buildPackRarityStarSpecs(seed = seed, isEpicBoosted = isEpicBoosted),
     tearBand = PackTearBandSpec(
         toothCount = 10,
         toothDepthFraction = 0.03f,
     ),
 )
 
-private fun buildPackRarityStarSpecs(seed: Int): List<PackRarityStarSpec> {
+private fun buildPackRarityStarSpecs(seed: Int, isEpicBoosted: Boolean): List<PackRarityStarSpec> {
     val random = Random(seed)
-    val rarityLabels = listOf(
-        "Common",
-        "Common",
-        "Common",
-        "Common",
-        "Common",
-        "Common",
-        "Common",
-        "Common",
-        "Common",
-        "Common",
-        "Common",
-        "Uncommon",
-        "Uncommon",
-        "Uncommon",
-        "Uncommon",
-        "Rare",
-        "Rare",
-        "Rare",
-        "Epic",
-    )
+    val rarityLabels = buildList {
+        repeat(11) { add("Common") }
+        repeat(4) { add("Uncommon") }
+        repeat(3) { add("Rare") }
+        add("Epic")
+        if (isEpicBoosted) add("Epic")
+    }
 
     return rarityLabels.map { rarityLabel ->
         val topWindow = random.nextBoolean()

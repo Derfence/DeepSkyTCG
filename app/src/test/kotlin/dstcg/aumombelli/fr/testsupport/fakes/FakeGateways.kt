@@ -173,8 +173,8 @@ class FakePackGateway : PackGateway {
     private val packFlow = MutableStateFlow<DrawPackResponse?>(null)
     var openPackResponse: DrawPackResponse? = null
     var openPackFailure: Throwable? = null
-    var onOpenPack: ((String) -> Unit)? = null
-    val openPackCalls = mutableListOf<String>()
+    var onOpenPack: ((String, Boolean) -> Unit)? = null
+    val openPackCalls = mutableListOf<Pair<String, Boolean>>()
 
     override fun currentPackResult(): StateFlow<DrawPackResponse?> = packFlow
 
@@ -182,10 +182,10 @@ class FakePackGateway : PackGateway {
         packFlow.value = null
     }
 
-    override suspend fun openPack(extensionId: String): DrawPackResponse {
-        openPackCalls += extensionId
+    override suspend fun openPack(extensionId: String, isEpicBoosted: Boolean): DrawPackResponse {
+        openPackCalls += extensionId to isEpicBoosted
         openPackFailure?.let { throw it }
-        onOpenPack?.invoke(extensionId)
+        onOpenPack?.invoke(extensionId, isEpicBoosted)
         return checkNotNull(openPackResponse) { "openPackResponse must be configured in FakePackGateway." }
             .also { packFlow.value = it }
     }

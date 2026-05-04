@@ -47,6 +47,29 @@ class CatalogBalanceRuntimeTest {
     }
 
     @Test
+    fun `epic boosted rarity probabilities add three points and keep sum at one`() {
+        val runtime = calculator.resolve(
+            cards = listOf(
+                testCardDefinition(id = "C-1", extensionId = "balanced", rarityLabel = "Common"),
+                testCardDefinition(id = "U-1", extensionId = "balanced", rarityLabel = "Uncommon"),
+                testCardDefinition(id = "R-1", extensionId = "balanced", rarityLabel = "Rare"),
+                testCardDefinition(id = "E-1", extensionId = "balanced", rarityLabel = "Epic"),
+            ),
+            variantProfiles = testVariantProfiles(),
+            gameBalance = testGameBalanceDefinition(),
+        )
+
+        val boostedProbabilities = checkNotNull(runtime.extensionPlansById["balanced"])
+            .epicBoostedRarityProbabilities
+
+        assertEquals(0.08, boostedProbabilities.getValue("Epic"), 0.000001)
+        assertEquals(1.0, boostedProbabilities.values.sum(), 0.000001)
+        assertEquals(0.4842105263, boostedProbabilities.getValue("Common"), 0.000001)
+        assertEquals(0.2905263158, boostedProbabilities.getValue("Uncommon"), 0.000001)
+        assertEquals(0.1452631579, boostedProbabilities.getValue("Rare"), 0.000001)
+    }
+
+    @Test
     fun `card multipliers drive the second draw phase inside a rarity`() {
         val runtime = calculator.resolve(
             cards = listOf(
