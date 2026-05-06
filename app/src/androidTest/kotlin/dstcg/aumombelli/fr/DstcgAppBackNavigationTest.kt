@@ -188,7 +188,7 @@ class DstcgAppBackNavigationTest {
     }
 
     @Test
-    fun visible_back_from_pack_selection_returns_to_extension_list_then_home() {
+    fun visible_back_from_pack_selection_extension_list_returns_home() {
         setAppContent(backNavigationTestAppContainer())
         startAndReachHome()
 
@@ -198,9 +198,10 @@ class DstcgAppBackNavigationTest {
         advanceUntilTagEnabled("pack-booster-0", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("pack-booster-0").assertIsDisplayed()
 
-        composeRule.onNodeWithTag("pack-back").performClick()
+        pressAndroidBack()
         advanceUntilTagGone("pack-booster-0", timeoutMillis = 10_000)
         advanceUntilTagDisplayed("pack-extension-enter-astronomes-en-herbe", timeoutMillis = 10_000)
+        advanceUntilTagGone("pack-extension-stage", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").assertIsDisplayed()
 
         composeRule.onNodeWithTag("pack-back").performClick()

@@ -27,9 +27,11 @@ internal fun SceneNavigationButton(
     contentDescription: String,
     testTag: String,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     IconButton(
         onClick = onClick,
+        enabled = enabled,
         modifier = modifier
             .size(48.dp)
             .clip(CircleShape)

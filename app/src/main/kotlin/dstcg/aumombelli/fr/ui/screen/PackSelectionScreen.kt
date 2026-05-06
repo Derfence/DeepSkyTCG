@@ -25,6 +25,7 @@ fun PackSelectionScreen(
     extensionListVisible: Boolean = true,
     interactionsEnabled: Boolean = true,
     backgroundOnly: Boolean = false,
+    backEnabled: Boolean = true,
     onBack: (() -> Unit)? = null,
 ) {
     PackSelectionFeatureScreen(
@@ -44,5 +45,6 @@ fun PackSelectionScreen(
         extensionListVisible = extensionListVisible,
         interactionsEnabled = interactionsEnabled,
         backgroundOnly = backgroundOnly,
+        backEnabled = backEnabled,
     )
 }

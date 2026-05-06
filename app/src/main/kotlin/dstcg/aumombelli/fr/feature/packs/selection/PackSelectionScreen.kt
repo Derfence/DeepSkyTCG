@@ -68,6 +68,7 @@ fun PackSelectionScreen(
     interactionsEnabled: Boolean = true,
     backgroundOnly: Boolean = false,
     reserveBackButtonSpace: Boolean = false,
+    backEnabled: Boolean = true,
     onBack: (() -> Unit)? = null,
 ) {
     val performanceProfile = LocalAppPerformanceProfile.current
@@ -270,6 +271,7 @@ fun PackSelectionScreen(
                                 onClick = back,
                                 contentDescription = "Retour",
                                 testTag = "pack-back",
+                                enabled = backEnabled,
                             )
                         }
                     } ?: run {

@@ -75,10 +75,11 @@ internal fun PackScene(
         !sceneState.transitionLocked &&
         !uiState.isAwaitingPackResult
     val navigateBackFromPackSelection: () -> Unit = {
-        if (packSelectionBackAllowed) {
-            if (packViewModel.uiState.value.selectedExtensionId != null) {
+        val currentPackState = packViewModel.uiState.value
+        if (!currentPackState.isAwaitingPackResult) {
+            if (currentPackState.selectedExtensionId != null) {
                 packViewModel.clearExtensionSelection()
-            } else {
+            } else if (!sceneState.transitionLocked) {
                 scope.launch { transitions.animatePackSelectionToHome() }
             }
         }
@@ -140,6 +141,7 @@ internal fun PackScene(
                 sceneState.packExtensionListVisible,
             interactionsEnabled = !sceneState.transitionLocked && sceneState.currentScene == AppScene.PackSelection,
             backgroundOnly = sceneState.currentScene == AppScene.PackOpening,
+            backEnabled = packSelectionBackAllowed,
             onBack = if (packSelectionBackVisible) navigateBackFromPackSelection else null,
         )
     }

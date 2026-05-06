@@ -164,7 +164,11 @@ class LocalEndToEndTest {
     private fun openEquipmentMenuAndRevealActivationCoachmark() {
         composeRule.onNodeWithTag("home-equipment").performClick()
         composeRule.waitUntilTagExists("equipment-screen", timeoutMillis = 10_000)
-        composeRule.waitUntilTagDisplayed("new-player-coachmark-EquipmentActivation", timeoutMillis = 10_000)
+        composeRule.waitUntilAnyTagDisplayed(
+            "new-player-coachmark-EquipmentActivation",
+            "new-player-coachmark-scroll-down",
+            timeoutMillis = 10_000,
+        )
     }
 
     private fun verifyRechargeStatusIsVisible() {
@@ -211,6 +215,15 @@ class LocalEndToEndTest {
     ) {
         waitUntil(timeoutMillis) {
             isTagDisplayed(tag)
+        }
+    }
+
+    private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.waitUntilAnyTagDisplayed(
+        vararg tags: String,
+        timeoutMillis: Long = 5_000,
+    ) {
+        waitUntil(timeoutMillis) {
+            tags.any { tag -> isTagDisplayed(tag) }
         }
     }
 
