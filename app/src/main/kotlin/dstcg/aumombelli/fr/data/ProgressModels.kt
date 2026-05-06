@@ -21,6 +21,7 @@ data class ProgressSnapshot(
     val collection: OwnedCollection,
     val rechargeState: PackRechargeState = PackRechargeState(),
     val openedPackCount: Int = 0,
+    val hasOpenedEpicBoostedPack: Boolean = false,
     val newPlayerOnboardingStep: NewPlayerOnboardingStep = NewPlayerOnboardingStep.ShowWelcomeIntro,
     val equipmentInventory: OwnedEquipmentInventory = OwnedEquipmentInventory(),
     val activeEquipmentByType: Map<EquipmentType, ActiveEquipmentEffect> = emptyMap(),
@@ -38,6 +39,7 @@ data class ProgressSnapshot(
         collection = collection,
         rechargeState = rechargeState,
         openedPackCount = openedPackCount,
+        hasOpenedEpicBoostedPack = hasOpenedEpicBoostedPack,
         newPlayerOnboardingStep = newPlayerOnboardingStep,
         equipmentInventory = equipmentInventory,
         activeEquipmentByType = activeEquipmentByType,
@@ -49,7 +51,7 @@ data class ProgressSnapshot(
     )
 
     companion object {
-        const val CURRENT_SCHEMA_VERSION: Int = 8
+        const val CURRENT_SCHEMA_VERSION: Int = 9
         const val ONBOARDING_STATE_SCHEMA_VERSION: Int = 4
     }
 }

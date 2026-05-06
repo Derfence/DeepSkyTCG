@@ -45,6 +45,7 @@ class ProgressRepositoryTest {
         assertEquals(emptyMap<String, Int>(), loaded.progress.collection.cards.mapValues { it.value.totalOwned })
         assertEquals(10, loaded.progress.rechargeState.availableDrawCount)
         assertEquals(0, loaded.progress.openedPackCount)
+        assertEquals(false, loaded.progress.hasOpenedEpicBoostedPack)
         assertEquals(NewPlayerOnboardingStep.ShowWelcomeIntro, loaded.progress.newPlayerOnboardingStep)
         assertFalse(fixture.secureDataStore.data.first().isEmpty())
     }
@@ -58,12 +59,13 @@ class ProgressRepositoryTest {
                 availableDrawCount = 4,
                 nextChargeAt = "2026-03-25T00:00:00Z",
             ),
-                openedPackCount = 3,
-                newPlayerOnboardingStep = NewPlayerOnboardingStep.LearnLibraryVariants,
-                homeMenuNoveltyState = HomeMenuNoveltyState(
-                    library = true,
-                    badgeBook = true,
-                ),
+            openedPackCount = 3,
+            hasOpenedEpicBoostedPack = true,
+            newPlayerOnboardingStep = NewPlayerOnboardingStep.LearnLibraryVariants,
+            homeMenuNoveltyState = HomeMenuNoveltyState(
+                library = true,
+                badgeBook = true,
+            ),
             libraryCardNoveltyState = LibraryCardNoveltyState(
                 newCardIds = setOf("ALP-001"),
             ),
@@ -90,6 +92,7 @@ class ProgressRepositoryTest {
                     nextChargeAt = "2026-03-25T00:00:00Z",
                 ),
                 openedPackCount = 1,
+                hasOpenedEpicBoostedPack = true,
                 newPlayerOnboardingStep = NewPlayerOnboardingStep.Completed,
             ),
         )
@@ -99,6 +102,7 @@ class ProgressRepositoryTest {
         val reloaded = fixture.repository.loadProgress().requireUsableProgress().progress
         assertEquals(NewPlayerOnboardingStep.ShowWelcomeIntro, reloaded.newPlayerOnboardingStep)
         assertEquals(0, reloaded.openedPackCount)
+        assertEquals(false, reloaded.hasOpenedEpicBoostedPack)
         assertEquals(OwnedCollection(), reloaded.collection)
         assertEquals(10, reloaded.rechargeState.availableDrawCount)
         assertEquals(HomeMenuNoveltyState(), reloaded.homeMenuNoveltyState)
@@ -310,6 +314,7 @@ class ProgressRepositoryTest {
         assertEquals(2, loaded.collection.cards.getValue("ALP-001").totalOwned)
         assertEquals(4, loaded.rechargeState.availableDrawCount)
         assertEquals(2, loaded.openedPackCount)
+        assertEquals(false, loaded.hasOpenedEpicBoostedPack)
         assertTrue(loaded.equipmentInventory.cards.isEmpty())
         assertTrue(loaded.activeEquipmentByType.isEmpty())
         assertTrue(loaded.lastActivatedCardIdByType.isEmpty())

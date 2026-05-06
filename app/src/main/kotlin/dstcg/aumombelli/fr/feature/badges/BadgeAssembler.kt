@@ -102,6 +102,7 @@ private fun buildGeneralSection(
     sectionType = BadgeSectionType.General,
     badges = listOf(
         buildFirstPackOpenedBadge(progress),
+        buildEpicBoostedPackOpenedBadge(progress),
         buildEquipmentAllCardsActivatedOnceBadge(progress, equipmentCards),
         buildEquipmentThreeTypesActiveSimultaneouslyBadge(progress),
         buildEquipmentThreeLevelThreeTypesActiveSimultaneouslyBadge(progress),
@@ -123,6 +124,24 @@ private fun buildFirstPackOpenedBadge(progress: StandaloneProgress): BadgeItem {
             matchedCards = openedPackProgress,
             totalCards = 1,
             unitLabel = "pack ouvert",
+        ),
+        centerMarkKind = BadgeCenterMarkKind.GeneralLogo,
+    )
+}
+
+private fun buildEpicBoostedPackOpenedBadge(progress: StandaloneProgress): BadgeItem {
+    val matched = if (progress.hasOpenedEpicBoostedPack) 1 else 0
+    return BadgeItem(
+        id = "$GeneralBadgeSectionId::pack::epic-boost-opened",
+        extensionId = GeneralBadgeSectionId,
+        extensionName = "Général",
+        title = "Pack amélioré",
+        description = "Quelque chose a brillé au bon moment.",
+        requirementType = BadgeRequirementType.EpicBoostedPackOpened,
+        progress = BadgeProgress(
+            matchedCards = matched,
+            totalCards = 1,
+            unitLabel = "signe aperçu",
         ),
         centerMarkKind = BadgeCenterMarkKind.GeneralLogo,
     )

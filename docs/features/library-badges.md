@@ -21,6 +21,7 @@ Pendant l'onboarding, une modale de variantes explique les differences de ciel e
 Le carnet de badges est accessible apres le premier pack. Les badges couvrent notamment :
 
 - premier pack ouvert ;
+- pack amélioré volontairement opaque ;
 - progression par qualite de ciel ;
 - cartes tamponnees et holographiques tamponnees ;
 - collection parfaite ;

@@ -48,6 +48,7 @@ class PackRepository(
             equipmentInventory = mergedEquipmentInventory,
             rechargeState = packResponse.rechargeState,
             openedPackCount = progress.openedPackCount + 1,
+            hasOpenedEpicBoostedPack = progress.hasOpenedEpicBoostedPack || packResponse.isEpicBoosted,
         )
             .recordAffectedPackIfEquipmentActive()
             .consumeEquipmentEffectsAfterPackOpen()

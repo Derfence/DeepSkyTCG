@@ -1,5 +1,7 @@
 package fr.aumombelli.dstcg
 
+import fr.aumombelli.dstcg.feature.badges.BadgeCenterMarkKind
+import fr.aumombelli.dstcg.feature.badges.BadgeRequirementType
 import fr.aumombelli.dstcg.feature.badges.buildBadgeBookSections
 import fr.aumombelli.dstcg.feature.badges.buildNewlyUnlockedBadges
 import fr.aumombelli.dstcg.model.EquipmentBadgeProgress
@@ -192,6 +194,7 @@ class BadgeAssemblerTest {
         assertEquals(
             listOf(
                 "general::pack::first-opened",
+                "general::pack::epic-boost-opened",
                 "general::equipment::all-used-once",
                 "general::equipment::three-types-active",
                 "general::equipment::three-level-three-active",
@@ -199,6 +202,48 @@ class BadgeAssemblerTest {
                 "general::equipment::activations-100",
             ),
             sections.first().badges.map { it.id },
+        )
+    }
+
+    @Test
+    fun `general section contains boosted pack badge in second position`() {
+        val sections = buildBadgeBookSections(
+            extensions = emptyList(),
+            cards = emptyList(),
+            equipmentCards = emptyList(),
+            variantProfiles = testVariantProfiles(),
+            progress = badgeProgress(
+                collection = OwnedCollection(),
+                hasOpenedEpicBoostedPack = true,
+            ),
+        )
+
+        val boostedPackBadge = sections.first().badges[1]
+
+        assertEquals("general::pack::epic-boost-opened", boostedPackBadge.id)
+        assertEquals(BadgeRequirementType.EpicBoostedPackOpened, boostedPackBadge.requirementType)
+        assertEquals(BadgeCenterMarkKind.GeneralLogo, boostedPackBadge.centerMarkKind)
+        assertTrue(boostedPackBadge.isUnlocked)
+        assertEquals("1 / 1 signe aperçu", boostedPackBadge.progress.label)
+    }
+
+    @Test
+    fun `boosted pack badge unlocks when progress records a boosted pack opening`() {
+        val newlyUnlockedBadges = buildNewlyUnlockedBadges(
+            extensions = emptyList(),
+            cards = emptyList(),
+            equipmentCards = emptyList(),
+            variantProfiles = testVariantProfiles(),
+            beforeProgress = badgeProgress(collection = OwnedCollection()),
+            afterProgress = badgeProgress(
+                collection = OwnedCollection(),
+                hasOpenedEpicBoostedPack = true,
+            ),
+        )
+
+        assertEquals(
+            listOf("general::pack::epic-boost-opened"),
+            newlyUnlockedBadges.map { it.id },
         )
     }
 
@@ -265,12 +310,14 @@ class BadgeAssemblerTest {
     private fun badgeProgress(
         collection: OwnedCollection,
         openedPackCount: Int = 0,
+        hasOpenedEpicBoostedPack: Boolean = false,
         equipmentInventory: fr.aumombelli.dstcg.model.OwnedEquipmentInventory =
             fr.aumombelli.dstcg.model.OwnedEquipmentInventory(),
         equipmentBadgeProgress: EquipmentBadgeProgress = EquipmentBadgeProgress(),
     ): StandaloneProgress = StandaloneProgress(
         collection = collection,
         openedPackCount = openedPackCount,
+        hasOpenedEpicBoostedPack = hasOpenedEpicBoostedPack,
         equipmentInventory = equipmentInventory,
         equipmentBadgeProgress = equipmentBadgeProgress,
     )

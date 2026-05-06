@@ -66,6 +66,9 @@ private fun MutableSet<String>.addUnlockedGeneralBadgeIds(
     if (progress.openedPackCount >= 1) {
         add("$GeneralBadgeSectionId::pack::first-opened")
     }
+    if (progress.hasOpenedEpicBoostedPack) {
+        add("$GeneralBadgeSectionId::pack::epic-boost-opened")
+    }
     if (
         equipmentCards.isNotEmpty() &&
         progress.activatedEquipmentCardCount(equipmentCards) >= equipmentCards.size

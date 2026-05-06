@@ -68,6 +68,7 @@ private fun badgeRequirementPriority(requirementType: BadgeRequirementType): Int
     BadgeRequirementType.EquipmentActivations100 -> 4
     BadgeRequirementType.EquipmentAffectedPacks100 -> 3
     BadgeRequirementType.FirstPackOpened -> 2
+    BadgeRequirementType.EpicBoostedPackOpened -> 2
     BadgeRequirementType.SkyQuality -> 1
 }
 

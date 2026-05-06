@@ -342,6 +342,56 @@ class PackViewModelTest {
     }
 
     @Test
+    fun `open pack emits boosted pack badge when boosted progress is recorded`() = runTest {
+        val response = DrawPackResponse.fromCards(
+            extensionId = "core-alpha",
+            drawnAt = "2026-03-23T12:00:00Z",
+            rechargeState = testRechargeState(availableDrawCount = 9),
+            cards = emptyList(),
+        ).copy(isEpicBoosted = true)
+        val progressGateway = FakeProgressGateway().apply {
+            progress = StandaloneProgress(
+                collection = ownedCollectionOf(),
+                rechargeState = testRechargeState(),
+                openedPackCount = 1,
+            )
+        }
+        val packGateway = FakePackGateway().apply {
+            openPackResponse = response
+            onOpenPack = { _, isEpicBoosted ->
+                progressGateway.progress = StandaloneProgress(
+                    collection = ownedCollectionOf(),
+                    rechargeState = response.rechargeState,
+                    openedPackCount = 2,
+                    hasOpenedEpicBoostedPack = isEpicBoosted,
+                )
+            }
+        }
+        val catalogGateway = FakeCatalogGateway().apply {
+            extensions = listOf(ExtensionDefinition("core-alpha", "Core Alpha", "cover"))
+        }
+
+        val viewModel = PackViewModel(
+            catalogRepository = catalogGateway,
+            progressRepository = progressGateway,
+            packRepository = packGateway,
+            gameSettings = queuedEpicBoostGameSettings(0, 2),
+        )
+        advanceUntilIdle()
+
+        val event = async { viewModel.events.first() }
+        viewModel.selectExtension("core-alpha")
+        viewModel.selectBooster(2)
+        viewModel.openPack("core-alpha")
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf("general::pack::epic-boost-opened"),
+            (event.await() as PackEvent.PackReadyForReveal).newlyUnlockedBadges.map { it.id },
+        )
+    }
+
+    @Test
     fun `open pack generic failure resets booster selection and uses default message`() = runTest {
         val viewModel = PackViewModel(
             catalogRepository = FakeCatalogGateway().apply {

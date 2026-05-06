@@ -85,6 +85,7 @@ class ProgressRepository(
         val effectiveNow = currentRecord.trustedNow ?: timeEvidence.wallClockUtc
         val normalizedProgress = sanitizedProgress.copy(
             openedPackCount = sanitizedProgress.openedPackCount.coerceAtLeast(0),
+            hasOpenedEpicBoostedPack = sanitizedProgress.hasOpenedEpicBoostedPack,
             newPlayerOnboardingStep = sanitizedProgress.newPlayerOnboardingStep,
         ).withNormalizedPackCharge(
             now = effectiveNow,
@@ -100,6 +101,7 @@ class ProgressRepository(
             collection = normalizedProgress.collection,
             rechargeState = normalizedProgress.rechargeState,
             openedPackCount = normalizedProgress.openedPackCount.coerceAtLeast(0),
+            hasOpenedEpicBoostedPack = normalizedProgress.hasOpenedEpicBoostedPack,
             newPlayerOnboardingStep = normalizedProgress.newPlayerOnboardingStep,
             equipmentInventory = normalizedProgress.equipmentInventory,
             activeEquipmentByType = normalizedProgress.activeEquipmentByType,
@@ -124,6 +126,7 @@ class ProgressRepository(
             collection = emptyCollection(),
             rechargeState = PackRechargeState(availableDrawCount = settings.maxStoredDraws),
             openedPackCount = 0,
+            hasOpenedEpicBoostedPack = false,
             newPlayerOnboardingStep = NewPlayerOnboardingStep.ShowWelcomeIntro,
             equipmentBadgeProgress = EquipmentBadgeProgress(),
             homeMenuNoveltyState = HomeMenuNoveltyState(),
@@ -161,6 +164,7 @@ class ProgressRepository(
                 collection = emptyCollection(),
                 rechargeState = PackRechargeState(availableDrawCount = settings.maxStoredDraws),
                 openedPackCount = 0,
+                hasOpenedEpicBoostedPack = false,
                 newPlayerOnboardingStep = NewPlayerOnboardingStep.ShowWelcomeIntro,
                 equipmentBadgeProgress = EquipmentBadgeProgress(),
                 homeMenuNoveltyState = HomeMenuNoveltyState(),
@@ -201,6 +205,7 @@ class ProgressRepository(
         val normalizedProgress = sanitizedProgress.copy(
             rechargeState = snapshot.rechargeState,
             openedPackCount = snapshot.openedPackCount.coerceAtLeast(0),
+            hasOpenedEpicBoostedPack = snapshot.hasOpenedEpicBoostedPack,
             newPlayerOnboardingStep = normalizedOnboardingStep,
         ).withNormalizedPackCharge(
             now = trustedTime.trustedNow,
@@ -215,6 +220,7 @@ class ProgressRepository(
             collection = normalizedProgress.collection,
             rechargeState = normalizedProgress.rechargeState,
             openedPackCount = normalizedProgress.openedPackCount.coerceAtLeast(0),
+            hasOpenedEpicBoostedPack = normalizedProgress.hasOpenedEpicBoostedPack,
             newPlayerOnboardingStep = normalizedProgress.newPlayerOnboardingStep,
             equipmentInventory = normalizedProgress.equipmentInventory,
             activeEquipmentByType = normalizedProgress.activeEquipmentByType,
@@ -233,6 +239,7 @@ class ProgressRepository(
             snapshot.collection != normalizedSnapshot.collection ||
             snapshot.rechargeState != normalizedSnapshot.rechargeState ||
             snapshot.openedPackCount != normalizedSnapshot.openedPackCount ||
+            snapshot.hasOpenedEpicBoostedPack != normalizedSnapshot.hasOpenedEpicBoostedPack ||
             snapshot.newPlayerOnboardingStep != normalizedSnapshot.newPlayerOnboardingStep ||
             snapshot.equipmentInventory != normalizedSnapshot.equipmentInventory ||
             snapshot.activeEquipmentByType != normalizedSnapshot.activeEquipmentByType ||

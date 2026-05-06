@@ -23,6 +23,7 @@ data class BadgeSection(
 
 enum class BadgeRequirementType {
     FirstPackOpened,
+    EpicBoostedPackOpened,
     EquipmentAllCardsActivatedOnce,
     EquipmentThreeTypesActiveSimultaneously,
     EquipmentThreeLevelThreeTypesActiveSimultaneously,

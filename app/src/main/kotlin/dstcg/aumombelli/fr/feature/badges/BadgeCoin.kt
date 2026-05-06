@@ -203,7 +203,9 @@ internal fun BadgeCoinFace(
 }
 
 private fun badgePalette(badge: BadgeItem): SkyQualityPalette = when (badge.requirementType) {
-    BadgeRequirementType.FirstPackOpened -> SkyQualityPalette(
+    BadgeRequirementType.FirstPackOpened,
+    BadgeRequirementType.EpicBoostedPackOpened,
+    -> SkyQualityPalette(
         top = Color(0xFFF8C95E),
         bottom = Color(0xFFB66C10),
         glow = Color(0xAAFFE29B),
@@ -255,7 +257,9 @@ private fun badgeBackgroundBrush(
             1.00f to skyQualityPalette("city").bottom,
         ),
     )
-    BadgeRequirementType.FirstPackOpened -> Brush.verticalGradient(
+    BadgeRequirementType.FirstPackOpened,
+    BadgeRequirementType.EpicBoostedPackOpened,
+    -> Brush.verticalGradient(
         colors = listOf(
             Color(0xFFFFD77D),
             Color(0xFFE09B24),
@@ -313,6 +317,7 @@ internal fun badgeCoinLogoSize(
 
 private fun badgeUsesTwinklingStars(badge: BadgeItem): Boolean = when (badge.requirementType) {
     BadgeRequirementType.FirstPackOpened,
+    BadgeRequirementType.EpicBoostedPackOpened,
     BadgeRequirementType.EquipmentAllCardsActivatedOnce,
     BadgeRequirementType.EquipmentThreeTypesActiveSimultaneously,
     BadgeRequirementType.EquipmentThreeLevelThreeTypesActiveSimultaneously,

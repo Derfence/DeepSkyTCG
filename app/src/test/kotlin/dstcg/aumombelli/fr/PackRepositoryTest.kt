@@ -68,6 +68,7 @@ class PackRepositoryTest {
         assertEquals(response, repository.currentPackResult().value)
         assertEquals(response.rechargeState, progressGateway.progress.rechargeState)
         assertEquals(1, progressGateway.progress.openedPackCount)
+        assertEquals(false, progressGateway.progress.hasOpenedEpicBoostedPack)
         assertEquals(3, progressGateway.progress.collection.cards.values.sumOf { it.totalOwned })
         assertEquals(
             mapOf(
@@ -85,6 +86,49 @@ class PackRepositoryTest {
             ),
             progressGateway.progress.libraryCardNoveltyState,
         )
+    }
+
+    @Test
+    fun `open boosted pack records boosted badge progress`() = runTest {
+        val fixedNow = Instant.parse("2026-03-24T12:00:00Z")
+        val progressGateway = FakeProgressGateway().apply {
+            progress = StandaloneProgress(
+                collection = ownedCollectionOf(),
+                rechargeState = testRechargeState(),
+                openedPackCount = 1,
+            )
+        }
+        val catalogGateway = FakeCatalogGateway().apply {
+            cards = listOf(
+                testCardDefinition("ALP-001", name = "Nebuleuse d'Orion", variantProfileId = "local-pack-profile"),
+            )
+            variantProfiles = listOf(localPackProfile())
+            gameBalance = testGameBalanceDefinition(
+                cardsPerDraw = 1,
+                suburbanMeanPerDay = 1.0,
+                ruralMeanPerDay = 1.0,
+                mountainMeanPerDay = 1.0,
+            )
+        }
+        val repository = PackRepository(
+            progressRepository = progressGateway,
+            collectionRepository = CollectionRepository(progressGateway),
+            localPackEngine = LocalPackEngine(
+                catalogRepository = catalogGateway,
+                settings = testGameSettings(
+                    now = fixedNow,
+                    maxStoredDraws = 10,
+                    randomSeed = 4,
+                ),
+            ),
+            homeMenuNoveltyEvaluator = HomeMenuNoveltyEvaluator(catalogGateway),
+        )
+
+        val response = repository.openPack("astronomes-en-herbe", isEpicBoosted = true)
+
+        assertEquals(true, response.isEpicBoosted)
+        assertEquals(true, progressGateway.progress.hasOpenedEpicBoostedPack)
+        assertEquals(true, progressGateway.progress.homeMenuNoveltyState.badgeBook)
     }
 
     @Test

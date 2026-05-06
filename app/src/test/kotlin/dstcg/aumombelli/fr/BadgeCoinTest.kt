@@ -32,6 +32,7 @@ class BadgeCoinTest {
         assertTrue(generalLogoSize > regularLogoSize)
         assertTrue(equipmentLogoSize > regularLogoSize)
         assertEquals(0.72f, badgeCoinLogoScale(sampleBadge(BadgeRequirementType.FirstPackOpened)), 0.0001f)
+        assertEquals(0.72f, badgeCoinLogoScale(sampleBadge(BadgeRequirementType.EpicBoostedPackOpened)), 0.0001f)
         assertEquals(0.64f, badgeCoinLogoScale(sampleBadge(BadgeRequirementType.EquipmentActivations100)), 0.0001f)
         assertEquals(0.60f, badgeCoinLogoScale(sampleBadge(BadgeRequirementType.Stamped)), 0.0001f)
     }
@@ -56,6 +57,7 @@ class BadgeCoinTest {
         progress = BadgeProgress(matchedCards = 1, totalCards = 1),
         centerMarkKind = when (requirementType) {
             BadgeRequirementType.FirstPackOpened -> BadgeCenterMarkKind.GeneralLogo
+            BadgeRequirementType.EpicBoostedPackOpened -> BadgeCenterMarkKind.GeneralLogo
             BadgeRequirementType.EquipmentAllCardsActivatedOnce,
             BadgeRequirementType.EquipmentThreeTypesActiveSimultaneously,
             BadgeRequirementType.EquipmentThreeLevelThreeTypesActiveSimultaneously,
