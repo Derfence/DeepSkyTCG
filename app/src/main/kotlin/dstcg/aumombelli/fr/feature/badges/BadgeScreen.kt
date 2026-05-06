@@ -250,22 +250,13 @@ private fun BadgeSectionCard(
                 val spacing = 12.dp
                 val cellWidth = ((maxWidth - spacing * 2) / 3f).coerceAtLeast(84.dp)
                 val coinSize = (cellWidth * 0.74f).coerceIn(64.dp, 92.dp)
-                val perfectBadge = section.badges.firstOrNull {
-                    section.sectionType == BadgeSectionType.Extension &&
-                    it.requirementType == BadgeRequirementType.PerfectCollection
-                }
-                val regularRows = section.badges
-                    .filterNot {
-                        section.sectionType == BadgeSectionType.Extension &&
-                            it.requirementType == BadgeRequirementType.PerfectCollection
-                    }
-                    .chunked(3)
+                val badgeRows = section.badges.chunked(3)
 
                 Column(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    regularRows.forEach { rowBadges ->
+                    badgeRows.forEach { rowBadges ->
                         BadgeGridRow(
                             badges = rowBadges,
                             cellWidth = cellWidth,
@@ -274,22 +265,6 @@ private fun BadgeSectionCard(
                             onBadgePositioned = onBadgePositioned,
                             onBadgeClick = onBadgeClick,
                         )
-                    }
-
-                    perfectBadge?.let { badge ->
-                        Row(
-                            horizontalArrangement = Arrangement.Center,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            BadgeCoinCard(
-                                badge = badge,
-                                coinSize = coinSize,
-                                isCoinHidden = hiddenBadgeId == badge.id,
-                                onCoinPositioned = { bounds -> onBadgePositioned(badge.id, bounds) },
-                                onClick = { onBadgeClick(badge) },
-                                modifier = Modifier.width(cellWidth),
-                            )
-                        }
                     }
                 }
             }
