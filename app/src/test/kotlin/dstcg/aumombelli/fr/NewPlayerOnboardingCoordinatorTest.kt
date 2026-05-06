@@ -326,12 +326,25 @@ class NewPlayerOnboardingCoordinatorTest {
 
         coordinator.onCraftingOpened()
 
+        assertEquals(NewPlayerOnboardingStep.LearnCraftingTools, coordinator.uiState.currentStep)
+        assertEquals(NewPlayerOnboardingStep.LearnCraftingTools, progressGateway.progress.newPlayerOnboardingStep)
+        assertEquals(
+            NewPlayerBlockingModalSpec(NewPlayerBlockingModalKind.CraftingTools),
+            coordinator.activeBlockingModal(
+                currentScene = AppScene.Crafting,
+                sceneState = craftingModeSceneState,
+            ),
+        )
+
+        coordinator.onCraftingToolsWalkthroughCompleted()
+
         val darkenSkyCoachmark = coordinator.activeCoachmark(
             currentScene = AppScene.Crafting,
             sceneState = craftingModeSceneState,
             badgeCelebrationVisible = false,
         )
         assertEquals(NewPlayerOnboardingStep.UseSkyDarkening, coordinator.uiState.currentStep)
+        assertEquals(NewPlayerOnboardingStep.UseSkyDarkening, progressGateway.progress.newPlayerOnboardingStep)
         assertEquals(NewPlayerOnboardingTarget.CraftingDarkenSkyMode, darkenSkyCoachmark?.target)
         assertEquals(NewPlayerCoachmarkPlacement.OverlapTargetBottom, darkenSkyCoachmark?.placement)
         assertEquals(NewPlayerCoachmarkTargetEffect.TouchZone, darkenSkyCoachmark?.targetEffect)

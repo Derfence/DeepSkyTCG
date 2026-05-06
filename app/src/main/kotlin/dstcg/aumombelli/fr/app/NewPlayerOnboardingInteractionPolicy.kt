@@ -24,6 +24,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
         NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.LearnCraftingTools,
         NewPlayerOnboardingStep.UseSkyDarkening,
         NewPlayerOnboardingStep.ShowConclusion,
         -> true
@@ -50,6 +51,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
         NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.LearnCraftingTools,
         NewPlayerOnboardingStep.UseSkyDarkening,
         NewPlayerOnboardingStep.ShowConclusion,
         -> false
@@ -72,6 +74,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
         NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.LearnCraftingTools,
         NewPlayerOnboardingStep.UseSkyDarkening,
         NewPlayerOnboardingStep.ShowConclusion,
         -> false
@@ -94,6 +97,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
         NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.LearnCraftingTools,
         NewPlayerOnboardingStep.UseSkyDarkening,
         NewPlayerOnboardingStep.ShowConclusion,
         -> false
@@ -102,6 +106,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
     fun allowsHomeCrafting(step: NewPlayerOnboardingStep?): Boolean = when (step) {
         null,
         NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.LearnCraftingTools,
         NewPlayerOnboardingStep.UseSkyDarkening,
         NewPlayerOnboardingStep.Completed,
         -> true
@@ -138,6 +143,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.LearnLibraryVariants,
         NewPlayerOnboardingStep.ViewBadges,
         NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.LearnCraftingTools,
         NewPlayerOnboardingStep.UseSkyDarkening,
         NewPlayerOnboardingStep.ShowConclusion,
         -> false
@@ -160,6 +166,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
         NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.LearnCraftingTools,
         NewPlayerOnboardingStep.UseSkyDarkening,
         NewPlayerOnboardingStep.ShowConclusion,
         -> false
@@ -182,6 +189,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
         NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.LearnCraftingTools,
         NewPlayerOnboardingStep.UseSkyDarkening,
         NewPlayerOnboardingStep.ShowConclusion,
         -> false
@@ -204,6 +212,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
         NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.LearnCraftingTools,
         NewPlayerOnboardingStep.UseSkyDarkening,
         NewPlayerOnboardingStep.ShowConclusion,
         -> false
@@ -226,6 +235,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
         NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.LearnCraftingTools,
         NewPlayerOnboardingStep.UseSkyDarkening,
         NewPlayerOnboardingStep.ShowConclusion,
         -> false
@@ -248,6 +258,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.LearnLibraryVariants,
         NewPlayerOnboardingStep.ViewBadges,
         NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.LearnCraftingTools,
         NewPlayerOnboardingStep.UseSkyDarkening,
         NewPlayerOnboardingStep.ShowConclusion,
         -> false
@@ -255,6 +266,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
 
     fun allowsCraftingBack(step: NewPlayerOnboardingStep?): Boolean = when (step) {
         NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.LearnCraftingTools,
         NewPlayerOnboardingStep.UseSkyDarkening,
         -> false
 
@@ -276,14 +288,20 @@ internal object NewPlayerOnboardingInteractionPolicy {
     }
 
     fun allowsCraftingModeSelection(step: NewPlayerOnboardingStep?, mode: CraftingMode): Boolean = when (step) {
-        NewPlayerOnboardingStep.ShowConclusion -> false
+        NewPlayerOnboardingStep.LearnCraftingTools,
+        NewPlayerOnboardingStep.ShowConclusion,
+        -> false
+
         NewPlayerOnboardingStep.ViewCraftingMenu,
         NewPlayerOnboardingStep.UseSkyDarkening -> mode == CraftingMode.DarkenSky
         else -> true
     }
 
     fun allowsCraftingApplication(step: NewPlayerOnboardingStep?, mode: CraftingMode?): Boolean = when (step) {
-        NewPlayerOnboardingStep.ShowConclusion -> false
+        NewPlayerOnboardingStep.LearnCraftingTools,
+        NewPlayerOnboardingStep.ShowConclusion,
+        -> false
+
         NewPlayerOnboardingStep.ViewCraftingMenu,
         NewPlayerOnboardingStep.UseSkyDarkening -> mode == CraftingMode.DarkenSky
         else -> true

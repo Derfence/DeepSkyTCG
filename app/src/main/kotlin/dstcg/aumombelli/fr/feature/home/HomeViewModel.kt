@@ -156,6 +156,7 @@ private suspend fun StandaloneProgress.isCraftingMenuAvailable(
 ): Boolean {
     if (openedPackCount < CraftingMenuMinOpenedPackCount) return false
     val alreadyUnlocked = newPlayerOnboardingStep == NewPlayerOnboardingStep.ViewCraftingMenu ||
+        newPlayerOnboardingStep == NewPlayerOnboardingStep.LearnCraftingTools ||
         newPlayerOnboardingStep == NewPlayerOnboardingStep.UseSkyDarkening ||
         newPlayerOnboardingStep == NewPlayerOnboardingStep.ShowConclusion ||
         newPlayerOnboardingStep == NewPlayerOnboardingStep.Completed

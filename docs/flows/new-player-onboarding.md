@@ -21,6 +21,7 @@ ShowWelcomeIntro
   -> ActivateFirstEquipment
   -> AwaitCraftingEligibility
   -> ViewCraftingMenu
+  -> LearnCraftingTools
   -> UseSkyDarkening
   -> ShowConclusion
   -> Completed
@@ -96,8 +97,14 @@ Au retour accueil, le bouton `Equipements` devient visible et recoit un coachmar
 - `AwaitCraftingEligibility` est silencieuse et sans Aster jusqu'a ce que la fabrication soit eligible.
 - Quand `openedPackCount >= 3` et qu'une carte est eligible a `DarkenSky`, le coordinateur avance vers `ViewCraftingMenu`.
 - Accueil : coachmark sur `Atelier de fabrication`, avec Aster en bas a gauche.
-- Atelier : guide le mode `Assombrir le ciel`, la premiere carte eligible, puis le bouton de confirmation.
+- L'ouverture de l'Atelier avance vers `LearnCraftingTools`.
+- La modale `new-player-modal-crafting-tools` explique les deux outils avant tout coachmark dans l'Atelier.
+- Page `Assombrir le ciel` : couts explicites `Ville -> Periurbain : 2`, `Periurbain -> Campagne : 2`, `Campagne -> Montagne : 3`, `Montagne -> Holographique : 6`.
+- Page `Agence spatiale` : cout explicite `Standard -> Tamponnee : 10`.
+- Apres `Terminer`, le parcours avance vers `UseSkyDarkening`.
+- Atelier : guide alors le mode `Assombrir le ciel`, la premiere carte eligible, puis le bouton de confirmation.
 - Aster utilise sa main cle a molette pendant le chapitre fabrication.
+- Aster est absente de la modale d'explication des outils, comme dans la modale des variantes de bibliotheque.
 - Pendant ce chapitre, seul `DarkenSky` est autorise.
 - Une application reussie de `DarkenSky` avance vers `ShowConclusion`, sans afficher immediatement la conclusion dans l'Atelier.
 - Le retour vers l'accueil redevient possible pour permettre au joueur de quitter l'Atelier.

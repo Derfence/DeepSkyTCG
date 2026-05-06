@@ -58,6 +58,7 @@ internal fun AppSceneContent(
             sceneState = sceneState,
             onboardingCoordinator = onboardingCoordinator,
             onboardingStep = onboardingStep,
+            blockingModalSpec = blockingModalSpec,
             transitions = transitions,
             scope = scope,
             updateSceneState = updateSceneState,

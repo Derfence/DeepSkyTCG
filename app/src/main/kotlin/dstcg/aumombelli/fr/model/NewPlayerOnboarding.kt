@@ -16,6 +16,7 @@ enum class NewPlayerOnboardingStep {
     ActivateFirstEquipment,
     AwaitCraftingEligibility,
     ViewCraftingMenu,
+    LearnCraftingTools,
     UseSkyDarkening,
     ShowConclusion,
     Completed,

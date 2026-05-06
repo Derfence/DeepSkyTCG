@@ -109,6 +109,23 @@ class NewPlayerOnboardingInteractionPolicyTest {
     }
 
     @Test
+    fun `learn crafting tools keeps crafting modal blocking until acknowledged`() {
+        val step = NewPlayerOnboardingStep.LearnCraftingTools
+
+        assertTrue(NewPlayerOnboardingInteractionPolicy.isBlockingStep(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeOpenPack(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeLibrary(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeBadgeBook(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeEquipment(step))
+        assertTrue(NewPlayerOnboardingInteractionPolicy.allowsHomeCrafting(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsCraftingBack(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsCraftingModeSelection(step, CraftingMode.DarkenSky))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsCraftingModeSelection(step, CraftingMode.SpaceAgency))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsCraftingApplication(step, CraftingMode.DarkenSky))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsCraftingApplication(step, CraftingMode.SpaceAgency))
+    }
+
+    @Test
     fun `use sky darkening restricts crafting to the darken sky recipe`() {
         val step = NewPlayerOnboardingStep.UseSkyDarkening
 

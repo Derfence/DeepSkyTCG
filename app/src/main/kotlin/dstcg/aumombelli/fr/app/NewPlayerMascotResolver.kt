@@ -78,6 +78,15 @@ internal fun resolveNewPlayerSceneMascotSpec(
 
         NewPlayerOnboardingStep.LearnLibraryVariants -> null
 
+        NewPlayerOnboardingStep.LearnCraftingTools ->
+            ifVisible(currentScene == AppScene.Home && sceneState.homeContentVisible) {
+                mascot(
+                    face = AsterFace.SmileLookingRight,
+                    hand = AsterHand.Wrench,
+                    anchor = AsterAnchor.BottomStart,
+                ).hidingIfOverlappingTarget(sceneState, activeCoachmarkSpec)
+            }
+
         NewPlayerOnboardingStep.ViewBadges ->
             ifVisible(currentScene == AppScene.Home && sceneState.homeContentVisible) {
                 mascot(
@@ -147,7 +156,9 @@ internal fun resolveNewPlayerBlockingModalMascotSpec(
         sizeMultiplier = CenteredModalAsterSizeMultiplier,
     )
 
-    NewPlayerBlockingModalKind.LibraryVariants -> null
+    NewPlayerBlockingModalKind.LibraryVariants,
+    NewPlayerBlockingModalKind.CraftingTools,
+    -> null
 }
 
 private inline fun ifVisible(

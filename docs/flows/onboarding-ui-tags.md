@@ -43,10 +43,13 @@ Cette page centralise les tags Compose et la validation associee au parcours nou
 - `new-player-modal-welcome`
 - `new-player-modal-conclusion`
 - `new-player-modal-library-variants`
+- `new-player-modal-crafting-tools`
 - `new-player-modal-page-<index>`
 - `new-player-modal-previous`
 - `new-player-modal-next`
 - `new-player-modal-finish`
+- `new-player-modal-crafting-tools-costs-<pageIndex>`
+- `new-player-modal-crafting-tools-cost-<pageIndex>-<costIndex>`
 
 ## Hints locaux
 
@@ -57,7 +60,7 @@ Cette page centralise les tags Compose et la validation associee au parcours nou
 
 - `aster-mascot`
 
-Aster est rendue seulement avec les modales d'introduction/conclusion et les bulles de coachmark hors scene Equipement. Quand elle apparait, son overlay reste au-dessus des filtres, halos et bulles de coachmark, avec une taille `1.5x`, et un multiplicateur local `2x` dans les modales centrees. Les cartes `new-player-modal-welcome` et `new-player-modal-conclusion` remontent pour eviter Aster lorsque la hauteur disponible le permet. Elle est en bas centre avec deux mains ouvertes dans `new-player-modal-welcome`, en bas centre avec une main cartes et une main telescope dans `new-player-modal-conclusion` apres retour a l'accueil, puis en bas a droite, sauf sur le coachmark `HomeCrafting` ou elle est en bas a gauche avec cheveux et main en miroir horizontal. Elle utilise le telescope sur `HomeEquipment` et la cle a molette sur le chapitre Atelier. Elle est absente de la modale `new-player-modal-library-variants`, de `ActivateFirstEquipment`, des hints locaux, de `OpenSecondPackMenu`, de `AwaitCraftingEligibility` et de `Completed`, et peut etre masquee temporairement si elle recouvre la cible guidee.
+Aster est rendue seulement avec les modales d'introduction/conclusion et les bulles de coachmark hors scene Equipement. Quand elle apparait, son overlay reste au-dessus des filtres, halos et bulles de coachmark, avec une taille `1.5x`, et un multiplicateur local `2x` dans les modales centrees. Les cartes `new-player-modal-welcome` et `new-player-modal-conclusion` remontent pour eviter Aster lorsque la hauteur disponible le permet. Elle est en bas centre avec deux mains ouvertes dans `new-player-modal-welcome`, en bas centre avec une main cartes et une main telescope dans `new-player-modal-conclusion` apres retour a l'accueil, puis en bas a droite, sauf sur le coachmark `HomeCrafting` ou elle est en bas a gauche avec cheveux et main en miroir horizontal. Elle utilise le telescope sur `HomeEquipment` et la cle a molette sur le chapitre Atelier. Elle est absente des modales `new-player-modal-library-variants` et `new-player-modal-crafting-tools`, de `ActivateFirstEquipment`, des hints locaux, de `OpenSecondPackMenu`, de `AwaitCraftingEligibility` et de `Completed`, et peut etre masquee temporairement si elle recouvre la cible guidee.
 
 Le coachmark `HomeOpenPack` utilise un placement dedie : la bulle est posee par-dessus la zone de texte de la grande carte centrale.
 
@@ -78,6 +81,8 @@ Le coachmark `HomeOpenPack` utilise un placement dedie : la bulle est posee par-
 - `PackOpeningScreenTest`
 - `NewPlayerOnboardingInteractionPolicyTest`
 - `NewPlayerBlockingModalTest`
+- `CraftingOnboardingToolsContentTest`
+- `CraftingOnboardingToolsWalkthroughTest`
 - `NewPlayerCoachmarkOverlayTest`
 - `CraftingScreenTest`
 - `CraftingViewModelTest`

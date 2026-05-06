@@ -110,6 +110,25 @@ class ProgressRepositoryTest {
     }
 
     @Test
+    fun `save progress persists crafting tools onboarding step`() = runTest {
+        val fixture = newFixture()
+        val progress = StandaloneProgress(
+            collection = ownedCollectionOf("ALP-001" to 2),
+            rechargeState = testRechargeStateWithNextChargeAt(
+                availableDrawCount = 4,
+                nextChargeAt = "2026-03-25T00:00:00Z",
+            ),
+            openedPackCount = 3,
+            newPlayerOnboardingStep = NewPlayerOnboardingStep.LearnCraftingTools,
+        )
+
+        fixture.repository.saveProgress(progress)
+
+        val reloaded = fixture.repository.loadProgress().requireUsableProgress().progress
+        assertEquals(NewPlayerOnboardingStep.LearnCraftingTools, reloaded.newPlayerOnboardingStep)
+    }
+
+    @Test
     fun `load progress normalizes invalid cards and variants from secure storage`() = runTest {
         val fixture = newFixture()
         writeSecureSnapshot(

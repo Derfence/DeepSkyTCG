@@ -34,7 +34,7 @@ Accueil
 - une celebration de badge differee tant que le joueur doit d'abord voir sa bibliotheque ;
 - une pause libre apres `Badges`, puis un deuxieme tirage garantissant une carte d'equipement ;
 - une activation d'equipement guidee ;
-- une pause jusqu'a l'eligibilite de l'artisanat, puis le guidage `DarkenSky`.
+- une pause jusqu'a l'eligibilite de l'artisanat, une explication des deux outils et de leurs couts, puis le guidage `DarkenSky`.
 
 ## Decoupage refondu
 

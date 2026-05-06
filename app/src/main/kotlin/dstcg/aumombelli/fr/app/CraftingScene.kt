@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.aumombelli.dstcg.AppContainer
 import fr.aumombelli.dstcg.feature.crafting.CraftingEvent
+import fr.aumombelli.dstcg.feature.crafting.CraftingOnboardingToolsWalkthrough
 import fr.aumombelli.dstcg.feature.crafting.CraftingScreen
 import fr.aumombelli.dstcg.feature.crafting.CraftingViewModel
 import fr.aumombelli.dstcg.model.CraftingMode
@@ -22,6 +23,7 @@ internal fun CraftingScene(
     sceneState: AppSceneUiState,
     onboardingCoordinator: NewPlayerOnboardingCoordinator,
     onboardingStep: NewPlayerOnboardingStep?,
+    blockingModalSpec: NewPlayerBlockingModalSpec?,
     transitions: AppSceneTransitionController,
     scope: CoroutineScope,
     updateSceneState: ((AppSceneUiState) -> AppSceneUiState) -> Unit,
@@ -100,4 +102,12 @@ internal fun CraftingScene(
             updateSceneState { it.withCoachmarkTargetBounds(target, bounds) }
         },
     )
+
+    if (blockingModalSpec?.kind == NewPlayerBlockingModalKind.CraftingTools) {
+        CraftingOnboardingToolsWalkthrough(
+            onCompleted = {
+                scope.launch { onboardingCoordinator.onCraftingToolsWalkthroughCompleted() }
+            },
+        )
+    }
 }

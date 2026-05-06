@@ -24,6 +24,7 @@ class NewPlayerMascotResolverTest {
         val welcome = resolveNewPlayerBlockingModalMascotSpec(NewPlayerBlockingModalKind.WelcomeIntro)
         val conclusion = resolveNewPlayerBlockingModalMascotSpec(NewPlayerBlockingModalKind.Conclusion)
         val libraryVariants = resolveNewPlayerBlockingModalMascotSpec(NewPlayerBlockingModalKind.LibraryVariants)
+        val craftingTools = resolveNewPlayerBlockingModalMascotSpec(NewPlayerBlockingModalKind.CraftingTools)
 
         assertEquals(AsterFace.Smile, welcome?.face)
         assertEquals(AsterHand.Open, welcome?.hand)
@@ -39,6 +40,7 @@ class NewPlayerMascotResolverTest {
         assertEquals(true, conclusion?.showBothHands)
         assertEquals(2f, conclusion?.sizeMultiplier)
         assertNull(libraryVariants)
+        assertNull(craftingTools)
     }
 
     @Test

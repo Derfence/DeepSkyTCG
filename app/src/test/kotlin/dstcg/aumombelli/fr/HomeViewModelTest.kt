@@ -135,15 +135,24 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `crafting menu stays available during the onboarding conclusion`() = runTest {
+    fun `crafting menu stays available during crafting walkthrough and conclusion`() = runTest {
         val progressGateway = FakeProgressGateway().apply {
             progress = progress.copy(
                 openedPackCount = 3,
-                newPlayerOnboardingStep = NewPlayerOnboardingStep.ShowConclusion,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.LearnCraftingTools,
             )
         }
 
         val viewModel = HomeViewModel(progressGateway)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isCraftingMenuAvailable)
+
+        progressGateway.progress = progressGateway.progress.copy(
+            newPlayerOnboardingStep = NewPlayerOnboardingStep.ShowConclusion,
+        )
+
+        viewModel.refresh()
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.isCraftingMenuAvailable)

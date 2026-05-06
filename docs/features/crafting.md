@@ -36,7 +36,12 @@ Les couts de ciel viennent de `game_balance.json` si `skyUpgradeCosts` existe. S
 
 ## Onboarding
 
-Le chapitre fabrication guide seulement `Assombrir le ciel`. Pendant les etapes `ViewCraftingMenu` et `UseSkyDarkening`, le mode `DarkenSky` est le seul mode autorise pour la selection et l'application guidees.
+Le chapitre fabrication guide seulement `Assombrir le ciel`, mais commence par `LearnCraftingTools`, une modale paginee de deux pages qui explique les deux outils et leurs couts :
+
+- `Assombrir le ciel` : `Ville -> Periurbain = 2`, `Periurbain -> Campagne = 2`, `Campagne -> Montagne = 3`, `Montagne -> Holographique = 6`.
+- `Agence spatiale` : `Standard -> Tamponnee = 10`.
+
+Pendant `LearnCraftingTools`, la modale bloque l'Atelier. Pendant `ViewCraftingMenu` et `UseSkyDarkening`, le mode `DarkenSky` est le seul mode autorise pour la selection et l'application guidees.
 
 ## Tests associes
 
@@ -44,6 +49,8 @@ Le chapitre fabrication guide seulement `Assombrir le ciel`. Pendant les etapes 
 - `CraftingRepositoryTest`
 - `CraftingViewModelTest`
 - `CraftingScreenTest`
+- `CraftingOnboardingToolsContentTest`
+- `CraftingOnboardingToolsWalkthroughTest`
 - `NewPlayerOnboardingCoordinatorTest`
 
 [← Index documentation](../README.md)

@@ -41,6 +41,7 @@ internal enum class NewPlayerCoachmarkTargetEffect {
 internal enum class NewPlayerBlockingModalKind {
     WelcomeIntro,
     LibraryVariants,
+    CraftingTools,
     Conclusion,
 }
 
@@ -108,6 +109,7 @@ internal class NewPlayerOnboardingCoordinator(
             NewPlayerOnboardingStep.LearnLibraryVariants,
             NewPlayerOnboardingStep.ViewBadges,
             NewPlayerOnboardingStep.ViewCraftingMenu,
+            NewPlayerOnboardingStep.LearnCraftingTools,
             NewPlayerOnboardingStep.UseSkyDarkening,
             NewPlayerOnboardingStep.ShowConclusion,
             NewPlayerOnboardingStep.Completed,
@@ -160,15 +162,20 @@ internal class NewPlayerOnboardingCoordinator(
     }
 
     suspend fun onCraftingOpened() {
-        advanceTo(NewPlayerOnboardingStep.UseSkyDarkening) {
+        advanceTo(NewPlayerOnboardingStep.LearnCraftingTools) {
             it == NewPlayerOnboardingStep.ViewCraftingMenu
+        }
+    }
+
+    suspend fun onCraftingToolsWalkthroughCompleted() {
+        advanceTo(NewPlayerOnboardingStep.UseSkyDarkening) {
+            it == NewPlayerOnboardingStep.LearnCraftingTools
         }
     }
 
     suspend fun onSkyDarkeningCrafted() {
         advanceTo(NewPlayerOnboardingStep.ShowConclusion) {
-            it == NewPlayerOnboardingStep.ViewCraftingMenu ||
-                it == NewPlayerOnboardingStep.UseSkyDarkening
+            it == NewPlayerOnboardingStep.UseSkyDarkening
         }
     }
 
@@ -203,6 +210,13 @@ internal class NewPlayerOnboardingCoordinator(
             NewPlayerOnboardingStep.LearnLibraryVariants ->
                 if (currentScene == AppScene.Library && sceneState.libraryContentVisible) {
                     NewPlayerBlockingModalSpec(kind = NewPlayerBlockingModalKind.LibraryVariants)
+                } else {
+                    null
+                }
+
+            NewPlayerOnboardingStep.LearnCraftingTools ->
+                if (currentScene == AppScene.Crafting && sceneState.craftingContentVisible) {
+                    NewPlayerBlockingModalSpec(kind = NewPlayerBlockingModalKind.CraftingTools)
                 } else {
                     null
                 }
@@ -375,6 +389,7 @@ internal class NewPlayerOnboardingCoordinator(
             NewPlayerOnboardingStep.AwaitCraftingEligibility -> null
 
             NewPlayerOnboardingStep.ViewCraftingMenu,
+            NewPlayerOnboardingStep.LearnCraftingTools,
             NewPlayerOnboardingStep.UseSkyDarkening,
             -> activeCraftingCoachmark(
                 currentScene = currentScene,
@@ -522,6 +537,7 @@ private fun NewPlayerOnboardingUiState.withStep(
     blockingModalStep = when (nextStep) {
         NewPlayerOnboardingStep.ShowWelcomeIntro,
         NewPlayerOnboardingStep.LearnLibraryVariants,
+        NewPlayerOnboardingStep.LearnCraftingTools,
         NewPlayerOnboardingStep.ShowConclusion,
         -> nextStep
 

@@ -56,5 +56,6 @@ Les commandes detaillees sont dans [Installation et tests](docs/setup-and-tests.
 - Stock local de `10` ouvertures, `5` cartes par pack et cooldown de `6 h` module par la meteo UTC.
 - Catalogue embarque synchronise depuis `catalogue_astronomie.xlsx`.
 - NFC optionnel pour echanger une variante en doublon contre une variante compatible.
+- Onboarding local guide jusqu'a l'artisanat, avec explication des outils et de leurs couts.
 
 Ne pousse rien depuis ce depot sans instruction explicite.
