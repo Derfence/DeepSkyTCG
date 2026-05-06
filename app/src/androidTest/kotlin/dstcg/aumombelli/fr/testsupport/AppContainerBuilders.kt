@@ -370,7 +370,10 @@ private class NavigationPackGateway(
         packFlow.value = null
     }
 
-    override suspend fun openPack(extensionId: String): DrawPackResponse {
+    override suspend fun openPack(
+        extensionId: String,
+        isEpicBoosted: Boolean,
+    ): DrawPackResponse {
         val progress = (progressRepository.loadProgress() as ProgressLoadResult.Ok).progress
         val mergedCollection = progress.collection.mergePackCards(openPackResponse.cards)
         progressRepository.saveProgress(

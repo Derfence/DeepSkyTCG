@@ -25,6 +25,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ActivateFirstEquipment,
         NewPlayerOnboardingStep.ViewCraftingMenu,
         NewPlayerOnboardingStep.UseSkyDarkening,
+        NewPlayerOnboardingStep.ShowConclusion,
         -> true
     }
 
@@ -50,6 +51,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ActivateFirstEquipment,
         NewPlayerOnboardingStep.ViewCraftingMenu,
         NewPlayerOnboardingStep.UseSkyDarkening,
+        NewPlayerOnboardingStep.ShowConclusion,
         -> false
     }
 
@@ -71,6 +73,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ActivateFirstEquipment,
         NewPlayerOnboardingStep.ViewCraftingMenu,
         NewPlayerOnboardingStep.UseSkyDarkening,
+        NewPlayerOnboardingStep.ShowConclusion,
         -> false
     }
 
@@ -92,6 +95,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ActivateFirstEquipment,
         NewPlayerOnboardingStep.ViewCraftingMenu,
         NewPlayerOnboardingStep.UseSkyDarkening,
+        NewPlayerOnboardingStep.ShowConclusion,
         -> false
     }
 
@@ -113,6 +117,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
         NewPlayerOnboardingStep.AwaitCraftingEligibility,
+        NewPlayerOnboardingStep.ShowConclusion,
         -> false
     }
 
@@ -134,6 +139,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ViewBadges,
         NewPlayerOnboardingStep.ViewCraftingMenu,
         NewPlayerOnboardingStep.UseSkyDarkening,
+        NewPlayerOnboardingStep.ShowConclusion,
         -> false
     }
 
@@ -155,6 +161,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ActivateFirstEquipment,
         NewPlayerOnboardingStep.ViewCraftingMenu,
         NewPlayerOnboardingStep.UseSkyDarkening,
+        NewPlayerOnboardingStep.ShowConclusion,
         -> false
     }
 
@@ -176,6 +183,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ActivateFirstEquipment,
         NewPlayerOnboardingStep.ViewCraftingMenu,
         NewPlayerOnboardingStep.UseSkyDarkening,
+        NewPlayerOnboardingStep.ShowConclusion,
         -> false
     }
 
@@ -197,6 +205,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ActivateFirstEquipment,
         NewPlayerOnboardingStep.ViewCraftingMenu,
         NewPlayerOnboardingStep.UseSkyDarkening,
+        NewPlayerOnboardingStep.ShowConclusion,
         -> false
     }
 
@@ -218,6 +227,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ActivateFirstEquipment,
         NewPlayerOnboardingStep.ViewCraftingMenu,
         NewPlayerOnboardingStep.UseSkyDarkening,
+        NewPlayerOnboardingStep.ShowConclusion,
         -> false
     }
 
@@ -239,6 +249,7 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ViewBadges,
         NewPlayerOnboardingStep.ViewCraftingMenu,
         NewPlayerOnboardingStep.UseSkyDarkening,
+        NewPlayerOnboardingStep.ShowConclusion,
         -> false
     }
 
@@ -259,17 +270,20 @@ internal object NewPlayerOnboardingInteractionPolicy {
         NewPlayerOnboardingStep.ViewEquipmentMenu,
         NewPlayerOnboardingStep.ActivateFirstEquipment,
         NewPlayerOnboardingStep.AwaitCraftingEligibility,
+        NewPlayerOnboardingStep.ShowConclusion,
         NewPlayerOnboardingStep.Completed,
         -> true
     }
 
     fun allowsCraftingModeSelection(step: NewPlayerOnboardingStep?, mode: CraftingMode): Boolean = when (step) {
+        NewPlayerOnboardingStep.ShowConclusion -> false
         NewPlayerOnboardingStep.ViewCraftingMenu,
         NewPlayerOnboardingStep.UseSkyDarkening -> mode == CraftingMode.DarkenSky
         else -> true
     }
 
     fun allowsCraftingApplication(step: NewPlayerOnboardingStep?, mode: CraftingMode?): Boolean = when (step) {
+        NewPlayerOnboardingStep.ShowConclusion -> false
         NewPlayerOnboardingStep.ViewCraftingMenu,
         NewPlayerOnboardingStep.UseSkyDarkening -> mode == CraftingMode.DarkenSky
         else -> true

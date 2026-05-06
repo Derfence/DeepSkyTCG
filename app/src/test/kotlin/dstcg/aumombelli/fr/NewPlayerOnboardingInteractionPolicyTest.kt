@@ -121,6 +121,17 @@ class NewPlayerOnboardingInteractionPolicyTest {
     }
 
     @Test
+    fun `show conclusion allows returning home while keeping crafting actions locked`() {
+        val step = NewPlayerOnboardingStep.ShowConclusion
+
+        assertTrue(NewPlayerOnboardingInteractionPolicy.isBlockingStep(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeExit(step))
+        assertTrue(NewPlayerOnboardingInteractionPolicy.allowsCraftingBack(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsCraftingModeSelection(step, CraftingMode.DarkenSky))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsCraftingApplication(step, CraftingMode.DarkenSky))
+    }
+
+    @Test
     fun `select first booster keeps pack progression available but blocks leaving the scene`() {
         val step = NewPlayerOnboardingStep.SelectFirstBooster
 
@@ -145,6 +156,11 @@ class NewPlayerOnboardingInteractionPolicyTest {
         assertFalse(
             NewPlayerOnboardingInteractionPolicy.showsPackOpeningDismissHint(
                 NewPlayerOnboardingStep.ViewEquipmentMenu,
+            ),
+        )
+        assertFalse(
+            NewPlayerOnboardingInteractionPolicy.showsPackOpeningDismissHint(
+                NewPlayerOnboardingStep.ShowConclusion,
             ),
         )
         assertFalse(

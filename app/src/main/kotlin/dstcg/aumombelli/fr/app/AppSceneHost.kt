@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.AppContainer
 import fr.aumombelli.dstcg.feature.badges.BadgeUnlockCelebrationOverlay
@@ -34,6 +35,9 @@ import fr.aumombelli.dstcg.feature.home.HOME_LOGO_LANDING_SCALE
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingContent
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.TradeCardCandidate
+import fr.aumombelli.dstcg.ui.component.AsterMascotOverlay
+import fr.aumombelli.dstcg.ui.component.AsterMascotSpec
+import fr.aumombelli.dstcg.ui.component.asterMascotHeightForContainer
 import fr.aumombelli.dstcg.ui.motion.AppScene
 import fr.aumombelli.dstcg.ui.motion.AppSkyBackdrop
 import fr.aumombelli.dstcg.ui.motion.BrandLogoVariant
@@ -216,7 +220,10 @@ internal fun AppSceneHost(
                 testTagsAsResourceId = true
             }
             .onSizeChanged { size ->
-                sceneStateHolder.value = sceneStateHolder.value.withRootHeight(size.height.toFloat())
+                sceneStateHolder.value = sceneStateHolder.value.withRootSize(
+                    widthPx = size.width.toFloat(),
+                    heightPx = size.height.toFloat(),
+                )
             },
     ) {
         BackHandler(enabled = sceneState.transitionLocked) {
@@ -304,8 +311,20 @@ internal fun AppSceneHost(
             sceneState.pendingBadgeCelebration.isNotEmpty() &&
             !sceneState.badgeCelebrationDeferred &&
             badgeCelebrationTargetBounds != null
+        val activeCoachmarkSpec = if (blockingModalSpec == null) {
+            onboardingCoordinator.activeCoachmark(
+                currentScene = sceneState.currentScene,
+                sceneState = sceneState,
+                badgeCelebrationVisible = badgeCelebrationVisible,
+            )
+        } else {
+            null
+        }
 
         if (blockingModalSpec?.kind == NewPlayerBlockingModalKind.WelcomeIntro) {
+            val welcomeMascotSpec = resolveNewPlayerBlockingModalMascotSpec(
+                NewPlayerBlockingModalKind.WelcomeIntro,
+            )
             NewPlayerBlockingModal(
                 testTag = "new-player-modal-welcome",
                 pages = listOf(
@@ -318,15 +337,67 @@ internal fun AppSceneHost(
                 onFinished = {
                     scope.launch { onboardingCoordinator.onWelcomeIntroAcknowledged() }
                 },
+                decorativeBottomAvoidanceHeight = {
+                    welcomeMascotSpec?.modalBottomAvoidanceHeight(maxWidth.value) ?: 0.dp
+                },
+                decorativeOverlay = {
+                    welcomeMascotSpec?.let { spec ->
+                        AsterMascotOverlay(
+                            spec = spec,
+                            bottomPadding = CenteredModalAsterBottomPadding,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                },
+            )
+        }
+
+        if (blockingModalSpec?.kind == NewPlayerBlockingModalKind.Conclusion) {
+            val conclusionMascotSpec = resolveNewPlayerBlockingModalMascotSpec(
+                NewPlayerBlockingModalKind.Conclusion,
+            )
+            NewPlayerBlockingModal(
+                testTag = "new-player-modal-conclusion",
+                pages = listOf(
+                    NewPlayerBlockingModalPage(
+                        title = NewPlayerOnboardingContent.conclusion.title,
+                        message = NewPlayerOnboardingContent.conclusion.message,
+                    ),
+                ),
+                finishButtonLabel = "Terminer",
+                onFinished = {
+                    scope.launch { onboardingCoordinator.onConclusionAcknowledged() }
+                },
+                decorativeBottomAvoidanceHeight = {
+                    conclusionMascotSpec?.modalBottomAvoidanceHeight(maxWidth.value) ?: 0.dp
+                },
+                decorativeOverlay = {
+                    conclusionMascotSpec?.let { spec ->
+                        AsterMascotOverlay(
+                            spec = spec,
+                            bottomPadding = CenteredModalAsterBottomPadding,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                },
             )
         }
 
         if (blockingModalSpec == null) {
-            onboardingCoordinator.activeCoachmark(
+            resolveNewPlayerSceneMascotSpec(
+                currentStep = onboardingStep,
                 currentScene = sceneState.currentScene,
                 sceneState = sceneState,
+                activeCoachmarkSpec = activeCoachmarkSpec,
                 badgeCelebrationVisible = badgeCelebrationVisible,
             )?.let { spec ->
+                AsterMascotOverlay(
+                    spec = spec,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+
+            activeCoachmarkSpec?.let { spec ->
                 val targetBounds = sceneState.coachmarkTargetBounds[spec.target]
                 val forceScrollDownHint =
                     spec.target == NewPlayerOnboardingTarget.EquipmentActivation &&
@@ -357,3 +428,12 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
     is ContextWrapper -> baseContext.findActivity()
     else -> null
 }
+
+private fun AsterMascotSpec.modalBottomAvoidanceHeight(containerWidth: Float): Dp =
+    asterMascotHeightForContainer(
+        containerWidth = containerWidth,
+        scale = scale,
+        sizeMultiplier = sizeMultiplier,
+    ).dp + CenteredModalAsterBottomPadding
+
+private val CenteredModalAsterBottomPadding = 92.dp

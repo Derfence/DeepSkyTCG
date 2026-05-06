@@ -2,7 +2,9 @@
 
 [← Index documentation](../README.md) | [Tags UI](onboarding-ui-tags.md) | [Accueil](../features/home.md)
 
-Le standalone guide le premier parcours joueur avec une intro obligatoire, des etapes guidees pack/bibliotheque/equipement/fabrication, puis des pauses silencieuses quand le parcours redevient libre.
+Le standalone guide le premier parcours joueur avec une intro obligatoire, des etapes guidees pack/bibliotheque/equipement/fabrication, une conclusion obligatoire, puis des pauses silencieuses quand le parcours redevient libre.
+
+Aster, la mascotte de guidage, accompagne uniquement certaines boites de texte d'onboarding : les modales d'introduction et de conclusion, et les bulles de coachmark hors scene Equipement. Elle reste decorative, ne prend pas le focus accessibilite, ne bloque pas les interactions et est toujours rendue au premier plan quand elle apparait. Sa taille est multipliee par `1.5` par rapport au gabarit initial, avec un multiplicateur local `2x` dans les deux modales ou elle est en bas centre. Dans ces modales, la boite de dialogue remonte pour ne pas intersecter Aster lorsque la hauteur disponible le permet. Elle est en bas centre avec deux mains ouvertes dans l'introduction, en bas centre avec cartes et telescope dans la conclusion, puis en bas a droite pour les coachmarks, sauf pour le coachmark d'ouverture de l'Atelier ou elle passe en bas a gauche avec cheveux et main en miroir horizontal. Elle est masquee pendant les transitions, les celebrations de badge, la modale d'explication des variantes, la scene Equipement, les hints sans bulle de texte et les pauses silencieuses `OpenSecondPackMenu`, `AwaitCraftingEligibility` et `Completed`.
 
 ## Sequence persistante
 
@@ -20,6 +22,7 @@ ShowWelcomeIntro
   -> AwaitCraftingEligibility
   -> ViewCraftingMenu
   -> UseSkyDarkening
+  -> ShowConclusion
   -> Completed
 ```
 
@@ -28,12 +31,16 @@ Chaque etape est stockee dans la progression locale securisee et rejouee jusqu'a
 ## Introduction
 
 - `ShowWelcomeIntro` affiche la modale bloquante `new-player-modal-welcome` quand l'accueil est visible et stabilise.
+- Aster apparait dans la modale en version compacte, en bas centre, avec deux mains ouvertes et un multiplicateur local `2x`.
+- Le texte presente Aster comme guide du parcours.
 - Le bouton `Commencer` avance vers `OpenFirstPackMenu`.
 - Aucun coachmark global n'est affiche tant que cette modale est active.
 
 ## Premier pack
 
 - Accueil : coachmark sur `Ouvrir un pack`.
+- Aster apparait avec la bulle de coachmark, avec l'index pointe vers le guidage quand l'espace le permet.
+- La bulle `HomeOpenPack` est placee par-dessus la zone de texte de la grande carte centrale.
 - Selection : coachmark sur le premier bouton `Observer`.
 - Booster : coachmark apres la fin de l'introduction visuelle des quatre boosters.
 - Le coachmark disparait des le clic pour ne pas suivre l'animation.
@@ -43,6 +50,7 @@ Chaque etape est stockee dans la progression locale securisee et rejouee jusqu'a
 ## Retour apres premier pack
 
 - `PackOpeningScreen` garde le hint vertical.
+- Aster ne s'affiche pas pendant ce hint, car il ne s'agit pas d'une boite de texte de coachmark.
 - Le premier nudge affiche `Glisse vers le haut pour revenir a l'accueil.`
 - Au retour accueil, la priorite va a `Bibliotheque`.
 - Si un badge est debloque, sa celebration est differee jusqu'a la fin de `ViewLibrary`.
@@ -50,9 +58,11 @@ Chaque etape est stockee dans la progression locale securisee et rejouee jusqu'a
 ## Bibliotheque puis badges
 
 - Coachmark sur `Bibliotheque`.
+- Aster accompagne ce coachmark avec sa main cartes.
 - Transition par portail-livre frontal avec couverture, pages et decor d'etoiles.
 - L'ouverture avance vers `LearnLibraryVariants`.
 - La modale `new-player-modal-library-variants` bloque les interactions bibliotheque, l'echange et le retour.
+- Aster ne s'affiche pas dans la modale de variantes, pour laisser toute la place aux exemples de cartes.
 - Apres `Terminer`, micro-hint local : `Touche une carte obtenue pour l'ouvrir.`
 - Le micro-hint disparait apres environ `2.8 s`.
 - Les cartes pedagogiques sont tirees aleatoirement dans le vrai catalogue par rarete.
@@ -65,6 +75,7 @@ Chaque etape est stockee dans la progression locale securisee et rejouee jusqu'a
 `OpenSecondPackMenu` est silencieuse :
 
 - pas de coachmark ;
+- pas d'Aster, pour signaler que la pause est volontairement libre ;
 - pas de blocage supplementaire ;
 - `Home`, `Bibliotheque`, `Badges`, `Packs` et retour Android redeviennent normaux ;
 - `Equipements` reste absent tant qu'aucune carte d'equipement n'a ete obtenue.
@@ -77,17 +88,26 @@ Le premier pack effectivement ouvert apres cette pause est le deuxieme tirage d'
 - un slot `Common` est privilegie, sinon le slot de plus faible rarete finale ;
 - pas de carte holographique ni tamponnee.
 
-Au retour accueil, le bouton `Equipements` devient visible et recoit un coachmark. Dans l'ecran, le coachmark cible le premier bouton `Activer` eligible. Si ce bouton est hors viewport, la bulle devient une fleche vers le bas jusqu'a ce que la cible soit visible.
+Au retour accueil, le bouton `Equipements` devient visible et recoit un coachmark avec Aster et sa main telescope. Dans l'ecran, le coachmark cible le premier bouton `Activer` eligible, sans Aster dans la scene Equipement. Si ce bouton est hors viewport, la bulle devient une fleche vers le bas jusqu'a ce que la cible soit visible.
 
 ## Chapitre fabrication
 
 - La premiere activation reussie avance vers `AwaitCraftingEligibility`.
-- `AwaitCraftingEligibility` est silencieuse.
+- `AwaitCraftingEligibility` est silencieuse et sans Aster jusqu'a ce que la fabrication soit eligible.
 - Quand `openedPackCount >= 3` et qu'une carte est eligible a `DarkenSky`, le coordinateur avance vers `ViewCraftingMenu`.
-- Accueil : coachmark sur `Atelier de fabrication`.
+- Accueil : coachmark sur `Atelier de fabrication`, avec Aster en bas a gauche.
 - Atelier : guide le mode `Assombrir le ciel`, la premiere carte eligible, puis le bouton de confirmation.
+- Aster utilise sa main cle a molette pendant le chapitre fabrication.
 - Pendant ce chapitre, seul `DarkenSky` est autorise.
-- L'onboarding se termine apres une application reussie de `DarkenSky`.
+- Une application reussie de `DarkenSky` avance vers `ShowConclusion`, sans afficher immediatement la conclusion dans l'Atelier.
+- Le retour vers l'accueil redevient possible pour permettre au joueur de quitter l'Atelier.
+
+## Conclusion
+
+- `ShowConclusion` affiche la modale bloquante `new-player-modal-conclusion` une fois l'accueil retrouve, sur le meme format que l'introduction.
+- Aster apparait dans la modale en version compacte, en bas centre, avec une main cartes, une main telescope et un multiplicateur local `2x`.
+- Le bouton `Terminer` avance vers `Completed`.
+- `Completed` ne montre plus de boite, de coachmark, ni d'Aster.
 
 ## Persistance et reprise
 

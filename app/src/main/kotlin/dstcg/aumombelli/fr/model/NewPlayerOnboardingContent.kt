@@ -21,7 +21,12 @@ internal data class LibraryVariantWalkthroughPageContent(
 internal object NewPlayerOnboardingContent {
     val welcomeIntro = NewPlayerOnboardingMessageContent(
         title = "Bienvenue dans Deep Sky TCG",
-        message = "Dans un \"Trading Card Game\" ou \"Jeu de Cartes à Echanger\", tu ouvres des paquets de cartes aléatoires, découvre différentes variantes rares et échanges tes doublons pour compléter ta collection.\nBonne chance pour réunir les plus beaux objets célestes !",
+        message = "Dans un \"Trading Card Game\" ou \"Jeu de Cartes à Echanger\", tu ouvres des paquets de cartes aléatoires, découvre différentes variantes rares et échanges tes doublons pour compléter ta collection.\nMon nom est Aster, et je te guiderai pour terminer ta collection.",
+    )
+
+    val conclusion = NewPlayerOnboardingMessageContent(
+        title = "Tu es prêt",
+        message = "Tu sais maintenant ouvrir des packs, retrouver tes cartes, activer un équipement et améliorer une carte dans l'atelier.\nJe te laisse explorer la suite à ton rythme. Bonne collection !",
     )
 
     val libraryVariantWalkthroughPages = listOf(

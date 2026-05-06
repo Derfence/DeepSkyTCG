@@ -28,6 +28,7 @@ internal enum class NewPlayerCoachmarkPlacement {
     AroundTarget,
     BelowTarget,
     CenteredOnTarget,
+    OverHomeCardText,
     OverlapTargetBottom,
 }
 
@@ -40,6 +41,7 @@ internal enum class NewPlayerCoachmarkTargetEffect {
 internal enum class NewPlayerBlockingModalKind {
     WelcomeIntro,
     LibraryVariants,
+    Conclusion,
 }
 
 internal data class NewPlayerBlockingModalSpec(
@@ -107,6 +109,7 @@ internal class NewPlayerOnboardingCoordinator(
             NewPlayerOnboardingStep.ViewBadges,
             NewPlayerOnboardingStep.ViewCraftingMenu,
             NewPlayerOnboardingStep.UseSkyDarkening,
+            NewPlayerOnboardingStep.ShowConclusion,
             NewPlayerOnboardingStep.Completed,
             -> false
         }
@@ -163,9 +166,15 @@ internal class NewPlayerOnboardingCoordinator(
     }
 
     suspend fun onSkyDarkeningCrafted() {
-        advanceTo(NewPlayerOnboardingStep.Completed) {
+        advanceTo(NewPlayerOnboardingStep.ShowConclusion) {
             it == NewPlayerOnboardingStep.ViewCraftingMenu ||
                 it == NewPlayerOnboardingStep.UseSkyDarkening
+        }
+    }
+
+    suspend fun onConclusionAcknowledged() {
+        advanceTo(NewPlayerOnboardingStep.Completed) {
+            it == NewPlayerOnboardingStep.ShowConclusion
         }
     }
 
@@ -198,6 +207,13 @@ internal class NewPlayerOnboardingCoordinator(
                     null
                 }
 
+            NewPlayerOnboardingStep.ShowConclusion ->
+                if (currentScene == AppScene.Home && sceneState.homeContentVisible) {
+                    NewPlayerBlockingModalSpec(kind = NewPlayerBlockingModalKind.Conclusion)
+                } else {
+                    null
+                }
+
             else -> null
         }
     }
@@ -208,7 +224,12 @@ internal class NewPlayerOnboardingCoordinator(
         badgeCelebrationVisible: Boolean,
     ): NewPlayerCoachmarkSpec? {
         val step = uiState.currentStep ?: return null
-        if (step == NewPlayerOnboardingStep.Completed) return null
+        if (
+            step == NewPlayerOnboardingStep.ShowConclusion ||
+            step == NewPlayerOnboardingStep.Completed
+        ) {
+            return null
+        }
 
         return when (step) {
             NewPlayerOnboardingStep.ShowWelcomeIntro -> null
@@ -225,6 +246,7 @@ internal class NewPlayerOnboardingCoordinator(
                         target = NewPlayerOnboardingTarget.HomeOpenPack,
                         title = "Premières cartes",
                         message = "Commençons ta collection de cartes d'objets célestes !",
+                        placement = NewPlayerCoachmarkPlacement.OverHomeCardText,
                     )
                 } else {
                     null
@@ -360,6 +382,7 @@ internal class NewPlayerOnboardingCoordinator(
                 badgeCelebrationVisible = badgeCelebrationVisible,
             )
 
+            NewPlayerOnboardingStep.ShowConclusion,
             NewPlayerOnboardingStep.Completed -> null
         }
     }
@@ -499,6 +522,7 @@ private fun NewPlayerOnboardingUiState.withStep(
     blockingModalStep = when (nextStep) {
         NewPlayerOnboardingStep.ShowWelcomeIntro,
         NewPlayerOnboardingStep.LearnLibraryVariants,
+        NewPlayerOnboardingStep.ShowConclusion,
         -> nextStep
 
         else -> null

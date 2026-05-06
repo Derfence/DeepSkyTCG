@@ -135,6 +135,21 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `crafting menu stays available during the onboarding conclusion`() = runTest {
+        val progressGateway = FakeProgressGateway().apply {
+            progress = progress.copy(
+                openedPackCount = 3,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.ShowConclusion,
+            )
+        }
+
+        val viewModel = HomeViewModel(progressGateway)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isCraftingMenuAvailable)
+    }
+
+    @Test
     fun `crafting menu stays locked before third pack even with darken sky candidate`() = runTest {
         val progressGateway = FakeProgressGateway().apply {
             progress = progress.copy(

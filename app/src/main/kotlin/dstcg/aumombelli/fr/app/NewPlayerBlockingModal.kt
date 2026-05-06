@@ -7,7 +7,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -44,9 +46,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -64,6 +68,9 @@ internal fun NewPlayerBlockingModal(
     finishButtonLabel: String,
     onFinished: () -> Unit,
     modifier: Modifier = Modifier,
+    decorativeBottomAvoidanceHeight: BoxWithConstraintsScope.() -> Dp = { 0.dp },
+    decorativeBottomAvoidanceGap: Dp = 12.dp,
+    decorativeOverlay: @Composable BoxScope.() -> Unit = {},
     pageContent: @Composable (Int) -> Unit = {},
 ) {
     if (pages.isEmpty()) return
@@ -129,18 +136,31 @@ internal fun NewPlayerBlockingModal(
                 .testTag(testTag),
         ) {
             val modalMaxHeight = this@BoxWithConstraints.maxHeight
+            val bottomAvoidanceHeight = decorativeBottomAvoidanceHeight()
+            val modalMaxHeightPx = with(density) { modalMaxHeight.toPx() }
+            val bottomAvoidanceHeightPx = with(density) { bottomAvoidanceHeight.toPx() }
+            val bottomAvoidanceGapPx = with(density) { decorativeBottomAvoidanceGap.toPx() }
+            var cardHeightPx by remember { mutableStateOf(0) }
+            val avoidanceTranslationY = newPlayerModalCardVerticalShiftPx(
+                modalHeightPx = modalMaxHeightPx,
+                cardHeightPx = cardHeightPx.toFloat(),
+                bottomAvoidanceHeightPx = bottomAvoidanceHeightPx,
+                gapPx = bottomAvoidanceGapPx,
+            )
 
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF10233B)),
                 shape = RoundedCornerShape(30.dp),
                 modifier = Modifier
                     .align(Alignment.Center)
+                    .onSizeChanged { size -> cardHeightPx = size.height }
                     .graphicsLayer {
                         alpha = cardAlpha
                         scaleX = cardScale
                         scaleY = cardScale
-                        translationY = cardTranslationY
+                        translationY = cardTranslationY + avoidanceTranslationY
                     }
+                    .testTag("new-player-modal-card")
                     .fillMaxWidth()
                     .heightIn(max = modalMaxHeight),
             ) {
@@ -283,6 +303,27 @@ internal fun NewPlayerBlockingModal(
                     }
                 }
             }
+            decorativeOverlay()
         }
     }
+}
+
+internal fun newPlayerModalCardVerticalShiftPx(
+    modalHeightPx: Float,
+    cardHeightPx: Float,
+    bottomAvoidanceHeightPx: Float,
+    gapPx: Float,
+): Float {
+    if (
+        modalHeightPx <= 0f ||
+        cardHeightPx <= 0f ||
+        bottomAvoidanceHeightPx <= 0f
+    ) {
+        return 0f
+    }
+    val maxCardBottomPx = modalHeightPx - bottomAvoidanceHeightPx - gapPx
+    if (maxCardBottomPx < cardHeightPx) return 0f
+
+    val centeredCardBottomPx = (modalHeightPx + cardHeightPx) / 2f
+    return (maxCardBottomPx - centeredCardBottomPx).coerceAtMost(0f)
 }

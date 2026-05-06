@@ -17,6 +17,7 @@ internal data class AppSceneUiState(
     val packSceneVisible: Boolean = false,
     val packExtensionListVisible: Boolean = false,
     val transitionLocked: Boolean = false,
+    val rootWidthPx: Float = 0f,
     val rootHeightPx: Float = 0f,
     val homeLogoBadgeCenterYPx: Float = 0f,
     val homeLogoBadgeLandingSizePx: Float = 0f,
@@ -36,6 +37,14 @@ internal data class AppSceneUiState(
 )
 
 internal fun AppSceneUiState.withRootHeight(heightPx: Float): AppSceneUiState = copy(rootHeightPx = heightPx)
+
+internal fun AppSceneUiState.withRootSize(
+    widthPx: Float,
+    heightPx: Float,
+): AppSceneUiState = copy(
+    rootWidthPx = widthPx,
+    rootHeightPx = heightPx,
+)
 
 internal fun AppSceneUiState.withHomeLogoBadgeLayout(
     centerYPx: Float,

@@ -228,6 +228,38 @@ class NewPlayerOnboardingCoordinatorTest {
     }
 
     @Test
+    fun `conclusion modal resumes on home until acknowledged`() = runTest {
+        val progressGateway = FakeProgressGateway().apply {
+            progress = StandaloneProgress(
+                collection = ownedCollectionOf("ALP-001" to 2),
+                rechargeState = testRechargeState(availableDrawCount = 9),
+                openedPackCount = 3,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.ShowConclusion,
+            )
+        }
+        val coordinator = NewPlayerOnboardingCoordinator(progressGateway)
+        val sceneState = AppSceneUiState(
+            currentScene = AppScene.Home,
+            homeContentVisible = true,
+        )
+
+        coordinator.syncFromProgress()
+
+        assertEquals(
+            NewPlayerBlockingModalSpec(NewPlayerBlockingModalKind.Conclusion),
+            coordinator.activeBlockingModal(
+                currentScene = AppScene.Home,
+                sceneState = sceneState,
+            ),
+        )
+
+        coordinator.onConclusionAcknowledged()
+
+        assertEquals(NewPlayerOnboardingStep.Completed, coordinator.uiState.currentStep)
+        assertEquals(NewPlayerOnboardingStep.Completed, progressGateway.progress.newPlayerOnboardingStep)
+    }
+
+    @Test
     fun `crafting onboarding remains pending before third pack even with eligible card`() = runTest {
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
@@ -313,6 +345,24 @@ class NewPlayerOnboardingCoordinatorTest {
         )
 
         coordinator.onSkyDarkeningCrafted()
+
+        assertEquals(NewPlayerOnboardingStep.ShowConclusion, coordinator.uiState.currentStep)
+        assertEquals(NewPlayerOnboardingStep.ShowConclusion, progressGateway.progress.newPlayerOnboardingStep)
+        assertNull(
+            coordinator.activeBlockingModal(
+                currentScene = AppScene.Crafting,
+                sceneState = craftingConfirmSceneState,
+            ),
+        )
+        assertEquals(
+            NewPlayerBlockingModalSpec(NewPlayerBlockingModalKind.Conclusion),
+            coordinator.activeBlockingModal(
+                currentScene = AppScene.Home,
+                sceneState = homeSceneState,
+            ),
+        )
+
+        coordinator.onConclusionAcknowledged()
 
         assertEquals(NewPlayerOnboardingStep.Completed, coordinator.uiState.currentStep)
         assertEquals(NewPlayerOnboardingStep.Completed, progressGateway.progress.newPlayerOnboardingStep)
@@ -412,6 +462,7 @@ class NewPlayerOnboardingCoordinatorTest {
                 target = NewPlayerOnboardingTarget.HomeOpenPack,
                 title = "Premières cartes",
                 message = "Commençons ta collection de cartes d'objets célestes !",
+                placement = NewPlayerCoachmarkPlacement.OverHomeCardText,
             ),
             visibleCoachmark,
         )

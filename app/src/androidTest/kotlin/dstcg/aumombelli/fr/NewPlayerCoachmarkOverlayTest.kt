@@ -197,6 +197,54 @@ class NewPlayerCoachmarkOverlayTest {
     }
 
     @Test
+    fun home_open_pack_coachmark_sits_over_card_text_area() {
+        lateinit var density: Density
+        lateinit var targetBounds: Rect
+
+        composeRule.setContent {
+            density = LocalDensity.current
+            targetBounds = with(density) {
+                Rect(
+                    left = 64.dp.toPx(),
+                    top = 120.dp.toPx(),
+                    right = 296.dp.toPx(),
+                    bottom = 520.dp.toPx(),
+                )
+            }
+            Box(modifier = Modifier.size(width = 360.dp, height = 640.dp)) {
+                NewPlayerCoachmarkOverlay(
+                    spec = NewPlayerCoachmarkSpec(
+                        target = NewPlayerOnboardingTarget.HomeOpenPack,
+                        title = "Premières cartes",
+                        message = "Commençons ta collection de cartes d'objets célestes !",
+                        placement = NewPlayerCoachmarkPlacement.OverHomeCardText,
+                    ),
+                    targetBounds = targetBounds,
+                    modifier = Modifier.size(width = 360.dp, height = 640.dp),
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("new-player-coachmark-HomeOpenPack").assertIsDisplayed()
+        composeRule.waitForIdle()
+
+        val bubbleBounds = composeRule
+            .onNodeWithTag("new-player-coachmark-HomeOpenPack", useUnmergedTree = true)
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val expectedBubbleBottomPx = targetBounds.bottom - with(density) { 20.dp.toPx() }
+
+        assertTrue(
+            "Expected HomeOpenPack bubble bottom ${bubbleBounds.bottom} to align over the card text area at $expectedBubbleBottomPx.",
+            abs(bubbleBounds.bottom - expectedBubbleBottomPx) <= with(density) { 2.dp.toPx() },
+        )
+        assertTrue(
+            "Expected HomeOpenPack bubble top ${bubbleBounds.top} to stay inside the card bounds starting at ${targetBounds.top}.",
+            bubbleBounds.top > targetBounds.top,
+        )
+    }
+
+    @Test
     fun touch_zone_coachmark_draws_tap_hint_and_places_text_slightly_over_target_bottom() {
         lateinit var density: Density
         lateinit var targetBounds: Rect

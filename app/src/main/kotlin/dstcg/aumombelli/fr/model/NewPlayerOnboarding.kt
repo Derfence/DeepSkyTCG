@@ -17,6 +17,7 @@ enum class NewPlayerOnboardingStep {
     AwaitCraftingEligibility,
     ViewCraftingMenu,
     UseSkyDarkening,
+    ShowConclusion,
     Completed,
 }
 

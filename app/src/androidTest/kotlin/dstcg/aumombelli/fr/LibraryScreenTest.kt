@@ -194,6 +194,7 @@ class LibraryScreenTest {
         }
 
         composeRule.onNodeWithTag("new-player-modal-library-variants").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("aster-mascot").assertCountEquals(0)
         composeRule.onNodeWithTag("new-player-modal-page-0").assertIsDisplayed()
         composeRule.assertNodeInsideModalVerticalBounds(
             nodeTag = "new-player-modal-next",

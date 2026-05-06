@@ -128,6 +128,9 @@ internal fun NewPlayerCoachmarkOverlay(
                 NewPlayerCoachmarkPlacement.CenteredOnTarget ->
                     targetBounds.top + targetBounds.height / 2f - bubbleHeightPx / 2f
 
+                NewPlayerCoachmarkPlacement.OverHomeCardText ->
+                    targetBounds.bottom - with(density) { 20.dp.toPx() } - bubbleHeightPx
+
                 NewPlayerCoachmarkPlacement.OverlapTargetBottom ->
                     targetBounds.bottom - targetBottomOverlapPx
             }

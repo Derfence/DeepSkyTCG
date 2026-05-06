@@ -10,9 +10,17 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.dp
 import androidx.test.espresso.Espresso
 import fr.aumombelli.dstcg.app.NewPlayerBlockingModal
 import fr.aumombelli.dstcg.app.NewPlayerBlockingModalPage
+import fr.aumombelli.dstcg.ui.component.AsterAnchor
+import fr.aumombelli.dstcg.ui.component.AsterFace
+import fr.aumombelli.dstcg.ui.component.AsterHand
+import fr.aumombelli.dstcg.ui.component.AsterHandSide
+import fr.aumombelli.dstcg.ui.component.AsterMascotOverlay
+import fr.aumombelli.dstcg.ui.component.AsterMascotScale
+import fr.aumombelli.dstcg.ui.component.AsterMascotSpec
 import org.junit.Rule
 import org.junit.Test
 
@@ -47,6 +55,38 @@ class NewPlayerBlockingModalTest {
 
         composeRule.onNodeWithTag("new-player-modal-page-0").assertIsDisplayed()
         composeRule.onAllNodesWithTag("new-player-modal-page-1").assertCountEquals(0)
+    }
+
+    @Test
+    fun decorative_mascot_keeps_finish_button_visible() {
+        composeRule.setContent {
+            Box(modifier = Modifier.fillMaxSize()) {
+                NewPlayerBlockingModal(
+                    testTag = "new-player-modal-welcome",
+                    pages = listOf(NewPlayerBlockingModalPage("Bienvenue", "Message")),
+                    finishButtonLabel = "Commencer",
+                    onFinished = {},
+                    decorativeOverlay = {
+                        AsterMascotOverlay(
+                            spec = AsterMascotSpec(
+                                face = AsterFace.Smile,
+                                hand = AsterHand.Open,
+                                handSide = AsterHandSide.Left,
+                                anchor = AsterAnchor.BottomCenter,
+                                scale = AsterMascotScale.Compact,
+                                showBothHands = true,
+                                sizeMultiplier = 2f,
+                            ),
+                            bottomPadding = 92.dp,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    },
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("aster-mascot").assertIsDisplayed()
+        composeRule.onNodeWithTag("new-player-modal-finish").assertIsDisplayed()
     }
 
     private fun pressAndroidBack() {

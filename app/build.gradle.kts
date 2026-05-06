@@ -6,10 +6,18 @@ plugins {
 }
 
 val generatedHomeCardAssetDir = layout.buildDirectory.dir("generated/assets/homeCard/main")
+val generatedAsterAssetDir = layout.buildDirectory.dir("generated/assets/aster/main/aster")
 
 val syncHomeCardAsset by tasks.registering(Sync::class) {
     from(rootProject.file("design-explorations/carte_finale.svg"))
     into(generatedHomeCardAssetDir)
+}
+
+val syncAsterAssets by tasks.registering(Sync::class) {
+    from(rootProject.file("artwork/aster")) {
+        include("*.svg")
+    }
+    into(generatedAsterAssetDir)
 }
 
 android {
@@ -66,6 +74,7 @@ android {
     sourceSets {
         getByName("main") {
             assets.srcDir(generatedHomeCardAssetDir)
+            assets.srcDir(generatedAsterAssetDir.map { it.asFile.parentFile })
         }
     }
 
@@ -80,6 +89,7 @@ android {
 
 tasks.named("preBuild") {
     dependsOn(syncHomeCardAsset)
+    dependsOn(syncAsterAssets)
 }
 
 dependencies {
