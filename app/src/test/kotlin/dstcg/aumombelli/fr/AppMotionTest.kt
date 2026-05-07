@@ -2,12 +2,16 @@ package fr.aumombelli.dstcg
 
 import fr.aumombelli.dstcg.ui.motion.BurstParticleMotion
 import fr.aumombelli.dstcg.ui.motion.BrandLogoVariant
+import fr.aumombelli.dstcg.ui.motion.ExtensionAnimationSpec
 import fr.aumombelli.dstcg.ui.motion.ExtensionAnimationStyle
+import fr.aumombelli.dstcg.ui.motion.ExtensionCircleFromCenterPoint
+import fr.aumombelli.dstcg.ui.motion.FractionalPoint
 import fr.aumombelli.dstcg.ui.motion.SkyBackdropVariant
 import fr.aumombelli.dstcg.ui.motion.autoplayHolographicMotion
 import fr.aumombelli.dstcg.ui.motion.buildBurstParticleSpecs
 import fr.aumombelli.dstcg.ui.motion.burstRarityLabelsUpTo
 import fr.aumombelli.dstcg.ui.motion.calculateBookPose
+import fr.aumombelli.dstcg.ui.motion.extensionCircleReveal
 import fr.aumombelli.dstcg.ui.motion.extensionAnimationSpec
 import fr.aumombelli.dstcg.ui.motion.extensionPointReveal
 import fr.aumombelli.dstcg.ui.motion.homeLogoVariantFor
@@ -84,8 +88,10 @@ class AppMotionTest {
         assertEquals(ExtensionAnimationStyle.BigDipper, astronomesSpec.style)
         assertEquals(7, astronomesSpec.starPattern.size)
         assertEquals(7, astronomesSpec.lineConnections.size)
+        assertTrue(astronomesSpec.circlePatterns.isEmpty())
         assertEquals(ExtensionAnimationStyle.NeutralSky, fallbackSpec.style)
         assertTrue(fallbackSpec.starPattern.isEmpty())
+        assertTrue(fallbackSpec.circlePatterns.isEmpty())
     }
 
     @Test
@@ -93,8 +99,9 @@ class AppMotionTest {
         val systemeSolaireSpec = extensionAnimationSpec("systeme-solaire")
 
         assertEquals(ExtensionAnimationStyle.Planet, systemeSolaireSpec.style)
-        assertEquals(10, systemeSolaireSpec.starPattern.size)
-        assertEquals(12, systemeSolaireSpec.lineConnections.size)
+        assertEquals(listOf(FractionalPoint(0.500f, 0.500f)), systemeSolaireSpec.starPattern)
+        assertTrue(systemeSolaireSpec.lineConnections.isEmpty())
+        assertEquals(4, systemeSolaireSpec.circlePatterns.size)
     }
 
     @Test
@@ -140,6 +147,63 @@ class AppMotionTest {
     }
 
     @Test
+    fun `extension pattern projection includes full circle bounds`() {
+        val center = FractionalPoint(0.5f, 0.5f)
+        val spec = ExtensionAnimationSpec(
+            style = ExtensionAnimationStyle.Planet,
+            starPattern = listOf(center),
+            circlePatterns = listOf(
+                ExtensionCircleFromCenterPoint(center, FractionalPoint(0.7f, 0.5f)),
+            ),
+        )
+
+        val projection = projectExtensionPattern(
+            spec = spec,
+            canvasWidth = 100f,
+            canvasHeight = 100f,
+        )
+
+        assertEquals(0f, projection.project(FractionalPoint(0.3f, 0.5f)).x, 0.001f)
+        assertEquals(100f, projection.project(FractionalPoint(0.7f, 0.5f)).x, 0.001f)
+        assertEquals(0f, projection.project(FractionalPoint(0.5f, 0.7f)).y, 0.001f)
+        assertEquals(100f, projection.project(FractionalPoint(0.5f, 0.3f)).y, 0.001f)
+    }
+
+    @Test
+    fun `extension circle reveal supports hidden partial and complete orbit states`() {
+        assertEquals(
+            0f,
+            extensionCircleReveal(
+                lineProgress = 0f,
+                circleIndex = 0,
+                circleCount = 1,
+                revealWindow = 0.25f,
+            ),
+            0.001f,
+        )
+        assertEquals(
+            0.5f,
+            extensionCircleReveal(
+                lineProgress = 0.5f,
+                circleIndex = 0,
+                circleCount = 1,
+                revealWindow = 0.25f,
+            ),
+            0.001f,
+        )
+        assertEquals(
+            1f,
+            extensionCircleReveal(
+                lineProgress = 1f,
+                circleIndex = 0,
+                circleCount = 1,
+                revealWindow = 0.25f,
+            ),
+            0.001f,
+        )
+    }
+
+    @Test
     fun `extension points appear when their first connected line starts`() {
         val spec = extensionAnimationSpec("astronomes-en-herbe")
 
@@ -162,6 +226,23 @@ class AppMotionTest {
                 isReversing = false,
                 revealWindow = 0.25f,
             ) > 0f,
+        )
+    }
+
+    @Test
+    fun `extension standalone points reveal without visible line connections`() {
+        val spec = extensionAnimationSpec("systeme-solaire")
+
+        assertEquals(
+            1f,
+            extensionPointReveal(
+                spec = spec,
+                pointIndex = 0,
+                lineProgress = 1f,
+                isReversing = false,
+                revealWindow = 0.25f,
+            ),
+            0.001f,
         )
     }
 

@@ -5,6 +5,7 @@ import fr.aumombelli.dstcg.model.raritySortPriority
 import kotlin.math.PI
 import kotlin.math.min
 import kotlin.math.sin
+import kotlin.math.sqrt
 import kotlin.random.Random
 
 enum class SkyBackdropVariant(
@@ -59,10 +60,23 @@ data class FractionalPoint(
     val y: Float,
 )
 
+data class ExtensionCircleFromCenterPoint(
+    val center: FractionalPoint,
+    val point: FractionalPoint,
+)
+
 data class ExtensionAnimationSpec(
     val style: ExtensionAnimationStyle,
     val starPattern: List<FractionalPoint> = emptyList(),
     val lineConnections: List<Pair<Int, Int>> = emptyList(),
+    val circlePatterns: List<ExtensionCircleFromCenterPoint> = emptyList(),
+)
+
+private data class ExtensionPatternBounds(
+    val minX: Float,
+    val maxX: Float,
+    val minY: Float,
+    val maxY: Float,
 )
 
 data class ExtensionPatternProjection(
@@ -342,35 +356,19 @@ fun extensionAnimationSpec(extensionId: String): ExtensionAnimationSpec = when (
             6 to 3,
         ),
     )
-    "systeme-solaire" -> ExtensionAnimationSpec(
-        style = ExtensionAnimationStyle.Planet,
-        starPattern = listOf(
-            FractionalPoint(0.090f, 0.545f), // Pointe gauche de l’anneau
-            FractionalPoint(0.260f, 0.355f), // Anneau haut-gauche
-            FractionalPoint(0.470f, 0.245f), // Haut de la planète
-            FractionalPoint(0.735f, 0.285f), // Anneau haut-droit
-            FractionalPoint(0.940f, 0.445f), // Pointe droite de l’anneau
-            FractionalPoint(0.790f, 0.645f), // Anneau bas-droit
-            FractionalPoint(0.555f, 0.815f), // Bas de la planète
-            FractionalPoint(0.285f, 0.735f), // Anneau bas-gauche
-            FractionalPoint(0.355f, 0.470f), // Bord gauche du noyau
-            FractionalPoint(0.665f, 0.545f), // Bord droit du noyau
-        ),
-        lineConnections = listOf(
-            0 to 1,
-            1 to 2,
-            2 to 3,
-            3 to 4,
-            4 to 5,
-            5 to 6,
-            6 to 7,
-            7 to 0,
-            8 to 2,
-            2 to 9,
-            9 to 6,
-            6 to 8,
-        ),
-    )
+    "systeme-solaire" -> {
+        val sun = FractionalPoint(0.500f, 0.500f)
+        ExtensionAnimationSpec(
+            style = ExtensionAnimationStyle.Planet,
+            starPattern = listOf(sun),
+            circlePatterns = listOf(
+                ExtensionCircleFromCenterPoint(sun, FractionalPoint(0.580f, 0.430f)),
+                ExtensionCircleFromCenterPoint(sun, FractionalPoint(0.360f, 0.640f)),
+                ExtensionCircleFromCenterPoint(sun, FractionalPoint(0.740f, 0.650f)),
+                ExtensionCircleFromCenterPoint(sun, FractionalPoint(0.180f, 0.500f)),
+            ),
+        )
+    }
     else -> ExtensionAnimationSpec(style = ExtensionAnimationStyle.NeutralSky)
 }
 
@@ -379,7 +377,8 @@ fun projectExtensionPattern(
     canvasWidth: Float,
     canvasHeight: Float,
 ): ExtensionPatternProjection {
-    if (spec.starPattern.isEmpty()) {
+    val bounds = extensionPatternBounds(spec)
+    if (bounds == null) {
         return ExtensionPatternProjection(
             originX = canvasWidth / 2f,
             originY = canvasHeight / 2f,
@@ -389,12 +388,8 @@ fun projectExtensionPattern(
         )
     }
 
-    val minX = spec.starPattern.minOf { it.x.toDouble() }.toFloat()
-    val maxX = spec.starPattern.maxOf { it.x.toDouble() }.toFloat()
-    val minY = spec.starPattern.minOf { it.y.toDouble() }.toFloat()
-    val maxY = spec.starPattern.maxOf { it.y.toDouble() }.toFloat()
-    val patternWidth = (maxX - minX).coerceAtLeast(0.0001f)
-    val patternHeight = (maxY - minY).coerceAtLeast(0.0001f)
+    val patternWidth = (bounds.maxX - bounds.minX).coerceAtLeast(0.0001f)
+    val patternHeight = (bounds.maxY - bounds.minY).coerceAtLeast(0.0001f)
     val scale = min(canvasWidth / patternWidth, canvasHeight / patternHeight)
     val projectedWidth = patternWidth * scale
     val projectedHeight = patternHeight * scale
@@ -405,9 +400,47 @@ fun projectExtensionPattern(
         originX = originX,
         originY = originY,
         scale = scale,
-        minX = minX,
-        maxY = maxY,
+        minX = bounds.minX,
+        maxY = bounds.maxY,
     )
+}
+
+private fun extensionPatternBounds(spec: ExtensionAnimationSpec): ExtensionPatternBounds? {
+    var minX: Float? = null
+    var maxX: Float? = null
+    var minY: Float? = null
+    var maxY: Float? = null
+
+    fun include(point: FractionalPoint) {
+        minX = minOf(minX ?: point.x, point.x)
+        maxX = maxOf(maxX ?: point.x, point.x)
+        minY = minOf(minY ?: point.y, point.y)
+        maxY = maxOf(maxY ?: point.y, point.y)
+    }
+
+    spec.starPattern.forEach(::include)
+    spec.circlePatterns.forEach { circle ->
+        val radius = fractionalDistance(circle.center, circle.point)
+        include(FractionalPoint(circle.center.x - radius, circle.center.y - radius))
+        include(FractionalPoint(circle.center.x + radius, circle.center.y + radius))
+    }
+
+    val resolvedMinX = minX ?: return null
+    return ExtensionPatternBounds(
+        minX = resolvedMinX,
+        maxX = maxX ?: resolvedMinX,
+        minY = minY ?: 0f,
+        maxY = maxY ?: 0f,
+    )
+}
+
+internal fun fractionalDistance(
+    start: FractionalPoint,
+    end: FractionalPoint,
+): Float {
+    val dx = end.x - start.x
+    val dy = end.y - start.y
+    return sqrt((dx * dx + dy * dy).toDouble()).toFloat()
 }
 
 fun extensionLineReveal(
@@ -422,6 +455,18 @@ fun extensionLineReveal(
     val segmentSpan = (segmentEnd - segmentStart).coerceAtLeast(0.0001f)
     return ((lineProgress - segmentStart) / segmentSpan).coerceIn(0f, 1f)
 }
+
+fun extensionCircleReveal(
+    lineProgress: Float,
+    circleIndex: Int,
+    circleCount: Int,
+    revealWindow: Float,
+): Float = extensionLineReveal(
+    lineProgress = lineProgress,
+    lineIndex = circleIndex,
+    lineCount = circleCount,
+    revealWindow = revealWindow,
+)
 
 fun extensionPointReveal(
     spec: ExtensionAnimationSpec,
@@ -442,7 +487,13 @@ fun extensionPointReveal(
             null
         }
     }
-    if (adjacentReveals.isEmpty()) return 0f
+    if (adjacentReveals.isEmpty()) {
+        return if (spec.lineConnections.isEmpty()) {
+            lineProgress.coerceIn(0f, 1f)
+        } else {
+            0f
+        }
+    }
 
     return if (isReversing) {
         if (adjacentReveals.any { it >= 0.999f }) 1f else 0f
