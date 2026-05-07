@@ -47,6 +47,21 @@ internal class AppSceneTransitionController(
         }
     }
 
+    suspend fun finishPackOpeningToPackSelection() {
+        val state = readState()
+        if (state.transitionLocked) return
+
+        writeState(state.lockTransitions().preparePackOpeningReturnToPackSelection())
+        awaitNextFrame()
+        appContainer.packRepository.clearCurrentPackResult()
+        writeState(
+            readState()
+                .showPackScene()
+                .showPackExtensionList(),
+        )
+        unlockTransitionsAndRevealOnboardingHints()
+    }
+
     fun completeBadgeCelebration() {
         writeState(
             readState()

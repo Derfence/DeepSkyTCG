@@ -60,7 +60,8 @@ Il n'y a pas de garde anti-farming : revenir en arriere puis selectionner a nouv
 - Ouverture plein ecran.
 - Tri de reveal stable : equipements et cartes non holo avant cartes holo, puis rarete, ciel et ordre initial.
 - Alertes de premiere rencontre pendant l'ouverture.
-- Retour vers l'accueil par swipe ou retour Android.
+- Sortie d'ouverture : retour accueil pendant l'onboarding ou si au moins un badge vient d'etre obtenu,
+  sinon retour a la selection des extensions.
 
 ## Tests associes
 

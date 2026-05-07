@@ -2,8 +2,14 @@ package fr.aumombelli.dstcg.app
 
 import androidx.compose.ui.geometry.Rect
 import fr.aumombelli.dstcg.feature.badges.BadgeItem
+import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.ui.motion.AppScene
 import fr.aumombelli.dstcg.ui.motion.PackRevealBounds
+
+internal enum class PackOpeningExitDestination {
+    Home,
+    PackSelection,
+}
 
 internal data class AppSceneUiState(
     val currentScene: AppScene = AppScene.Home,
@@ -194,6 +200,31 @@ internal fun AppSceneUiState.preparePackOpeningReturnToHome(): AppSceneUiState =
 internal fun AppSceneUiState.finishPackOpeningToHome(): AppSceneUiState = preparePackOpeningReturnToHome().copy(
     homeContentVisible = true,
 )
+
+internal fun AppSceneUiState.preparePackOpeningReturnToPackSelection(): AppSceneUiState = copy(
+    currentScene = AppScene.PackSelection,
+    homeContentVisible = false,
+    packSceneVisible = false,
+    packExtensionListVisible = false,
+    selectedPackRevealBounds = null,
+    packOpeningExitSignal = 0,
+)
+
+internal fun AppSceneUiState.finishPackOpeningToPackSelection(): AppSceneUiState =
+    preparePackOpeningReturnToPackSelection().copy(
+        packSceneVisible = true,
+        packExtensionListVisible = true,
+    )
+
+internal fun AppSceneUiState.packOpeningExitDestination(
+    onboardingStep: NewPlayerOnboardingStep?,
+): PackOpeningExitDestination = when {
+    onboardingStep != null &&
+        onboardingStep != NewPlayerOnboardingStep.Completed -> PackOpeningExitDestination.Home
+
+    pendingBadgeCelebration.isNotEmpty() -> PackOpeningExitDestination.Home
+    else -> PackOpeningExitDestination.PackSelection
+}
 
 internal fun AppSceneUiState.withPackRevealBounds(bounds: PackRevealBounds?): AppSceneUiState =
     copy(selectedPackRevealBounds = bounds)

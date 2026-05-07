@@ -171,7 +171,15 @@ internal fun PackScene(
             onDismissRequest = if (packOpeningDismissAllowed) requestPackOpeningExit else null,
             dismissSignal = sceneState.packOpeningExitSignal,
             onDone = {
-                scope.launch { transitions.finishPackOpeningToHome() }
+                scope.launch {
+                    when (sceneState.packOpeningExitDestination(onboardingCoordinator.uiState.currentStep)) {
+                        PackOpeningExitDestination.Home -> transitions.finishPackOpeningToHome()
+                        PackOpeningExitDestination.PackSelection -> {
+                            packViewModel.clearExtensionSelection()
+                            transitions.finishPackOpeningToPackSelection()
+                        }
+                    }
+                }
             },
         )
     }

@@ -1,14 +1,18 @@
 package fr.aumombelli.dstcg
 
 import fr.aumombelli.dstcg.app.AppSceneUiState
+import fr.aumombelli.dstcg.app.PackOpeningExitDestination
 import fr.aumombelli.dstcg.app.clearPendingBadgeCelebration
 import fr.aumombelli.dstcg.app.enterBadgeBook
 import fr.aumombelli.dstcg.app.enterCrafting
 import fr.aumombelli.dstcg.app.enterPackOpening
+import fr.aumombelli.dstcg.app.finishPackOpeningToPackSelection
 import fr.aumombelli.dstcg.app.finishPackOpeningToHome
+import fr.aumombelli.dstcg.app.packOpeningExitDestination
 import fr.aumombelli.dstcg.app.lockTransitions
 import fr.aumombelli.dstcg.app.prepareBadgeBookEntry
 import fr.aumombelli.dstcg.app.prepareCraftingEntry
+import fr.aumombelli.dstcg.app.preparePackOpeningReturnToPackSelection
 import fr.aumombelli.dstcg.app.preparePackOpeningReturnToHome
 import fr.aumombelli.dstcg.app.preparePackSelection
 import fr.aumombelli.dstcg.app.registerPackReady
@@ -20,6 +24,7 @@ import fr.aumombelli.dstcg.app.unlockTransitions
 import fr.aumombelli.dstcg.feature.badges.BadgeItem
 import fr.aumombelli.dstcg.feature.badges.BadgeProgress
 import fr.aumombelli.dstcg.feature.badges.BadgeRequirementType
+import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.ui.motion.AppScene
 import fr.aumombelli.dstcg.ui.motion.PackRevealBounds
 import org.junit.Assert.assertEquals
@@ -77,6 +82,65 @@ class AppSceneStateTest {
         assertEquals(false, nextState.packExtensionListVisible)
         assertEquals(listOf(sampleBadge()), nextState.pendingBadgeCelebration)
         assertNull(nextState.selectedPackRevealBounds)
+    }
+
+    @Test
+    fun `finish pack opening can return to visible pack selection`() {
+        val openedState = AppSceneUiState(
+            currentScene = AppScene.PackSelection,
+            packSceneVisible = true,
+            packExtensionListVisible = true,
+            selectedPackRevealBounds = PackRevealBounds(1f, 2f, 3f, 4f),
+            packOpeningExitSignal = 1,
+        ).enterPackOpening()
+
+        val nextState = openedState.finishPackOpeningToPackSelection()
+
+        assertEquals(AppScene.PackSelection, nextState.currentScene)
+        assertEquals(false, nextState.homeContentVisible)
+        assertEquals(true, nextState.packSceneVisible)
+        assertEquals(true, nextState.packExtensionListVisible)
+        assertEquals(0, nextState.packOpeningExitSignal)
+        assertNull(nextState.selectedPackRevealBounds)
+    }
+
+    @Test
+    fun `pack opening exits to home during active onboarding`() {
+        val state = AppSceneUiState(currentScene = AppScene.PackOpening)
+
+        val destination = state.packOpeningExitDestination(NewPlayerOnboardingStep.ViewLibrary)
+
+        assertEquals(PackOpeningExitDestination.Home, destination)
+    }
+
+    @Test
+    fun `pack opening exits to home when badges were unlocked`() {
+        val state = AppSceneUiState(
+            currentScene = AppScene.PackOpening,
+            pendingBadgeCelebration = listOf(sampleBadge()),
+        )
+
+        val destination = state.packOpeningExitDestination(NewPlayerOnboardingStep.Completed)
+
+        assertEquals(PackOpeningExitDestination.Home, destination)
+    }
+
+    @Test
+    fun `pack opening exits to pack selection when onboarding is completed and no badge was unlocked`() {
+        val state = AppSceneUiState(currentScene = AppScene.PackOpening)
+
+        val destination = state.packOpeningExitDestination(NewPlayerOnboardingStep.Completed)
+
+        assertEquals(PackOpeningExitDestination.PackSelection, destination)
+    }
+
+    @Test
+    fun `pack opening exits to pack selection without onboarding and badge`() {
+        val state = AppSceneUiState(currentScene = AppScene.PackOpening)
+
+        val destination = state.packOpeningExitDestination(null)
+
+        assertEquals(PackOpeningExitDestination.PackSelection, destination)
     }
 
     @Test
@@ -187,6 +251,25 @@ class AppSceneStateTest {
 
         assertEquals(AppScene.Home, nextState.currentScene)
         assertEquals(false, nextState.homeContentVisible)
+        assertEquals(0, nextState.packOpeningExitSignal)
+        assertNull(nextState.selectedPackRevealBounds)
+    }
+
+    @Test
+    fun `prepare return to pack selection hides the pack scene until the controller reveals it`() {
+        val state = AppSceneUiState(
+            currentScene = AppScene.PackOpening,
+            packSceneVisible = true,
+            packExtensionListVisible = true,
+            selectedPackRevealBounds = PackRevealBounds(1f, 2f, 3f, 4f),
+            packOpeningExitSignal = 1,
+        )
+
+        val nextState = state.preparePackOpeningReturnToPackSelection()
+
+        assertEquals(AppScene.PackSelection, nextState.currentScene)
+        assertEquals(false, nextState.packSceneVisible)
+        assertEquals(false, nextState.packExtensionListVisible)
         assertEquals(0, nextState.packOpeningExitSignal)
         assertNull(nextState.selectedPackRevealBounds)
     }

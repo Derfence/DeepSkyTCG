@@ -130,6 +130,13 @@ fun PackSelectionScreen(
         animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
         label = "pack-selection-extension-list-translation",
     )
+    var extensionListWasHidden by remember { mutableStateOf(!extensionListVisible) }
+    var extensionListEntranceSignal by remember { mutableIntStateOf(0) }
+    val activeExtensionListEntranceSignal = if (extensionListVisible && extensionListWasHidden) {
+        extensionListEntranceSignal + 1
+    } else {
+        extensionListEntranceSignal
+    }
 
     val heroProgress = remember { Animatable(0f) }
     val boosterIntroProgress = remember { Animatable(0f) }
@@ -141,6 +148,15 @@ fun PackSelectionScreen(
     LaunchedEffect(state.extensions, drawLocked) {
         if (state.extensions.isEmpty() || drawLocked) {
             onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.PackSelectionExtension, null)
+        }
+    }
+
+    LaunchedEffect(extensionListVisible) {
+        if (!extensionListVisible) {
+            extensionListWasHidden = true
+        } else if (extensionListWasHidden) {
+            extensionListWasHidden = false
+            extensionListEntranceSignal += 1
         }
     }
 
@@ -371,6 +387,7 @@ fun PackSelectionScreen(
                             onFirstEnabledExtensionBoundsChanged = { bounds ->
                                 onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.PackSelectionExtension, bounds)
                             },
+                            entranceSignal = activeExtensionListEntranceSignal,
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(top = EXTENSION_LIST_TOP_PADDING)
