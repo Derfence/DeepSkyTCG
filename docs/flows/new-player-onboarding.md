@@ -4,7 +4,7 @@
 
 Le standalone guide le premier parcours joueur avec une intro obligatoire, des etapes guidees pack/bibliotheque/equipement/fabrication, une conclusion obligatoire, puis des pauses silencieuses quand le parcours redevient libre.
 
-Aster, la mascotte de guidage, accompagne uniquement certaines boites de texte d'onboarding : les modales d'introduction et de conclusion, et les bulles de coachmark hors scene Equipement. Elle reste decorative, ne prend pas le focus accessibilite, ne bloque pas les interactions et est toujours rendue au premier plan quand elle apparait. Sa taille est multipliee par `1.5` par rapport au gabarit initial, avec un multiplicateur local `2x` dans les deux modales ou elle est en bas centre. Dans ces modales, la boite de dialogue remonte pour ne pas intersecter Aster lorsque la hauteur disponible le permet. Elle est en bas centre avec deux mains ouvertes dans l'introduction, en bas centre avec cartes et telescope dans la conclusion, puis en bas a droite pour les coachmarks, sauf pour le coachmark d'ouverture de l'Atelier ou elle passe en bas a gauche avec cheveux et main en miroir horizontal. Elle est masquee pendant les transitions, les celebrations de badge, la modale d'explication des variantes, la scene Equipement, les hints sans bulle de texte et les pauses silencieuses `OpenSecondPackMenu`, `AwaitCraftingEligibility` et `Completed`.
+Aster, la mascotte de guidage, accompagne uniquement certaines boites de texte d'onboarding : les modales d'introduction et de conclusion, et les bulles de coachmark hors scene Equipement. Elle reste decorative, ne prend pas le focus accessibilite, ne bloque pas les interactions et est toujours rendue au premier plan quand elle apparait. Sa taille est multipliee par `1.5` par rapport au gabarit initial, avec un multiplicateur local `2x` dans les deux modales ou elle est en bas centre. Dans ces modales, la boite de dialogue remonte pour ne pas intersecter Aster lorsque la hauteur disponible le permet. Elle est en bas centre avec deux mains ouvertes dans l'introduction, en bas centre avec cartes et telescope dans la conclusion, puis en bas a droite pour les coachmarks, sauf pour le coachmark d'ouverture de l'Atelier ou elle passe en bas a gauche avec cheveux et main en miroir horizontal. Elle utilise le telescope sur `HomeEquipment`, la cle a molette sur le chapitre Atelier et le pointage sur la decouverte des mini-jeux. Elle est masquee pendant les transitions, les celebrations de badge, la modale d'explication des variantes, la scene Equipement, les hints sans bulle de texte et les pauses silencieuses `OpenSecondPackMenu`, `AwaitCraftingEligibility` et `Completed`.
 
 ## Sequence persistante
 
@@ -23,6 +23,7 @@ ShowWelcomeIntro
   -> ViewCraftingMenu
   -> LearnCraftingTools
   -> UseSkyDarkening
+  -> DiscoverMiniGames
   -> ShowConclusion
   -> Completed
 ```
@@ -106,12 +107,21 @@ Au retour accueil, le bouton `Equipements` devient visible et recoit un coachmar
 - Aster utilise sa main cle a molette pendant le chapitre fabrication.
 - Aster est absente de la modale d'explication des outils, comme dans la modale des variantes de bibliotheque.
 - Pendant ce chapitre, seul `DarkenSky` est autorise.
-- Une application reussie de `DarkenSky` avance vers `ShowConclusion`, sans afficher immediatement la conclusion dans l'Atelier.
+- Une application reussie de `DarkenSky` avance vers `DiscoverMiniGames`, debloque `miniGamesMenuUnlocked` et active l'indicateur de nouveaute `miniGames`.
 - Le retour vers l'accueil redevient possible pour permettre au joueur de quitter l'Atelier.
+
+## Decouverte des mini-jeux
+
+- `DiscoverMiniGames` affiche un coachmark sur la grande carte Home, cible `HomeMiniGames`.
+- Le message explique que la carte a un verso mini-jeux, accessible par bouton ou swipe, puis par clic sur la carte.
+- Le message indique le plafond de recompense : quatre jeux pouvant reduire la recharge d'un pack jusqu'a `4 h` par jour.
+- Pendant cette etape, seul l'acces au menu mini-jeux est autorise depuis l'accueil.
+- L'ouverture du menu mini-jeux avance vers `ShowConclusion`, mais la conclusion ne s'affiche pas dans le menu.
+- Le joueur n'est pas force a revenir : bouton retour et Back Android gardent le controle du retour Home.
 
 ## Conclusion
 
-- `ShowConclusion` affiche la modale bloquante `new-player-modal-conclusion` une fois l'accueil retrouve, sur le meme format que l'introduction.
+- `ShowConclusion` affiche la modale bloquante `new-player-modal-conclusion` une fois l'accueil retrouve apres la visite du menu mini-jeux, sur le meme format que l'introduction.
 - Aster apparait dans la modale en version compacte, en bas centre, avec une main cartes, une main telescope et un multiplicateur local `2x`.
 - Le bouton `Terminer` avance vers `Completed`.
 - `Completed` ne montre plus de boite, de coachmark, ni d'Aster.

@@ -131,6 +131,7 @@ internal fun HomeScene(
             ) {
                 homeViewModel.markMiniGamesSeen()
                 scope.launch {
+                    onboardingCoordinator.onMiniGamesMenuOpened()
                     transitions.animateHomeToMiniGamesMenu()
                 }
             }

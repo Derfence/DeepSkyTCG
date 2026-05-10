@@ -201,7 +201,9 @@ internal fun homeMenuNoveltyTestAppContainer(): AppContainer {
     )
 }
 
-internal fun miniGamesMenuTestAppContainer(): AppContainer {
+internal fun miniGamesMenuTestAppContainer(
+    initialOnboardingStep: NewPlayerOnboardingStep? = null,
+): AppContainer {
     return navigationTestAppContainer(
         initialCollection = OwnedCollection(
             cards = mapOf(
@@ -221,6 +223,7 @@ internal fun miniGamesMenuTestAppContainer(): AppContainer {
         homeMenuNoveltyState = HomeMenuNoveltyState(
             miniGames = true,
         ),
+        initialOnboardingStep = initialOnboardingStep,
     )
 }
 

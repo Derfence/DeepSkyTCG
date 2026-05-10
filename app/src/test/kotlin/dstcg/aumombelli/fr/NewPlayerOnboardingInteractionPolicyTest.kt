@@ -138,6 +138,24 @@ class NewPlayerOnboardingInteractionPolicyTest {
     }
 
     @Test
+    fun `discover mini games blocks home except mini games and allows crafting back`() {
+        val step = NewPlayerOnboardingStep.DiscoverMiniGames
+
+        assertTrue(NewPlayerOnboardingInteractionPolicy.isBlockingStep(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeExit(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeAuxiliaryActions(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeOpenPack(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeLibrary(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeBadgeBook(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeEquipment(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsHomeCrafting(step))
+        assertTrue(NewPlayerOnboardingInteractionPolicy.allowsHomeMiniGames(step))
+        assertTrue(NewPlayerOnboardingInteractionPolicy.allowsCraftingBack(step))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsCraftingModeSelection(step, CraftingMode.DarkenSky))
+        assertFalse(NewPlayerOnboardingInteractionPolicy.allowsCraftingApplication(step, CraftingMode.DarkenSky))
+    }
+
+    @Test
     fun `show conclusion allows returning home while keeping crafting actions locked`() {
         val step = NewPlayerOnboardingStep.ShowConclusion
 

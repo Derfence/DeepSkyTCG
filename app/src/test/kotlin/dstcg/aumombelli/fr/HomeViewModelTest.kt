@@ -135,7 +135,7 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `crafting menu stays available during crafting walkthrough and conclusion`() = runTest {
+    fun `crafting menu stays available during crafting walkthrough mini games discovery and conclusion`() = runTest {
         val progressGateway = FakeProgressGateway().apply {
             progress = progress.copy(
                 openedPackCount = 3,
@@ -144,6 +144,15 @@ class HomeViewModelTest {
         }
 
         val viewModel = HomeViewModel(progressGateway)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isCraftingMenuAvailable)
+
+        progressGateway.progress = progressGateway.progress.copy(
+            newPlayerOnboardingStep = NewPlayerOnboardingStep.DiscoverMiniGames,
+        )
+
+        viewModel.refresh()
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.isCraftingMenuAvailable)

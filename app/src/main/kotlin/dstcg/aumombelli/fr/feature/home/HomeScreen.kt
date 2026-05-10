@@ -128,6 +128,13 @@ fun HomeScreen(
             onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeEquipment, null)
             onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeBadges, null)
             onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeCrafting, null)
+            onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeMiniGames, null)
+        }
+    }
+
+    LaunchedEffect(contentVisible, state.isMiniGamesMenuVisible) {
+        if (!contentVisible || !state.isMiniGamesMenuVisible) {
+            onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeMiniGames, null)
         }
     }
 
@@ -285,6 +292,12 @@ fun HomeScreen(
                                         NewPlayerOnboardingTarget.HomeOpenPack,
                                         coordinates.boundsInRoot(),
                                     )
+                                    if (state.isMiniGamesMenuVisible) {
+                                        onCoachmarkTargetBoundsChanged(
+                                            NewPlayerOnboardingTarget.HomeMiniGames,
+                                            coordinates.boundsInRoot(),
+                                        )
+                                    }
                                 }
                             }
                     )

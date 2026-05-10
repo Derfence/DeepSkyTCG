@@ -129,6 +129,15 @@ internal fun resolveNewPlayerSceneMascotSpec(
                 ).hidingIfOverlappingTarget(sceneState, activeCoachmarkSpec)
             }
 
+        NewPlayerOnboardingStep.DiscoverMiniGames ->
+            ifVisible(currentScene == AppScene.Home && sceneState.homeContentVisible) {
+                mascot(
+                    face = AsterFace.BigSmile,
+                    hand = AsterHand.Point,
+                    anchor = AsterAnchor.BottomEnd,
+                ).hidingIfOverlappingTarget(sceneState, activeCoachmarkSpec)
+            }
+
         NewPlayerOnboardingStep.ShowConclusion,
         NewPlayerOnboardingStep.Completed -> null
     }

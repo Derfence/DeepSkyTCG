@@ -10,6 +10,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.testsupport.badgeCelebrationBackNavigationTestAppContainer
 import fr.aumombelli.dstcg.testsupport.backNavigationTestAppContainer
 import fr.aumombelli.dstcg.testsupport.miniGamesMenuTestAppContainer
@@ -199,6 +200,25 @@ class DstcgAppBackNavigationTest {
 
         pressAndroidBack()
         advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
+    }
+
+    @Test
+    fun mini_games_discovery_conclusion_waits_for_return_home() {
+        setAppContent(
+            miniGamesMenuTestAppContainer(
+                initialOnboardingStep = NewPlayerOnboardingStep.DiscoverMiniGames,
+            ),
+        )
+        startAndReachHome()
+
+        composeRule.onNodeWithTag("home-card-flip").performClick()
+        advanceUntilTagDisplayed("home-mini-games-open-menu", timeoutMillis = 5_000)
+        composeRule.onNodeWithTag("home-mini-games-card").performClick()
+        advanceUntilTagDisplayed("mini-games-menu-screen", timeoutMillis = 10_000)
+        composeRule.onAllNodesWithTag("new-player-modal-conclusion").assertCountEquals(0)
+
+        pressAndroidBack()
+        advanceUntilTagDisplayed("new-player-modal-conclusion", timeoutMillis = 10_000)
     }
 
     @Test

@@ -11,7 +11,7 @@ L'accueil est la scene principale. Il remplace les anciens ecrans `Start` et `Ma
 - acces `Bibliotheque` et `Badges` apres le premier pack ;
 - acces `Equipements` apres la premiere carte d'equipement obtenue ;
 - acces `Atelier de fabrication` apres au moins `3` packs et une carte eligible ;
-- acces `Mini-jeux` apres la fin de l'onboarding puis une nouvelle ouverture de pack ;
+- acces `Mini-jeux` pendant l'etape d'onboarding `DiscoverMiniGames` ;
 - menu `Parametres` en haut a droite.
 
 ## Navigation
@@ -33,6 +33,8 @@ La grande carte reste sur le recto `Ouvrir un pack` par defaut.
 
 Quand les mini-jeux sont debloques, un bouton visible permet de retourner la carte. Un swipe horizontal fonctionne aussi si le geste commence sur la carte. Le verso montre un apercu `Mini-jeux du jour` et un bouton `Menu des jeux`.
 
+Pendant `DiscoverMiniGames`, un coachmark cible la carte centrale et explique le bouton, le swipe, le clic sur le verso, et le plafond de `4 h` de reduction quotidienne.
+
 ## Indicateurs de nouveaute
 
 Les boutons `Bibliotheque`, `Equipements`, `Badges` et `Mini-jeux` peuvent afficher un groupe de trois etoiles. L'indicateur disparait quand le menu correspondant est ouvert depuis l'accueil.
@@ -40,7 +42,7 @@ Les boutons `Bibliotheque`, `Equipements`, `Badges` et `Mini-jeux` peuvent affic
 - `Bibliotheque` : nouvelles cartes obtenues.
 - `Equipements` : premiere apparition d'une carte d'equipement en stock.
 - `Badges` : badge debloque.
-- `Mini-jeux` : premiere disponibilite du menu des mini-jeux.
+- `Mini-jeux` : premiere disponibilite du menu des mini-jeux pendant l'onboarding.
 
 Quand la bibliotheque est marquee comme nouvelle, les vignettes des cartes nouvellement obtenues affichent aussi cet indicateur pendant la premiere visite.
 

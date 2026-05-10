@@ -8,10 +8,12 @@ Cette page documente seulement l'acces aux mini-jeux. Les mini-jeux eux-memes re
 
 Le menu `Mini-jeux` se debloque apres :
 
-- onboarding nouveau joueur termine (`Completed`) ;
-- puis ouverture d'un nouveau pack.
+- fabrication guidee terminee (`UseSkyDarkening`) ;
+- passage vers l'etape d'onboarding `DiscoverMiniGames`.
 
 Le deblocage est persiste par `miniGamesMenuUnlocked`. La premiere disponibilite active aussi l'indicateur de nouveaute `miniGames` sur l'accueil.
+
+Pendant `DiscoverMiniGames`, le coachmark Home explique que la carte centrale a un verso mini-jeux, accessible par bouton ou swipe, puis par clic sur la carte. Il indique aussi le plafond fonctionnel : les quatre jeux peuvent reduire la recharge d'un pack jusqu'a `4 h` par jour. Ouvrir le menu avance l'onboarding vers `ShowConclusion`, mais la conclusion attend le retour du joueur au Home.
 
 ## Acces depuis l'accueil
 

@@ -18,6 +18,7 @@ enum class NewPlayerOnboardingStep {
     ViewCraftingMenu,
     LearnCraftingTools,
     UseSkyDarkening,
+    DiscoverMiniGames,
     ShowConclusion,
     Completed,
 }

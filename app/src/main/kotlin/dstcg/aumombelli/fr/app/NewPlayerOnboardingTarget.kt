@@ -6,6 +6,7 @@ enum class NewPlayerOnboardingTarget {
     HomeBadges,
     HomeEquipment,
     HomeCrafting,
+    HomeMiniGames,
     PackSelectionExtension,
     PackSelectionBooster,
     EquipmentActivation,

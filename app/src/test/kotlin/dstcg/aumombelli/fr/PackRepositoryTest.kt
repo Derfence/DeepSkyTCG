@@ -174,7 +174,7 @@ class PackRepositoryTest {
     }
 
     @Test
-    fun `open pack after onboarding completion unlocks mini games with novelty`() = runTest {
+    fun `open pack after onboarding completion does not unlock mini games`() = runTest {
         val fixedNow = Instant.parse("2026-03-24T12:00:00Z")
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
@@ -211,8 +211,8 @@ class PackRepositoryTest {
 
         repository.openPack("astronomes-en-herbe")
 
-        assertEquals(true, progressGateway.progress.miniGamesMenuUnlocked)
-        assertEquals(true, progressGateway.progress.homeMenuNoveltyState.miniGames)
+        assertEquals(false, progressGateway.progress.miniGamesMenuUnlocked)
+        assertEquals(false, progressGateway.progress.homeMenuNoveltyState.miniGames)
     }
 
     @Test
@@ -442,7 +442,7 @@ class PackRepositoryTest {
                 library = true,
                 equipment = false,
                 badgeBook = true,
-                miniGames = true,
+                miniGames = false,
             ),
             progressGateway.progress.homeMenuNoveltyState,
         )

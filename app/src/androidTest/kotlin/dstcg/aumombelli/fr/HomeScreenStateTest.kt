@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -18,6 +19,7 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
+import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
 import fr.aumombelli.dstcg.feature.home.HomeScreen
 import fr.aumombelli.dstcg.feature.home.HomeUiState
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
@@ -251,6 +253,27 @@ class HomeScreenStateTest {
     }
 
     @Test
+    fun mini_games_home_target_uses_central_card_bounds() {
+        val reportedTargets = mutableSetOf<NewPlayerOnboardingTarget>()
+        setHomeScreenContent(
+            initialState = HomeUiState(
+                isLoading = false,
+                isMiniGamesMenuVisible = true,
+            ),
+            onCoachmarkTargetBoundsChanged = { target, bounds ->
+                if (bounds != null) {
+                    reportedTargets += target
+                }
+            },
+        )
+
+        composeRule.waitForIdle()
+
+        assertTrue(NewPlayerOnboardingTarget.HomeOpenPack in reportedTargets)
+        assertTrue(NewPlayerOnboardingTarget.HomeMiniGames in reportedTargets)
+    }
+
+    @Test
     fun novelty_indicators_are_shown_only_for_matching_buttons() {
         setHomeScreenContent(
             HomeUiState(
@@ -419,6 +442,10 @@ class HomeScreenStateTest {
         onOpenCrafting: () -> Unit = {},
         onOpenMiniGamesMenu: () -> Unit = {},
         onResetProgress: () -> Unit = {},
+        onCoachmarkTargetBoundsChanged: (
+            NewPlayerOnboardingTarget,
+            Rect?,
+        ) -> Unit = { _, _ -> },
     ): MutableState<HomeUiState> {
         val state = mutableStateOf(initialState)
         composeRule.setContent {
@@ -434,6 +461,7 @@ class HomeScreenStateTest {
                     onResetProgress = onResetProgress,
                     showBackground = false,
                     contentVisible = true,
+                    onCoachmarkTargetBoundsChanged = onCoachmarkTargetBoundsChanged,
                 )
             }
         }

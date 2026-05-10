@@ -298,6 +298,17 @@ class NewPlayerOnboardingCoordinatorTest {
                 NewPlayerOnboardingTarget.HomeCrafting to Rect(10f, 20f, 120f, 72f),
             ),
         )
+        val miniGamesHomeSceneState = AppSceneUiState(
+            currentScene = AppScene.Home,
+            homeContentVisible = true,
+            coachmarkTargetBounds = mapOf(
+                NewPlayerOnboardingTarget.HomeMiniGames to Rect(20f, 40f, 180f, 300f),
+            ),
+        )
+        val miniGamesMenuSceneState = AppSceneUiState(
+            currentScene = AppScene.MiniGamesMenu,
+            miniGamesMenuContentVisible = true,
+        )
         val craftingModeSceneState = AppSceneUiState(
             currentScene = AppScene.Crafting,
             craftingContentVisible = true,
@@ -359,12 +370,32 @@ class NewPlayerOnboardingCoordinatorTest {
 
         coordinator.onSkyDarkeningCrafted()
 
-        assertEquals(NewPlayerOnboardingStep.ShowConclusion, coordinator.uiState.currentStep)
-        assertEquals(NewPlayerOnboardingStep.ShowConclusion, progressGateway.progress.newPlayerOnboardingStep)
+        assertEquals(NewPlayerOnboardingStep.DiscoverMiniGames, coordinator.uiState.currentStep)
+        assertEquals(NewPlayerOnboardingStep.DiscoverMiniGames, progressGateway.progress.newPlayerOnboardingStep)
+        assertEquals(true, progressGateway.progress.miniGamesMenuUnlocked)
+        assertEquals(true, progressGateway.progress.homeMenuNoveltyState.miniGames)
         assertNull(
             coordinator.activeBlockingModal(
                 currentScene = AppScene.Crafting,
                 sceneState = craftingConfirmSceneState,
+            ),
+        )
+        val miniGamesCoachmark = coordinator.activeCoachmark(
+            currentScene = AppScene.Home,
+            sceneState = miniGamesHomeSceneState,
+            badgeCelebrationVisible = false,
+        )
+        assertEquals(NewPlayerOnboardingTarget.HomeMiniGames, miniGamesCoachmark?.target)
+        assertEquals(NewPlayerCoachmarkPlacement.OverHomeCardText, miniGamesCoachmark?.placement)
+
+        coordinator.onMiniGamesMenuOpened()
+
+        assertEquals(NewPlayerOnboardingStep.ShowConclusion, coordinator.uiState.currentStep)
+        assertEquals(NewPlayerOnboardingStep.ShowConclusion, progressGateway.progress.newPlayerOnboardingStep)
+        assertNull(
+            coordinator.activeBlockingModal(
+                currentScene = AppScene.MiniGamesMenu,
+                sceneState = miniGamesMenuSceneState,
             ),
         )
         assertEquals(

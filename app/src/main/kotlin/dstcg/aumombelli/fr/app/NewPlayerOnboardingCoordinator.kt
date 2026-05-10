@@ -6,8 +6,10 @@ import androidx.compose.runtime.setValue
 import fr.aumombelli.dstcg.data.CraftingGateway
 import fr.aumombelli.dstcg.data.ProgressGateway
 import fr.aumombelli.dstcg.data.requireUsableProgress
+import fr.aumombelli.dstcg.model.HomeMenuNoveltyState
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.StandaloneProgress
+import fr.aumombelli.dstcg.model.or
 import fr.aumombelli.dstcg.ui.motion.AppScene
 
 internal data class NewPlayerOnboardingUiState(
@@ -111,6 +113,7 @@ internal class NewPlayerOnboardingCoordinator(
             NewPlayerOnboardingStep.ViewCraftingMenu,
             NewPlayerOnboardingStep.LearnCraftingTools,
             NewPlayerOnboardingStep.UseSkyDarkening,
+            NewPlayerOnboardingStep.DiscoverMiniGames,
             NewPlayerOnboardingStep.ShowConclusion,
             NewPlayerOnboardingStep.Completed,
             -> false
@@ -174,8 +177,14 @@ internal class NewPlayerOnboardingCoordinator(
     }
 
     suspend fun onSkyDarkeningCrafted() {
+        val currentStep = uiState.currentStep ?: return
+        if (currentStep != NewPlayerOnboardingStep.UseSkyDarkening) return
+        persistMiniGamesDiscovery()
+    }
+
+    suspend fun onMiniGamesMenuOpened() {
         advanceTo(NewPlayerOnboardingStep.ShowConclusion) {
-            it == NewPlayerOnboardingStep.UseSkyDarkening
+            it == NewPlayerOnboardingStep.DiscoverMiniGames
         }
     }
 
@@ -397,9 +406,38 @@ internal class NewPlayerOnboardingCoordinator(
                 badgeCelebrationVisible = badgeCelebrationVisible,
             )
 
+            NewPlayerOnboardingStep.DiscoverMiniGames -> activeMiniGamesDiscoveryCoachmark(
+                currentScene = currentScene,
+                sceneState = sceneState,
+                badgeCelebrationVisible = badgeCelebrationVisible,
+            )
+
             NewPlayerOnboardingStep.ShowConclusion,
             NewPlayerOnboardingStep.Completed -> null
         }
+    }
+
+    private fun activeMiniGamesDiscoveryCoachmark(
+        currentScene: AppScene,
+        sceneState: AppSceneUiState,
+        badgeCelebrationVisible: Boolean,
+    ): NewPlayerCoachmarkSpec? {
+        if (
+            currentScene != AppScene.Home ||
+            !sceneState.homeContentVisible ||
+            !sceneState.onboardingHintsVisible ||
+            sceneState.transitionLocked ||
+            badgeCelebrationVisible ||
+            !sceneState.coachmarkTargetBounds.containsKey(NewPlayerOnboardingTarget.HomeMiniGames)
+        ) {
+            return null
+        }
+        return NewPlayerCoachmarkSpec(
+            target = NewPlayerOnboardingTarget.HomeMiniGames,
+            title = "Mini-jeux quotidiens",
+            message = "La carte d'accueil a maintenant un verso Mini-jeux : retourne-la avec le bouton ou un swipe, puis touche la carte pour ouvrir le menu. Les quatre jeux peuvent réduire la recharge d'un pack jusqu'à 4 h par jour.",
+            placement = NewPlayerCoachmarkPlacement.OverHomeCardText,
+        )
     }
 
     private fun activeCraftingCoachmark(
@@ -490,6 +528,30 @@ internal class NewPlayerOnboardingCoordinator(
             nextStep = nextStep,
             libraryCardHintVisible = libraryCardHintVisible,
         )
+    }
+
+    private suspend fun persistMiniGamesDiscovery() {
+        val nextStep = NewPlayerOnboardingStep.DiscoverMiniGames
+        val loadedProgress = progressRepository.loadProgress().requireUsableProgress().progress
+        if (loadedProgress.newPlayerOnboardingStep == nextStep) {
+            uiState = uiState.withStep(nextStep = nextStep)
+            return
+        }
+
+        progressRepository.updateProgress { currentProgress ->
+            if (currentProgress.newPlayerOnboardingStep.ordinal >= nextStep.ordinal) {
+                currentProgress
+            } else {
+                currentProgress.copy(
+                    newPlayerOnboardingStep = nextStep,
+                    miniGamesMenuUnlocked = true,
+                    homeMenuNoveltyState = currentProgress.homeMenuNoveltyState.or(
+                        HomeMenuNoveltyState(miniGames = true),
+                    ),
+                )
+            }
+        }
+        uiState = uiState.withStep(nextStep = nextStep)
     }
 
     private suspend fun syncCraftingEligibility() {
