@@ -224,7 +224,7 @@ private fun CraftingConfirmationPanel(
                 modifier = Modifier.testTag("crafting-consumed-text"),
             )
             Text(
-                text = "Cree 1 x ${candidate.targetVariant.skyQualityLabel} · ${candidate.targetVariant.finishLabel}",
+                text = "Crée 1 x ${candidate.targetVariant.skyQualityLabel} · ${candidate.targetVariant.finishLabel}",
                 color = Color(0xFFD3E3F3),
                 modifier = Modifier.testTag("crafting-created-text"),
             )
