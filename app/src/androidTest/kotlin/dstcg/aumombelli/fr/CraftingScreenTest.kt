@@ -99,6 +99,8 @@ class CraftingScreenTest {
 
         composeRule.onNodeWithTag("crafting-mode-darken-sky-svg-slot", useUnmergedTree = true).assertIsDisplayed()
         composeRule.onNodeWithTag("crafting-mode-space-agency-svg-slot", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onAllNodesWithTag("crafting-mode-costs-DarkenSky", useUnmergedTree = true).assertCountEquals(0)
+        composeRule.onAllNodesWithTag("crafting-mode-costs-SpaceAgency", useUnmergedTree = true).assertCountEquals(0)
         assertEquals(screenBounds.height / 2f, darkenBounds.height, 2f)
         assertEquals(screenBounds.height / 2f, agencyBounds.height, 2f)
         assertEquals(darkenBounds.bottom, agencyBounds.top, 1f)
@@ -114,9 +116,9 @@ class CraftingScreenTest {
         assertEquals(darkenBounds.right, darkenTargetBounds.right, 1f)
         assertEquals(darkenBounds.bottom, darkenTargetBounds.bottom, 1f)
         assertTrue(
-            "Expected darken sky onboarding target to start below the copy top and before the copy bottom.",
-            darkenTargetBounds.top > darkenCopyBounds.top &&
-                darkenTargetBounds.top < darkenCopyBounds.bottom,
+            "Expected darken sky onboarding target to start after the copy begins and no lower than its bottom.",
+            darkenTargetBounds.top >= darkenCopyBounds.top &&
+                darkenTargetBounds.top <= darkenCopyBounds.bottom,
         )
     }
 
@@ -279,6 +281,9 @@ class CraftingScreenTest {
         }
 
         composeRule.onNodeWithTag("crafting-empty").assertIsDisplayed()
+        composeRule.onNodeWithTag("crafting-mode-costs-DarkenSky", useUnmergedTree = true)
+            .assertTextContains("Ville 2", substring = true)
+            .assertTextContains("Montagne 6", substring = true)
         composeRule.onAllNodesWithTag("library-filter-tradeable").assertCountEquals(0)
     }
 

@@ -49,11 +49,11 @@ internal fun CraftingModeMenu(
     modifier: Modifier = Modifier,
 ) {
     var darkenSkyBounds by remember { mutableStateOf<Rect?>(null) }
-    var darkenSkyDescriptionBounds by remember { mutableStateOf<Rect?>(null) }
+    var darkenSkyCopyBounds by remember { mutableStateOf<Rect?>(null) }
 
-    LaunchedEffect(darkenSkyBounds, darkenSkyDescriptionBounds) {
+    LaunchedEffect(darkenSkyBounds, darkenSkyCopyBounds) {
         val modeBounds = darkenSkyBounds ?: return@LaunchedEffect
-        val interactionTop = darkenSkyDescriptionBounds
+        val interactionTop = darkenSkyCopyBounds
             ?.bottom
             ?.coerceIn(modeBounds.top, modeBounds.bottom)
             ?: modeBounds.top
@@ -78,8 +78,8 @@ internal fun CraftingModeMenu(
                     listOf(Color(0xFF091523), Color(0xFF132A42)),
                 ),
                 onClick = { onSelectMode(CraftingMode.DarkenSky) },
-                onDescriptionBoundsChanged = { bounds ->
-                    darkenSkyDescriptionBounds = bounds
+                onCopyBoundsChanged = { bounds ->
+                    darkenSkyCopyBounds = bounds
                 },
                 modifier = Modifier
                     .weight(1f)
@@ -127,7 +127,7 @@ private fun CraftingModeHalfButton(
     svgSlotTestTag: String,
     background: Brush,
     onClick: () -> Unit,
-    onDescriptionBoundsChanged: (Rect?) -> Unit = {},
+    onCopyBoundsChanged: (Rect?) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -151,7 +151,7 @@ private fun CraftingModeHalfButton(
         CraftingModeCopy(
             mode = mode,
             placement = copyPlacement,
-            onDescriptionBoundsChanged = onDescriptionBoundsChanged,
+            onCopyBoundsChanged = onCopyBoundsChanged,
         )
         CraftingModeActionHint(
             mode = mode,
@@ -197,7 +197,7 @@ private fun BoxScope.CraftingModeActionHint(
 private fun BoxScope.CraftingModeCopy(
     mode: CraftingMode,
     placement: CraftingModeCopyPlacement,
-    onDescriptionBoundsChanged: (Rect?) -> Unit = {},
+    onCopyBoundsChanged: (Rect?) -> Unit = {},
 ) {
     val alignment = when (placement) {
         CraftingModeCopyPlacement.Top -> Alignment.TopEnd
@@ -241,7 +241,10 @@ private fun BoxScope.CraftingModeCopy(
                 .fillMaxWidth(0.88f)
                 .clip(copyBackgroundShape)
                 .background(Color(0x9907111B))
-                .padding(horizontal = 14.dp, vertical = 10.dp),
+                .padding(horizontal = 14.dp, vertical = 10.dp)
+                .onGloballyPositioned { coordinates ->
+                    onCopyBoundsChanged(coordinates.boundsInRoot())
+                },
         ) {
             Text(
                 text = mode.title(),
@@ -256,11 +259,7 @@ private fun BoxScope.CraftingModeCopy(
                 color = Color(0xFFD3E3F3),
                 textAlign = textAlign,
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onGloballyPositioned { coordinates ->
-                        onDescriptionBoundsChanged(coordinates.boundsInRoot())
-                    },
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }

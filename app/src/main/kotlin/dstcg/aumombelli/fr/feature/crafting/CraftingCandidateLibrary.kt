@@ -80,6 +80,15 @@ internal fun CraftingCandidateLibrary(
                             color = Color(0xFFD3E3F3),
                             style = MaterialTheme.typography.bodyMedium,
                         )
+                        state.selectedMode?.let { selectedMode ->
+                            Text(
+                                text = selectedMode.costSummary(),
+                                color = Color(0xFFF5D58F),
+                                style = MaterialTheme.typography.bodySmall,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.testTag("crafting-mode-costs-${selectedMode.name}"),
+                            )
+                        }
                     }
                 }
                 state.successMessage?.let { message ->
