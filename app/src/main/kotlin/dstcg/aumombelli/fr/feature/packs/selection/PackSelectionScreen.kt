@@ -304,6 +304,16 @@ fun PackSelectionScreen(
                     )
                 }
 
+                WeatherForecastCard(
+                    forecast = weatherForecast,
+                    utcTimeLabel = weatherForecastUtcTimeLabel,
+                    modifier = Modifier
+                        .graphicsLayer {
+                            alpha = stageTextAlpha
+                        }
+                        .testTag("pack-weather-forecast"),
+                )
+
                 PackChargeStatus(
                     availableDrawCount = liveChargeStatus.availableDrawCount,
                     maxStoredDraws = liveChargeStatus.maxStoredDraws,
@@ -314,16 +324,6 @@ fun PackSelectionScreen(
                             alpha = stageTextAlpha
                         }
                         .testTag("pack-status"),
-                )
-
-                WeatherForecastCard(
-                    forecast = weatherForecast,
-                    utcTimeLabel = weatherForecastUtcTimeLabel,
-                    modifier = Modifier
-                        .graphicsLayer {
-                            alpha = stageTextAlpha
-                        }
-                        .testTag("pack-weather-forecast"),
                 )
 
                 state.errorMessage?.let { error ->

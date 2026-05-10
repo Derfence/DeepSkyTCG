@@ -132,6 +132,90 @@ class PackRepositoryTest {
     }
 
     @Test
+    fun `open pack before onboarding completion does not unlock mini games`() = runTest {
+        val fixedNow = Instant.parse("2026-03-24T12:00:00Z")
+        val progressGateway = FakeProgressGateway().apply {
+            progress = StandaloneProgress(
+                collection = ownedCollectionOf("ALP-001" to 1),
+                rechargeState = testRechargeState(),
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.ShowConclusion,
+            )
+        }
+        val catalogGateway = FakeCatalogGateway().apply {
+            cards = listOf(
+                testCardDefinition("ALP-001", name = "Nebuleuse d'Orion", variantProfileId = "local-pack-profile"),
+            )
+            variantProfiles = listOf(localPackProfile())
+            gameBalance = testGameBalanceDefinition(
+                cardsPerDraw = 1,
+                suburbanMeanPerDay = 1.0,
+                ruralMeanPerDay = 1.0,
+                mountainMeanPerDay = 1.0,
+            )
+        }
+        val repository = PackRepository(
+            progressRepository = progressGateway,
+            collectionRepository = CollectionRepository(progressGateway),
+            localPackEngine = LocalPackEngine(
+                catalogRepository = catalogGateway,
+                settings = testGameSettings(
+                    now = fixedNow,
+                    maxStoredDraws = 10,
+                    randomSeed = 4,
+                ),
+            ),
+            homeMenuNoveltyEvaluator = HomeMenuNoveltyEvaluator(catalogGateway),
+        )
+
+        repository.openPack("astronomes-en-herbe")
+
+        assertEquals(false, progressGateway.progress.miniGamesMenuUnlocked)
+        assertEquals(false, progressGateway.progress.homeMenuNoveltyState.miniGames)
+    }
+
+    @Test
+    fun `open pack after onboarding completion unlocks mini games with novelty`() = runTest {
+        val fixedNow = Instant.parse("2026-03-24T12:00:00Z")
+        val progressGateway = FakeProgressGateway().apply {
+            progress = StandaloneProgress(
+                collection = ownedCollectionOf("ALP-001" to 1),
+                rechargeState = testRechargeState(),
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.Completed,
+            )
+        }
+        val catalogGateway = FakeCatalogGateway().apply {
+            cards = listOf(
+                testCardDefinition("ALP-001", name = "Nebuleuse d'Orion", variantProfileId = "local-pack-profile"),
+            )
+            variantProfiles = listOf(localPackProfile())
+            gameBalance = testGameBalanceDefinition(
+                cardsPerDraw = 1,
+                suburbanMeanPerDay = 1.0,
+                ruralMeanPerDay = 1.0,
+                mountainMeanPerDay = 1.0,
+            )
+        }
+        val repository = PackRepository(
+            progressRepository = progressGateway,
+            collectionRepository = CollectionRepository(progressGateway),
+            localPackEngine = LocalPackEngine(
+                catalogRepository = catalogGateway,
+                settings = testGameSettings(
+                    now = fixedNow,
+                    maxStoredDraws = 10,
+                    randomSeed = 4,
+                ),
+            ),
+            homeMenuNoveltyEvaluator = HomeMenuNoveltyEvaluator(catalogGateway),
+        )
+
+        repository.openPack("astronomes-en-herbe")
+
+        assertEquals(true, progressGateway.progress.miniGamesMenuUnlocked)
+        assertEquals(true, progressGateway.progress.homeMenuNoveltyState.miniGames)
+    }
+
+    @Test
     fun `open pack stores equipment rewards and expires active effects after use`() = runTest {
         val fixedNow = Instant.parse("2026-03-24T12:00:00Z")
         val rewardCard = testEquipmentCardDefinition(
@@ -358,6 +442,7 @@ class PackRepositoryTest {
                 library = true,
                 equipment = false,
                 badgeBook = true,
+                miniGames = true,
             ),
             progressGateway.progress.homeMenuNoveltyState,
         )

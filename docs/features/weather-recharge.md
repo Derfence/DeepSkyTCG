@@ -67,6 +67,7 @@ Invariants :
 ## UI
 
 L'ecran des packs affiche une prevision sur `7` jours, de `J` a `J+6`, avec heure de reference `UTC`, icone et multiplicateur.
+Cette prevision est affichee au-dessus du bloc stock/recharge des packs.
 
 Representations actuelles :
 
