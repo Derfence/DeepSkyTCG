@@ -248,6 +248,68 @@ internal fun StandaloneProgress.withNormalizedPackCharge(
 }
 
 /**
+ * Applies a fixed time reduction to pack recharge after first normalizing the
+ * canonical state. The reduction is intentionally weather-independent.
+ */
+internal fun applyPackRechargeReduction(
+    rechargeState: PackRechargeState,
+    now: Instant,
+    reduction: Duration,
+    drawCooldown: Duration,
+    maxStoredDraws: Int,
+    weatherPolicy: WeatherPolicy,
+    rechargeMultiplier: Double = 1.0,
+): PackRechargeState {
+    val normalizedNow = now.normalizedRechargeInstant()
+    val normalizedState = normalizePackRechargeState(
+        rechargeState = rechargeState,
+        now = normalizedNow,
+        drawCooldown = drawCooldown,
+        maxStoredDraws = maxStoredDraws,
+        weatherPolicy = weatherPolicy,
+        rechargeMultiplier = rechargeMultiplier,
+    )
+    if (
+        maxStoredDraws <= 0 ||
+        drawCooldown.isZero ||
+        drawCooldown.isNegative ||
+        normalizedState.availableDrawCount >= maxStoredDraws
+    ) {
+        return normalizedState
+    }
+
+    val reductionSeconds = reduction.seconds.coerceAtLeast(0L)
+    if (reductionSeconds == 0L) {
+        return normalizedState
+    }
+
+    val cooldownUnits = drawCooldown.rechargeCooldownUnits()
+    val reductionUnits = reductionSeconds * BASE_RECHARGE_UNITS_PER_SECOND
+    var availableDrawCount = normalizedState.availableDrawCount
+    var accumulatedChargeUnits = normalizedState.accumulatedChargeUnits + reductionUnits
+
+    if (accumulatedChargeUnits >= cooldownUnits) {
+        val recoveredDrawCount = (accumulatedChargeUnits / cooldownUnits).toInt()
+        availableDrawCount = (availableDrawCount + recoveredDrawCount).coerceAtMost(maxStoredDraws)
+        accumulatedChargeUnits %= cooldownUnits
+    }
+
+    if (availableDrawCount >= maxStoredDraws) {
+        return PackRechargeState(
+            availableDrawCount = maxStoredDraws,
+            accumulatedChargeUnits = 0L,
+            lastChargeEvaluationAt = null,
+        )
+    }
+
+    return PackRechargeState(
+        availableDrawCount = availableDrawCount,
+        accumulatedChargeUnits = accumulatedChargeUnits.coerceIn(0L, cooldownUnits - 1L),
+        lastChargeEvaluationAt = normalizedNow.toString(),
+    )
+}
+
+/**
  * Derives the next recharge instant from the canonical recharge state.
  */
 internal fun PackRechargeState.derivedNextChargeAt(

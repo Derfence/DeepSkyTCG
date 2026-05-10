@@ -11,6 +11,11 @@ import fr.aumombelli.dstcg.model.EquipmentSettingsDefinition
 import fr.aumombelli.dstcg.model.EquipmentState
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.GameBalanceDefinition
+import fr.aumombelli.dstcg.model.MiniGameDifficulty
+import fr.aumombelli.dstcg.model.MiniGameId
+import fr.aumombelli.dstcg.model.MiniGameResolvedCardRef
+import fr.aumombelli.dstcg.model.MiniGameReward
+import fr.aumombelli.dstcg.model.MiniGamesProgress
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.PackCard
 import fr.aumombelli.dstcg.model.StandaloneProgress
@@ -61,6 +66,30 @@ interface PackGateway {
     fun clearCurrentPackResult()
     suspend fun openPack(extensionId: String, isEpicBoosted: Boolean = false): DrawPackResponse
 }
+
+interface MiniGamesGateway {
+    suspend fun loadMiniGamesState(): MiniGamesState
+    suspend fun prepareResolvedCardsForToday(
+        miniGameId: MiniGameId,
+        slotCount: Int,
+        extensionId: String? = null,
+    ): List<MiniGameResolvedCardRef>
+
+    suspend fun grantRewardForToday(
+        miniGameId: MiniGameId,
+        reward: MiniGameReward,
+    ): MiniGameRewardGrantResult
+
+    suspend fun unlockDifficulty(
+        miniGameId: MiniGameId,
+        difficulty: MiniGameDifficulty,
+    ): MiniGamesProgress
+}
+
+data class MiniGamesState(
+    val todayUtc: String,
+    val progress: MiniGamesProgress,
+)
 
 interface TradeGateway {
     suspend fun loadTradeCandidates(): List<TradeCardCandidate>

@@ -35,6 +35,18 @@ Les quatre lieux sont positionnes sur une diagonale bas-gauche vers haut-droite 
 
 Les boutons ronds sont visibles mais desactives tant que les jeux ne sont pas implementes.
 
+## Socle commun
+
+Le socle commun est pret pour les futurs jeux, sans activer de gameplay :
+
+- `MiniGameId` identifie Quiz, Memory, Timeline et Observatoire ;
+- `MiniGameDifficulty` porte les quatre niveaux communs et leurs reductions de `15`, `30`, `45` et `60` minutes ;
+- `MiniGamesProgress` persiste les etats quotidiens, les recompenses deja obtenues et les difficultes debloquees ;
+- `MiniGamesRepository` expose l'etat du jour UTC, prepare les cartes resolues et applique les recompenses ;
+- `MiniGameRewardApplier` reduit la recharge des packs une seule fois par jour et par jeu, avec plafonnement au stock maximal.
+
+Le tirage global des cartes est deterministe et ne depend jamais de l'etat du joueur. Il utilise le jeu, la date UTC, le slot, l'extension cible eventuelle et la version d'algorithme. Si le joueur ne possede pas la carte globale, `MiniGameCardResolver` choisit un fallback deterministe parmi ses cartes de la meme extension, puis parmi ses cartes des autres extensions si besoin. La carte resolue est persistee pour rester stable pendant la journee, meme si la collection evolue.
+
 ## Assets
 
 Sources attendues :

@@ -10,6 +10,7 @@ import fr.aumombelli.dstcg.model.EquipmentCardDefinition
 import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.model.HomeMenuNoveltyState
 import fr.aumombelli.dstcg.model.LibraryCardNoveltyState
+import fr.aumombelli.dstcg.model.MiniGamesProgress
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.OwnedCardEntry
 import fr.aumombelli.dstcg.model.OwnedCollection
@@ -111,6 +112,7 @@ class ProgressRepository(
             libraryCardNoveltyState = normalizedProgress.libraryCardNoveltyState,
             tradeLedgerState = normalizedProgress.tradeLedgerState,
             miniGamesMenuUnlocked = normalizedProgress.miniGamesMenuUnlocked,
+            miniGamesProgress = normalizedProgress.miniGamesProgress,
             lastTrustedWallClockUtc = effectiveNow.toString(),
             lastTrustedElapsedRealtimeMs = timeEvidence.elapsedRealtimeMs,
             lastObservedBootMarker = timeEvidence.bootSessionId,
@@ -134,6 +136,7 @@ class ProgressRepository(
             libraryCardNoveltyState = LibraryCardNoveltyState(),
             tradeLedgerState = TradeLedgerState(),
             miniGamesMenuUnlocked = false,
+            miniGamesProgress = MiniGamesProgress(),
             lastTrustedWallClockUtc = timeEvidence.wallClockUtc.toString(),
             lastTrustedElapsedRealtimeMs = timeEvidence.elapsedRealtimeMs,
             lastObservedBootMarker = timeEvidence.bootSessionId,
@@ -173,6 +176,7 @@ class ProgressRepository(
                 libraryCardNoveltyState = LibraryCardNoveltyState(),
                 tradeLedgerState = TradeLedgerState(),
                 miniGamesMenuUnlocked = false,
+                miniGamesProgress = MiniGamesProgress(),
                 lastTrustedWallClockUtc = timeEvidence.wallClockUtc.toString(),
                 lastTrustedElapsedRealtimeMs = timeEvidence.elapsedRealtimeMs,
                 lastObservedBootMarker = timeEvidence.bootSessionId,
@@ -233,6 +237,7 @@ class ProgressRepository(
             libraryCardNoveltyState = normalizedProgress.libraryCardNoveltyState,
             tradeLedgerState = normalizedProgress.tradeLedgerState,
             miniGamesMenuUnlocked = normalizedProgress.miniGamesMenuUnlocked,
+            miniGamesProgress = normalizedProgress.miniGamesProgress,
             lastTrustedWallClockUtc = trustedTime.trustedNow.toString(),
             lastTrustedElapsedRealtimeMs = trustedTime.timeEvidence.elapsedRealtimeMs,
             lastObservedBootMarker = trustedTime.timeEvidence.bootSessionId,
@@ -253,6 +258,7 @@ class ProgressRepository(
             snapshot.libraryCardNoveltyState != normalizedSnapshot.libraryCardNoveltyState ||
             snapshot.tradeLedgerState != normalizedSnapshot.tradeLedgerState ||
             snapshot.miniGamesMenuUnlocked != normalizedSnapshot.miniGamesMenuUnlocked ||
+            snapshot.miniGamesProgress != normalizedSnapshot.miniGamesProgress ||
             snapshot.tamperFlag ||
             trustedTime.tamperDetected
 

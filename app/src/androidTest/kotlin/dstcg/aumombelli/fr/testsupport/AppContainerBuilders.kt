@@ -14,6 +14,7 @@ import fr.aumombelli.dstcg.data.EquipmentRepository
 import fr.aumombelli.dstcg.data.GameCatalogRepository
 import fr.aumombelli.dstcg.data.HomeMenuNoveltyEvaluator
 import fr.aumombelli.dstcg.data.LocalPackEngine
+import fr.aumombelli.dstcg.data.MiniGamesRepository
 import fr.aumombelli.dstcg.data.PackGateway
 import fr.aumombelli.dstcg.data.PackRepository
 import fr.aumombelli.dstcg.data.ProgressLoadResult
@@ -102,6 +103,11 @@ internal fun offlineMainActivityTestAppContainer(
         ),
         homeMenuNoveltyEvaluator = homeMenuNoveltyEvaluator,
     )
+    val miniGamesRepository = MiniGamesRepository(
+        progressRepository = progressRepository,
+        catalogRepository = catalogRepository,
+        settings = gameSettings,
+    )
     val tradeRepository = TradeRepository(
         catalogRepository = catalogRepository,
         progressRepository = progressRepository,
@@ -114,6 +120,7 @@ internal fun offlineMainActivityTestAppContainer(
         craftingRepository = craftingRepository,
         equipmentRepository = equipmentRepository,
         packRepository = packRepository,
+        miniGamesRepository = miniGamesRepository,
         tradeRepository = tradeRepository,
         gameSettings = gameSettings,
     )
@@ -271,6 +278,9 @@ private fun navigationTestAppContainer(
         cards = listOf(cardDefinition),
         variantProfiles = listOf(navigationVariantProfile()),
     )
+    val gameSettings = StandaloneGameSettings(
+        entropySource = RandomEntropySource(Random(12345)),
+    )
     val packResponse = DrawPackResponse.fromCards(
         extensionId = extension.id,
         drawnAt = "2026-03-23T12:00:00Z",
@@ -302,13 +312,16 @@ private fun navigationTestAppContainer(
             homeMenuNoveltyEvaluator = HomeMenuNoveltyEvaluator(catalogRepository),
         ),
         packRepository = NavigationPackGateway(progressRepository, packResponse),
+        miniGamesRepository = MiniGamesRepository(
+            progressRepository = progressRepository,
+            catalogRepository = catalogRepository,
+            settings = gameSettings,
+        ),
         tradeRepository = TradeRepository(
             catalogRepository = catalogRepository,
             progressRepository = progressRepository,
         ),
-        gameSettings = StandaloneGameSettings(
-            entropySource = RandomEntropySource(Random(12345)),
-        ),
+        gameSettings = gameSettings,
     )
 }
 

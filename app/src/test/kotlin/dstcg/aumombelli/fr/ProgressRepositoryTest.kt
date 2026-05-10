@@ -13,6 +13,10 @@ import fr.aumombelli.dstcg.data.drawCooldownDuration
 import fr.aumombelli.dstcg.data.requireUsableProgress
 import fr.aumombelli.dstcg.model.HomeMenuNoveltyState
 import fr.aumombelli.dstcg.model.LibraryCardNoveltyState
+import fr.aumombelli.dstcg.model.MiniGameDailyState
+import fr.aumombelli.dstcg.model.MiniGameId
+import fr.aumombelli.dstcg.model.MiniGameReward
+import fr.aumombelli.dstcg.model.MiniGamesProgress
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.OwnedCardEntry
 import fr.aumombelli.dstcg.model.OwnedCollection
@@ -47,6 +51,7 @@ class ProgressRepositoryTest {
         assertEquals(0, loaded.progress.openedPackCount)
         assertEquals(false, loaded.progress.hasOpenedEpicBoostedPack)
         assertEquals(NewPlayerOnboardingStep.ShowWelcomeIntro, loaded.progress.newPlayerOnboardingStep)
+        assertEquals(MiniGamesProgress(), loaded.progress.miniGamesProgress)
         assertFalse(fixture.secureDataStore.data.first().isEmpty())
     }
 
@@ -107,6 +112,7 @@ class ProgressRepositoryTest {
         assertEquals(10, reloaded.rechargeState.availableDrawCount)
         assertEquals(HomeMenuNoveltyState(), reloaded.homeMenuNoveltyState)
         assertEquals(LibraryCardNoveltyState(), reloaded.libraryCardNoveltyState)
+        assertEquals(MiniGamesProgress(), reloaded.miniGamesProgress)
     }
 
     @Test
@@ -126,6 +132,30 @@ class ProgressRepositoryTest {
 
         val reloaded = fixture.repository.loadProgress().requireUsableProgress().progress
         assertEquals(NewPlayerOnboardingStep.LearnCraftingTools, reloaded.newPlayerOnboardingStep)
+    }
+
+    @Test
+    fun `save progress persists mini games progress`() = runTest {
+        val fixture = newFixture()
+        val miniGamesProgress = MiniGamesProgress(
+            dailyStates = mapOf(
+                MiniGameId.Memory to MiniGameDailyState(
+                    dateUtc = "2026-03-24",
+                    hasPlayed = true,
+                    reward = MiniGameReward(reductionMinutes = 30L),
+                ),
+            ),
+        )
+        val progress = StandaloneProgress(
+            collection = ownedCollectionOf("ALP-001" to 2),
+            rechargeState = testRechargeState(),
+            miniGamesProgress = miniGamesProgress,
+        )
+
+        fixture.repository.saveProgress(progress)
+
+        val reloaded = fixture.repository.loadProgress().requireUsableProgress().progress
+        assertEquals(miniGamesProgress, reloaded.miniGamesProgress)
     }
 
     @Test
@@ -339,6 +369,7 @@ class ProgressRepositoryTest {
         assertTrue(loaded.lastActivatedCardIdByType.isEmpty())
         assertEquals(HomeMenuNoveltyState(), loaded.homeMenuNoveltyState)
         assertEquals(LibraryCardNoveltyState(), loaded.libraryCardNoveltyState)
+        assertEquals(MiniGamesProgress(), loaded.miniGamesProgress)
     }
 
     private fun newFixture(

@@ -12,6 +12,8 @@ import fr.aumombelli.dstcg.data.EquipmentRepository
 import fr.aumombelli.dstcg.data.GameCatalogRepository
 import fr.aumombelli.dstcg.data.HomeMenuNoveltyEvaluator
 import fr.aumombelli.dstcg.data.LocalPackEngine
+import fr.aumombelli.dstcg.data.MiniGamesGateway
+import fr.aumombelli.dstcg.data.MiniGamesRepository
 import fr.aumombelli.dstcg.data.PackGateway
 import fr.aumombelli.dstcg.data.PackRepository
 import fr.aumombelli.dstcg.data.ProgressGateway
@@ -27,6 +29,7 @@ class AppContainer(
     val craftingRepository: CraftingGateway,
     val equipmentRepository: EquipmentGateway,
     val packRepository: PackGateway,
+    val miniGamesRepository: MiniGamesGateway,
     val tradeRepository: TradeGateway,
     val gameSettings: StandaloneGameSettings,
 ) {
@@ -65,6 +68,11 @@ class AppContainer(
                 ),
                 homeMenuNoveltyEvaluator = homeMenuNoveltyEvaluator,
             )
+            val miniGamesRepository = MiniGamesRepository(
+                progressRepository = progressRepository,
+                catalogRepository = catalogRepository,
+                settings = gameSettings,
+            )
             val tradeRepository = TradeRepository(
                 catalogRepository = catalogRepository,
                 progressRepository = progressRepository,
@@ -77,6 +85,7 @@ class AppContainer(
                 craftingRepository = craftingRepository,
                 equipmentRepository = equipmentRepository,
                 packRepository = packRepository,
+                miniGamesRepository = miniGamesRepository,
                 tradeRepository = tradeRepository,
                 gameSettings = gameSettings,
             )

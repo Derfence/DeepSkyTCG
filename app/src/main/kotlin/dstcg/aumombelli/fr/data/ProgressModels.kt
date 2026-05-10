@@ -10,6 +10,7 @@ import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.model.HomeMenuNoveltyState
 import fr.aumombelli.dstcg.model.LibraryCardNoveltyState
+import fr.aumombelli.dstcg.model.MiniGamesProgress
 import fr.aumombelli.dstcg.model.TradeLedgerState
 import java.time.Instant
 import kotlinx.serialization.Serializable
@@ -31,6 +32,7 @@ data class ProgressSnapshot(
     val libraryCardNoveltyState: LibraryCardNoveltyState = LibraryCardNoveltyState(),
     val tradeLedgerState: TradeLedgerState = TradeLedgerState(),
     val miniGamesMenuUnlocked: Boolean = false,
+    val miniGamesProgress: MiniGamesProgress = MiniGamesProgress(),
     val lastTrustedWallClockUtc: String,
     val lastTrustedElapsedRealtimeMs: Long = 0L,
     val lastObservedBootMarker: String,
@@ -50,10 +52,11 @@ data class ProgressSnapshot(
         libraryCardNoveltyState = libraryCardNoveltyState,
         tradeLedgerState = tradeLedgerState,
         miniGamesMenuUnlocked = miniGamesMenuUnlocked,
+        miniGamesProgress = miniGamesProgress,
     )
 
     companion object {
-        const val CURRENT_SCHEMA_VERSION: Int = 10
+        const val CURRENT_SCHEMA_VERSION: Int = 11
         const val ONBOARDING_STATE_SCHEMA_VERSION: Int = 4
     }
 }

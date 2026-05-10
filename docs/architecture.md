@@ -74,7 +74,7 @@ Repository
 
 ## Persistance locale
 
-`ProgressSnapshot.CURRENT_SCHEMA_VERSION` vaut `8`. Le snapshot contient notamment :
+`ProgressSnapshot.CURRENT_SCHEMA_VERSION` vaut `11`. Le snapshot contient notamment :
 
 - collection et variantes possedees ;
 - stock/recharge de packs ;
@@ -84,6 +84,7 @@ Repository
 - progression de badges d'equipements ;
 - indicateurs de nouveaute Home/Bibliotheque ;
 - ledger des echanges NFC deja appliques.
+- deblocage du menu mini-jeux et progression commune des mini-jeux.
 
 Le fichier DataStore est `dstcg_standalone_secure_progress.json`. Son contenu est enveloppe puis chiffre en AES-GCM via Android Keystore.
 
