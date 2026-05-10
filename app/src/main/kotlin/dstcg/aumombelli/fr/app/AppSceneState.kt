@@ -20,6 +20,7 @@ internal data class AppSceneUiState(
     val craftingContentVisible: Boolean = false,
     val equipmentContentVisible: Boolean = false,
     val badgeBookContentVisible: Boolean = false,
+    val miniGamesMenuContentVisible: Boolean = false,
     val packSceneVisible: Boolean = false,
     val packExtensionListVisible: Boolean = false,
     val transitionLocked: Boolean = false,
@@ -104,6 +105,10 @@ internal fun AppSceneUiState.hideBadgeBookContent(): AppSceneUiState = copy(badg
 
 internal fun AppSceneUiState.showBadgeBookContent(): AppSceneUiState = copy(badgeBookContentVisible = true)
 
+internal fun AppSceneUiState.hideMiniGamesMenuContent(): AppSceneUiState = copy(miniGamesMenuContentVisible = false)
+
+internal fun AppSceneUiState.showMiniGamesMenuContent(): AppSceneUiState = copy(miniGamesMenuContentVisible = true)
+
 internal fun AppSceneUiState.hidePackSelectionScene(): AppSceneUiState = copy(
     packSceneVisible = false,
     packExtensionListVisible = false,
@@ -163,6 +168,13 @@ internal fun AppSceneUiState.prepareBadgeBookEntry(nextBadgeBookRefreshSignal: I
 )
 
 internal fun AppSceneUiState.enterBadgeBook(): AppSceneUiState = copy(currentScene = AppScene.BadgeBook)
+
+internal fun AppSceneUiState.prepareMiniGamesMenuEntry(): AppSceneUiState = copy(
+    homeContentVisible = false,
+    miniGamesMenuContentVisible = false,
+)
+
+internal fun AppSceneUiState.enterMiniGamesMenu(): AppSceneUiState = copy(currentScene = AppScene.MiniGamesMenu)
 
 internal fun AppSceneUiState.preparePackSelection(nextPackRefreshSignal: Int): AppSceneUiState = copy(
     currentScene = AppScene.PackSelection,

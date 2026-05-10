@@ -110,6 +110,7 @@ class ProgressRepository(
             homeMenuNoveltyState = normalizedProgress.homeMenuNoveltyState,
             libraryCardNoveltyState = normalizedProgress.libraryCardNoveltyState,
             tradeLedgerState = normalizedProgress.tradeLedgerState,
+            miniGamesMenuUnlocked = normalizedProgress.miniGamesMenuUnlocked,
             lastTrustedWallClockUtc = effectiveNow.toString(),
             lastTrustedElapsedRealtimeMs = timeEvidence.elapsedRealtimeMs,
             lastObservedBootMarker = timeEvidence.bootSessionId,
@@ -132,6 +133,7 @@ class ProgressRepository(
             homeMenuNoveltyState = HomeMenuNoveltyState(),
             libraryCardNoveltyState = LibraryCardNoveltyState(),
             tradeLedgerState = TradeLedgerState(),
+            miniGamesMenuUnlocked = false,
             lastTrustedWallClockUtc = timeEvidence.wallClockUtc.toString(),
             lastTrustedElapsedRealtimeMs = timeEvidence.elapsedRealtimeMs,
             lastObservedBootMarker = timeEvidence.bootSessionId,
@@ -170,6 +172,7 @@ class ProgressRepository(
                 homeMenuNoveltyState = HomeMenuNoveltyState(),
                 libraryCardNoveltyState = LibraryCardNoveltyState(),
                 tradeLedgerState = TradeLedgerState(),
+                miniGamesMenuUnlocked = false,
                 lastTrustedWallClockUtc = timeEvidence.wallClockUtc.toString(),
                 lastTrustedElapsedRealtimeMs = timeEvidence.elapsedRealtimeMs,
                 lastObservedBootMarker = timeEvidence.bootSessionId,
@@ -229,6 +232,7 @@ class ProgressRepository(
             homeMenuNoveltyState = normalizedProgress.homeMenuNoveltyState,
             libraryCardNoveltyState = normalizedProgress.libraryCardNoveltyState,
             tradeLedgerState = normalizedProgress.tradeLedgerState,
+            miniGamesMenuUnlocked = normalizedProgress.miniGamesMenuUnlocked,
             lastTrustedWallClockUtc = trustedTime.trustedNow.toString(),
             lastTrustedElapsedRealtimeMs = trustedTime.timeEvidence.elapsedRealtimeMs,
             lastObservedBootMarker = trustedTime.timeEvidence.bootSessionId,
@@ -248,6 +252,7 @@ class ProgressRepository(
             snapshot.homeMenuNoveltyState != normalizedSnapshot.homeMenuNoveltyState ||
             snapshot.libraryCardNoveltyState != normalizedSnapshot.libraryCardNoveltyState ||
             snapshot.tradeLedgerState != normalizedSnapshot.tradeLedgerState ||
+            snapshot.miniGamesMenuUnlocked != normalizedSnapshot.miniGamesMenuUnlocked ||
             snapshot.tamperFlag ||
             trustedTime.tamperDetected
 

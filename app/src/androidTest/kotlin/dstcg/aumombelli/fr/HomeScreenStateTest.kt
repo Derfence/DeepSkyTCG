@@ -16,6 +16,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
+import androidx.compose.ui.test.swipeLeft
+import androidx.compose.ui.test.swipeRight
 import fr.aumombelli.dstcg.feature.home.HomeScreen
 import fr.aumombelli.dstcg.feature.home.HomeUiState
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
@@ -150,6 +152,102 @@ class HomeScreenStateTest {
         composeRule.onAllNodesWithTag("home-library").assertCountEquals(0)
         composeRule.onAllNodesWithTag("home-badges").assertCountEquals(0)
         composeRule.onAllNodesWithTag("home-crafting").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("home-card-flip").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("home-mini-games-card").assertCountEquals(0)
+    }
+
+    @Test
+    fun mini_games_card_is_front_side_by_default_after_unlock() {
+        setHomeScreenContent(
+            HomeUiState(
+                isLoading = false,
+                isMiniGamesMenuVisible = true,
+            ),
+        )
+
+        composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
+        composeRule.onNodeWithTag("home-card-flip").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("home-mini-games-card").assertCountEquals(0)
+    }
+
+    @Test
+    fun flip_button_and_swipes_toggle_the_home_card_back() {
+        setHomeScreenContent(
+            HomeUiState(
+                isLoading = false,
+                isMiniGamesMenuVisible = true,
+            ),
+        )
+
+        composeRule.onNodeWithTag("home-card-flip").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("home-mini-games-card").assertIsDisplayed()
+
+        composeRule.onNodeWithTag("home-mini-games-card").performTouchInput { swipeRight() }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
+
+        composeRule.onNodeWithTag("home-open-pack").performTouchInput { swipeLeft() }
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("home-mini-games-card").assertIsDisplayed()
+    }
+
+    @Test
+    fun swipe_outside_home_card_does_not_flip() {
+        setHomeScreenContent(
+            HomeUiState(
+                isLoading = false,
+                isMiniGamesMenuVisible = true,
+            ),
+        )
+
+        composeRule.onNodeWithTag("home-settings").performTouchInput { swipeLeft() }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("home-mini-games-card").assertCountEquals(0)
+    }
+
+    @Test
+    fun mini_games_card_button_opens_menu_callback() {
+        var openMiniGamesCount = 0
+        setHomeScreenContent(
+            initialState = HomeUiState(
+                isLoading = false,
+                isMiniGamesMenuVisible = true,
+            ),
+            onOpenMiniGamesMenu = { openMiniGamesCount += 1 },
+        )
+
+        composeRule.onNodeWithTag("home-card-flip").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("home-mini-games-open-menu").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.runOnIdle {
+            assertEquals(1, openMiniGamesCount)
+        }
+    }
+
+    @Test
+    fun mini_games_card_click_opens_menu_callback() {
+        var openMiniGamesCount = 0
+        setHomeScreenContent(
+            initialState = HomeUiState(
+                isLoading = false,
+                isMiniGamesMenuVisible = true,
+            ),
+            onOpenMiniGamesMenu = { openMiniGamesCount += 1 },
+        )
+
+        composeRule.onNodeWithTag("home-card-flip").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("home-mini-games-card").performClick()
+        composeRule.waitForIdle()
+
+        composeRule.runOnIdle {
+            assertEquals(1, openMiniGamesCount)
+        }
     }
 
     @Test
@@ -319,6 +417,7 @@ class HomeScreenStateTest {
     private fun setHomeScreenContent(
         initialState: HomeUiState,
         onOpenCrafting: () -> Unit = {},
+        onOpenMiniGamesMenu: () -> Unit = {},
         onResetProgress: () -> Unit = {},
     ): MutableState<HomeUiState> {
         val state = mutableStateOf(initialState)
@@ -331,6 +430,7 @@ class HomeScreenStateTest {
                     onOpenCrafting = onOpenCrafting,
                     onOpenEquipment = {},
                     onOpenBadgeBook = {},
+                    onOpenMiniGamesMenu = onOpenMiniGamesMenu,
                     onResetProgress = onResetProgress,
                     showBackground = false,
                     contentVisible = true,
@@ -360,6 +460,7 @@ class HomeScreenStateTest {
                         onOpenCrafting = {},
                         onOpenEquipment = {},
                         onOpenBadgeBook = {},
+                        onOpenMiniGamesMenu = {},
                         onResetProgress = {},
                         showBackground = false,
                         contentVisible = true,

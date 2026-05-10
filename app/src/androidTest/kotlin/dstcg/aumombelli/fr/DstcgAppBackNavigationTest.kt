@@ -4,6 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -11,6 +12,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import fr.aumombelli.dstcg.testsupport.badgeCelebrationBackNavigationTestAppContainer
 import fr.aumombelli.dstcg.testsupport.backNavigationTestAppContainer
+import fr.aumombelli.dstcg.testsupport.miniGamesMenuTestAppContainer
 import fr.aumombelli.dstcg.ui.theme.DstcgTheme
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -163,6 +165,39 @@ class DstcgAppBackNavigationTest {
         composeRule.onNodeWithTag("badge-book-scroll").assertIsDisplayed()
         composeRule.onNodeWithTag("badge-book-back").performClick()
 
+        advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
+    }
+
+    @Test
+    fun mini_games_menu_opens_from_home_card_and_visible_back_returns_home() {
+        setAppContent(miniGamesMenuTestAppContainer())
+        startAndReachHome()
+
+        composeRule.onNodeWithTag("home-card-flip").performClick()
+        advanceUntilTagDisplayed("home-mini-games-open-menu", timeoutMillis = 5_000)
+        composeRule.onNodeWithTag("home-mini-games-open-menu").performClick()
+        advanceUntilTagDisplayed("mini-games-menu-screen", timeoutMillis = 10_000)
+
+        composeRule.onNodeWithTag("mini-games-quiz").assertIsDisplayed().assertIsNotEnabled()
+        composeRule.onNodeWithTag("mini-games-memory").assertIsDisplayed().assertIsNotEnabled()
+        composeRule.onNodeWithTag("mini-games-timeline").assertIsDisplayed().assertIsNotEnabled()
+        composeRule.onNodeWithTag("mini-games-observatory").assertIsDisplayed().assertIsNotEnabled()
+
+        composeRule.onNodeWithTag("mini-games-menu-back").performClick()
+        advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
+    }
+
+    @Test
+    fun android_back_from_mini_games_menu_returns_home() {
+        setAppContent(miniGamesMenuTestAppContainer())
+        startAndReachHome()
+
+        composeRule.onNodeWithTag("home-card-flip").performClick()
+        advanceUntilTagDisplayed("home-mini-games-open-menu", timeoutMillis = 5_000)
+        composeRule.onNodeWithTag("home-mini-games-open-menu").performClick()
+        advanceUntilTagDisplayed("mini-games-menu-screen", timeoutMillis = 10_000)
+
+        pressAndroidBack()
         advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
     }
 

@@ -4,6 +4,7 @@ import fr.aumombelli.dstcg.model.AstronomyPackRevealSlot
 import fr.aumombelli.dstcg.model.DrawPackResponse
 import fr.aumombelli.dstcg.model.HomeMenuNoveltyState
 import fr.aumombelli.dstcg.model.LibraryCardNoveltyState
+import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.addRewards
 import fr.aumombelli.dstcg.model.buildNewLibraryCardIds
 import fr.aumombelli.dstcg.model.consumeEquipmentEffectsAfterPackOpen
@@ -43,12 +44,15 @@ class PackRepository(
         )
         val mergedCollection = collectionRepository.mergeCards(progress.collection, packResponse.cards)
         val mergedEquipmentInventory = progress.equipmentInventory.addRewards(packResponse.equipmentCards)
+        val unlocksMiniGamesMenu = progress.newPlayerOnboardingStep == NewPlayerOnboardingStep.Completed &&
+            !progress.miniGamesMenuUnlocked
         val afterProgress = progress.copy(
             collection = mergedCollection,
             equipmentInventory = mergedEquipmentInventory,
             rechargeState = packResponse.rechargeState,
             openedPackCount = progress.openedPackCount + 1,
             hasOpenedEpicBoostedPack = progress.hasOpenedEpicBoostedPack || packResponse.isEpicBoosted,
+            miniGamesMenuUnlocked = progress.miniGamesMenuUnlocked || unlocksMiniGamesMenu,
         )
             .recordAffectedPackIfEquipmentActive()
             .consumeEquipmentEffectsAfterPackOpen()
@@ -82,6 +86,7 @@ class PackRepository(
                     beforeProgress = progress,
                     afterProgress = afterProgress,
                 ),
+                miniGames = unlocksMiniGamesMenu,
             ),
         )
         progressRepository.saveProgress(

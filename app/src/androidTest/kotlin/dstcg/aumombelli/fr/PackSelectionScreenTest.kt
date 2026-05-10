@@ -676,8 +676,8 @@ class PackSelectionScreenTest {
         val forecastBounds = composeRule.onNodeWithTag("pack-weather-forecast").fetchSemanticsNode().boundsInRoot
         val statusBounds = composeRule.onNodeWithTag("pack-status").fetchSemanticsNode().boundsInRoot
 
-        assertTrue(titleBounds.bottom <= statusBounds.top)
-        assertTrue(statusBounds.bottom <= forecastBounds.top)
+        assertTrue(titleBounds.bottom <= forecastBounds.top)
+        assertTrue(forecastBounds.bottom <= statusBounds.top)
         composeRule.onNodeWithTag("pack-weather-title").assertIsDisplayed()
         composeRule.onNodeWithTag("pack-weather-time").assertTextContains("12:00 UTC")
         composeRule.onNodeWithTag("pack-weather-forecast").assertIsDisplayed()

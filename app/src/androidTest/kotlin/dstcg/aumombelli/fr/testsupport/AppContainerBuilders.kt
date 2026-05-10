@@ -201,9 +201,33 @@ internal fun homeMenuNoveltyTestAppContainer(): AppContainer {
     )
 }
 
+internal fun miniGamesMenuTestAppContainer(): AppContainer {
+    return navigationTestAppContainer(
+        initialCollection = OwnedCollection(
+            cards = mapOf(
+                "ALP-001" to fr.aumombelli.dstcg.model.OwnedCardEntry(
+                    totalOwned = 1,
+                    variants = listOf(
+                        OwnedVariantCount(
+                            skyQuality = "city",
+                            finish = "standard",
+                            count = 1,
+                        ),
+                    ),
+                ),
+            ),
+        ),
+        miniGamesMenuUnlocked = true,
+        homeMenuNoveltyState = HomeMenuNoveltyState(
+            miniGames = true,
+        ),
+    )
+}
+
 private fun navigationTestAppContainer(
     initialCollection: OwnedCollection,
     unlockEquipmentMenu: Boolean = false,
+    miniGamesMenuUnlocked: Boolean = false,
     initialOnboardingStep: NewPlayerOnboardingStep? = null,
     homeMenuNoveltyState: HomeMenuNoveltyState = HomeMenuNoveltyState(),
     libraryCardNoveltyState: LibraryCardNoveltyState = LibraryCardNoveltyState(),
@@ -235,6 +259,7 @@ private fun navigationTestAppContainer(
             },
             homeMenuNoveltyState = homeMenuNoveltyState,
             libraryCardNoveltyState = libraryCardNoveltyState,
+            miniGamesMenuUnlocked = miniGamesMenuUnlocked,
         ),
     )
     val collectionRepository = NavigationCollectionGateway(progressRepository)

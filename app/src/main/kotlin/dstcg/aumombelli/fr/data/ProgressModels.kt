@@ -30,6 +30,7 @@ data class ProgressSnapshot(
     val homeMenuNoveltyState: HomeMenuNoveltyState = HomeMenuNoveltyState(),
     val libraryCardNoveltyState: LibraryCardNoveltyState = LibraryCardNoveltyState(),
     val tradeLedgerState: TradeLedgerState = TradeLedgerState(),
+    val miniGamesMenuUnlocked: Boolean = false,
     val lastTrustedWallClockUtc: String,
     val lastTrustedElapsedRealtimeMs: Long = 0L,
     val lastObservedBootMarker: String,
@@ -48,10 +49,11 @@ data class ProgressSnapshot(
         homeMenuNoveltyState = homeMenuNoveltyState,
         libraryCardNoveltyState = libraryCardNoveltyState,
         tradeLedgerState = tradeLedgerState,
+        miniGamesMenuUnlocked = miniGamesMenuUnlocked,
     )
 
     companion object {
-        const val CURRENT_SCHEMA_VERSION: Int = 9
+        const val CURRENT_SCHEMA_VERSION: Int = 10
         const val ONBOARDING_STATE_SCHEMA_VERSION: Int = 4
     }
 }

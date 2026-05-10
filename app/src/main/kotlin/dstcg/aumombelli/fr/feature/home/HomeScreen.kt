@@ -67,6 +67,7 @@ fun HomeScreen(
     onOpenCrafting: () -> Unit,
     onOpenEquipment: () -> Unit,
     onOpenBadgeBook: () -> Unit,
+    onOpenMiniGamesMenu: () -> Unit = {},
     onResetProgress: () -> Unit,
     modifier: Modifier = Modifier,
     showBackground: Boolean = true,
@@ -269,6 +270,9 @@ fun HomeScreen(
                             else -> "Traverse l'observatoire et découvre une nouvelle extension."
                         },
                         onClick = onOpenPack,
+                        miniGamesEnabled = state.isMiniGamesMenuVisible,
+                        showMiniGamesNewIndicator = state.showMiniGamesNewIndicator,
+                        onOpenMiniGamesMenu = onOpenMiniGamesMenu,
                         interactionTestTag = "home-open-pack",
                         modifier = Modifier
                             .align(Alignment.TopCenter)

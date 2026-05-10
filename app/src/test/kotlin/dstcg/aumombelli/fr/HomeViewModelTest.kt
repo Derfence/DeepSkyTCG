@@ -181,10 +181,12 @@ class HomeViewModelTest {
     fun `init exposes persisted home menu novelty flags`() = runTest {
         val progressGateway = FakeProgressGateway().apply {
             progress = progress.copy(
+                miniGamesMenuUnlocked = true,
                 homeMenuNoveltyState = HomeMenuNoveltyState(
                     library = true,
                     equipment = true,
                     badgeBook = true,
+                    miniGames = true,
                 ),
                 equipmentInventory = OwnedEquipmentInventory(
                     cards = mapOf(
@@ -200,6 +202,24 @@ class HomeViewModelTest {
         assertTrue(viewModel.uiState.value.showLibraryNewIndicator)
         assertTrue(viewModel.uiState.value.showEquipmentNewIndicator)
         assertTrue(viewModel.uiState.value.showBadgeBookNewIndicator)
+        assertTrue(viewModel.uiState.value.showMiniGamesNewIndicator)
+        assertTrue(viewModel.uiState.value.isMiniGamesMenuVisible)
+    }
+
+    @Test
+    fun `mini games menu is visible only after persisted unlock`() = runTest {
+        val progressGateway = FakeProgressGateway()
+
+        val viewModel = HomeViewModel(progressGateway)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.uiState.value.isMiniGamesMenuVisible)
+
+        progressGateway.progress = progressGateway.progress.copy(miniGamesMenuUnlocked = true)
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isMiniGamesMenuVisible)
     }
 
     @Test
@@ -257,6 +277,35 @@ class HomeViewModelTest {
         assertEquals(0, progressGateway.savedProgress.size)
         assertFalse(viewModel.uiState.value.showLibraryNewIndicator)
         assertTrue(viewModel.uiState.value.showEquipmentNewIndicator)
+    }
+
+    @Test
+    fun `mark mini games seen only clears mini games novelty`() = runTest {
+        val progressGateway = FakeProgressGateway().apply {
+            progress = progress.copy(
+                miniGamesMenuUnlocked = true,
+                homeMenuNoveltyState = HomeMenuNoveltyState(
+                    library = true,
+                    miniGames = true,
+                ),
+            )
+        }
+
+        val viewModel = HomeViewModel(progressGateway)
+        advanceUntilIdle()
+
+        viewModel.markMiniGamesSeen()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.showLibraryNewIndicator)
+        assertFalse(viewModel.uiState.value.showMiniGamesNewIndicator)
+        assertEquals(
+            HomeMenuNoveltyState(
+                library = true,
+                miniGames = false,
+            ),
+            progressGateway.progress.homeMenuNoveltyState,
+        )
     }
 
     @Test

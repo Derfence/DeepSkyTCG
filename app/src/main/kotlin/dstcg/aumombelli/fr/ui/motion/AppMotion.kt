@@ -45,6 +45,7 @@ enum class AppScene {
     Crafting,
     Equipment,
     BadgeBook,
+    MiniGamesMenu,
     PackSelection,
     PackOpening,
 }

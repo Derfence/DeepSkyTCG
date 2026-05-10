@@ -18,9 +18,10 @@ docs/README.md
     |   `-- features/weather-recharge.md
     |-- features/library-badges.md
     |   `-- features/trade-nfc.md
-    |-- features/equipment.md
-    |-- features/crafting.md
-    `-- new-player-onboarding.md
+|-- features/equipment.md
+|-- features/crafting.md
+|-- features/mini-games.md
+`-- new-player-onboarding.md
         `-- flows/new-player-onboarding.md
             `-- flows/onboarding-ui-tags.md
 ```
@@ -45,6 +46,7 @@ docs/README.md
 - [Bibliotheque et badges](features/library-badges.md)
 - [Equipements](features/equipment.md)
 - [Artisanat](features/crafting.md)
+- [Mini-jeux](features/mini-games.md)
 - [Echange NFC](features/trade-nfc.md)
 
 ## Rattrapage depuis git
@@ -52,6 +54,7 @@ docs/README.md
 L'audit a compare les docs existantes, les fichiers sources et l'historique recent. Les points suivants etaient disperses ou manquants dans la documentation centrale :
 
 - `v1.6.0` : ajout de l'artisanat, menu `Atelier`, modes `Assombrir le ciel` et `Agence spatiale`.
+- Mini-jeux : acces Home recto-verso et menu carte, sans implementation des jeux.
 - `v1.5.0` : echange de cartes par NFC, validation par rarete/variante et empreinte de catalogue.
 - Refactor scenes : `HomeScene`, `LibraryScene`, `CraftingScene`, `EquipmentScene`, `BadgeBookScene`, `PackScene` via `AppSceneContent`.
 - Visuels recents : nouveaux boosters, fond Home, portail-livre, portail-equipement, arrivee holographique, logos et tampons SVG.

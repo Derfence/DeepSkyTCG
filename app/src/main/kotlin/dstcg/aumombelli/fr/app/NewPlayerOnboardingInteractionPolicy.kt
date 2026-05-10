@@ -149,6 +149,29 @@ internal object NewPlayerOnboardingInteractionPolicy {
         -> false
     }
 
+    fun allowsHomeMiniGames(step: NewPlayerOnboardingStep?): Boolean = when (step) {
+        null,
+        NewPlayerOnboardingStep.Completed,
+        -> true
+
+        NewPlayerOnboardingStep.ShowWelcomeIntro,
+        NewPlayerOnboardingStep.OpenFirstPackMenu,
+        NewPlayerOnboardingStep.SelectFirstExtension,
+        NewPlayerOnboardingStep.SelectFirstBooster,
+        NewPlayerOnboardingStep.ViewLibrary,
+        NewPlayerOnboardingStep.LearnLibraryVariants,
+        NewPlayerOnboardingStep.ViewBadges,
+        NewPlayerOnboardingStep.OpenSecondPackMenu,
+        NewPlayerOnboardingStep.ViewEquipmentMenu,
+        NewPlayerOnboardingStep.ActivateFirstEquipment,
+        NewPlayerOnboardingStep.AwaitCraftingEligibility,
+        NewPlayerOnboardingStep.ViewCraftingMenu,
+        NewPlayerOnboardingStep.LearnCraftingTools,
+        NewPlayerOnboardingStep.UseSkyDarkening,
+        NewPlayerOnboardingStep.ShowConclusion,
+        -> false
+    }
+
     fun allowsPackSelectionBack(step: NewPlayerOnboardingStep?): Boolean = when (step) {
         null,
         NewPlayerOnboardingStep.OpenSecondPackMenu,

@@ -81,6 +81,12 @@ internal fun AppSceneContent(
             scope = scope,
         )
 
+        AppScene.MiniGamesMenu -> MiniGamesScene(
+            sceneState = sceneState,
+            transitions = transitions,
+            scope = scope,
+        )
+
         AppScene.PackSelection,
         AppScene.PackOpening,
         -> PackScene(

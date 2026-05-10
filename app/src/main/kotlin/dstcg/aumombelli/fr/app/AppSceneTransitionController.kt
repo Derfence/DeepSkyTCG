@@ -209,6 +209,25 @@ internal class AppSceneTransitionController(
         unlockTransitionsAndRevealOnboardingHints()
     }
 
+    suspend fun animateHomeToMiniGamesMenu() {
+        val state = readState()
+        if (state.transitionLocked) return
+
+        writeState(
+            state.lockTransitions()
+                .hideLaunchLogo()
+                .hideHomeContent()
+                .hideMiniGamesMenuContent()
+                .prepareMiniGamesMenuEntry(),
+        )
+        delay(520)
+        writeState(readState().enterMiniGamesMenu())
+        awaitNextFrame()
+        writeState(readState().showMiniGamesMenuContent())
+        delay(420)
+        unlockTransitionsAndRevealOnboardingHints()
+    }
+
     suspend fun animatePackSelectionToHome() {
         val state = readState()
         if (state.transitionLocked) return
@@ -339,6 +358,30 @@ internal class AppSceneTransitionController(
         equipmentProgress.snapTo(0f)
         equipmentOverlayAlpha.snapTo(1f)
         writeState(readState().enterHome())
+        val nextState = readState().showHomeContent()
+        writeState(
+            if (nextState.pendingBadgeCelebration.isNotEmpty() && !nextState.badgeCelebrationDeferred) {
+                nextState
+            } else {
+                nextState.unlockTransitions()
+            },
+        )
+        if (nextState.pendingBadgeCelebration.isEmpty() || nextState.badgeCelebrationDeferred) {
+            revealOnboardingHintsAfterTransition()
+        }
+    }
+
+    suspend fun animateMiniGamesMenuToHome() {
+        val state = readState()
+        if (state.transitionLocked) return
+
+        writeState(
+            state.lockTransitions()
+                .hideMiniGamesMenuContent(),
+        )
+        delay(420)
+        writeState(readState().enterHome())
+        awaitNextFrame()
         val nextState = readState().showHomeContent()
         writeState(
             if (nextState.pendingBadgeCelebration.isNotEmpty() && !nextState.badgeCelebrationDeferred) {

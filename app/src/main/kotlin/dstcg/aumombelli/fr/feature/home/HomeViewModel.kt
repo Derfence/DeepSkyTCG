@@ -22,9 +22,11 @@ data class HomeUiState(
     val isLibraryMenuVisible: Boolean = false,
     val isEquipmentMenuVisible: Boolean = false,
     val isBadgeBookMenuVisible: Boolean = false,
+    val isMiniGamesMenuVisible: Boolean = false,
     val showLibraryNewIndicator: Boolean = false,
     val showEquipmentNewIndicator: Boolean = false,
     val showBadgeBookNewIndicator: Boolean = false,
+    val showMiniGamesNewIndicator: Boolean = false,
     val isCraftingMenuAvailable: Boolean = false,
 )
 
@@ -53,6 +55,10 @@ class HomeViewModel(
 
     fun markBadgeBookSeen() {
         markMenuSeen(HomeMenuDestination.BadgeBook)
+    }
+
+    fun markMiniGamesSeen() {
+        markMenuSeen(HomeMenuDestination.MiniGames)
     }
 
     fun resetProgress() {
@@ -132,10 +138,12 @@ private fun ProgressLoadResult.Ok.toHomeUiState(
     isLibraryMenuVisible = progress.hasOpenedFirstPack(),
     isEquipmentMenuVisible = progress.hasUnlockedEquipmentMenu(),
     isBadgeBookMenuVisible = progress.hasOpenedFirstPack(),
+    isMiniGamesMenuVisible = progress.miniGamesMenuUnlocked,
     isCraftingMenuAvailable = isCraftingMenuAvailable,
     showLibraryNewIndicator = progress.homeMenuNoveltyState.library,
     showEquipmentNewIndicator = progress.homeMenuNoveltyState.equipment,
     showBadgeBookNewIndicator = progress.homeMenuNoveltyState.badgeBook,
+    showMiniGamesNewIndicator = progress.homeMenuNoveltyState.miniGames,
 )
 
 private fun ProgressLoadResult.Recovered.toHomeUiState(
@@ -145,10 +153,12 @@ private fun ProgressLoadResult.Recovered.toHomeUiState(
     isLibraryMenuVisible = progress.hasOpenedFirstPack(),
     isEquipmentMenuVisible = progress.hasUnlockedEquipmentMenu(),
     isBadgeBookMenuVisible = progress.hasOpenedFirstPack(),
+    isMiniGamesMenuVisible = progress.miniGamesMenuUnlocked,
     isCraftingMenuAvailable = isCraftingMenuAvailable,
     showLibraryNewIndicator = progress.homeMenuNoveltyState.library,
     showEquipmentNewIndicator = progress.homeMenuNoveltyState.equipment,
     showBadgeBookNewIndicator = progress.homeMenuNoveltyState.badgeBook,
+    showMiniGamesNewIndicator = progress.homeMenuNoveltyState.miniGames,
 )
 
 private suspend fun StandaloneProgress.isCraftingMenuAvailable(
@@ -174,10 +184,12 @@ private fun HomeUiState.hasNewIndicator(destination: HomeMenuDestination): Boole
     HomeMenuDestination.Library -> showLibraryNewIndicator
     HomeMenuDestination.Equipment -> showEquipmentNewIndicator
     HomeMenuDestination.BadgeBook -> showBadgeBookNewIndicator
+    HomeMenuDestination.MiniGames -> showMiniGamesNewIndicator
 }
 
 private fun HomeUiState.consumeIndicator(destination: HomeMenuDestination): HomeUiState = when (destination) {
     HomeMenuDestination.Library -> copy(showLibraryNewIndicator = false)
     HomeMenuDestination.Equipment -> copy(showEquipmentNewIndicator = false)
     HomeMenuDestination.BadgeBook -> copy(showBadgeBookNewIndicator = false)
+    HomeMenuDestination.MiniGames -> copy(showMiniGamesNewIndicator = false)
 }

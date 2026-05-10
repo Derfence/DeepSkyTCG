@@ -33,4 +33,5 @@ data class StandaloneProgress(
     val homeMenuNoveltyState: HomeMenuNoveltyState = HomeMenuNoveltyState(),
     val libraryCardNoveltyState: LibraryCardNoveltyState = LibraryCardNoveltyState(),
     val tradeLedgerState: TradeLedgerState = TradeLedgerState(),
+    val miniGamesMenuUnlocked: Boolean = false,
 )

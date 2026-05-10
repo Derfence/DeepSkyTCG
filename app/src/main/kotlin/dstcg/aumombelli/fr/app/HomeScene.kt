@@ -123,6 +123,18 @@ internal fun HomeScene(
                 }
             }
         },
+        onOpenMiniGamesMenu = {
+            if (
+                !sceneState.transitionLocked &&
+                uiState.isMiniGamesMenuVisible &&
+                NewPlayerOnboardingInteractionPolicy.allowsHomeMiniGames(onboardingStep)
+            ) {
+                homeViewModel.markMiniGamesSeen()
+                scope.launch {
+                    transitions.animateHomeToMiniGamesMenu()
+                }
+            }
+        },
         onResetProgress = homeViewModel::resetProgress,
         showBackground = false,
         contentVisible = sceneState.homeContentVisible,

@@ -6,6 +6,7 @@ plugins {
 }
 
 val generatedHomeCardAssetDir = layout.buildDirectory.dir("generated/assets/homeCard/main")
+val generatedMiniGamesAssetDir = layout.buildDirectory.dir("generated/assets/miniGames/main")
 val generatedAsterAssetDir = layout.buildDirectory.dir("generated/assets/aster/main/aster")
 
 val syncHomeCardAsset by tasks.registering(Sync::class) {
@@ -18,6 +19,14 @@ val syncAsterAssets by tasks.registering(Sync::class) {
         include("*.svg")
     }
     into(generatedAsterAssetDir)
+}
+
+val syncMiniGamesAssets by tasks.registering(Sync::class) {
+    from(rootProject.file("design-explorations/mini-games")) {
+        include("home-mini-games-card.svg")
+        include("mini-games-map.svg")
+    }
+    into(generatedMiniGamesAssetDir)
 }
 
 android {
@@ -74,6 +83,7 @@ android {
     sourceSets {
         getByName("main") {
             assets.srcDir(generatedHomeCardAssetDir)
+            assets.srcDir(generatedMiniGamesAssetDir)
             assets.srcDir(generatedAsterAssetDir.map { it.asFile.parentFile })
         }
     }
@@ -89,6 +99,7 @@ android {
 
 tasks.named("preBuild") {
     dependsOn(syncHomeCardAsset)
+    dependsOn(syncMiniGamesAssets)
     dependsOn(syncAsterAssets)
 }
 
