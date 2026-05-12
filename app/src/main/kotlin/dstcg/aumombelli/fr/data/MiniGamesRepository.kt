@@ -54,7 +54,7 @@ class MiniGamesRepository(
             extensionId = extensionId,
         )
         check(globalCards.size >= slotCount) {
-            "Le catalogue ne contient pas assez de cartes pour preparer $slotCount tirage(s) mini-jeux."
+            "Le catalogue ne contient pas assez de cartes pour préparer $slotCount tirage(s) mini-jeux."
         }
 
         val resolvedCards = currentDailyState.resolvedCards.toMutableList()
@@ -68,7 +68,7 @@ class MiniGamesRepository(
                 slot = slot,
             )
             checkNotNull(resolvedCard) {
-                "Aucune carte possedee disponible pour resoudre le tirage mini-jeux."
+                "Aucune carte possédée disponible pour résoudre le tirage mini-jeux."
             }
             resolvedCards += resolvedCard
         }
@@ -82,6 +82,38 @@ class MiniGamesRepository(
         )
 
         return resolvedCards
+    }
+
+    override suspend fun consumeAttemptForToday(
+        miniGameId: MiniGameId,
+    ): MiniGameAttemptConsumeResult {
+        val loadedProgress = progressRepository.loadProgress().requireUsableProgress()
+        val progress = loadedProgress.progress
+        val todayUtc = loadedProgress.trustedNow.toMiniGameDateUtc()
+        val currentDailyState = progress.miniGamesProgress.dailyStateFor(
+            miniGameId = miniGameId,
+            dateUtc = todayUtc,
+        )
+        if (currentDailyState.hasPlayed || currentDailyState.reward != null) {
+            return MiniGameAttemptConsumeResult.AlreadyConsumed(
+                miniGamesProgress = progress.miniGamesProgress.withDailyState(miniGameId, currentDailyState),
+                dailyState = currentDailyState,
+            )
+        }
+
+        val updatedDailyState = currentDailyState.copy(hasPlayed = true)
+        val updatedMiniGamesProgress = progress.miniGamesProgress.withDailyState(
+            miniGameId = miniGameId,
+            dailyState = updatedDailyState,
+        )
+        progressRepository.saveProgress(
+            progress.copy(miniGamesProgress = updatedMiniGamesProgress),
+        )
+
+        return MiniGameAttemptConsumeResult.Consumed(
+            miniGamesProgress = updatedMiniGamesProgress,
+            dailyState = updatedDailyState,
+        )
     }
 
     override suspend fun grantRewardForToday(

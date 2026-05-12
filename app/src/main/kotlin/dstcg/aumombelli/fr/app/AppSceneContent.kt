@@ -82,6 +82,7 @@ internal fun AppSceneContent(
         )
 
         AppScene.MiniGamesMenu -> MiniGamesScene(
+            appContainer = appContainer,
             sceneState = sceneState,
             transitions = transitions,
             scope = scope,

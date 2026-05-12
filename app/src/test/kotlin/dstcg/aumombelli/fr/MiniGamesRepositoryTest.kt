@@ -1,5 +1,6 @@
 package fr.aumombelli.dstcg
 
+import fr.aumombelli.dstcg.data.MiniGameAttemptConsumeResult
 import fr.aumombelli.dstcg.data.MiniGameRewardGrantResult
 import fr.aumombelli.dstcg.data.MiniGamesRepository
 import fr.aumombelli.dstcg.model.MiniGameDailyState
@@ -109,6 +110,52 @@ class MiniGamesRepositoryTest {
             .dailyStateFor(MiniGameId.Memory, "2026-05-10")
         assertTrue(dailyState.hasPlayed)
         assertEquals(MiniGameReward(reductionMinutes = 15L), dailyState.reward)
+    }
+
+    @Test
+    fun `attempt is consumed once without granting reward`() = runTest {
+        val fixture = newFixture(
+            progress = StandaloneProgress(
+                collection = ownedCollection("ALP-001"),
+                rechargeState = PackRechargeState(),
+            ),
+        )
+
+        val first = fixture.repository.consumeAttemptForToday(MiniGameId.Memory)
+        val second = fixture.repository.consumeAttemptForToday(MiniGameId.Memory)
+
+        assertTrue(first is MiniGameAttemptConsumeResult.Consumed)
+        assertTrue(second is MiniGameAttemptConsumeResult.AlreadyConsumed)
+        val dailyState = fixture.progressGateway.progress.miniGamesProgress
+            .dailyStateFor(MiniGameId.Memory, "2026-05-10")
+        assertTrue(dailyState.hasPlayed)
+        assertEquals(null, dailyState.reward)
+    }
+
+    @Test
+    fun `reward can be granted after attempt consumption`() = runTest {
+        val fixture = newFixture(
+            progress = StandaloneProgress(
+                collection = ownedCollection("ALP-001"),
+                rechargeState = PackRechargeState(
+                    availableDrawCount = 0,
+                    accumulatedChargeUnits = 0L,
+                    lastChargeEvaluationAt = now.toString(),
+                ),
+            ),
+        )
+
+        fixture.repository.consumeAttemptForToday(MiniGameId.Memory)
+        val reward = fixture.repository.grantRewardForToday(
+            miniGameId = MiniGameId.Memory,
+            reward = MiniGameReward(reductionMinutes = 30L),
+        )
+
+        assertTrue(reward is MiniGameRewardGrantResult.Granted)
+        val dailyState = fixture.progressGateway.progress.miniGamesProgress
+            .dailyStateFor(MiniGameId.Memory, "2026-05-10")
+        assertTrue(dailyState.hasPlayed)
+        assertEquals(MiniGameReward(reductionMinutes = 30L), dailyState.reward)
     }
 
     @Test

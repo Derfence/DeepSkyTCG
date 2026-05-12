@@ -2,29 +2,75 @@ package fr.aumombelli.dstcg.app
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.viewmodel.compose.viewModel
+import fr.aumombelli.dstcg.AppContainer
+import fr.aumombelli.dstcg.feature.minigames.MemoryGameScreen
 import fr.aumombelli.dstcg.feature.minigames.MiniGamesMenuScreen
+import fr.aumombelli.dstcg.feature.minigames.MiniGamesScreenUiState
+import fr.aumombelli.dstcg.feature.minigames.MiniGamesViewModel
+import fr.aumombelli.dstcg.ui.viewmodel.DstcgViewModelFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
 internal fun MiniGamesScene(
+    appContainer: AppContainer,
     sceneState: AppSceneUiState,
     transitions: AppSceneTransitionController,
     scope: CoroutineScope,
 ) {
+    val miniGamesViewModel: MiniGamesViewModel = viewModel(
+        key = "mini-games",
+        factory = DstcgViewModelFactory {
+            MiniGamesViewModel(
+                miniGamesRepository = appContainer.miniGamesRepository,
+                catalogRepository = appContainer.catalogRepository,
+                progressRepository = appContainer.progressRepository,
+            )
+        },
+    )
+    val uiState by miniGamesViewModel.uiState.collectAsState()
+
+    LaunchedEffect(sceneState.miniGamesMenuContentVisible) {
+        if (sceneState.miniGamesMenuContentVisible && uiState.screen is MiniGamesScreenUiState.Menu) {
+            miniGamesViewModel.refresh()
+        }
+    }
+
     val backAllowed = !sceneState.transitionLocked
     val navigateBackToHome: () -> Unit = {
         if (backAllowed) {
             scope.launch { transitions.animateMiniGamesMenuToHome() }
         }
     }
-
-    BackHandler(enabled = backAllowed) {
-        navigateBackToHome()
+    val navigateBack: () -> Unit = {
+        if (uiState.screen is MiniGamesScreenUiState.Menu) {
+            navigateBackToHome()
+        } else {
+            miniGamesViewModel.backToMenu()
+        }
     }
 
-    MiniGamesMenuScreen(
-        onBack = navigateBackToHome,
-        contentVisible = sceneState.miniGamesMenuContentVisible,
-    )
+    BackHandler(enabled = backAllowed) {
+        navigateBack()
+    }
+
+    when (uiState.screen) {
+        is MiniGamesScreenUiState.Menu -> MiniGamesMenuScreen(
+            state = uiState,
+            onBack = navigateBackToHome,
+            onOpenMemory = miniGamesViewModel::openMemory,
+            contentVisible = sceneState.miniGamesMenuContentVisible,
+        )
+
+        else -> MemoryGameScreen(
+            state = uiState,
+            onBackToMenu = miniGamesViewModel::backToMenu,
+            onSelectDifficulty = miniGamesViewModel::selectMemoryDifficulty,
+            onSelectCell = miniGamesViewModel::selectMemoryCell,
+        )
+    }
 }

@@ -2,7 +2,7 @@
 
 [← README racine](../README.md)
 
-Cette documentation est organisee en petits fichiers. Chaque page revient ici et pointe vers les pages voisines pour eviter les longs blocs isoles.
+Cette documentation est organisée en petits fichiers. Chaque page revient ici et pointe vers les pages voisines pour éviter les longs blocs isolés.
 
 ## Carte de lecture
 
@@ -21,6 +21,7 @@ docs/README.md
 |-- features/equipment.md
 |-- features/crafting.md
 |-- features/mini-games.md
+|   `-- features/memory.md
 `-- new-player-onboarding.md
         `-- flows/new-player-onboarding.md
             `-- flows/onboarding-ui-tags.md
@@ -32,35 +33,36 @@ docs/README.md
 | --- | --- |
 | Installer, compiler, lancer les tests | [Installation et tests](setup-and-tests.md) |
 | Comprendre le produit offline | [Vue d'ensemble](overview.md) |
-| Comprendre les frontieres techniques | [Architecture](architecture.md) |
+| Comprendre les frontières techniques | [Architecture](architecture.md) |
 | Retrouver les couleurs et conventions visuelles | [Design visuel](visual-design.md) |
 | Modifier le catalogue ou les images | [Catalogue et assets](catalog-assets.md) |
-| Documenter un ecran precis | Pages [fonctionnalites](features/home.md) |
-| Verifier le premier parcours joueur | [Onboarding](new-player-onboarding.md) |
+| Documenter un écran précis | Pages [fonctionnalités](features/home.md) |
+| Vérifier le premier parcours joueur | [Onboarding](new-player-onboarding.md) |
 
-## Fonctionnalites
+## Fonctionnalités
 
 - [Accueil](features/home.md)
 - [Packs et tirage local](features/packs.md)
-- [Meteo et recharge](features/weather-recharge.md)
-- [Bibliotheque et badges](features/library-badges.md)
-- [Equipements](features/equipment.md)
+- [Météo et recharge](features/weather-recharge.md)
+- [Bibliothèque et badges](features/library-badges.md)
+- [Équipements](features/equipment.md)
 - [Artisanat](features/crafting.md)
 - [Mini-jeux](features/mini-games.md)
-- [Echange NFC](features/trade-nfc.md)
+- [Memory](features/memory.md)
+- [Échange NFC](features/trade-nfc.md)
 
 ## Rattrapage depuis git
 
-L'audit a compare les docs existantes, les fichiers sources et l'historique recent. Les points suivants etaient disperses ou manquants dans la documentation centrale :
+L'audit a comparé les docs existantes, les fichiers sources et l'historique récent. Les points suivants étaient dispersés ou manquants dans la documentation centrale :
 
 - `v1.6.0` : ajout de l'artisanat, menu `Atelier`, modes `Assombrir le ciel` et `Agence spatiale`.
-- Mini-jeux : acces Home recto-verso et menu carte, sans implementation des jeux.
-- `v1.5.0` : echange de cartes par NFC, validation par rarete/variante et empreinte de catalogue.
+- Mini-jeux : accès Home recto-verso, menu carte et premier jeu Memory.
+- `v1.5.0` : échange de cartes par NFC, validation par rareté/variante et empreinte de catalogue.
 - Refactor scenes : `HomeScene`, `LibraryScene`, `CraftingScene`, `EquipmentScene`, `BadgeBookScene`, `PackScene` via `AppSceneContent`.
-- Visuels recents : nouveaux boosters, fond Home, portail-livre, portail-equipement, arrivee holographique, logos et tampons SVG.
-- Progression : nouveaux champs `tradeLedgerState`, `equipmentBadgeProgress`, indicateurs de nouveaute et onboarding etendu.
+- Visuels récents : nouveaux boosters, fond Home, portail-livre, portail-équipement, arrivée holographique, logos et tampons SVG.
+- Progression : nouveaux champs `tradeLedgerState`, `equipmentBadgeProgress`, indicateurs de nouveauté et onboarding étendu.
 
-## Anciennes pages conservees
+## Anciennes pages conservées
 
 Ces chemins restent presents pour ne pas casser les liens existants :
 

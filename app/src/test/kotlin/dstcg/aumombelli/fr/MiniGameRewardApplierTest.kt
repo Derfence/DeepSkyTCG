@@ -3,8 +3,10 @@ package fr.aumombelli.dstcg
 import fr.aumombelli.dstcg.data.DeterministicWeatherCalendar
 import fr.aumombelli.dstcg.data.MiniGameRewardApplier
 import fr.aumombelli.dstcg.data.MiniGameRewardGrantResult
+import fr.aumombelli.dstcg.model.MiniGameDailyState
 import fr.aumombelli.dstcg.model.MiniGameId
 import fr.aumombelli.dstcg.model.MiniGameReward
+import fr.aumombelli.dstcg.model.MiniGamesProgress
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.StandaloneProgress
@@ -104,5 +106,35 @@ class MiniGameRewardApplierTest {
         )
 
         assertTrue(second is MiniGameRewardGrantResult.AlreadyGranted)
+    }
+
+    @Test
+    fun `reward can be granted after attempt was consumed without reward`() {
+        val result = applier.grantReward(
+            progress = StandaloneProgress(
+                collection = OwnedCollection(),
+                rechargeState = PackRechargeState(lastChargeEvaluationAt = now.toString()),
+                miniGamesProgress = MiniGamesProgress(
+                    dailyStates = mapOf(
+                        MiniGameId.Memory to MiniGameDailyState(
+                            dateUtc = "2026-05-10",
+                            hasPlayed = true,
+                            reward = null,
+                        ),
+                    ),
+                ),
+            ),
+            miniGameId = MiniGameId.Memory,
+            todayUtc = "2026-05-10",
+            reward = MiniGameReward(reductionMinutes = 30L),
+            now = now,
+            drawCooldown = drawCooldown,
+            maxStoredDraws = 10,
+            weatherPolicy = DeterministicWeatherCalendar,
+        )
+
+        require(result is MiniGameRewardGrantResult.Granted)
+        assertEquals(MiniGameReward(reductionMinutes = 30L), result.dailyState.reward)
+        assertTrue(result.dailyState.hasPlayed)
     }
 }

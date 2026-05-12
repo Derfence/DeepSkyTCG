@@ -180,7 +180,7 @@ class DstcgAppBackNavigationTest {
         advanceUntilTagDisplayed("mini-games-menu-screen", timeoutMillis = 10_000)
 
         composeRule.onNodeWithTag("mini-games-quiz").assertIsDisplayed().assertIsNotEnabled()
-        composeRule.onNodeWithTag("mini-games-memory").assertIsDisplayed().assertIsNotEnabled()
+        composeRule.onNodeWithTag("mini-games-memory").assertIsDisplayed().assertIsEnabled()
         composeRule.onNodeWithTag("mini-games-timeline").assertIsDisplayed().assertIsNotEnabled()
         composeRule.onNodeWithTag("mini-games-observatory").assertIsDisplayed().assertIsNotEnabled()
 

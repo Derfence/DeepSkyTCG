@@ -75,6 +75,10 @@ interface MiniGamesGateway {
         extensionId: String? = null,
     ): List<MiniGameResolvedCardRef>
 
+    suspend fun consumeAttemptForToday(
+        miniGameId: MiniGameId,
+    ): MiniGameAttemptConsumeResult
+
     suspend fun grantRewardForToday(
         miniGameId: MiniGameId,
         reward: MiniGameReward,

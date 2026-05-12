@@ -26,6 +26,20 @@ sealed interface MiniGameRewardGrantResult {
     ) : MiniGameRewardGrantResult
 }
 
+sealed interface MiniGameAttemptConsumeResult {
+    val miniGamesProgress: MiniGamesProgress
+
+    data class Consumed(
+        override val miniGamesProgress: MiniGamesProgress,
+        val dailyState: MiniGameDailyState,
+    ) : MiniGameAttemptConsumeResult
+
+    data class AlreadyConsumed(
+        override val miniGamesProgress: MiniGamesProgress,
+        val dailyState: MiniGameDailyState,
+    ) : MiniGameAttemptConsumeResult
+}
+
 class MiniGameRewardApplier {
     fun grantReward(
         progress: StandaloneProgress,
@@ -42,7 +56,7 @@ class MiniGameRewardApplier {
             miniGameId = miniGameId,
             dateUtc = todayUtc,
         )
-        if (dailyState.hasPlayed || dailyState.reward != null) {
+        if (dailyState.reward != null) {
             return MiniGameRewardGrantResult.AlreadyGranted(
                 miniGamesProgress = progress.miniGamesProgress.withDailyState(miniGameId, dailyState),
                 dailyState = dailyState,

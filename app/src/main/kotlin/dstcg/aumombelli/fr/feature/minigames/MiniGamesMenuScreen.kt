@@ -7,7 +7,9 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -30,11 +32,14 @@ import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.ui.component.AssetSvgImage
 import fr.aumombelli.dstcg.ui.component.SceneNavigationButton
 import fr.aumombelli.dstcg.ui.component.SceneNavigationIcon
+import fr.aumombelli.dstcg.ui.motion.SkyBackdropVariant
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
 
 @Composable
-fun MiniGamesMenuScreen(
+internal fun MiniGamesMenuScreen(
+    state: MiniGamesUiState,
     onBack: () -> Unit,
+    onOpenMemory: () -> Unit,
     contentVisible: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
@@ -48,17 +53,13 @@ fun MiniGamesMenuScreen(
         modifier = modifier
             .fillMaxSize()
             .graphicsLayer { alpha = contentAlpha }
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFF07111A),
-                        Color(0xFF11283B),
-                        Color(0xFF060A10),
-                    ),
-                ),
-            )
             .testTag("mini-games-menu-screen"),
     ) {
+        MiniGameSceneBackdrop(
+            variant = SkyBackdropVariant.Suburban,
+            sparkleBoost = 0.12f,
+            modifier = Modifier.fillMaxSize(),
+        )
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -80,24 +81,32 @@ fun MiniGamesMenuScreen(
                 index = "1",
                 anchorX = 0.24f,
                 anchorY = 0.74f,
+                enabled = false,
+                onClick = {},
                 testTag = "mini-games-quiz",
             )
             MiniGameMapButton(
                 index = "2",
                 anchorX = 0.40f,
                 anchorY = 0.58f,
+                enabled = !state.isLoading,
+                onClick = onOpenMemory,
                 testTag = "mini-games-memory",
             )
             MiniGameMapButton(
                 index = "3",
                 anchorX = 0.57f,
                 anchorY = 0.42f,
+                enabled = false,
+                onClick = {},
                 testTag = "mini-games-timeline",
             )
             MiniGameMapButton(
                 index = "4",
                 anchorX = 0.74f,
                 anchorY = 0.26f,
+                enabled = false,
+                onClick = {},
                 testTag = "mini-games-observatory",
             )
         }
@@ -125,6 +134,39 @@ fun MiniGamesMenuScreen(
                     .align(Alignment.TopCenter)
                     .padding(top = 4.dp),
             )
+
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .background(
+                        color = Color(0xAA07111A),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+                    )
+                    .padding(horizontal = 16.dp, vertical = 14.dp)
+                    .testTag("mini-games-memory-status"),
+            ) {
+                Text(
+                    text = "Memory amateur",
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = state.memoryStatusLabel,
+                    color = Color(0xFFD6E7F7),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+                state.errorMessage?.let { message ->
+                    Text(
+                        text = message,
+                        color = Color(0xFFFFC4BD),
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                }
+            }
         }
     }
 }
@@ -134,19 +176,32 @@ private fun MiniGameMapButton(
     index: String,
     anchorX: Float,
     anchorY: Float,
+    enabled: Boolean,
+    onClick: () -> Unit,
     testTag: String,
 ) {
     val buttonSize = 52.dp
     BoxWithConstraints(
         modifier = Modifier.fillMaxSize(),
     ) {
+        val ringSize = buttonSize + 24.dp
+        MiniGamePulsingRing(
+            enabled = enabled,
+            tone = if (enabled) MiniGameFeedbackTone.Success else MiniGameFeedbackTone.Error,
+            modifier = Modifier
+                .offset(
+                    x = (maxWidth * anchorX) - (ringSize / 2f),
+                    y = (maxHeight * anchorY) - (ringSize / 2f),
+                )
+                .size(ringSize),
+        )
         Surface(
-            onClick = {},
-            enabled = false,
+            onClick = onClick,
+            enabled = enabled,
             shape = CircleShape,
-            color = Color(0xCC0A1524),
+            color = if (enabled) Color(0xDD0F4050) else Color(0xCC0A1524),
             contentColor = Color.White,
-            shadowElevation = 8.dp,
+            shadowElevation = if (enabled) 12.dp else 8.dp,
             modifier = Modifier
                 .offset(
                     x = (maxWidth * anchorX) - (buttonSize / 2f),
@@ -160,7 +215,7 @@ private fun MiniGameMapButton(
                     text = index,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White.copy(alpha = 0.72f),
+                    color = Color.White.copy(alpha = if (enabled) 1f else 0.72f),
                 )
             }
         }
