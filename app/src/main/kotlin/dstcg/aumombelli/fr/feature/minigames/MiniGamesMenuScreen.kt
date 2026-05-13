@@ -50,6 +50,7 @@ internal fun MiniGamesMenuScreen(
     onBack: () -> Unit,
     onOpenQuiz: () -> Unit,
     onOpenMemory: () -> Unit,
+    onOpenTimeline: () -> Unit,
     contentVisible: Boolean = true,
     interactionsEnabled: Boolean = true,
     modifier: Modifier = Modifier,
@@ -121,12 +122,16 @@ internal fun MiniGamesMenuScreen(
             MiniGameMapNode(
                 index = "3",
                 title = "Timeline",
-                status = "À venir",
+                status = state.timelineStatusLabel,
                 anchorX = 0.57f,
                 anchorY = 0.42f,
-                buttonState = MiniGameMenuButtonState.Disabled,
-                interactionsEnabled = false,
-                onClick = {},
+                buttonState = when {
+                    state.isLoading -> MiniGameMenuButtonState.Loading
+                    state.timelinePlayedToday -> MiniGameMenuButtonState.Consumed
+                    else -> MiniGameMenuButtonState.Available
+                },
+                interactionsEnabled = interactionsEnabled && !state.isLoading,
+                onClick = onOpenTimeline,
                 testTag = "mini-games-timeline",
             )
             MiniGameMapNode(

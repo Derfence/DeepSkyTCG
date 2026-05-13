@@ -73,6 +73,8 @@ interface MiniGamesGateway {
         miniGameId: MiniGameId,
         slotCount: Int,
         extensionId: String? = null,
+        eligibleCardIds: Set<String>? = null,
+        distinctOwnedCards: Boolean = false,
     ): List<MiniGameResolvedCardRef>
 
     suspend fun consumeAttemptForToday(

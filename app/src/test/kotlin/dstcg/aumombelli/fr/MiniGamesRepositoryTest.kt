@@ -159,6 +159,25 @@ class MiniGamesRepositoryTest {
     }
 
     @Test
+    fun `eligible card filter keeps fallback resolution compatible`() = runTest {
+        val fixture = newFixture(
+            progress = StandaloneProgress(
+                collection = ownedCollection("ALP-001", "BET-001"),
+                rechargeState = PackRechargeState(),
+            ),
+        )
+
+        val resolvedCards = fixture.repository.prepareResolvedCardsForToday(
+            miniGameId = MiniGameId.Timeline,
+            slotCount = 2,
+            eligibleCardIds = setOf("ALP-001"),
+            distinctOwnedCards = true,
+        )
+
+        assertEquals(listOf("ALP-001"), resolvedCards.map { it.ownedVariant.cardId })
+    }
+
+    @Test
     fun `unlock difficulty only moves forward`() = runTest {
         val fixture = newFixture(
             progress = StandaloneProgress(

@@ -33,12 +33,13 @@ Les quatre lieux sont positionnés sur une diagonale bas-gauche vers haut-droite
 - Timeline / Campagne ;
 - Observatoire / Montagne.
 
-Les boutons `Quiz / Ville` et `Memory / Périurbain` sont actifs et utilisent le halo de node commun. Les boutons Timeline et Observatoire restent visibles mais désactivés tant que leurs gameplays ne sont pas implémentés.
+Les boutons `Quiz / Ville`, `Memory / Périurbain` et `Timeline / Campagne` sont actifs et utilisent le halo de node commun. Le bouton Observatoire reste visible mais désactivé tant que son gameplay n'est pas implémenté.
 
 ## Jeux implémentés
 
 - [Quiz](quiz.md)
 - [Memory](memory.md)
+- [Timeline](timeline.md)
 
 ## Socle commun
 
@@ -61,6 +62,8 @@ Le socle visuel partage les briques Compose réutilisables :
 - `MiniGamePulsingRing` pour les nodes de carte ou d'objectif.
 
 Le tirage global des cartes est déterministe et ne dépend jamais de l'état du joueur. Il utilise le jeu, la date UTC, le slot, l'extension cible éventuelle et la version d'algorithme. Si le joueur ne possède pas la carte globale, `MiniGameCardResolver` choisit un fallback déterministe parmi ses cartes de la même extension, puis parmi ses cartes des autres extensions si besoin. La carte résolue est persistée pour rester stable pendant la journée, même si la collection évolue.
+
+Timeline ajoute un filtre d'éligibilité au tirage commun : le critère du jour est choisi avant les cartes, puis seules les cartes compatibles avec ce critère peuvent être tirées ou utilisées comme fallback. Ce filtre est optionnel et ne modifie pas Quiz ou Memory.
 
 ## Assets
 

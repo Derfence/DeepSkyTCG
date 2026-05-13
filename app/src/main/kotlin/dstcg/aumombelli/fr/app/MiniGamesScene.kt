@@ -12,6 +12,7 @@ import fr.aumombelli.dstcg.feature.minigames.MiniGamesMenuScreen
 import fr.aumombelli.dstcg.feature.minigames.MiniGamesScreenUiState
 import fr.aumombelli.dstcg.feature.minigames.MiniGamesViewModel
 import fr.aumombelli.dstcg.feature.minigames.QuizGameScreen
+import fr.aumombelli.dstcg.feature.minigames.TimelineGameScreen
 import fr.aumombelli.dstcg.ui.viewmodel.DstcgViewModelFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -65,6 +66,7 @@ internal fun MiniGamesScene(
             onBack = navigateBackToHome,
             onOpenQuiz = miniGamesViewModel::openQuiz,
             onOpenMemory = miniGamesViewModel::openMemory,
+            onOpenTimeline = miniGamesViewModel::openTimeline,
             contentVisible = sceneState.miniGamesMenuContentVisible,
             interactionsEnabled = !sceneState.transitionLocked,
         )
@@ -78,6 +80,15 @@ internal fun MiniGamesScene(
             onSelectDifficulty = miniGamesViewModel::selectQuizDifficulty,
             onSelectAnswer = miniGamesViewModel::selectQuizAnswer,
             onContinue = miniGamesViewModel::continueQuiz,
+        )
+
+        is MiniGamesScreenUiState.TimelinePlaying,
+        is MiniGamesScreenUiState.TimelineResult,
+        is MiniGamesScreenUiState.TimelineUnavailable -> TimelineGameScreen(
+            state = uiState,
+            onBackToMenu = miniGamesViewModel::backToMenu,
+            onPlaceCard = miniGamesViewModel::placeTimelineCard,
+            onValidate = miniGamesViewModel::validateTimeline,
         )
 
         else -> MemoryGameScreen(

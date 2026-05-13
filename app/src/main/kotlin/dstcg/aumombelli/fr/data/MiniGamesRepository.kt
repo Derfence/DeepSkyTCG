@@ -31,6 +31,8 @@ class MiniGamesRepository(
         miniGameId: MiniGameId,
         slotCount: Int,
         extensionId: String?,
+        eligibleCardIds: Set<String>?,
+        distinctOwnedCards: Boolean,
     ): List<MiniGameResolvedCardRef> {
         if (slotCount <= 0) return emptyList()
 
@@ -41,24 +43,47 @@ class MiniGamesRepository(
             miniGameId = miniGameId,
             dateUtc = todayUtc,
         )
-        if (currentDailyState.resolvedCards.size >= slotCount) {
-            return currentDailyState.resolvedCards.take(slotCount)
+        val reusableResolvedCards = currentDailyState.resolvedCards
+            .asSequence()
+            .filter { eligibleCardIds == null || it.ownedVariant.cardId in eligibleCardIds }
+            .let { sequence ->
+                if (distinctOwnedCards) {
+                    sequence.distinctBy { it.ownedVariant.cardId }
+                } else {
+                    sequence
+                }
+            }
+            .toList()
+        if (reusableResolvedCards.size >= slotCount) {
+            return reusableResolvedCards.take(slotCount)
         }
 
         val cards = catalogRepository.loadCards()
+        val drawCards = if (eligibleCardIds == null) {
+            cards
+        } else {
+            cards.filter { it.id in eligibleCardIds }
+        }
         val globalCards = drawPolicy.drawGlobalCards(
-            cards = cards,
+            cards = drawCards,
             miniGameId = miniGameId,
             dateUtc = todayUtc,
             slotCount = slotCount,
             extensionId = extensionId,
         )
-        check(globalCards.size >= slotCount) {
-            "Le catalogue ne contient pas assez de cartes pour préparer $slotCount tirage(s) mini-jeux."
+        if (eligibleCardIds == null) {
+            check(globalCards.size >= slotCount) {
+                "Le catalogue ne contient pas assez de cartes pour préparer $slotCount tirage(s) mini-jeux."
+            }
         }
 
-        val resolvedCards = currentDailyState.resolvedCards.toMutableList()
-        for (slot in resolvedCards.size until slotCount) {
+        val resolvedCards = reusableResolvedCards.toMutableList()
+        val excludedOwnedCardIds = resolvedCards
+            .takeIf { distinctOwnedCards }
+            ?.map { it.ownedVariant.cardId }
+            ?.toMutableSet()
+            ?: mutableSetOf()
+        for (slot in resolvedCards.size until minOf(slotCount, globalCards.size)) {
             val resolvedCard = cardResolver.resolve(
                 globalCard = globalCards[slot],
                 cards = cards,
@@ -66,11 +91,19 @@ class MiniGamesRepository(
                 miniGameId = miniGameId,
                 dateUtc = todayUtc,
                 slot = slot,
+                eligibleCardIds = eligibleCardIds,
+                excludedOwnedCardIds = excludedOwnedCardIds,
             )
-            checkNotNull(resolvedCard) {
-                "Aucune carte possédée disponible pour résoudre le tirage mini-jeux."
+            if (resolvedCard == null) {
+                if (eligibleCardIds == null) {
+                    error("Aucune carte possédée disponible pour résoudre le tirage mini-jeux.")
+                }
+                continue
             }
             resolvedCards += resolvedCard
+            if (distinctOwnedCards) {
+                excludedOwnedCardIds += resolvedCard.ownedVariant.cardId
+            }
         }
 
         val updatedMiniGamesProgress = progress.miniGamesProgress.withDailyState(

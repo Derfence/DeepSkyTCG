@@ -34,6 +34,9 @@ internal data class MiniGamesUiState(
     val memoryPlayedToday: Boolean = false,
     val memoryRewardLabel: String? = null,
     val memoryDifficultyChoices: List<MemoryDifficultyChoiceUi> = emptyList(),
+    val timelineStatusLabel: String = "Chargement",
+    val timelinePlayedToday: Boolean = false,
+    val timelineRewardLabel: String? = null,
     val screen: MiniGamesScreenUiState = MiniGamesScreenUiState.Menu,
     val errorMessage: String? = null,
 )
@@ -97,6 +100,30 @@ internal sealed interface MiniGamesScreenUiState {
     ) : MiniGamesScreenUiState
 
     data class MemoryUnavailable(
+        val message: String,
+    ) : MiniGamesScreenUiState
+
+    data class TimelinePlaying(
+        val criterionTitle: String,
+        val instruction: String,
+        val rewardLabel: String,
+        val slots: List<TimelineSlotUi>,
+        val handCards: List<TimelineCardUi>,
+        val canValidate: Boolean,
+        val feedbackEvent: MiniGameFeedbackEvent?,
+    ) : MiniGamesScreenUiState
+
+    data class TimelineResult(
+        val criterionTitle: String,
+        val scoreLabel: String,
+        val rewardLabel: String,
+        val slotResults: List<TimelineSlotResultUi>,
+        val correctOrder: List<TimelineCardUi>,
+        val showCorrectOrder: Boolean,
+        val feedbackEvent: MiniGameFeedbackEvent? = null,
+    ) : MiniGamesScreenUiState
+
+    data class TimelineUnavailable(
         val message: String,
     ) : MiniGamesScreenUiState
 }
@@ -164,6 +191,30 @@ internal enum class MemoryCellState {
     Mismatch,
 }
 
+internal data class TimelineCardUi(
+    val id: String,
+    val displayCard: DisplayCard,
+    val valueLabel: String,
+) {
+    val testTag: String = "timeline-card-$id"
+}
+
+internal data class TimelineSlotUi(
+    val index: Int,
+    val placedCard: TimelineCardUi?,
+) {
+    val testTag: String = "timeline-slot-$index"
+}
+
+internal data class TimelineSlotResultUi(
+    val index: Int,
+    val placedCard: TimelineCardUi,
+    val correctCard: TimelineCardUi,
+    val isCorrect: Boolean,
+) {
+    val testTag: String = "timeline-result-slot-$index"
+}
+
 internal class MiniGamesViewModel(
     private val miniGamesRepository: MiniGamesGateway,
     private val catalogRepository: CatalogGateway,
@@ -190,6 +241,9 @@ internal class MiniGamesViewModel(
     private var quizScore: Int = 0
     private var quizCorrections: List<QuizCorrectionUi> = emptyList()
     private var quizCompletionStarted: Boolean = false
+    private var activeTimeline: TimelineGame? = null
+    private var timelinePlacements: List<String?> = emptyList()
+    private var timelineCompletionStarted: Boolean = false
 
     init {
         refresh()
@@ -217,6 +271,7 @@ internal class MiniGamesViewModel(
         val state = _uiState.value
         if (state.isLoading) return
         clearActiveBoard()
+        clearActiveTimeline()
 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
@@ -240,6 +295,7 @@ internal class MiniGamesViewModel(
         val state = _uiState.value
         if (state.isLoading) return
         clearActiveQuiz()
+        clearActiveTimeline()
         val rewardLabel = state.memoryRewardLabel
         val screen = when {
             rewardLabel != null -> MiniGamesScreenUiState.MemoryResult(
@@ -258,9 +314,34 @@ internal class MiniGamesViewModel(
         _uiState.update { it.copy(screen = screen, errorMessage = null) }
     }
 
+    fun openTimeline() {
+        val state = _uiState.value
+        if (state.isLoading) return
+        clearActiveBoard()
+        clearActiveQuiz()
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            runCatching {
+                startTimeline()
+            }.onFailure { error ->
+                clearActiveTimeline()
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        screen = MiniGamesScreenUiState.TimelineUnavailable(
+                            message = error.message ?: "Impossible de préparer la Timeline.",
+                        ),
+                    )
+                }
+            }
+        }
+    }
+
     fun backToMenu() {
         clearActiveBoard()
         clearActiveQuiz()
+        clearActiveTimeline()
         refresh()
     }
 
@@ -397,6 +478,78 @@ internal class MiniGamesViewModel(
         }
     }
 
+    fun placeTimelineCard(cardId: String, slotIndex: Int) {
+        val timeline = activeTimeline ?: return
+        if (timelineCompletionStarted) return
+        if (slotIndex !in timeline.correctOrder.indices) return
+        if (timeline.cards.none { it.id == cardId }) return
+
+        val updatedPlacements = timelinePlacements.toMutableList()
+        val previousSlot = updatedPlacements.indexOf(cardId)
+        if (previousSlot >= 0) {
+            updatedPlacements[previousSlot] = null
+        }
+        updatedPlacements[slotIndex] = cardId
+        timelinePlacements = updatedPlacements
+        feedbackEvent = null
+        publishTimelinePlayingState()
+    }
+
+    fun validateTimeline() {
+        val timeline = activeTimeline ?: return
+        if (timelineCompletionStarted || timelinePlacements.any { it == null }) return
+        timelineCompletionStarted = true
+        feedbackEvent = nextFeedbackEvent(
+            tone = MiniGameFeedbackTone.Completion,
+            sourceIndexes = emptySet(),
+        )
+        publishTimelinePlayingState()
+
+        val placements = timelinePlacements
+        viewModelScope.launch {
+            runCatching {
+                val evaluation = evaluateTimelinePlacement(
+                    game = timeline,
+                    placedCardIds = placements,
+                )
+                val reward = calculateTimelineReward(
+                    correctCount = evaluation.correctCount,
+                    totalCount = evaluation.totalCount,
+                )
+                miniGamesRepository.grantRewardForToday(
+                    miniGameId = MiniGameId.Timeline,
+                    reward = reward,
+                )
+                val refreshed = miniGamesRepository.loadMiniGamesState()
+                val resultFeedbackEvent = nextFeedbackEvent(
+                    tone = MiniGameFeedbackTone.Completion,
+                    sourceIndexes = emptySet(),
+                )
+                val resultScreen = buildTimelineResultState(
+                    timeline = timeline,
+                    evaluation = evaluation,
+                    reward = reward,
+                    feedbackEvent = resultFeedbackEvent,
+                    alreadyPlayed = false,
+                )
+                clearActiveTimeline()
+                refreshed.toUiState(screen = resultScreen)
+            }.onSuccess { updatedState ->
+                _uiState.value = updatedState
+            }.onFailure { error ->
+                clearActiveTimeline()
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        screen = MiniGamesScreenUiState.TimelineUnavailable(
+                            message = error.message ?: "Impossible d'attribuer la récompense.",
+                        ),
+                    )
+                }
+            }
+        }
+    }
+
     private suspend fun openQuizScreen() {
         val miniGamesState = miniGamesRepository.loadMiniGamesState()
         val dailyState = miniGamesState.progress.dailyStateFor(
@@ -517,6 +670,91 @@ internal class MiniGamesViewModel(
             dateUtc = todayUtc,
             resolvedCards = resolvedCards,
             cards = catalogRepository.loadCards(),
+            extensions = catalogRepository.loadExtensions(),
+            variantProfiles = catalogRepository.loadVariantProfiles(),
+        )
+    }
+
+    private suspend fun startTimeline() {
+        val miniGamesState = miniGamesRepository.loadMiniGamesState()
+        val dailyState = miniGamesState.progress.dailyStateFor(
+            miniGameId = MiniGameId.Timeline,
+            dateUtc = miniGamesState.todayUtc,
+        )
+        if (dailyState.hasPlayed) {
+            if (dailyState.reward != null) {
+                val timeline = (buildTimelineForToday(miniGamesState.todayUtc) as? TimelineGameBuildResult.Ready)
+                    ?.game
+                _uiState.value = miniGamesState.toUiState(
+                    screen = alreadyPlayedTimelineScreen(
+                        reward = dailyState.reward,
+                        timeline = timeline,
+                    ),
+                )
+                return
+            }
+            _uiState.value = miniGamesState.toUiState(
+                screen = MiniGamesScreenUiState.TimelineUnavailable(
+                    message = "Ton essai Timeline est déjà utilisé pour aujourd'hui.",
+                ),
+            )
+            return
+        }
+
+        val timelineResult = buildTimelineForToday(miniGamesState.todayUtc)
+        val game = when (timelineResult) {
+            is TimelineGameBuildResult.Ready -> timelineResult.game
+            is TimelineGameBuildResult.Unavailable -> {
+                _uiState.value = miniGamesState.toUiState(
+                    screen = MiniGamesScreenUiState.TimelineUnavailable(timelineResult.message),
+                )
+                return
+            }
+        }
+
+        when (val consumed = miniGamesRepository.consumeAttemptForToday(MiniGameId.Timeline)) {
+            is MiniGameAttemptConsumeResult.Consumed -> {
+                activeTimeline = game
+                timelinePlacements = List(game.cards.size) { null }
+                timelineCompletionStarted = false
+                feedbackEvent = null
+                _uiState.value = consumed.miniGamesProgress.toUiState(
+                    todayUtc = miniGamesState.todayUtc,
+                    screen = buildTimelinePlayingState(game),
+                )
+            }
+
+            is MiniGameAttemptConsumeResult.AlreadyConsumed -> {
+                clearActiveTimeline()
+                _uiState.value = consumed.miniGamesProgress.toUiState(
+                    todayUtc = miniGamesState.todayUtc,
+                    screen = alreadyPlayedTimelineScreen(
+                        reward = consumed.dailyState.reward,
+                        timeline = game,
+                    ),
+                )
+            }
+        }
+    }
+
+    private suspend fun buildTimelineForToday(todayUtc: String): TimelineGameBuildResult {
+        val cards = catalogRepository.loadCards()
+        val criterion = selectTimelineCriterion(todayUtc)
+        val eligibleCardIds = eligibleTimelineCardIds(
+            criterion = criterion,
+            cards = cards,
+        )
+        val resolvedCards = miniGamesRepository.prepareResolvedCardsForToday(
+            miniGameId = MiniGameId.Timeline,
+            slotCount = TimelinePreferredCardCount,
+            eligibleCardIds = eligibleCardIds,
+            distinctOwnedCards = true,
+        )
+        return buildTimelineGame(
+            criterion = criterion,
+            dateUtc = todayUtc,
+            resolvedCards = resolvedCards,
+            cards = cards,
             extensions = catalogRepository.loadExtensions(),
             variantProfiles = catalogRepository.loadVariantProfiles(),
         )
@@ -698,6 +936,68 @@ internal class MiniGamesViewModel(
         )
     }
 
+    private fun publishTimelinePlayingState() {
+        val timeline = activeTimeline ?: return
+        _uiState.update {
+            it.copy(
+                isLoading = false,
+                screen = buildTimelinePlayingState(timeline),
+            )
+        }
+    }
+
+    private fun buildTimelinePlayingState(timeline: TimelineGame): MiniGamesScreenUiState.TimelinePlaying {
+        val placedIds = timelinePlacements.toSet()
+        return MiniGamesScreenUiState.TimelinePlaying(
+            criterionTitle = timeline.criterion.title,
+            instruction = timeline.criterion.instruction,
+            rewardLabel = formatReward(MiniGameReward.fromMinutes(60L)),
+            slots = timeline.correctOrder.mapIndexed { index, _ ->
+                TimelineSlotUi(
+                    index = index,
+                    placedCard = timelinePlacements.getOrNull(index)
+                        ?.let { cardId -> timeline.cards.firstOrNull { it.id == cardId } }
+                        ?.toUi(),
+                )
+            },
+            handCards = timeline.cards
+                .filter { it.id !in placedIds }
+                .map(TimelineCard::toUi),
+            canValidate = timelinePlacements.size == timeline.cards.size &&
+                timelinePlacements.all { it != null } &&
+                !timelineCompletionStarted,
+            feedbackEvent = feedbackEvent,
+        )
+    }
+
+    private fun buildTimelineResultState(
+        timeline: TimelineGame,
+        evaluation: TimelineEvaluation,
+        reward: MiniGameReward,
+        feedbackEvent: MiniGameFeedbackEvent?,
+        alreadyPlayed: Boolean,
+    ): MiniGamesScreenUiState.TimelineResult =
+        MiniGamesScreenUiState.TimelineResult(
+            criterionTitle = timeline.criterion.title,
+            scoreLabel = if (alreadyPlayed) {
+                "Déjà joué aujourd'hui"
+            } else {
+                "${evaluation.correctCount}/${evaluation.totalCount}"
+            },
+            rewardLabel = formatReward(reward),
+            slotResults = evaluation.slotResults.map { result ->
+                TimelineSlotResultUi(
+                    index = result.slotIndex,
+                    placedCard = result.placedCard.toUi(),
+                    correctCard = result.correctCard.toUi(),
+                    isCorrect = result.isCorrect,
+                )
+            },
+            correctOrder = timeline.correctOrder.map(TimelineCard::toUi),
+            showCorrectOrder = !alreadyPlayed && !evaluation.isPerfect,
+            feedbackEvent = feedbackEvent,
+        )
+
     private fun showMismatch(firstIndex: Int, secondIndex: Int) {
         recordMemoryMove(
             matched = false,
@@ -862,6 +1162,13 @@ internal class MiniGamesViewModel(
         feedbackEvent = null
     }
 
+    private fun clearActiveTimeline() {
+        activeTimeline = null
+        timelinePlacements = emptyList()
+        timelineCompletionStarted = false
+        feedbackEvent = null
+    }
+
     private fun alreadyPlayedQuizScreen(
         reward: MiniGameReward?,
         card: DisplayCard?,
@@ -894,7 +1201,56 @@ internal class MiniGamesViewModel(
                 message = "Ton essai Memory est déjà utilisé pour aujourd'hui.",
             )
         }
+
+    private fun alreadyPlayedTimelineScreen(
+        reward: MiniGameReward?,
+        timeline: TimelineGame?,
+    ): MiniGamesScreenUiState =
+        when {
+            reward != null && timeline != null -> {
+                val evaluation = TimelineEvaluation(
+                    correctCount = timeline.correctOrder.size,
+                    totalCount = timeline.correctOrder.size,
+                    slotResults = timeline.correctOrder.mapIndexed { index, card ->
+                        TimelineSlotResult(
+                            slotIndex = index,
+                            placedCard = card,
+                            correctCard = card,
+                            isCorrect = true,
+                        )
+                    },
+                )
+                buildTimelineResultState(
+                    timeline = timeline,
+                    evaluation = evaluation,
+                    reward = reward,
+                    feedbackEvent = null,
+                    alreadyPlayed = true,
+                )
+            }
+
+            reward != null -> MiniGamesScreenUiState.TimelineResult(
+                criterionTitle = "Timeline",
+                scoreLabel = "Déjà joué aujourd'hui",
+                rewardLabel = formatReward(reward),
+                slotResults = emptyList(),
+                correctOrder = emptyList(),
+                showCorrectOrder = false,
+                feedbackEvent = null,
+            )
+
+            else -> MiniGamesScreenUiState.TimelineUnavailable(
+                message = "Ton essai Timeline est déjà utilisé pour aujourd'hui.",
+            )
+        }
 }
+
+private fun TimelineCard.toUi(): TimelineCardUi =
+    TimelineCardUi(
+        id = id,
+        displayCard = displayCard,
+        valueLabel = valueLabel,
+    )
 
 private fun fr.aumombelli.dstcg.data.MiniGamesState.toUiState(
     screen: MiniGamesScreenUiState,
@@ -915,6 +1271,9 @@ private fun MiniGamesProgress.toUiState(
     val memoryUnlockedDifficulty = unlockedDifficultyFor(MiniGameId.Memory)
     val memoryRewardLabel = memoryDailyState.reward?.let(::formatReward)
     val memoryPlayedToday = memoryDailyState.hasPlayed || memoryDailyState.reward != null
+    val timelineDailyState = dailyStateFor(MiniGameId.Timeline, todayUtc)
+    val timelineRewardLabel = timelineDailyState.reward?.let(::formatReward)
+    val timelinePlayedToday = timelineDailyState.hasPlayed || timelineDailyState.reward != null
     return MiniGamesUiState(
         isLoading = false,
         todayUtc = todayUtc,
@@ -966,6 +1325,13 @@ private fun MiniGamesProgress.toUiState(
                 },
             )
         },
+        timelineStatusLabel = when {
+            timelineRewardLabel != null -> "Joué aujourd'hui - $timelineRewardLabel gagnées"
+            timelinePlayedToday -> "Essai utilisé aujourd'hui"
+            else -> "Disponible - 1h max"
+        },
+        timelinePlayedToday = timelinePlayedToday,
+        timelineRewardLabel = timelineRewardLabel,
         screen = screen,
     )
 }

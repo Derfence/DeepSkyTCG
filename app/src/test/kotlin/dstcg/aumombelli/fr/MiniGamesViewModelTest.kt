@@ -9,9 +9,19 @@ import fr.aumombelli.dstcg.feature.minigames.MiniGamesViewModel
 import fr.aumombelli.dstcg.feature.minigames.QuizAnswerState
 import fr.aumombelli.dstcg.feature.minigames.QuizGame
 import fr.aumombelli.dstcg.feature.minigames.QuizGameBuildResult
+import fr.aumombelli.dstcg.feature.minigames.TimelineGame
+import fr.aumombelli.dstcg.feature.minigames.TimelineGameBuildResult
+import fr.aumombelli.dstcg.feature.minigames.TimelinePreferredCardCount
 import fr.aumombelli.dstcg.feature.minigames.buildQuizGame
+import fr.aumombelli.dstcg.feature.minigames.buildTimelineGame
+import fr.aumombelli.dstcg.feature.minigames.eligibleTimelineCardIds
+import fr.aumombelli.dstcg.feature.minigames.selectTimelineCriterion
+import fr.aumombelli.dstcg.model.AbsoluteMagnitudeMeasurement
+import fr.aumombelli.dstcg.model.AngularMeasurement
 import fr.aumombelli.dstcg.model.CardDefinition
+import fr.aumombelli.dstcg.model.DeepSkyDetails
 import fr.aumombelli.dstcg.model.ExtensionDefinition
+import fr.aumombelli.dstcg.model.LightYearMeasurement
 import fr.aumombelli.dstcg.model.MiniGameDifficulty
 import fr.aumombelli.dstcg.model.MiniGameId
 import fr.aumombelli.dstcg.model.MiniGameReward
@@ -20,7 +30,9 @@ import fr.aumombelli.dstcg.model.OwnedCardEntry
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.OwnedVariantCount
 import fr.aumombelli.dstcg.model.PackRechargeState
+import fr.aumombelli.dstcg.model.SolarSystemDetails
 import fr.aumombelli.dstcg.model.StandaloneProgress
+import fr.aumombelli.dstcg.model.VisualSize
 import fr.aumombelli.dstcg.model.dailyStateFor
 import fr.aumombelli.dstcg.model.unlockedDifficultyFor
 import java.time.Instant
@@ -72,6 +84,90 @@ class MiniGamesViewModelTest {
         val dailyState = fixture.progressGateway.progress.miniGamesProgress
             .dailyStateFor(MiniGameId.Quiz, "2026-05-10")
         assertTrue(viewModel.uiState.value.screen is MiniGamesScreenUiState.Menu)
+        assertTrue(!dailyState.hasPlayed)
+        assertNull(dailyState.reward)
+    }
+
+    @Test
+    fun `opening timeline consumes attempt without reward`() = runTest {
+        val fixture = newTimelineFixture()
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openTimeline()
+        advanceUntilIdle()
+
+        val dailyState = fixture.progressGateway.progress.miniGamesProgress
+            .dailyStateFor(MiniGameId.Timeline, "2026-05-10")
+        val playing = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelinePlaying
+        assertTrue(dailyState.hasPlayed)
+        assertNull(dailyState.reward)
+        assertEquals(playing.slots.size, playing.handCards.size)
+        assertTrue(!playing.canValidate)
+    }
+
+    @Test
+    fun `leaving timeline after launch consumes attempt without reward`() = runTest {
+        val fixture = newTimelineFixture()
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openTimeline()
+        advanceUntilIdle()
+        viewModel.backToMenu()
+        advanceUntilIdle()
+
+        val dailyState = fixture.progressGateway.progress.miniGamesProgress
+            .dailyStateFor(MiniGameId.Timeline, "2026-05-10")
+        assertTrue(dailyState.hasPlayed)
+        assertNull(dailyState.reward)
+        assertTrue(viewModel.uiState.value.screen is MiniGamesScreenUiState.Menu)
+    }
+
+    @Test
+    fun `perfect timeline grants one hour reward`() = runTest {
+        val fixture = newTimelineFixture()
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openTimeline()
+        advanceUntilIdle()
+        val timeline = fixture.buildTimeline()
+        timeline.correctOrder.forEachIndexed { index, card ->
+            viewModel.placeTimelineCard(card.id, index)
+        }
+        val ready = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelinePlaying
+        assertTrue(ready.canValidate)
+
+        viewModel.validateTimeline()
+        advanceUntilIdle()
+
+        val progress = fixture.progressGateway.progress.miniGamesProgress
+        val dailyState = progress.dailyStateFor(MiniGameId.Timeline, "2026-05-10")
+        val result = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelineResult
+        assertEquals(MiniGameReward.fromMinutes(60L), dailyState.reward)
+        assertEquals("${timeline.correctOrder.size}/${timeline.correctOrder.size}", result.scoreLabel)
+        assertEquals("1h", result.rewardLabel)
+        assertTrue(!result.showCorrectOrder)
+    }
+
+    @Test
+    fun `timeline unavailable does not consume attempt`() = runTest {
+        val card = timelineDeepSkyCard("ALP-001", distance = 100.0)
+        val fixture = newFixture(
+            cardCount = 1,
+            cardDefinitions = listOf(card),
+            variants = mapOf(card.id to listOf(OwnedVariantCount("city", "standard", 1))),
+        )
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openTimeline()
+        advanceUntilIdle()
+
+        val dailyState = fixture.progressGateway.progress.miniGamesProgress
+            .dailyStateFor(MiniGameId.Timeline, "2026-05-10")
+        assertTrue(viewModel.uiState.value.screen is MiniGamesScreenUiState.TimelineUnavailable)
         assertTrue(!dailyState.hasPlayed)
         assertNull(dailyState.reward)
     }
@@ -433,6 +529,17 @@ class MiniGamesViewModelTest {
         )
     }
 
+    private fun newTimelineFixture(): Fixture {
+        val cards = timelineCards()
+        return newFixture(
+            cardCount = cards.size,
+            cardDefinitions = cards,
+            variants = cards.associate { card ->
+                card.id to listOf(OwnedVariantCount("city", "standard", 1))
+            },
+        )
+    }
+
     private fun newFixture(
         cardCount: Int,
         unlockedDifficulty: MiniGameDifficulty = MiniGameDifficulty.Apprentice,
@@ -527,6 +634,33 @@ class MiniGamesViewModelTest {
                 is QuizGameBuildResult.Unavailable -> error(result.message)
             }
         }
+
+        suspend fun buildTimeline(): TimelineGame {
+            val state = repository.loadMiniGamesState()
+            val criterion = selectTimelineCriterion(state.todayUtc)
+            val eligibleCardIds = eligibleTimelineCardIds(
+                criterion = criterion,
+                cards = catalogGateway.cards,
+            )
+            val resolvedCards = repository.prepareResolvedCardsForToday(
+                miniGameId = MiniGameId.Timeline,
+                slotCount = TimelinePreferredCardCount,
+                eligibleCardIds = eligibleCardIds,
+                distinctOwnedCards = true,
+            )
+            val result = buildTimelineGame(
+                criterion = criterion,
+                dateUtc = state.todayUtc,
+                resolvedCards = resolvedCards,
+                cards = catalogGateway.cards,
+                extensions = catalogGateway.extensions,
+                variantProfiles = catalogGateway.variantProfiles,
+            )
+            return when (result) {
+                is TimelineGameBuildResult.Ready -> result.game
+                is TimelineGameBuildResult.Unavailable -> error(result.message)
+            }
+        }
     }
 
     private fun quizCards(): List<CardDefinition> {
@@ -558,5 +692,79 @@ class MiniGamesViewModelTest {
                 ),
             )
         }
+    }
+
+    private fun timelineCards(): List<CardDefinition> {
+        val deepSkyCards = (1..5).map { index ->
+            timelineDeepSkyCard(
+                id = "DS-${index.toString().padStart(3, '0')}",
+                distance = 100.0 * index,
+                realSize = 10.0 * index,
+                visualWidth = index.toDouble(),
+                visualHeight = 1.0,
+                absoluteMagnitude = -10.0 + index,
+            )
+        }
+        val solarSystemCards = (1..5).map { index ->
+            timelineSolarSystemCard(
+                id = "SOL-${index.toString().padStart(3, '0')}",
+                diameter = 1_000.0 * index,
+            )
+        }
+        return deepSkyCards + solarSystemCards
+    }
+
+    private fun timelineDeepSkyCard(
+        id: String,
+        distance: Double,
+        realSize: Double = 10.0,
+        visualWidth: Double = 1.0,
+        visualHeight: Double = 1.0,
+        absoluteMagnitude: Double = -1.0,
+    ): CardDefinition {
+        val base = testCardDefinition(
+            id = id,
+            extensionId = "alpha",
+            name = id,
+        )
+        return base.copy(
+            astronomy = base.astronomy.copy(
+                objectFamily = "deep_sky",
+                details = DeepSkyDetails(
+                    distance = LightYearMeasurement(distance, "$distance années-lumière"),
+                    realSize = LightYearMeasurement(realSize, "$realSize années-lumière"),
+                    visualSize = VisualSize(
+                        fullMoonWidth = visualWidth,
+                        fullMoonHeight = visualHeight,
+                        angularWidth = AngularMeasurement(0, 30, 0, "0°30′00″"),
+                        angularHeight = AngularMeasurement(0, 30, 0, "0°30′00″"),
+                        label = "$visualWidth × $visualHeight",
+                    ),
+                    absoluteMagnitude = AbsoluteMagnitudeMeasurement(
+                        value = absoluteMagnitude,
+                        label = absoluteMagnitude.toString(),
+                    ),
+                ),
+            ),
+        )
+    }
+
+    private fun timelineSolarSystemCard(
+        id: String,
+        diameter: Double,
+    ): CardDefinition {
+        val base = testCardDefinition(
+            id = id,
+            extensionId = "alpha",
+            name = id,
+        )
+        return base.copy(
+            astronomy = base.astronomy.copy(
+                objectFamily = "solar_system",
+                details = SolarSystemDetails(
+                    realSize = LightYearMeasurement(diameter, "$diameter km"),
+                ),
+            ),
+        )
     }
 }

@@ -21,7 +21,9 @@ docs/README.md
 |-- features/equipment.md
 |-- features/crafting.md
 |-- features/mini-games.md
-|   `-- features/memory.md
+|   |-- features/quiz.md
+|   |-- features/memory.md
+|   `-- features/timeline.md
 `-- new-player-onboarding.md
         `-- flows/new-player-onboarding.md
             `-- flows/onboarding-ui-tags.md
@@ -50,6 +52,7 @@ docs/README.md
 - [Mini-jeux](features/mini-games.md)
 - [Quiz](features/quiz.md)
 - [Memory](features/memory.md)
+- [Timeline](features/timeline.md)
 - [Échange NFC](features/trade-nfc.md)
 
 ## Rattrapage depuis git
@@ -57,7 +60,7 @@ docs/README.md
 L'audit a comparé les docs existantes, les fichiers sources et l'historique récent. Les points suivants étaient dispersés ou manquants dans la documentation centrale :
 
 - `v1.6.0` : ajout de l'artisanat, menu `Atelier`, modes `Assombrir le ciel` et `Agence spatiale`.
-- Mini-jeux : accès Home recto-verso, menu carte, Quiz et Memory.
+- Mini-jeux : accès Home recto-verso, menu carte, Quiz, Memory et Timeline.
 - `v1.5.0` : échange de cartes par NFC, validation par rareté/variante et empreinte de catalogue.
 - Refactor scenes : `HomeScene`, `LibraryScene`, `CraftingScene`, `EquipmentScene`, `BadgeBookScene`, `PackScene` via `AppSceneContent`.
 - Visuels récents : nouveaux boosters, fond Home, portail-livre, portail-équipement, arrivée holographique, logos et tampons SVG.

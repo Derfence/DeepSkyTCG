@@ -40,8 +40,8 @@ class MiniGamesMenuScreenTest {
             .assert(hasStateDescription("Essai quotidien consommé"))
         composeRule.onNodeWithTag("mini-games-timeline")
             .assertIsDisplayed()
-            .assertIsNotEnabled()
-            .assert(hasStateDescription("Indisponible"))
+            .assertIsEnabled()
+            .assert(hasStateDescription("Disponible"))
         composeRule.onNodeWithTag("mini-games-observatory")
             .assertIsDisplayed()
             .assertIsNotEnabled()
@@ -88,6 +88,7 @@ class MiniGamesMenuScreenTest {
                     onBack = {},
                     onOpenQuiz = {},
                     onOpenMemory = {},
+                    onOpenTimeline = {},
                 )
             }
         }

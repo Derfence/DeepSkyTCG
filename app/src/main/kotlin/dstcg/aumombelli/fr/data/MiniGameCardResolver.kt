@@ -19,8 +19,12 @@ class MiniGameCardResolver(
         miniGameId: MiniGameId,
         dateUtc: String,
         slot: Int,
+        eligibleCardIds: Set<String>? = null,
+        excludedOwnedCardIds: Set<String> = emptySet(),
     ): MiniGameResolvedCardRef? {
         val ownedVariants = collection.ownedMiniGameVariants(cards)
+            .filter { eligibleCardIds == null || it.cardId in eligibleCardIds }
+            .filter { it.cardId !in excludedOwnedCardIds }
         val globalCardCandidates = ownedVariants.filter { it.cardId == globalCard.cardId }
         val sameExtensionCandidates = ownedVariants.filter { it.extensionId == globalCard.extensionId }
         val otherExtensionCandidates = ownedVariants.filter { it.extensionId != globalCard.extensionId }
