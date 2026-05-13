@@ -3,6 +3,9 @@ package fr.aumombelli.dstcg
 import fr.aumombelli.dstcg.data.DeterministicWeatherCalendar
 import fr.aumombelli.dstcg.data.MiniGameRewardApplier
 import fr.aumombelli.dstcg.data.MiniGameRewardGrantResult
+import fr.aumombelli.dstcg.data.WeatherPolicy
+import fr.aumombelli.dstcg.data.WeatherState
+import fr.aumombelli.dstcg.data.buildPackChargeUiStatus
 import fr.aumombelli.dstcg.model.MiniGameDailyState
 import fr.aumombelli.dstcg.model.MiniGameId
 import fr.aumombelli.dstcg.model.MiniGameReward
@@ -22,9 +25,11 @@ class MiniGameRewardApplierTest {
     private val applier = MiniGameRewardApplier()
     private val now = Instant.parse("2026-05-10T12:00:00Z")
     private val drawCooldown = Duration.ofHours(6)
+    private val clearWeather = constantWeather(WeatherState.Clear)
+    private val pureWeather = constantWeather(WeatherState.Pure)
 
     @Test
-    fun `reward advances partial recharge with fixed weather independent units`() {
+    fun `reward advances partial recharge by its wall clock duration in clear weather`() {
         val result = applier.grantReward(
             progress = StandaloneProgress(
                 collection = OwnedCollection(),
@@ -40,13 +45,80 @@ class MiniGameRewardApplierTest {
             now = now,
             drawCooldown = drawCooldown,
             maxStoredDraws = 10,
-            weatherPolicy = DeterministicWeatherCalendar,
+            weatherPolicy = clearWeather,
         )
 
         require(result is MiniGameRewardGrantResult.Granted)
         assertEquals(0, result.rechargeState.availableDrawCount)
         assertEquals(18_000L, result.rechargeState.accumulatedChargeUnits)
         assertEquals(now.toString(), result.rechargeState.lastChargeEvaluationAt)
+    }
+
+    @Test
+    fun `reward keeps the same wall clock reduction under pure weather`() {
+        val rechargeState = PackRechargeState(
+            availableDrawCount = 0,
+            accumulatedChargeUnits = 0L,
+            lastChargeEvaluationAt = now.toString(),
+        )
+        val initialChargeStatus = buildPackChargeUiStatus(
+            rechargeState = rechargeState,
+            now = now,
+            drawCooldown = drawCooldown,
+            maxStoredDraws = 10,
+            weatherPolicy = pureWeather,
+        )
+
+        val result = applier.grantReward(
+            progress = StandaloneProgress(
+                collection = OwnedCollection(),
+                rechargeState = rechargeState,
+            ),
+            miniGameId = MiniGameId.Memory,
+            todayUtc = "2026-05-10",
+            reward = MiniGameReward.fromMinutes(60L),
+            now = now,
+            drawCooldown = drawCooldown,
+            maxStoredDraws = 10,
+            weatherPolicy = pureWeather,
+        )
+
+        require(result is MiniGameRewardGrantResult.Granted)
+        val rewardedChargeStatus = buildPackChargeUiStatus(
+            rechargeState = result.rechargeState,
+            now = now,
+            drawCooldown = drawCooldown,
+            maxStoredDraws = 10,
+            weatherPolicy = pureWeather,
+        )
+
+        assertEquals(now.plus(Duration.ofHours(3)).toString(), initialChargeStatus.nextChargeAt)
+        assertEquals(now.plus(Duration.ofHours(2)).toString(), rewardedChargeStatus.nextChargeAt)
+    }
+
+    @Test
+    fun `reward overflow becomes progress toward the next pack`() {
+        val result = applier.grantReward(
+            progress = StandaloneProgress(
+                collection = OwnedCollection(),
+                rechargeState = PackRechargeState(
+                    availableDrawCount = 0,
+                    accumulatedChargeUnits = 99_000L,
+                    lastChargeEvaluationAt = now.toString(),
+                ),
+            ),
+            miniGameId = MiniGameId.Memory,
+            todayUtc = "2026-05-10",
+            reward = MiniGameReward.fromMinutes(60L),
+            now = now,
+            drawCooldown = drawCooldown,
+            maxStoredDraws = 10,
+            weatherPolicy = clearWeather,
+        )
+
+        require(result is MiniGameRewardGrantResult.Granted)
+        assertEquals(1, result.rechargeState.availableDrawCount)
+        assertEquals(9_000L, result.rechargeState.accumulatedChargeUnits)
     }
 
     @Test
@@ -66,7 +138,7 @@ class MiniGameRewardApplierTest {
             now = now,
             drawCooldown = drawCooldown,
             maxStoredDraws = 10,
-            weatherPolicy = DeterministicWeatherCalendar,
+            weatherPolicy = clearWeather,
         )
 
         require(result is MiniGameRewardGrantResult.Granted)
@@ -91,7 +163,7 @@ class MiniGameRewardApplierTest {
             now = now,
             drawCooldown = drawCooldown,
             maxStoredDraws = 10,
-            weatherPolicy = DeterministicWeatherCalendar,
+            weatherPolicy = clearWeather,
         )
 
         require(result is MiniGameRewardGrantResult.Granted)
@@ -178,5 +250,9 @@ class MiniGameRewardApplierTest {
         assertEquals(MiniGameReward.fromMinutes(15L), legacyReward)
         assertTrue(encoded.contains("reductionSeconds"))
         assertTrue(!encoded.contains("reductionMinutes"))
+    }
+
+    private fun constantWeather(weatherState: WeatherState): WeatherPolicy = object : WeatherPolicy {
+        override fun weatherAt(instant: Instant): WeatherState = weatherState
     }
 }
