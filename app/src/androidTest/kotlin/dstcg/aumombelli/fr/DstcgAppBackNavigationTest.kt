@@ -178,8 +178,9 @@ class DstcgAppBackNavigationTest {
         advanceUntilTagDisplayed("home-mini-games-open-menu", timeoutMillis = 5_000)
         composeRule.onNodeWithTag("home-mini-games-open-menu").performClick()
         advanceUntilTagDisplayed("mini-games-menu-screen", timeoutMillis = 10_000)
+        advanceUntilTagEnabled("mini-games-menu-back", timeoutMillis = 10_000)
 
-        composeRule.onNodeWithTag("mini-games-quiz").assertIsDisplayed().assertIsNotEnabled()
+        composeRule.onNodeWithTag("mini-games-quiz").assertIsDisplayed().assertIsEnabled()
         composeRule.onNodeWithTag("mini-games-memory").assertIsDisplayed().assertIsEnabled()
         composeRule.onNodeWithTag("mini-games-timeline").assertIsDisplayed().assertIsNotEnabled()
         composeRule.onNodeWithTag("mini-games-observatory").assertIsDisplayed().assertIsNotEnabled()
@@ -197,6 +198,7 @@ class DstcgAppBackNavigationTest {
         advanceUntilTagDisplayed("home-mini-games-open-menu", timeoutMillis = 5_000)
         composeRule.onNodeWithTag("home-mini-games-open-menu").performClick()
         advanceUntilTagDisplayed("mini-games-menu-screen", timeoutMillis = 10_000)
+        advanceUntilTagEnabled("mini-games-menu-back", timeoutMillis = 10_000)
 
         pressAndroidBack()
         advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
@@ -215,6 +217,7 @@ class DstcgAppBackNavigationTest {
         advanceUntilTagDisplayed("home-mini-games-open-menu", timeoutMillis = 5_000)
         composeRule.onNodeWithTag("home-mini-games-card").performClick()
         advanceUntilTagDisplayed("mini-games-menu-screen", timeoutMillis = 10_000)
+        advanceUntilTagEnabled("mini-games-menu-back", timeoutMillis = 10_000)
         composeRule.onAllNodesWithTag("new-player-modal-conclusion").assertCountEquals(0)
 
         pressAndroidBack()
@@ -264,7 +267,7 @@ class DstcgAppBackNavigationTest {
     }
 
     @Test
-    fun android_back_from_pack_opening_returns_to_home() {
+    fun android_back_from_pack_opening_returns_to_pack_selection() {
         setAppContent(backNavigationTestAppContainer())
         startAndReachHome()
 
@@ -277,12 +280,12 @@ class DstcgAppBackNavigationTest {
         composeRule.onNodeWithTag("pack-opening-current-card-surface").assertIsDisplayed()
 
         pressAndroidBack()
-        advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
-        composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
+        advanceUntilTagEnabled("pack-extension-enter-astronomes-en-herbe", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").assertIsDisplayed()
     }
 
     @Test
-    fun visible_close_from_pack_opening_returns_to_home() {
+    fun visible_close_from_pack_opening_returns_to_pack_selection() {
         setAppContent(backNavigationTestAppContainer())
         startAndReachHome()
 
@@ -294,7 +297,7 @@ class DstcgAppBackNavigationTest {
         advanceUntilTagDisplayed("pack-opening-current-card-surface", timeoutMillis = 15_000)
 
         composeRule.onNodeWithTag("pack-opening-close").performClick()
-        advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
+        advanceUntilTagEnabled("pack-extension-enter-astronomes-en-herbe", timeoutMillis = 10_000)
     }
 
     @Test
@@ -336,7 +339,7 @@ class DstcgAppBackNavigationTest {
     }
 
     @Test
-    fun second_pack_selection_entry_returns_to_extension_list_before_any_new_selection() {
+    fun pack_opening_back_returns_to_extension_list_before_any_new_selection() {
         setAppContent(backNavigationTestAppContainer())
         startAndReachHome()
 
@@ -348,9 +351,6 @@ class DstcgAppBackNavigationTest {
         advanceUntilTagDisplayed("pack-opening-current-card-surface", timeoutMillis = 15_000)
 
         pressAndroidBack()
-        advanceUntilTagEnabled("home-open-pack", timeoutMillis = 10_000)
-
-        composeRule.onNodeWithTag("home-open-pack").performClick()
         advanceUntilTagEnabled("pack-extension-enter-astronomes-en-herbe", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").assertIsDisplayed()
         composeRule.onAllNodesWithTag("pack-booster-0").assertCountEquals(0)

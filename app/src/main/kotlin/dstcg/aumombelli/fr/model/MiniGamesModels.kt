@@ -1,6 +1,20 @@
 package fr.aumombelli.dstcg.model
 
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.descriptors.element
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonEncoder
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.longOrNull
+import kotlinx.serialization.json.put
 
 @Serializable
 enum class MiniGameId {
@@ -23,7 +37,7 @@ enum class MiniGameDifficulty(
     ;
 
     val reward: MiniGameReward
-        get() = MiniGameReward(reductionMinutes = rewardMinutes)
+        get() = MiniGameReward.fromMinutes(rewardMinutes)
 
     fun next(): MiniGameDifficulty? =
         entries.firstOrNull { it.level == level + 1 }
@@ -33,10 +47,48 @@ enum class MiniGameDifficulty(
     }
 }
 
-@Serializable
+@Serializable(with = MiniGameRewardSerializer::class)
 data class MiniGameReward(
-    val reductionMinutes: Long,
-)
+    val reductionSeconds: Long,
+) {
+    val reductionMinutes: Long
+        get() = reductionSeconds / 60L
+
+    companion object {
+        fun fromMinutes(minutes: Long): MiniGameReward =
+            MiniGameReward(reductionSeconds = minutes * 60L)
+
+        fun fromSeconds(seconds: Long): MiniGameReward =
+            MiniGameReward(reductionSeconds = seconds)
+    }
+}
+
+internal object MiniGameRewardSerializer : KSerializer<MiniGameReward> {
+    override val descriptor: SerialDescriptor = buildClassSerialDescriptor("MiniGameReward") {
+        element<Long>("reductionSeconds", isOptional = true)
+        element<Long>("reductionMinutes", isOptional = true)
+    }
+
+    override fun deserialize(decoder: Decoder): MiniGameReward {
+        val jsonDecoder = decoder as? JsonDecoder
+            ?: throw SerializationException("MiniGameReward can only be decoded from JSON.")
+        val jsonObject = jsonDecoder.decodeJsonElement().jsonObject
+        val seconds = jsonObject["reductionSeconds"]?.jsonPrimitive?.longOrNull
+            ?: jsonObject["reductionMinutes"]?.jsonPrimitive?.longOrNull?.times(60L)
+            ?: 0L
+        return MiniGameReward.fromSeconds(seconds)
+    }
+
+    override fun serialize(encoder: Encoder, value: MiniGameReward) {
+        val jsonEncoder = encoder as? JsonEncoder
+            ?: throw SerializationException("MiniGameReward can only be encoded to JSON.")
+        jsonEncoder.encodeJsonElement(
+            buildJsonObject {
+                put("reductionSeconds", value.reductionSeconds)
+            },
+        )
+    }
+}
 
 @Serializable
 data class MiniGameGlobalCardRef(

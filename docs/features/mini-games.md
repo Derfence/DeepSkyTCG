@@ -33,21 +33,23 @@ Les quatre lieux sont positionnés sur une diagonale bas-gauche vers haut-droite
 - Timeline / Campagne ;
 - Observatoire / Montagne.
 
-Le bouton `Memory / Périurbain` est actif et utilise le halo de node commun. Les boutons Quiz, Timeline et Observatoire restent visibles mais désactivés tant que leurs gameplays ne sont pas implémentés.
+Les boutons `Quiz / Ville` et `Memory / Périurbain` sont actifs et utilisent le halo de node commun. Les boutons Timeline et Observatoire restent visibles mais désactivés tant que leurs gameplays ne sont pas implémentés.
 
 ## Jeux implémentés
 
+- [Quiz](quiz.md)
 - [Memory](memory.md)
 
 ## Socle commun
 
-Le socle commun est utilisé par Memory et reste prêt pour les futurs jeux :
+Le socle commun est utilisé par Quiz et Memory, et reste prêt pour les futurs jeux :
 
 - `MiniGameId` identifie Quiz, Memory, Timeline et Observatoire ;
-- `MiniGameDifficulty` porte les quatre niveaux communs et leurs réductions de `15`, `30`, `45` et `60` minutes ;
+- `MiniGameDifficulty` porte les quatre niveaux communs et leurs réductions maximales de `15`, `30`, `45` et `60` minutes ;
 - `MiniGamesProgress` persiste les états quotidiens, les récompenses déjà obtenues et les difficultés débloquées ;
 - `MiniGamesRepository` expose l'état du jour UTC, prépare les cartes résolues et applique les récompenses ;
 - `MiniGameRewardApplier` réduit la recharge des packs une seule fois par jour et par jeu, avec plafonnement au stock maximal.
+- `MiniGameReward` stocke les réductions en secondes pour supporter les gains proportionnels du Quiz.
 - `hasPlayed` signifie que l'essai quotidien du jeu est consommé. Si `reward` vaut `null`, l'essai a été utilisé sans récompense, par exemple après abandon.
 
 Le socle visuel partage les briques Compose réutilisables :

@@ -12,6 +12,8 @@ import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.StandaloneProgress
 import java.time.Duration
 import java.time.Instant
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -34,7 +36,7 @@ class MiniGameRewardApplierTest {
             ),
             miniGameId = MiniGameId.Memory,
             todayUtc = "2026-05-10",
-            reward = MiniGameReward(reductionMinutes = 60L),
+            reward = MiniGameReward.fromMinutes(60L),
             now = now,
             drawCooldown = drawCooldown,
             maxStoredDraws = 10,
@@ -45,6 +47,31 @@ class MiniGameRewardApplierTest {
         assertEquals(0, result.rechargeState.availableDrawCount)
         assertEquals(18_000L, result.rechargeState.accumulatedChargeUnits)
         assertEquals(now.toString(), result.rechargeState.lastChargeEvaluationAt)
+    }
+
+    @Test
+    fun `reward applies second precision to recharge`() {
+        val result = applier.grantReward(
+            progress = StandaloneProgress(
+                collection = OwnedCollection(),
+                rechargeState = PackRechargeState(
+                    availableDrawCount = 0,
+                    accumulatedChargeUnits = 0L,
+                    lastChargeEvaluationAt = now.toString(),
+                ),
+            ),
+            miniGameId = MiniGameId.Quiz,
+            todayUtc = "2026-05-10",
+            reward = MiniGameReward.fromSeconds(450L),
+            now = now,
+            drawCooldown = drawCooldown,
+            maxStoredDraws = 10,
+            weatherPolicy = DeterministicWeatherCalendar,
+        )
+
+        require(result is MiniGameRewardGrantResult.Granted)
+        assertEquals(2_250L, result.rechargeState.accumulatedChargeUnits)
+        assertEquals(MiniGameReward.fromSeconds(450L), result.dailyState.reward)
     }
 
     @Test
@@ -60,7 +87,7 @@ class MiniGameRewardApplierTest {
             ),
             miniGameId = MiniGameId.Observatory,
             todayUtc = "2026-05-10",
-            reward = MiniGameReward(reductionMinutes = 60L),
+            reward = MiniGameReward.fromMinutes(60L),
             now = now,
             drawCooldown = drawCooldown,
             maxStoredDraws = 10,
@@ -82,7 +109,7 @@ class MiniGameRewardApplierTest {
             ),
             miniGameId = MiniGameId.Quiz,
             todayUtc = "2026-05-10",
-            reward = MiniGameReward(reductionMinutes = 15L),
+            reward = MiniGameReward.fromMinutes(15L),
             now = now,
             drawCooldown = drawCooldown,
             maxStoredDraws = 10,
@@ -94,11 +121,11 @@ class MiniGameRewardApplierTest {
             progress = StandaloneProgress(
                 collection = OwnedCollection(),
                 rechargeState = first.rechargeState,
-                miniGamesProgress = first.miniGamesProgress,
+            miniGamesProgress = first.miniGamesProgress,
             ),
             miniGameId = MiniGameId.Quiz,
             todayUtc = "2026-05-10",
-            reward = MiniGameReward(reductionMinutes = 15L),
+            reward = MiniGameReward.fromMinutes(15L),
             now = now,
             drawCooldown = drawCooldown,
             maxStoredDraws = 10,
@@ -126,7 +153,7 @@ class MiniGameRewardApplierTest {
             ),
             miniGameId = MiniGameId.Memory,
             todayUtc = "2026-05-10",
-            reward = MiniGameReward(reductionMinutes = 30L),
+            reward = MiniGameReward.fromMinutes(30L),
             now = now,
             drawCooldown = drawCooldown,
             maxStoredDraws = 10,
@@ -134,7 +161,22 @@ class MiniGameRewardApplierTest {
         )
 
         require(result is MiniGameRewardGrantResult.Granted)
-        assertEquals(MiniGameReward(reductionMinutes = 30L), result.dailyState.reward)
+        assertEquals(MiniGameReward.fromMinutes(30L), result.dailyState.reward)
         assertTrue(result.dailyState.hasPlayed)
+    }
+
+    @Test
+    fun `reward deserializes legacy minute field and writes seconds field`() {
+        val json = Json { ignoreUnknownKeys = true }
+
+        val legacyReward = json.decodeFromString(
+            MiniGameReward.serializer(),
+            """{"reductionMinutes":15}""",
+        )
+        val encoded = json.encodeToString(MiniGameReward.fromSeconds(450L))
+
+        assertEquals(MiniGameReward.fromMinutes(15L), legacyReward)
+        assertTrue(encoded.contains("reductionSeconds"))
+        assertTrue(!encoded.contains("reductionMinutes"))
     }
 }

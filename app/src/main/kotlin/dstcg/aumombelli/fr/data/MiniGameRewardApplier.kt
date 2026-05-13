@@ -64,12 +64,12 @@ class MiniGameRewardApplier {
         }
 
         val sanitizedReward = MiniGameReward(
-            reductionMinutes = reward.reductionMinutes.coerceAtLeast(0L),
+            reductionSeconds = reward.reductionSeconds.coerceAtLeast(0L),
         )
         val updatedRechargeState = applyPackRechargeReduction(
             rechargeState = progress.rechargeState,
             now = now,
-            reduction = Duration.ofMinutes(sanitizedReward.reductionMinutes),
+            reduction = Duration.ofSeconds(sanitizedReward.reductionSeconds),
             drawCooldown = drawCooldown,
             maxStoredDraws = maxStoredDraws,
             weatherPolicy = weatherPolicy,

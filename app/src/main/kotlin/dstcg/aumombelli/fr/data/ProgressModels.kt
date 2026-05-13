@@ -56,7 +56,7 @@ data class ProgressSnapshot(
     )
 
     companion object {
-        const val CURRENT_SCHEMA_VERSION: Int = 11
+        const val CURRENT_SCHEMA_VERSION: Int = 12
         const val ONBOARDING_STATE_SCHEMA_VERSION: Int = 4
     }
 }

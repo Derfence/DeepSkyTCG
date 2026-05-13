@@ -11,6 +11,7 @@ import fr.aumombelli.dstcg.feature.minigames.MemoryGameScreen
 import fr.aumombelli.dstcg.feature.minigames.MiniGamesMenuScreen
 import fr.aumombelli.dstcg.feature.minigames.MiniGamesScreenUiState
 import fr.aumombelli.dstcg.feature.minigames.MiniGamesViewModel
+import fr.aumombelli.dstcg.feature.minigames.QuizGameScreen
 import fr.aumombelli.dstcg.ui.viewmodel.DstcgViewModelFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -62,8 +63,21 @@ internal fun MiniGamesScene(
         is MiniGamesScreenUiState.Menu -> MiniGamesMenuScreen(
             state = uiState,
             onBack = navigateBackToHome,
+            onOpenQuiz = miniGamesViewModel::openQuiz,
             onOpenMemory = miniGamesViewModel::openMemory,
             contentVisible = sceneState.miniGamesMenuContentVisible,
+            interactionsEnabled = !sceneState.transitionLocked,
+        )
+
+        is MiniGamesScreenUiState.QuizDifficultySelection,
+        is MiniGamesScreenUiState.QuizPlaying,
+        is MiniGamesScreenUiState.QuizResult,
+        is MiniGamesScreenUiState.QuizUnavailable -> QuizGameScreen(
+            state = uiState,
+            onBackToMenu = miniGamesViewModel::backToMenu,
+            onSelectDifficulty = miniGamesViewModel::selectQuizDifficulty,
+            onSelectAnswer = miniGamesViewModel::selectQuizAnswer,
+            onContinue = miniGamesViewModel::continueQuiz,
         )
 
         else -> MemoryGameScreen(

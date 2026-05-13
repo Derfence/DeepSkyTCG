@@ -142,7 +142,7 @@ class ProgressRepositoryTest {
                 MiniGameId.Memory to MiniGameDailyState(
                     dateUtc = "2026-03-24",
                     hasPlayed = true,
-                    reward = MiniGameReward(reductionMinutes = 30L),
+                    reward = MiniGameReward.fromMinutes(30L),
                 ),
             ),
         )

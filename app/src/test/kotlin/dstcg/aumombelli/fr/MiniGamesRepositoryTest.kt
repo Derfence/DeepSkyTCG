@@ -67,7 +67,7 @@ class MiniGamesRepositoryTest {
                         MiniGameId.Memory to MiniGameDailyState(
                             dateUtc = "2026-05-09",
                             hasPlayed = true,
-                            reward = MiniGameReward(reductionMinutes = 15L),
+                            reward = MiniGameReward.fromMinutes(15L),
                         ),
                     ),
                 ),
@@ -97,11 +97,11 @@ class MiniGamesRepositoryTest {
 
         val first = fixture.repository.grantRewardForToday(
             miniGameId = MiniGameId.Memory,
-            reward = MiniGameReward(reductionMinutes = 15L),
+            reward = MiniGameReward.fromMinutes(15L),
         )
         val second = fixture.repository.grantRewardForToday(
             miniGameId = MiniGameId.Memory,
-            reward = MiniGameReward(reductionMinutes = 15L),
+            reward = MiniGameReward.fromMinutes(15L),
         )
 
         assertTrue(first is MiniGameRewardGrantResult.Granted)
@@ -109,7 +109,7 @@ class MiniGamesRepositoryTest {
         val dailyState = fixture.progressGateway.progress.miniGamesProgress
             .dailyStateFor(MiniGameId.Memory, "2026-05-10")
         assertTrue(dailyState.hasPlayed)
-        assertEquals(MiniGameReward(reductionMinutes = 15L), dailyState.reward)
+        assertEquals(MiniGameReward.fromMinutes(15L), dailyState.reward)
     }
 
     @Test
@@ -148,14 +148,14 @@ class MiniGamesRepositoryTest {
         fixture.repository.consumeAttemptForToday(MiniGameId.Memory)
         val reward = fixture.repository.grantRewardForToday(
             miniGameId = MiniGameId.Memory,
-            reward = MiniGameReward(reductionMinutes = 30L),
+            reward = MiniGameReward.fromMinutes(30L),
         )
 
         assertTrue(reward is MiniGameRewardGrantResult.Granted)
         val dailyState = fixture.progressGateway.progress.miniGamesProgress
             .dailyStateFor(MiniGameId.Memory, "2026-05-10")
         assertTrue(dailyState.hasPlayed)
-        assertEquals(MiniGameReward(reductionMinutes = 30L), dailyState.reward)
+        assertEquals(MiniGameReward.fromMinutes(30L), dailyState.reward)
     }
 
     @Test

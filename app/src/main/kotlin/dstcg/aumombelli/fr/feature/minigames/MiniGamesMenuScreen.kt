@@ -3,17 +3,21 @@ package fr.aumombelli.dstcg.feature.minigames
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,20 +31,27 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.ui.component.AssetSvgImage
 import fr.aumombelli.dstcg.ui.component.SceneNavigationButton
 import fr.aumombelli.dstcg.ui.component.SceneNavigationIcon
 import fr.aumombelli.dstcg.ui.motion.SkyBackdropVariant
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
+import fr.aumombelli.dstcg.ui.theme.AuroraTeal
 
 @Composable
 internal fun MiniGamesMenuScreen(
     state: MiniGamesUiState,
     onBack: () -> Unit,
+    onOpenQuiz: () -> Unit,
     onOpenMemory: () -> Unit,
     contentVisible: Boolean = true,
+    interactionsEnabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     val contentAlpha by animateFloatAsState(
@@ -77,35 +88,55 @@ internal fun MiniGamesMenuScreen(
                 .fillMaxSize()
                 .dstcgContentInsetsPadding(includeBottom = true),
         ) {
-            MiniGameMapButton(
+            MiniGameMapNode(
                 index = "1",
+                title = "Quiz universitaire",
+                status = state.quizStatusLabel,
                 anchorX = 0.24f,
                 anchorY = 0.74f,
-                enabled = false,
-                onClick = {},
+                buttonState = when {
+                    state.isLoading -> MiniGameMenuButtonState.Loading
+                    state.quizPlayedToday -> MiniGameMenuButtonState.Consumed
+                    else -> MiniGameMenuButtonState.Available
+                },
+                interactionsEnabled = interactionsEnabled && !state.isLoading,
+                onClick = onOpenQuiz,
                 testTag = "mini-games-quiz",
             )
-            MiniGameMapButton(
+            MiniGameMapNode(
                 index = "2",
+                title = "Memory amateur",
+                status = state.memoryStatusLabel,
                 anchorX = 0.40f,
                 anchorY = 0.58f,
-                enabled = !state.isLoading,
+                buttonState = when {
+                    state.isLoading -> MiniGameMenuButtonState.Loading
+                    state.memoryPlayedToday -> MiniGameMenuButtonState.Consumed
+                    else -> MiniGameMenuButtonState.Available
+                },
+                interactionsEnabled = interactionsEnabled && !state.isLoading,
                 onClick = onOpenMemory,
                 testTag = "mini-games-memory",
             )
-            MiniGameMapButton(
+            MiniGameMapNode(
                 index = "3",
+                title = "Timeline",
+                status = "À venir",
                 anchorX = 0.57f,
                 anchorY = 0.42f,
-                enabled = false,
+                buttonState = MiniGameMenuButtonState.Disabled,
+                interactionsEnabled = false,
                 onClick = {},
                 testTag = "mini-games-timeline",
             )
-            MiniGameMapButton(
+            MiniGameMapNode(
                 index = "4",
+                title = "Observatoire",
+                status = "À venir",
                 anchorX = 0.74f,
                 anchorY = 0.26f,
-                enabled = false,
+                buttonState = MiniGameMenuButtonState.Disabled,
+                interactionsEnabled = false,
                 onClick = {},
                 testTag = "mini-games-observatory",
             )
@@ -122,6 +153,7 @@ internal fun MiniGamesMenuScreen(
                 onClick = onBack,
                 contentDescription = "Retour",
                 testTag = "mini-games-menu-back",
+                enabled = interactionsEnabled,
                 modifier = Modifier.align(Alignment.TopStart),
             )
 
@@ -135,35 +167,19 @@ internal fun MiniGamesMenuScreen(
                     .padding(top = 4.dp),
             )
 
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .background(
-                        color = Color(0xAA07111A),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
-                    )
-                    .padding(horizontal = 16.dp, vertical = 14.dp)
-                    .testTag("mini-games-memory-status"),
-            ) {
-                Text(
-                    text = "Memory amateur",
-                    color = Color.White,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = state.memoryStatusLabel,
-                    color = Color(0xFFD6E7F7),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-                state.errorMessage?.let { message ->
+            state.errorMessage?.let { message ->
+                Surface(
+                    color = Color(0xCC180B0D),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(18.dp),
+                ) {
                     Text(
                         text = message,
                         color = Color(0xFFFFC4BD),
                         style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(top = 6.dp),
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
                     )
                 }
             }
@@ -172,42 +188,88 @@ internal fun MiniGamesMenuScreen(
 }
 
 @Composable
-private fun MiniGameMapButton(
+private fun MiniGameMapNode(
     index: String,
+    title: String,
+    status: String,
     anchorX: Float,
     anchorY: Float,
-    enabled: Boolean,
+    buttonState: MiniGameMenuButtonState,
+    interactionsEnabled: Boolean,
     onClick: () -> Unit,
     testTag: String,
 ) {
-    val buttonSize = 52.dp
-    BoxWithConstraints(
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        val ringSize = buttonSize + 24.dp
-        MiniGamePulsingRing(
-            enabled = enabled,
-            tone = if (enabled) MiniGameFeedbackTone.Success else MiniGameFeedbackTone.Error,
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+        val buttonSize = 52.dp
+        val calloutGap = 12.dp
+        val buttonEnabled = interactionsEnabled && buttonState.isInteractive
+        val buttonColors = buttonState.colors()
+        val pulseTone = when (buttonState) {
+            MiniGameMenuButtonState.Available -> MiniGameFeedbackTone.Completion
+            MiniGameMenuButtonState.Consumed -> MiniGameFeedbackTone.Success
+            MiniGameMenuButtonState.Loading -> MiniGameFeedbackTone.Success
+            MiniGameMenuButtonState.Disabled -> MiniGameFeedbackTone.Success
+        }
+        val anchorCenterX = maxWidth * anchorX
+        val anchorCenterY = maxHeight * anchorY
+        val leftAvailableSpace = anchorCenterX - (buttonSize / 2f)
+        val rightAvailableSpace = maxWidth - anchorCenterX - (buttonSize / 2f)
+        val placeCalloutRight = rightAvailableSpace >= leftAvailableSpace
+        val calloutTextAlign = if (placeCalloutRight) TextAlign.Start else TextAlign.End
+        val calloutWidth = minOf(maxWidth * 0.38f, 220.dp)
+        val calloutMaxX = maxOf(0.dp, maxWidth - calloutWidth)
+        val calloutRawX = if (placeCalloutRight) {
+            anchorCenterX + (buttonSize / 2f) + calloutGap
+        } else {
+            anchorCenterX - (buttonSize / 2f) - calloutGap - calloutWidth
+        }
+        val calloutX = calloutRawX.coerceIn(0.dp, calloutMaxX)
+        val calloutY = (anchorCenterY - 28.dp).coerceIn(0.dp, maxOf(0.dp, maxHeight - 64.dp))
+        val semanticState = when (buttonState) {
+            MiniGameMenuButtonState.Available -> "Disponible"
+            MiniGameMenuButtonState.Consumed -> "Essai quotidien consommé"
+            MiniGameMenuButtonState.Loading -> "Chargement"
+            MiniGameMenuButtonState.Disabled -> "Indisponible"
+        }
+
+        if (buttonState == MiniGameMenuButtonState.Available || buttonState == MiniGameMenuButtonState.Consumed) {
+            val ringSize = buttonSize + 24.dp
+            MiniGamePulsingRing(
+                enabled = buttonState == MiniGameMenuButtonState.Available && interactionsEnabled,
+                tone = pulseTone,
+                modifier = Modifier
+                    .offset(
+                        x = anchorCenterX - (ringSize / 2f),
+                        y = anchorCenterY - (ringSize / 2f),
+                    )
+                    .size(ringSize),
+            )
+        }
+        MiniGameInfoCallout(
+            title = title,
+            status = status,
+            borderColor = buttonColors.calloutBorder,
+            textAlign = calloutTextAlign,
             modifier = Modifier
-                .offset(
-                    x = (maxWidth * anchorX) - (ringSize / 2f),
-                    y = (maxHeight * anchorY) - (ringSize / 2f),
-                )
-                .size(ringSize),
+                .offset(x = calloutX, y = calloutY)
+                .width(calloutWidth)
+                .heightIn(min = 52.dp)
+                .testTag("$testTag-info"),
         )
         Surface(
             onClick = onClick,
-            enabled = enabled,
+            enabled = buttonEnabled,
             shape = CircleShape,
-            color = if (enabled) Color(0xDD0F4050) else Color(0xCC0A1524),
-            contentColor = Color.White,
-            shadowElevation = if (enabled) 12.dp else 8.dp,
+            color = buttonColors.button,
+            contentColor = buttonColors.content,
+            shadowElevation = if (buttonEnabled) 12.dp else 8.dp,
             modifier = Modifier
                 .offset(
-                    x = (maxWidth * anchorX) - (buttonSize / 2f),
-                    y = (maxHeight * anchorY) - (buttonSize / 2f),
+                    x = anchorCenterX - (buttonSize / 2f),
+                    y = anchorCenterY - (buttonSize / 2f),
                 )
                 .size(buttonSize)
+                .semantics { stateDescription = semanticState }
                 .testTag(testTag),
         ) {
             Box(contentAlignment = Alignment.Center) {
@@ -215,7 +277,7 @@ private fun MiniGameMapButton(
                     text = index,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White.copy(alpha = if (enabled) 1f else 0.72f),
+                    color = buttonColors.content,
                 )
             }
         }
@@ -265,5 +327,89 @@ private fun MiniGamesFallbackMap(
         }
     }
 }
+
+@Composable
+private fun MiniGameInfoCallout(
+    title: String,
+    status: String,
+    borderColor: Color,
+    textAlign: TextAlign,
+    modifier: Modifier = Modifier,
+) {
+    Surface(
+        color = Color(0xCC07111A),
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(1.dp, borderColor.copy(alpha = 0.76f)),
+        modifier = modifier,
+    ) {
+        Column(
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+            horizontalAlignment = if (textAlign == TextAlign.Start) Alignment.Start else Alignment.End,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+        ) {
+            Text(
+                text = title,
+                color = Color.White,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = textAlign,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Text(
+                text = status,
+                color = Color(0xFFD6E7F7),
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = textAlign,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+    }
+}
+
+private enum class MiniGameMenuButtonState {
+    Available,
+    Consumed,
+    Loading,
+    Disabled,
+}
+
+private data class MiniGameMenuButtonColors(
+    val button: Color,
+    val content: Color,
+    val calloutBorder: Color,
+)
+
+private fun MiniGameMenuButtonState.colors(): MiniGameMenuButtonColors = when (this) {
+    MiniGameMenuButtonState.Available -> MiniGameMenuButtonColors(
+        button = Color(0xFFF6C75D),
+        content = Color(0xFF221707),
+        calloutBorder = Color(0xFFF6C75D),
+    )
+
+    MiniGameMenuButtonState.Consumed -> MiniGameMenuButtonColors(
+        button = AuroraTeal,
+        content = Color(0xFF06101D),
+        calloutBorder = AuroraTeal,
+    )
+
+    MiniGameMenuButtonState.Loading -> MiniGameMenuButtonColors(
+        button = Color(0xCC0A1524),
+        content = Color.White.copy(alpha = 0.72f),
+        calloutBorder = Color(0xFF6F849C),
+    )
+
+    MiniGameMenuButtonState.Disabled -> MiniGameMenuButtonColors(
+        button = Color(0xCC0A1524),
+        content = Color.White.copy(alpha = 0.72f),
+        calloutBorder = Color(0xFF6F849C),
+    )
+}
+
+private val MiniGameMenuButtonState.isInteractive: Boolean
+    get() = this == MiniGameMenuButtonState.Available || this == MiniGameMenuButtonState.Consumed
 
 private const val MiniGamesMapSvgAssetName = "mini-games-map.svg"

@@ -6,6 +6,11 @@ import fr.aumombelli.dstcg.feature.minigames.MemoryCellState
 import fr.aumombelli.dstcg.feature.minigames.MiniGameFeedbackTone
 import fr.aumombelli.dstcg.feature.minigames.MiniGamesScreenUiState
 import fr.aumombelli.dstcg.feature.minigames.MiniGamesViewModel
+import fr.aumombelli.dstcg.feature.minigames.QuizAnswerState
+import fr.aumombelli.dstcg.feature.minigames.QuizGame
+import fr.aumombelli.dstcg.feature.minigames.QuizGameBuildResult
+import fr.aumombelli.dstcg.feature.minigames.buildQuizGame
+import fr.aumombelli.dstcg.model.CardDefinition
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.MiniGameDifficulty
 import fr.aumombelli.dstcg.model.MiniGameId
@@ -54,6 +59,24 @@ class MiniGamesViewModelTest {
     }
 
     @Test
+    fun `opening quiz then returning before difficulty does not consume attempt`() = runTest {
+        val fixture = newQuizFixture()
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openQuiz()
+        advanceUntilIdle()
+        viewModel.backToMenu()
+        advanceUntilIdle()
+
+        val dailyState = fixture.progressGateway.progress.miniGamesProgress
+            .dailyStateFor(MiniGameId.Quiz, "2026-05-10")
+        assertTrue(viewModel.uiState.value.screen is MiniGamesScreenUiState.Menu)
+        assertTrue(!dailyState.hasPlayed)
+        assertNull(dailyState.reward)
+    }
+
+    @Test
     fun `selecting memory difficulty consumes attempt without reward`() = runTest {
         val fixture = newFixture(cardCount = 2)
         val viewModel = fixture.newViewModel()
@@ -75,6 +98,26 @@ class MiniGamesViewModelTest {
     }
 
     @Test
+    fun `selecting quiz difficulty consumes attempt without reward`() = runTest {
+        val fixture = newQuizFixture()
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openQuiz()
+        advanceUntilIdle()
+        viewModel.selectQuizDifficulty(MiniGameDifficulty.Apprentice)
+        advanceUntilIdle()
+
+        val dailyState = fixture.progressGateway.progress.miniGamesProgress
+            .dailyStateFor(MiniGameId.Quiz, "2026-05-10")
+        val playing = viewModel.uiState.value.screen as MiniGamesScreenUiState.QuizPlaying
+        assertTrue(dailyState.hasPlayed)
+        assertNull(dailyState.reward)
+        assertEquals(0, playing.score)
+        assertEquals(1, playing.questionCount)
+    }
+
+    @Test
     fun `completing apprentice memory grants reward and unlocks observer`() = runTest {
         val fixture = newFixture(cardCount = 2)
         val viewModel = fixture.newViewModel()
@@ -89,8 +132,99 @@ class MiniGamesViewModelTest {
         val progress = fixture.progressGateway.progress.miniGamesProgress
         val dailyState = progress.dailyStateFor(MiniGameId.Memory, "2026-05-10")
         assertTrue(viewModel.uiState.value.screen is MiniGamesScreenUiState.MemoryResult)
-        assertEquals(MiniGameReward(reductionMinutes = 15L), dailyState.reward)
+        assertEquals(MiniGameReward.fromMinutes(15L), dailyState.reward)
         assertEquals(MiniGameDifficulty.Observer, progress.unlockedDifficultyFor(MiniGameId.Memory))
+    }
+
+    @Test
+    fun `wrong quiz answer is corrected immediately`() = runTest {
+        val fixture = newQuizFixture()
+        val expectedQuiz = fixture.buildQuiz(MiniGameDifficulty.Apprentice)
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openQuiz()
+        advanceUntilIdle()
+        viewModel.selectQuizDifficulty(MiniGameDifficulty.Apprentice)
+        advanceUntilIdle()
+        val correctAnswer = expectedQuiz.questions.first().correctAnswer
+        val wrongAnswer = expectedQuiz.questions.first().answers.first { it != correctAnswer }
+
+        selectQuizAnswer(viewModel, wrongAnswer)
+
+        val updated = viewModel.uiState.value.screen as MiniGamesScreenUiState.QuizPlaying
+        assertEquals(0, updated.score)
+        assertTrue(updated.canAdvance)
+        assertEquals(MiniGameFeedbackTone.Error, updated.feedbackEvent?.tone)
+        assertEquals(QuizAnswerState.SelectedWrong, updated.answers.single { it.text == wrongAnswer }.state)
+        assertEquals(QuizAnswerState.Correct, updated.answers.single { it.text == correctAnswer }.state)
+    }
+
+    @Test
+    fun `partial quiz score grants proportional reward in seconds`() = runTest {
+        val fixture = newQuizFixture(quizUnlockedDifficulty = MiniGameDifficulty.Observer)
+        val expectedQuiz = fixture.buildQuiz(MiniGameDifficulty.Observer)
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openQuiz()
+        advanceUntilIdle()
+        viewModel.selectQuizDifficulty(MiniGameDifficulty.Observer)
+        advanceUntilIdle()
+        selectQuizAnswer(viewModel, expectedQuiz.questions[0].correctAnswer)
+        viewModel.continueQuiz()
+        val wrongAnswer = expectedQuiz.questions[1].answers.first { it != expectedQuiz.questions[1].correctAnswer }
+        selectQuizAnswer(viewModel, wrongAnswer)
+        viewModel.continueQuiz()
+        advanceUntilIdle()
+
+        val progress = fixture.progressGateway.progress.miniGamesProgress
+        val dailyState = progress.dailyStateFor(MiniGameId.Quiz, "2026-05-10")
+        val result = viewModel.uiState.value.screen as MiniGamesScreenUiState.QuizResult
+        assertEquals(MiniGameReward.fromSeconds(1_350L), dailyState.reward)
+        assertEquals("1/2", result.scoreLabel)
+        assertEquals(MiniGameDifficulty.Observer, progress.unlockedDifficultyFor(MiniGameId.Quiz))
+    }
+
+    @Test
+    fun `perfect apprentice quiz grants reward and unlocks observer`() = runTest {
+        val fixture = newQuizFixture()
+        val expectedQuiz = fixture.buildQuiz(MiniGameDifficulty.Apprentice)
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openQuiz()
+        advanceUntilIdle()
+        viewModel.selectQuizDifficulty(MiniGameDifficulty.Apprentice)
+        advanceUntilIdle()
+        selectQuizAnswer(viewModel, expectedQuiz.questions[0].correctAnswer)
+        viewModel.continueQuiz()
+        advanceUntilIdle()
+
+        val progress = fixture.progressGateway.progress.miniGamesProgress
+        val dailyState = progress.dailyStateFor(MiniGameId.Quiz, "2026-05-10")
+        assertTrue(viewModel.uiState.value.screen is MiniGamesScreenUiState.QuizResult)
+        assertEquals(MiniGameReward.fromMinutes(15L), dailyState.reward)
+        assertEquals(MiniGameDifficulty.Observer, progress.unlockedDifficultyFor(MiniGameId.Quiz))
+    }
+
+    @Test
+    fun `leaving quiz after difficulty consumes attempt without reward`() = runTest {
+        val fixture = newQuizFixture()
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openQuiz()
+        advanceUntilIdle()
+        viewModel.selectQuizDifficulty(MiniGameDifficulty.Apprentice)
+        advanceUntilIdle()
+        viewModel.backToMenu()
+        advanceUntilIdle()
+
+        val dailyState = fixture.progressGateway.progress.miniGamesProgress
+            .dailyStateFor(MiniGameId.Quiz, "2026-05-10")
+        assertTrue(dailyState.hasPlayed)
+        assertNull(dailyState.reward)
     }
 
     @Test
@@ -247,9 +381,40 @@ class MiniGamesViewModelTest {
         }
     }
 
+    private fun selectQuizAnswer(
+        viewModel: MiniGamesViewModel,
+        answer: String,
+    ) {
+        val playing = viewModel.uiState.value.screen as MiniGamesScreenUiState.QuizPlaying
+        val index = playing.answers.single { it.text == answer }.index
+        viewModel.selectQuizAnswer(index)
+    }
+
+    private fun newQuizFixture(
+        quizUnlockedDifficulty: MiniGameDifficulty = MiniGameDifficulty.Apprentice,
+    ): Fixture {
+        val cards = quizCards()
+        return newFixture(
+            cardCount = cards.size,
+            quizUnlockedDifficulty = quizUnlockedDifficulty,
+            cardDefinitions = cards,
+            variants = cards.associate { card ->
+                card.id to listOf(OwnedVariantCount("city", "standard", 1))
+            },
+        )
+    }
+
     private fun newFixture(
         cardCount: Int,
         unlockedDifficulty: MiniGameDifficulty = MiniGameDifficulty.Apprentice,
+        quizUnlockedDifficulty: MiniGameDifficulty = MiniGameDifficulty.Apprentice,
+        cardDefinitions: List<CardDefinition> = (1..cardCount).map { index ->
+            testCardDefinition(
+                id = "ALP-${index.toString().padStart(3, '0')}",
+                extensionId = "alpha",
+                name = "Carte $index",
+            )
+        },
         variants: Map<String, List<OwnedVariantCount>> = (1..cardCount).associate { index ->
             "ALP-${index.toString().padStart(3, '0')}" to listOf(
                 OwnedVariantCount("city", "standard", 1),
@@ -273,7 +438,10 @@ class MiniGamesViewModelTest {
                     lastChargeEvaluationAt = now.toString(),
                 ),
                 miniGamesProgress = MiniGamesProgress(
-                    unlockedDifficulties = mapOf(MiniGameId.Memory to unlockedDifficulty),
+                    unlockedDifficulties = mapOf(
+                        MiniGameId.Memory to unlockedDifficulty,
+                        MiniGameId.Quiz to quizUnlockedDifficulty,
+                    ),
                 ),
             )
         }
@@ -285,13 +453,7 @@ class MiniGamesViewModelTest {
                     coverImageRef = "cover",
                 ),
             )
-            cards = (1..cardCount).map { index ->
-                testCardDefinition(
-                    id = "ALP-${index.toString().padStart(3, '0')}",
-                    extensionId = "alpha",
-                    name = "Carte $index",
-                )
-            }
+            cards = cardDefinitions
             variantProfiles = testVariantProfiles()
         }
         val repository = MiniGamesRepository(
@@ -316,5 +478,56 @@ class MiniGamesViewModelTest {
             catalogRepository = catalogGateway,
             progressRepository = progressGateway,
         )
+
+        suspend fun buildQuiz(difficulty: MiniGameDifficulty): QuizGame {
+            val state = repository.loadMiniGamesState()
+            val resolvedCards = repository.prepareResolvedCardsForToday(
+                miniGameId = MiniGameId.Quiz,
+                slotCount = 1,
+            )
+            val result = buildQuizGame(
+                difficulty = difficulty,
+                dateUtc = state.todayUtc,
+                resolvedCards = resolvedCards,
+                cards = catalogGateway.cards,
+                extensions = catalogGateway.extensions,
+                variantProfiles = catalogGateway.variantProfiles,
+            )
+            return when (result) {
+                is QuizGameBuildResult.Ready -> result.game
+                is QuizGameBuildResult.Unavailable -> error(result.message)
+            }
+        }
+    }
+
+    private fun quizCards(): List<CardDefinition> {
+        val objectTypes = listOf(
+            "Nébuleuse",
+            "Galaxie",
+            "Étoile",
+            "Constellation",
+            "Amas ouvert",
+            "Planète",
+        )
+        val constellations = listOf("Orion", "Cygne", "Lyre", "Aigle", "Andromède", "Taureau")
+        val seasons = listOf("Hiver", "Été", "Printemps", "Automne", "Toute l'année", "Fin d'été")
+        val catalogs = listOf("Messier", "Bayer", "NGC", "IAU", "Caldwell", "Système solaire")
+        return objectTypes.indices.map { index ->
+            val id = "ALP-${(index + 1).toString().padStart(3, '0')}"
+            val base = testCardDefinition(
+                id = id,
+                extensionId = "alpha",
+                name = "Carte ${index + 1}",
+            )
+            base.copy(
+                astronomy = base.astronomy.copy(
+                    objectTypeLabel = objectTypes[index],
+                    constellation = constellations[index],
+                    mainSeason = seasons[index],
+                    primaryCatalogName = catalogs[index],
+                    catalogNumber = "REF-${index + 1}",
+                ),
+            )
+        }
     }
 }

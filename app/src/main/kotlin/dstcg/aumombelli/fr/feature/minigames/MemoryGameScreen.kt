@@ -114,6 +114,8 @@ internal fun MemoryGameScreen(
                     modifier = Modifier
                         .align(Alignment.Center),
                 )
+
+                else -> Unit
             }
         }
     }
