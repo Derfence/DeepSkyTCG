@@ -50,7 +50,7 @@ internal fun MemoryGameScreen(
             .testTag("memory-screen"),
     ) {
         MiniGameSceneBackdrop(
-            variant = SkyBackdropVariant.Mountain,
+            variant = SkyBackdropVariant.Suburban,
             sparkleBoost = if (state.screen is MiniGamesScreenUiState.MemoryPlaying) 0.28f else 0.18f,
             modifier = Modifier.fillMaxSize(),
         )

@@ -52,7 +52,8 @@ import kotlin.random.Random
 @Composable
 internal fun MiniGameSceneBackdrop(
     modifier: Modifier = Modifier,
-    variant: SkyBackdropVariant = SkyBackdropVariant.Mountain,
+    variant: SkyBackdropVariant = SkyBackdropVariant.Suburban,
+    mountainBlendProgress: Float = 0f,
     sparkleBoost: Float = 0.16f,
 ) {
     val performanceProfile = LocalAppPerformanceProfile.current
@@ -65,7 +66,7 @@ internal fun MiniGameSceneBackdrop(
             variant = variant,
             cameraTiltProgress = 0.08f,
             horizonLightAlpha = 0.62f,
-            mountainBlendProgress = 0.36f,
+            mountainBlendProgress = mountainBlendProgress,
             modifier = Modifier.fillMaxSize(),
         )
         Box(
