@@ -118,6 +118,33 @@ class MiniGamesViewModelTest {
     }
 
     @Test
+    fun `quiz remains playable when catalog cannot provide distractors`() = runTest {
+        val card = testCardDefinition(
+            id = "ALP-001",
+            extensionId = "alpha",
+            name = "Carte unique",
+        )
+        val fixture = newFixture(
+            cardCount = 1,
+            quizUnlockedDifficulty = MiniGameDifficulty.Explorer,
+            cardDefinitions = listOf(card),
+            variants = mapOf(card.id to listOf(OwnedVariantCount("city", "standard", 1))),
+        )
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openQuiz()
+        advanceUntilIdle()
+        viewModel.selectQuizDifficulty(MiniGameDifficulty.Explorer)
+        advanceUntilIdle()
+
+        val playing = viewModel.uiState.value.screen as MiniGamesScreenUiState.QuizPlaying
+        assertEquals(4, playing.questionCount)
+        assertEquals(4, playing.answers.size)
+        assertTrue(playing.answers.map { it.text }.toSet().size == 4)
+    }
+
+    @Test
     fun `completing apprentice memory grants reward and unlocks observer`() = runTest {
         val fixture = newFixture(cardCount = 2)
         val viewModel = fixture.newViewModel()
@@ -206,6 +233,8 @@ class MiniGamesViewModelTest {
         assertTrue(viewModel.uiState.value.screen is MiniGamesScreenUiState.QuizResult)
         assertEquals(MiniGameReward.fromMinutes(15L), dailyState.reward)
         assertEquals(MiniGameDifficulty.Observer, progress.unlockedDifficultyFor(MiniGameId.Quiz))
+        val result = viewModel.uiState.value.screen as MiniGamesScreenUiState.QuizResult
+        assertEquals(expectedQuiz.questions[0].explanation, result.corrections.single().explanation)
     }
 
     @Test

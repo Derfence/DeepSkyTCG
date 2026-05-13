@@ -1,7 +1,5 @@
 package fr.aumombelli.dstcg.feature.minigames
 
-import fr.aumombelli.dstcg.data.MiniGameDeterministicDrawPolicy
-import fr.aumombelli.dstcg.data.stableMiniGameHash
 import fr.aumombelli.dstcg.model.CardDefinition
 import fr.aumombelli.dstcg.model.DisplayCard
 import fr.aumombelli.dstcg.model.ExtensionDefinition
@@ -43,16 +41,23 @@ internal data class QuizQuestion(
     val prompt: String,
     val correctAnswer: String,
     val answers: List<String>,
+    val explanation: String,
 )
 
-internal enum class QuizQuestionKind(
-    val prompt: String,
-) {
-    ObjectType(prompt = "Quel est le type d'objet indiqué ?"),
-    Constellation(prompt = "Dans quelle constellation se trouve cette carte ?"),
-    MainSeason(prompt = "Quelle est sa saison principale d'observation ?"),
-    PrimaryCatalog(prompt = "Quel est son catalogue principal ?"),
-    CatalogNumber(prompt = "Quelle est sa désignation dans ce catalogue ?"),
+internal enum class QuizQuestionKind {
+    ObjectType,
+    ObjectFamily,
+    Constellation,
+    MainSeason,
+    PrimaryCatalog,
+    CatalogNumber,
+    CelestialHemisphere,
+    DistanceScale,
+    VisualMoonScale,
+    RealSizeScale,
+    AbsoluteMagnitudeClass,
+    ProfileCategory,
+    SolarSystemDistanceContext,
 }
 
 internal sealed interface QuizGameBuildResult {
@@ -85,40 +90,19 @@ internal fun buildQuizGame(
     ) ?: return QuizGameBuildResult.Unavailable("La variante de la carte du jour est indisponible.")
 
     val spec = QuizDifficultySpec.forDifficulty(difficulty)
-    val questionCandidates = QuizQuestionKind.entries
-        .mapNotNull { kind ->
-            buildQuizQuestion(
-                kind = kind,
-                dateUtc = dateUtc,
-                difficulty = difficulty,
-                target = targetDefinition,
-                cards = cards,
-            )
-        }
-        .sortedWith(
-            compareBy<QuizQuestion> {
-                stableMiniGameHash(
-                    "quiz-question",
-                    "v${MiniGameDeterministicDrawPolicy.CurrentAlgorithmVersion}",
-                    dateUtc,
-                    difficulty.name,
-                    targetDefinition.id,
-                    it.kind.name,
-                )
-            }.thenBy { it.kind.name },
-        )
-
-    if (questionCandidates.size < spec.questionCount) {
-        return QuizGameBuildResult.Unavailable(
-            message = "Pas assez de réponses distinctes dans le catalogue pour préparer ce Quiz.",
-        )
-    }
+    val questions = buildQuizQuestions(
+        difficulty = difficulty,
+        dateUtc = dateUtc,
+        target = targetDefinition,
+        cards = cards,
+        questionCount = spec.questionCount,
+    )
 
     return QuizGameBuildResult.Ready(
         game = QuizGame(
             difficulty = difficulty,
             targetCard = targetCard,
-            questions = questionCandidates.take(spec.questionCount),
+            questions = questions,
         ),
     )
 }
@@ -134,75 +118,6 @@ internal fun calculateQuizReward(
     val baseRewardSeconds = maxRewardSeconds / 2L
     val scoreBonusSeconds = (baseRewardSeconds * clampedCorrectCount) / safeQuestionCount
     return MiniGameReward.fromSeconds(baseRewardSeconds + scoreBonusSeconds)
-}
-
-private fun buildQuizQuestion(
-    kind: QuizQuestionKind,
-    dateUtc: String,
-    difficulty: MiniGameDifficulty,
-    target: CardDefinition,
-    cards: List<CardDefinition>,
-): QuizQuestion? {
-    val correctAnswer = target.quizValue(kind) ?: return null
-    val distractors = cards
-        .asSequence()
-        .filter { it.id != target.id }
-        .mapNotNull { it.quizValue(kind) }
-        .filter { it != correctAnswer }
-        .distinct()
-        .sortedWith(
-            compareBy<String> {
-                stableMiniGameHash(
-                    "quiz-distractor",
-                    "v${MiniGameDeterministicDrawPolicy.CurrentAlgorithmVersion}",
-                    dateUtc,
-                    difficulty.name,
-                    target.id,
-                    kind.name,
-                    correctAnswer,
-                    it,
-                )
-            }.thenBy { it },
-        )
-        .take(QuizDistractorCount)
-        .toList()
-    if (distractors.size < QuizDistractorCount) {
-        return null
-    }
-
-    val answers = (distractors + correctAnswer)
-        .sortedWith(
-            compareBy<String> {
-                stableMiniGameHash(
-                    "quiz-answer",
-                    "v${MiniGameDeterministicDrawPolicy.CurrentAlgorithmVersion}",
-                    dateUtc,
-                    difficulty.name,
-                    target.id,
-                    kind.name,
-                    it,
-                )
-            }.thenBy { it },
-        )
-
-    return QuizQuestion(
-        id = "${target.id}-${kind.name}",
-        kind = kind,
-        prompt = kind.prompt,
-        correctAnswer = correctAnswer,
-        answers = answers,
-    )
-}
-
-private fun CardDefinition.quizValue(kind: QuizQuestionKind): String? {
-    val value = when (kind) {
-        QuizQuestionKind.ObjectType -> astronomy.objectTypeLabel
-        QuizQuestionKind.Constellation -> astronomy.constellation
-        QuizQuestionKind.MainSeason -> astronomy.mainSeason
-        QuizQuestionKind.PrimaryCatalog -> astronomy.primaryCatalogName
-        QuizQuestionKind.CatalogNumber -> astronomy.catalogNumber
-    }.trim()
-    return value.takeIf { it.isNotEmpty() }
 }
 
 private fun CardDefinition.toQuizDisplayCard(
@@ -223,5 +138,3 @@ private fun CardDefinition.toQuizDisplayCard(
         activeVariant = activeVariant,
     )
 }
-
-private const val QuizDistractorCount = 3

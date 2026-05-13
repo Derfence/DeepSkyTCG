@@ -33,15 +33,27 @@ Un score parfait débloque la difficulté suivante si elle existe.
 
 ## Questions
 
-Les questions sont factuelles et générées depuis les champs de la carte :
+Les questions sont factuelles et générées depuis la carte du jour. Le moteur normalise les champs directs, détecte la famille astronomique de la carte et produit aussi des questions dérivées simples.
+
+Champs directs utilisés :
 
 - type d'objet ;
-- constellation ;
+- grande famille astronomique ;
+- constellation quand elle est stable pour la carte ;
 - saison principale ;
 - catalogue principal ;
 - désignation dans le catalogue.
 
-Chaque question propose `4` réponses distinctes. Les distracteurs viennent des autres cartes du catalogue. Si le catalogue ne permet pas de produire assez de questions valides pour la difficulté choisie, le Quiz affiche un état indisponible sans consommer l'essai.
+Questions dérivées possibles :
+
+- hémisphère céleste depuis le signe de déclinaison, sans demander les coordonnées exactes ;
+- ordre de grandeur de distance ;
+- taille apparente comparée à la pleine Lune ;
+- ordre de grandeur de taille réelle ;
+- classe de magnitude absolue pour les étoiles et le ciel profond ;
+- questions adaptées aux objets du Système solaire.
+
+Chaque question propose `4` réponses distinctes. Les distracteurs viennent d'abord des autres cartes du catalogue, puis de listes contrôlées et de réponses synthétiques par ordre de grandeur. Une difficulté ne devient plus indisponible par manque de distracteurs ; l'état indisponible est réservé aux blocages techniques comme l'absence de carte du jour, de définition catalogue ou de variante affichable.
 
 ## Déroulement
 

@@ -513,6 +513,11 @@ private fun QuizCorrectionRow(
             color = tint,
             style = MaterialTheme.typography.bodyMedium,
         )
+        Text(
+            text = correction.explanation,
+            color = Color(0xFFD8E8F1),
+            style = MaterialTheme.typography.bodySmall,
+        )
     }
 }
 

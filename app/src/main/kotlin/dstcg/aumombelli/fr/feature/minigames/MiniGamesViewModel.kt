@@ -132,6 +132,7 @@ internal data class QuizCorrectionUi(
     val prompt: String,
     val selectedAnswer: String,
     val correctAnswer: String,
+    val explanation: String,
     val isCorrect: Boolean,
 )
 
@@ -304,6 +305,7 @@ internal class MiniGamesViewModel(
             prompt = question.prompt,
             selectedAnswer = selectedAnswer,
             correctAnswer = question.correctAnswer,
+            explanation = question.explanation,
             isCorrect = isCorrect,
         )
         feedbackEvent = nextFeedbackEvent(
