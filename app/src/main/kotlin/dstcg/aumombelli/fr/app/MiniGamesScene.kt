@@ -66,6 +66,7 @@ internal fun MiniGamesScene(
             onBack = navigateBackToHome,
             onOpenQuiz = miniGamesViewModel::openQuiz,
             onOpenMemory = miniGamesViewModel::openMemory,
+            onResetDailyAttempts = miniGamesViewModel::resetDailyAttemptsForDebug,
             onOpenTimeline = miniGamesViewModel::openTimeline,
             contentVisible = sceneState.miniGamesMenuContentVisible,
             interactionsEnabled = !sceneState.transitionLocked,

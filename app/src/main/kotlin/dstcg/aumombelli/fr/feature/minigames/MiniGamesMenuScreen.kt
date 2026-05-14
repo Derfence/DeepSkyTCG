@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -51,6 +52,7 @@ internal fun MiniGamesMenuScreen(
     onOpenQuiz: () -> Unit,
     onOpenMemory: () -> Unit,
     onOpenTimeline: () -> Unit,
+    onResetDailyAttempts: () -> Unit,
     contentVisible: Boolean = true,
     interactionsEnabled: Boolean = true,
     modifier: Modifier = Modifier,
@@ -171,6 +173,20 @@ internal fun MiniGamesMenuScreen(
                     .align(Alignment.TopCenter)
                     .padding(top = 4.dp),
             )
+
+            Button(
+                onClick = onResetDailyAttempts,
+                enabled = interactionsEnabled && !state.isLoading,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .testTag("mini-games-reset-daily"),
+            ) {
+                Text(
+                    text = "Reset essais",
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
 
             state.errorMessage?.let { message ->
                 Surface(

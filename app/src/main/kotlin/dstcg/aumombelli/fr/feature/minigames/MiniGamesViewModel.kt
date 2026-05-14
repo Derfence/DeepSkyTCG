@@ -344,6 +344,39 @@ internal class MiniGamesViewModel(
         clearActiveTimeline()
         refresh()
     }
+    
+    fun resetDailyAttemptsForDebug() {
+        if (_uiState.value.isLoading) return
+        clearActiveBoard()
+        clearActiveQuiz()
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            runCatching {
+                progressRepository.updateProgress { progress ->
+                    progress.copy(
+                        miniGamesProgress = progress.miniGamesProgress.copy(
+                            dailyStates = progress.miniGamesProgress.dailyStates.mapValues { (_, dailyState) ->
+                                dailyState.copy(
+                                    hasPlayed = false,
+                                    reward = null,
+                                )
+                            },
+                        ),
+                    )
+                }
+                miniGamesRepository.loadMiniGamesState()
+            }.onSuccess { state ->
+                _uiState.value = state.toUiState(screen = MiniGamesScreenUiState.Menu)
+            }.onFailure { error ->
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        errorMessage = error.message ?: "Impossible de réinitialiser les essais.",
+                    )
+                }
+            }
+        }
+    }
 
     fun selectQuizDifficulty(difficulty: MiniGameDifficulty) {
         val current = _uiState.value
