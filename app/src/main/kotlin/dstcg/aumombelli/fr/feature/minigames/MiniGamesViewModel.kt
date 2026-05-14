@@ -110,6 +110,7 @@ internal sealed interface MiniGamesScreenUiState {
         val rewardLabel: String,
         val slots: List<TimelineSlotUi>,
         val handCards: List<TimelineCardUi>,
+        val handSlots: List<TimelineCardUi?> = handCards,
         val canValidate: Boolean,
         val feedbackEvent: MiniGameFeedbackEvent?,
     ) : MiniGamesScreenUiState
@@ -203,6 +204,7 @@ internal data class TimelineCardUi(
 internal data class TimelineSlotUi(
     val index: Int,
     val placedCard: TimelineCardUi?,
+    val emptyLabel: String? = null,
 ) {
     val testTag: String = "timeline-slot-$index"
 }
@@ -244,6 +246,7 @@ internal class MiniGamesViewModel(
     private var quizCompletionStarted: Boolean = false
     private var activeTimeline: TimelineGame? = null
     private var timelinePlacements: List<String?> = emptyList()
+    private var timelineHandSlots: List<String?> = emptyList()
     private var timelineCompletionStarted: Boolean = false
 
     init {
@@ -519,12 +522,53 @@ internal class MiniGamesViewModel(
         if (timeline.cards.none { it.id == cardId }) return
 
         val updatedPlacements = timelinePlacements.toMutableList()
-        val previousSlot = updatedPlacements.indexOf(cardId)
-        if (previousSlot >= 0) {
-            updatedPlacements[previousSlot] = null
+        val updatedHandSlots = normalizedTimelineHandSlots(
+            timeline = timeline,
+            handSlots = timelineHandSlots,
+            placements = timelinePlacements,
+        ).toMutableList()
+        val sourceSlotIndex = updatedPlacements.indexOf(cardId)
+        if (sourceSlotIndex == slotIndex) return
+        val sourceHandSlotIndex = updatedHandSlots.indexOf(cardId)
+        if (sourceSlotIndex < 0 && sourceHandSlotIndex < 0) return
+
+        val displacedCardId = updatedPlacements[slotIndex]
+        if (sourceSlotIndex >= 0) {
+            updatedPlacements[sourceSlotIndex] = displacedCardId
+        } else if (sourceHandSlotIndex >= 0) {
+            updatedHandSlots[sourceHandSlotIndex] = displacedCardId
         }
+        updatedHandSlots.removeTimelineHandCard(cardId)
         updatedPlacements[slotIndex] = cardId
         timelinePlacements = updatedPlacements
+        timelineHandSlots = updatedHandSlots
+        feedbackEvent = null
+        publishTimelinePlayingState()
+    }
+
+    fun returnTimelineCardToHand(cardId: String, handSlotIndex: Int) {
+        val timeline = activeTimeline ?: return
+        if (timelineCompletionStarted) return
+        if (handSlotIndex !in timeline.cards.indices) return
+        if (timeline.cards.none { it.id == cardId }) return
+
+        val previousSlot = timelinePlacements.indexOf(cardId)
+        if (previousSlot < 0) return
+
+        val updatedHandSlots = normalizedTimelineHandSlots(
+            timeline = timeline,
+            handSlots = timelineHandSlots,
+            placements = timelinePlacements,
+        ).toMutableList()
+        if (updatedHandSlots[handSlotIndex] != null) return
+
+        val updatedPlacements = timelinePlacements.toMutableList()
+        updatedPlacements[previousSlot] = null
+        updatedHandSlots.removeTimelineHandCard(cardId)
+        updatedHandSlots[handSlotIndex] = cardId
+
+        timelinePlacements = updatedPlacements
+        timelineHandSlots = updatedHandSlots
         feedbackEvent = null
         publishTimelinePlayingState()
     }
@@ -750,6 +794,7 @@ internal class MiniGamesViewModel(
             is MiniGameAttemptConsumeResult.Consumed -> {
                 activeTimeline = game
                 timelinePlacements = List(game.cards.size) { null }
+                timelineHandSlots = game.cards.map(TimelineCard::id)
                 timelineCompletionStarted = false
                 feedbackEvent = null
                 _uiState.value = consumed.miniGamesProgress.toUiState(
@@ -991,7 +1036,12 @@ internal class MiniGamesViewModel(
     }
 
     private fun buildTimelinePlayingState(timeline: TimelineGame): MiniGamesScreenUiState.TimelinePlaying {
-        val placedIds = timelinePlacements.toSet()
+        val handSlotIds = normalizedTimelineHandSlots(
+            timeline = timeline,
+            handSlots = timelineHandSlots,
+            placements = timelinePlacements,
+        )
+        val cardsById = timeline.cards.associateBy(TimelineCard::id)
         return MiniGamesScreenUiState.TimelinePlaying(
             criterionTitle = timeline.criterion.title,
             instruction = timeline.criterion.instruction,
@@ -1002,11 +1052,16 @@ internal class MiniGamesViewModel(
                     placedCard = timelinePlacements.getOrNull(index)
                         ?.let { cardId -> timeline.cards.firstOrNull { it.id == cardId } }
                         ?.toUi(),
+                    emptyLabel = timeline.criterion.emptySlotLabelFor(
+                        index = index,
+                        slotCount = timeline.correctOrder.size,
+                    ),
                 )
             },
-            handCards = timeline.cards
-                .filter { it.id !in placedIds }
+            handCards = handSlotIds
+                .mapNotNull { cardId -> cardId?.let(cardsById::get) }
                 .map(TimelineCard::toUi),
+            handSlots = handSlotIds.map { cardId -> cardId?.let(cardsById::get)?.toUi() },
             canValidate = timelinePlacements.size == timeline.cards.size &&
                 timelinePlacements.all { it != null } &&
                 !timelineCompletionStarted,
@@ -1209,6 +1264,7 @@ internal class MiniGamesViewModel(
     private fun clearActiveTimeline() {
         activeTimeline = null
         timelinePlacements = emptyList()
+        timelineHandSlots = emptyList()
         timelineCompletionStarted = false
         feedbackEvent = null
     }
@@ -1286,7 +1342,37 @@ internal class MiniGamesViewModel(
             else -> MiniGamesScreenUiState.TimelineUnavailable(
                 message = "Ton essai Timeline est déjà utilisé pour aujourd'hui.",
             )
-        }
+    }
+}
+
+private fun TimelineCriterion.emptySlotLabelFor(
+    index: Int,
+    slotCount: Int,
+): String? = when (index) {
+    0 -> firstSlotLabel
+    slotCount - 1 -> lastSlotLabel
+    else -> null
+}
+
+private fun normalizedTimelineHandSlots(
+    timeline: TimelineGame,
+    handSlots: List<String?>,
+    placements: List<String?>,
+): List<String?> {
+    if (handSlots.size == timeline.cards.size) {
+        return handSlots
+    }
+    val placedIds = placements.filterNotNull().toSet()
+    return timeline.cards.map { card ->
+        card.id.takeIf { it !in placedIds }
+    }
+}
+
+private fun MutableList<String?>.removeTimelineHandCard(cardId: String) {
+    val currentIndex = indexOf(cardId)
+    if (currentIndex >= 0) {
+        this[currentIndex] = null
+    }
 }
 
 private fun TimelineCard.toUi(): TimelineCardUi =

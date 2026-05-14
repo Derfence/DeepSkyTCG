@@ -89,6 +89,7 @@ class MiniGamesMenuScreenTest {
                     onOpenQuiz = {},
                     onOpenMemory = {},
                     onOpenTimeline = {},
+                    onResetDailyAttempts = {},
                 )
             }
         }

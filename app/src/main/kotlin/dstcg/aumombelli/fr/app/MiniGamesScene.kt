@@ -89,6 +89,7 @@ internal fun MiniGamesScene(
             state = uiState,
             onBackToMenu = miniGamesViewModel::backToMenu,
             onPlaceCard = miniGamesViewModel::placeTimelineCard,
+            onReturnCardToHand = miniGamesViewModel::returnTimelineCardToHand,
             onValidate = miniGamesViewModel::validateTimeline,
         )
 

@@ -31,6 +31,14 @@ class TimelineGameLogicTest {
     )
 
     @Test
+    fun `criterion endpoint labels explain first and last slots`() {
+        assertEquals("La plus proche", TimelineCriterion.StellarDistance.firstSlotLabel)
+        assertEquals("La plus lointaine", TimelineCriterion.StellarDistance.lastSlotLabel)
+        assertEquals("La plus lumineuse", TimelineCriterion.Luminosity.firstSlotLabel)
+        assertEquals("La moins lumineuse", TimelineCriterion.Luminosity.lastSlotLabel)
+    }
+
+    @Test
     fun `distance criterion sorts nearest to farthest`() {
         val cards = listOf(
             deepSkyCard("ALP-003", distance = 300.0),

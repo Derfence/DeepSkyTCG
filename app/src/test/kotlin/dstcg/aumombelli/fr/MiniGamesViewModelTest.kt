@@ -100,10 +100,110 @@ class MiniGamesViewModelTest {
         val dailyState = fixture.progressGateway.progress.miniGamesProgress
             .dailyStateFor(MiniGameId.Timeline, "2026-05-10")
         val playing = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelinePlaying
+        val expectedTimeline = fixture.buildTimeline()
         assertTrue(dailyState.hasPlayed)
         assertNull(dailyState.reward)
         assertEquals(playing.slots.size, playing.handCards.size)
+        assertEquals(playing.slots.size, playing.handSlots.size)
+        assertEquals(expectedTimeline.criterion.firstSlotLabel, playing.slots.first().emptyLabel)
+        assertEquals(expectedTimeline.criterion.lastSlotLabel, playing.slots.last().emptyLabel)
         assertTrue(!playing.canValidate)
+    }
+
+    @Test
+    fun `placing a timeline card keeps hand positions stable`() = runTest {
+        val fixture = newTimelineFixture()
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openTimeline()
+        advanceUntilIdle()
+        val initial = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelinePlaying
+        val firstHandCard = initial.handSlots.filterNotNull().first()
+        val secondHandCard = initial.handSlots.filterNotNull()[1]
+        val firstIndex = initial.handSlots.indexOf(firstHandCard)
+        val secondIndex = initial.handSlots.indexOf(secondHandCard)
+
+        viewModel.placeTimelineCard(firstHandCard.id, slotIndex = 0)
+        val updated = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelinePlaying
+
+        assertEquals(initial.handSlots.size, updated.handSlots.size)
+        assertNull(updated.handSlots[firstIndex])
+        assertEquals(secondHandCard.id, updated.handSlots[secondIndex]?.id)
+        assertEquals(firstHandCard.id, updated.slots[0].placedCard?.id)
+    }
+
+    @Test
+    fun `returning a placed timeline card fills selected empty hand slot`() = runTest {
+        val fixture = newTimelineFixture()
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openTimeline()
+        advanceUntilIdle()
+        val initial = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelinePlaying
+        val firstHandCard = initial.handSlots.filterNotNull().first()
+        val secondHandCard = initial.handSlots.filterNotNull()[1]
+        val firstIndex = initial.handSlots.indexOf(firstHandCard)
+        val secondIndex = initial.handSlots.indexOf(secondHandCard)
+
+        viewModel.placeTimelineCard(firstHandCard.id, slotIndex = 0)
+        viewModel.placeTimelineCard(secondHandCard.id, slotIndex = 1)
+        viewModel.returnTimelineCardToHand(firstHandCard.id, handSlotIndex = secondIndex)
+        val updated = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelinePlaying
+
+        assertNull(updated.slots[0].placedCard)
+        assertEquals(firstHandCard.id, updated.handSlots[secondIndex]?.id)
+        assertNull(updated.handSlots[firstIndex])
+        assertEquals(secondHandCard.id, updated.slots[1].placedCard?.id)
+    }
+
+    @Test
+    fun `placing a hand timeline card on occupied slot swaps with hand origin`() = runTest {
+        val fixture = newTimelineFixture()
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openTimeline()
+        advanceUntilIdle()
+        val initial = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelinePlaying
+        val firstHandCard = initial.handSlots.filterNotNull().first()
+        val secondHandCard = initial.handSlots.filterNotNull()[1]
+        val firstIndex = initial.handSlots.indexOf(firstHandCard)
+        val secondIndex = initial.handSlots.indexOf(secondHandCard)
+
+        viewModel.placeTimelineCard(firstHandCard.id, slotIndex = 0)
+        viewModel.placeTimelineCard(secondHandCard.id, slotIndex = 0)
+        val updated = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelinePlaying
+
+        assertEquals(secondHandCard.id, updated.slots[0].placedCard?.id)
+        assertNull(updated.handSlots[firstIndex])
+        assertEquals(firstHandCard.id, updated.handSlots[secondIndex]?.id)
+    }
+
+    @Test
+    fun `placing a slotted timeline card on occupied slot swaps slots`() = runTest {
+        val fixture = newTimelineFixture()
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openTimeline()
+        advanceUntilIdle()
+        val initial = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelinePlaying
+        val firstHandCard = initial.handSlots.filterNotNull().first()
+        val secondHandCard = initial.handSlots.filterNotNull()[1]
+        val firstIndex = initial.handSlots.indexOf(firstHandCard)
+        val secondIndex = initial.handSlots.indexOf(secondHandCard)
+
+        viewModel.placeTimelineCard(firstHandCard.id, slotIndex = 0)
+        viewModel.placeTimelineCard(secondHandCard.id, slotIndex = 1)
+        viewModel.placeTimelineCard(firstHandCard.id, slotIndex = 1)
+        val updated = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelinePlaying
+
+        assertEquals(secondHandCard.id, updated.slots[0].placedCard?.id)
+        assertEquals(firstHandCard.id, updated.slots[1].placedCard?.id)
+        assertNull(updated.handSlots[firstIndex])
+        assertNull(updated.handSlots[secondIndex])
     }
 
     @Test

@@ -36,7 +36,15 @@ Le critère retenu filtre aussi les cartes éligibles au tirage et aux fallbacks
 
 Timeline prépare jusqu'à `5` cartes compatibles. Elle accepte une main de `4`, `3` ou `2` cartes si la bibliothèque ne permet pas d'en afficher davantage.
 
-Le joueur classe les cartes par glisser-déposer dans des emplacements ordonnés, puis valide lorsque tous les emplacements sont remplis. Les cartes peuvent être déplacées depuis la main ou depuis un emplacement déjà rempli.
+Le joueur classe les cartes par glisser-déposer dans une timeline horizontale scrollable. Les emplacements ont le format des cartes, avec un affichage agrandi pour rester lisibles, et la main est placée sous la timeline avec les cartes partiellement visibles au bord bas du plateau. Les cartes jouables affichent directement la carte complète, sans cadre secondaire ni nom ajouté sous la carte, afin d'utiliser toute la place disponible. Quand le cadre vertical est trop court pour tout afficher, la timeline remonte au plus haut possible ; dès que les emplacements et la main peuvent être visibles entièrement, l'ensemble est centré verticalement.
+
+La main conserve des positions fixes : quand une carte est placée dans la timeline, son emplacement d'origine reste vide afin que les autres cartes ne se déplacent pas. Une carte déjà placée peut être glissée vers n'importe quelle place vide de la main pour la retirer de la timeline. Déposer une carte sur un emplacement occupé échange les deux cartes : l'ancienne carte prend la place d'origine de la carte déplacée, que celle-ci vienne de la main ou d'un autre emplacement.
+
+Les zones de dépôt suivent les emplacements visibles : une carte est placée lorsque son centre visuel arrive dans un emplacement. Une carte déjà placée repasse au premier plan lorsqu'elle est glissée vers un autre emplacement.
+
+Les emplacements extrêmes explicitent le sens du classement sans numéro visible : par exemple `La plus proche` / `La plus lointaine`, `La plus lumineuse` / `La moins lumineuse` ou `Le plus au sud` / `Le plus au nord` selon le critère du jour. Les emplacements intermédiaires restent sans texte.
+
+Le bouton de validation apparaît uniquement lorsque tous les emplacements sont remplis. Son espace est réservé dès l'ouverture pour éviter de redimensionner le plateau au moment de son apparition. Les cartes peuvent être déplacées depuis la main ou depuis un emplacement déjà rempli.
 
 ## Correction
 

@@ -19,36 +19,50 @@ internal enum class TimelineCriterion(
     val id: String,
     val title: String,
     val instruction: String,
+    val firstSlotLabel: String,
+    val lastSlotLabel: String,
 ) {
     StellarDistance(
         id = "stellar-distance",
         title = "Distance",
         instruction = "Classe les cartes de la plus proche à la plus lointaine.",
+        firstSlotLabel = "La plus proche",
+        lastSlotLabel = "La plus lointaine",
     ),
     DeepSkyRealSize(
         id = "deep-sky-real-size",
         title = "Taille réelle",
         instruction = "Classe les objets du ciel profond du plus petit au plus grand.",
+        firstSlotLabel = "Le plus petit",
+        lastSlotLabel = "Le plus grand",
     ),
     SolarSystemDiameter(
         id = "solar-system-diameter",
         title = "Diamètre",
         instruction = "Classe les objets du Système solaire du plus petit au plus grand.",
+        firstSlotLabel = "Le plus petit",
+        lastSlotLabel = "Le plus grand",
     ),
     VisualSize(
         id = "visual-size",
         title = "Taille apparente",
         instruction = "Classe les cartes de la plus petite à la plus grande dans le ciel.",
+        firstSlotLabel = "La plus petite",
+        lastSlotLabel = "La plus grande",
     ),
     Luminosity(
         id = "luminosity",
         title = "Luminosité",
         instruction = "Classe les cartes de la plus lumineuse à la moins lumineuse.",
+        firstSlotLabel = "La plus lumineuse",
+        lastSlotLabel = "La moins lumineuse",
     ),
     SkyPosition(
         id = "sky-position",
         title = "Position dans le ciel",
         instruction = "Classe les cartes du sud vers le nord.",
+        firstSlotLabel = "Le plus au sud",
+        lastSlotLabel = "Le plus au nord",
     ),
 }
 

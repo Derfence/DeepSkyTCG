@@ -1,18 +1,21 @@
 package fr.aumombelli.dstcg.feature.minigames
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -28,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
@@ -45,14 +49,21 @@ import fr.aumombelli.dstcg.ui.component.AstroCardPreviewSurface
 import fr.aumombelli.dstcg.ui.component.AstroCardSurfaceMode
 import fr.aumombelli.dstcg.ui.component.SceneNavigationButton
 import fr.aumombelli.dstcg.ui.component.SceneNavigationIcon
+import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.motion.SkyBackdropVariant
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
+
+private val TimelinePreferredCardWidth = 164.dp
+private val TimelineMinimumCardWidth = 124.dp
+private val TimelineCardGap = 18.dp
+private val TimelineValidateButtonSlotHeight = 58.dp
 
 @Composable
 internal fun TimelineGameScreen(
     state: MiniGamesUiState,
     onBackToMenu: () -> Unit,
     onPlaceCard: (String, Int) -> Unit,
+    onReturnCardToHand: (String, Int) -> Unit,
     onValidate: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -101,6 +112,7 @@ internal fun TimelineGameScreen(
                 is MiniGamesScreenUiState.TimelinePlaying -> TimelinePlayingPanel(
                     playing = screen,
                     onPlaceCard = onPlaceCard,
+                    onReturnCardToHand = onReturnCardToHand,
                     onValidate = onValidate,
                     modifier = Modifier
                         .align(Alignment.Center)
@@ -129,6 +141,7 @@ internal fun TimelineGameScreen(
 private fun TimelinePlayingPanel(
     playing: MiniGamesScreenUiState.TimelinePlaying,
     onPlaceCard: (String, Int) -> Unit,
+    onReturnCardToHand: (String, Int) -> Unit,
     onValidate: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -163,65 +176,34 @@ private fun TimelinePlayingPanel(
                 .fillMaxWidth()
                 .weight(1f),
         ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+            TimelineHorizontalBoard(
+                playing = playing,
+                slotBounds = slotBounds,
+                onSlotBoundsChanged = { index, bounds ->
+                    slotBounds = slotBounds + (index to bounds)
+                },
+                onPlaceCard = onPlaceCard,
+                onReturnCardToHand = onReturnCardToHand,
+                enabled = !playing.feedbackEvent.isCompletion(),
                 modifier = Modifier.fillMaxSize(),
-            ) {
-                playing.slots.forEach { slot ->
-                    TimelineDropSlot(
-                        slot = slot,
-                        slotBounds = slotBounds,
-                        onSlotBoundsChanged = { index, bounds ->
-                            slotBounds = slotBounds + (index to bounds)
-                        },
-                        onPlaceCard = onPlaceCard,
-                        enabled = !playing.feedbackEvent.isCompletion(),
-                    )
-                }
-            }
+            )
         }
-        Text(
-            text = "Main",
-            color = Color(0xFFD6E7F7),
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(top = 10.dp, bottom = 6.dp),
-        )
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        Box(
+            contentAlignment = Alignment.TopCenter,
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 118.dp, max = 160.dp)
-                .testTag("timeline-hand"),
+                .height(TimelineValidateButtonSlotHeight),
         ) {
-            playing.handCards.forEach { card ->
-                TimelineDraggableCard(
-                    card = card,
-                    slotBounds = slotBounds,
-                    onPlaceCard = onPlaceCard,
-                    enabled = !playing.feedbackEvent.isCompletion(),
-                    compact = false,
+            if (playing.canValidate) {
+                Button(
+                    onClick = onValidate,
                     modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                )
+                        .padding(top = 10.dp)
+                        .testTag("timeline-validate"),
+                ) {
+                    Text("Valider")
+                }
             }
-            repeat(playing.slots.size - playing.handCards.size) {
-                Spacer(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                )
-            }
-        }
-        Button(
-            onClick = onValidate,
-            enabled = playing.canValidate,
-            modifier = Modifier
-                .padding(top = 10.dp)
-                .testTag("timeline-validate"),
-        ) {
-            Text("Valider")
         }
     }
 }
@@ -257,55 +239,223 @@ private fun TimelineHud(
 }
 
 @Composable
-private fun TimelineDropSlot(
+private fun TimelineHorizontalBoard(
+    playing: MiniGamesScreenUiState.TimelinePlaying,
+    slotBounds: Map<Int, Rect>,
+    onSlotBoundsChanged: (Int, Rect) -> Unit,
+    onPlaceCard: (String, Int) -> Unit,
+    onReturnCardToHand: (String, Int) -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val scrollState = rememberScrollState()
+    val visibleHandRatio = 0.54f
+    var draggingCardId by remember { mutableStateOf<String?>(null) }
+    var handSlotBounds by remember { mutableStateOf<Map<Int, Rect>>(emptyMap()) }
+
+    BoxWithConstraints(
+        modifier = modifier
+            .clipToBounds()
+            .testTag("timeline-horizontal-scroll"),
+    ) {
+        val viewportWidth = maxWidth
+        val viewportHeight = maxHeight
+        val cardGap = TimelineCardGap
+        val sidePadding = 10.dp
+        val verticalGap = 14.dp
+        val cardHeightBudget = (viewportHeight - verticalGap) / (1f + visibleHandRatio)
+        val cardWidth = minOf(TimelinePreferredCardWidth, cardHeightBudget * TRADING_CARD_WIDTH_OVER_HEIGHT)
+            .coerceAtLeast(TimelineMinimumCardWidth)
+        val cardHeight = cardWidth / TRADING_CARD_WIDTH_OVER_HEIGHT
+        val fullStackHeight = (cardHeight * 2f) + verticalGap
+        val baseContentWidth = (cardWidth * playing.slots.size) +
+            (cardGap * (playing.slots.size - 1).coerceAtLeast(0)) +
+            (sidePadding * 2)
+        val contentWidth = maxOf(baseContentWidth, viewportWidth + 1.dp)
+        val slotTop = if (viewportHeight >= fullStackHeight) {
+            (viewportHeight - fullStackHeight) / 2f
+        } else {
+            0.dp
+        }
+        val handTop = slotTop + cardHeight + verticalGap
+        val isDraggingPlacedCard = playing.slots.any { it.placedCard?.id == draggingCardId }
+        val isDraggingHandCard = playing.handSlots.any { it?.id == draggingCardId }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .horizontalScroll(scrollState),
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(contentWidth)
+                    .height(viewportHeight)
+                    .padding(horizontal = sidePadding),
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(cardGap),
+                    modifier = Modifier
+                        .zIndex(if (isDraggingPlacedCard) 10f else 0f)
+                        .padding(top = slotTop),
+                ) {
+                    playing.slots.forEach { slot ->
+                        val placedCard = slot.placedCard
+                        TimelineCardSlot(
+                            slot = slot,
+                            slotBounds = slotBounds,
+                            onSlotBoundsChanged = onSlotBoundsChanged,
+                            onPlaceCard = onPlaceCard,
+                            handSlotBounds = handSlotBounds,
+                            emptyHandSlotIndexes = playing.emptyHandSlotIndexes(),
+                            onReturnCardToHand = onReturnCardToHand,
+                            onDragStateChange = { isDragging ->
+                                draggingCardId = placedCard?.id?.takeIf { isDragging }
+                            },
+                            enabled = enabled,
+                            modifier = Modifier
+                                .zIndex(if (placedCard?.id == draggingCardId) 8f else 0f)
+                                .width(cardWidth)
+                                .height(cardHeight),
+                        )
+                    }
+                }
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(cardGap),
+                    modifier = Modifier
+                        .zIndex(if (isDraggingHandCard) 10f else 0f)
+                        .padding(top = handTop)
+                        .testTag("timeline-hand"),
+                ) {
+                    playing.handSlots.forEachIndexed { index, card ->
+                        TimelineHandSlot(
+                            index = index,
+                            card = card,
+                            slotBounds = slotBounds,
+                            handSlotBounds = handSlotBounds,
+                            onHandSlotBoundsChanged = { slotIndex, bounds ->
+                                handSlotBounds = handSlotBounds + (slotIndex to bounds)
+                            },
+                            emptyHandSlotIndexes = playing.emptyHandSlotIndexes(),
+                            onPlaceCard = onPlaceCard,
+                            onReturnCardToHand = onReturnCardToHand,
+                            onDragStateChange = { isDragging ->
+                                draggingCardId = card?.id?.takeIf { isDragging }
+                            },
+                            enabled = enabled,
+                            modifier = Modifier
+                                .zIndex(if (card?.id == draggingCardId) 8f else 0f)
+                                .width(cardWidth)
+                                .height(cardHeight),
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TimelineHandSlot(
+    index: Int,
+    card: TimelineCardUi?,
+    slotBounds: Map<Int, Rect>,
+    handSlotBounds: Map<Int, Rect>,
+    onHandSlotBoundsChanged: (Int, Rect) -> Unit,
+    emptyHandSlotIndexes: Set<Int>,
+    onPlaceCard: (String, Int) -> Unit,
+    onReturnCardToHand: (String, Int) -> Unit,
+    onDragStateChange: (Boolean) -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .onGloballyPositioned { coordinates ->
+                onHandSlotBoundsChanged(index, coordinates.boundsInRoot())
+            }
+            .testTag("timeline-hand-slot-$index"),
+    ) {
+        if (card != null) {
+            TimelineDraggableCard(
+                card = card,
+                slotBounds = slotBounds,
+                onPlaceCard = onPlaceCard,
+                handSlotBounds = handSlotBounds,
+                emptyHandSlotIndexes = emptyHandSlotIndexes,
+                onReturnCardToHand = onReturnCardToHand,
+                onDragStateChange = onDragStateChange,
+                enabled = enabled,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun TimelineCardSlot(
     slot: TimelineSlotUi,
     slotBounds: Map<Int, Rect>,
     onSlotBoundsChanged: (Int, Rect) -> Unit,
     onPlaceCard: (String, Int) -> Unit,
+    handSlotBounds: Map<Int, Rect>,
+    emptyHandSlotIndexes: Set<Int>,
+    onReturnCardToHand: (String, Int) -> Unit,
+    onDragStateChange: (Boolean) -> Unit,
     enabled: Boolean,
+    modifier: Modifier = Modifier,
 ) {
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = Color(0xAA07111A),
-        contentColor = Color.White,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(58.dp)
+    val shape = RoundedCornerShape(14.dp)
+    val placedCard = slot.placedCard
+    val emptySlotDecoration = if (placedCard == null) {
+        Modifier
+            .background(Color(0xA807111A), shape)
+            .border(1.dp, Color(0x88BBDFF2), shape)
+    } else {
+        Modifier
+    }
+    Box(
+        modifier = modifier
+            .then(emptySlotDecoration)
             .onGloballyPositioned { coordinates ->
                 onSlotBoundsChanged(slot.index, coordinates.boundsInRoot())
             }
             .testTag(slot.testTag),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-        ) {
-            Text(
-                text = (slot.index + 1).toString(),
-                color = Color(0xFFF6C75D),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.widthIn(min = 24.dp),
-            )
-            val placedCard = slot.placedCard
-            if (placedCard == null) {
-                Text(
-                    text = "Dépose une carte ici",
-                    color = Color(0xFFAFC4D6),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.weight(1f),
-                )
-            } else {
-                TimelineDraggableCard(
-                    card = placedCard,
-                    slotBounds = slotBounds,
-                    onPlaceCard = onPlaceCard,
-                    enabled = enabled,
-                    compact = true,
-                    modifier = Modifier.weight(1f),
-                )
+        if (placedCard == null) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(8.dp),
+            ) {
+                val emptyLabel = slot.emptyLabel
+                if (emptyLabel != null) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(
+                            text = emptyLabel,
+                            color = Color(0xFFAFC4D6),
+                            style = MaterialTheme.typography.labelMedium,
+                            textAlign = TextAlign.Center,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
             }
+        } else {
+            TimelineDraggableCard(
+                card = placedCard,
+                slotBounds = slotBounds,
+                onPlaceCard = onPlaceCard,
+                handSlotBounds = handSlotBounds,
+                emptyHandSlotIndexes = emptyHandSlotIndexes,
+                onReturnCardToHand = onReturnCardToHand,
+                onDragStateChange = onDragStateChange,
+                enabled = enabled,
+                modifier = Modifier.fillMaxSize(),
+            )
         }
     }
 }
@@ -315,18 +465,19 @@ private fun TimelineDraggableCard(
     card: TimelineCardUi,
     slotBounds: Map<Int, Rect>,
     onPlaceCard: (String, Int) -> Unit,
+    handSlotBounds: Map<Int, Rect>,
+    emptyHandSlotIndexes: Set<Int>,
+    onReturnCardToHand: (String, Int) -> Unit,
+    onDragStateChange: (Boolean) -> Unit,
     enabled: Boolean,
-    compact: Boolean,
     modifier: Modifier = Modifier,
 ) {
     var dragOffset by remember(card.id) { mutableStateOf(Offset.Zero) }
+    var dragStartBounds by remember(card.id) { mutableStateOf<Rect?>(null) }
     var bounds by remember(card.id) { mutableStateOf<Rect?>(null) }
     val isDragging = dragOffset != Offset.Zero
 
-    Surface(
-        shape = RoundedCornerShape(if (compact) 10.dp else 12.dp),
-        color = if (compact) Color(0xCC153B4C) else Color(0xDD10283A),
-        contentColor = Color.White,
+    Box(
         modifier = modifier
             .zIndex(if (isDragging) 4f else 0f)
             .graphicsLayer {
@@ -340,26 +491,45 @@ private fun TimelineDraggableCard(
             }
             .then(
                 if (enabled) {
-                    Modifier.pointerInput(card.id, slotBounds) {
+                    Modifier.pointerInput(card.id, slotBounds, handSlotBounds, emptyHandSlotIndexes) {
                         detectDragGestures(
+                            onDragStart = {
+                                dragStartBounds = bounds
+                                onDragStateChange(true)
+                            },
                             onDrag = { change, dragAmount ->
                                 change.consume()
                                 dragOffset += dragAmount
                             },
                             onDragEnd = {
-                                val center = bounds?.center?.let { it + dragOffset }
-                                val targetSlot = center?.let { dropCenter ->
-                                    slotBounds.entries.firstOrNull { (_, slotRect) ->
-                                        slotRect.contains(dropCenter)
-                                    }?.key
-                                }
-                                if (targetSlot != null) {
-                                    onPlaceCard(card.id, targetSlot)
+                                val targetSlot = resolveTimelineDropTarget(
+                                    startBounds = dragStartBounds ?: bounds,
+                                    dragOffset = dragOffset,
+                                    slotBounds = slotBounds,
+                                )
+                                val targetHandSlot = if (targetSlot == null) {
+                                    resolveTimelineHandDropTarget(
+                                        startBounds = dragStartBounds ?: bounds,
+                                        dragOffset = dragOffset,
+                                        handSlotBounds = handSlotBounds,
+                                        emptyHandSlotIndexes = emptyHandSlotIndexes,
+                                    )
+                                } else {
+                                    null
                                 }
                                 dragOffset = Offset.Zero
+                                dragStartBounds = null
+                                onDragStateChange(false)
+                                if (targetSlot != null) {
+                                    onPlaceCard(card.id, targetSlot)
+                                } else if (targetHandSlot != null) {
+                                    onReturnCardToHand(card.id, targetHandSlot)
+                                }
                             },
                             onDragCancel = {
                                 dragOffset = Offset.Zero
+                                dragStartBounds = null
+                                onDragStateChange(false)
                             },
                         )
                     }
@@ -369,62 +539,69 @@ private fun TimelineDraggableCard(
             )
             .testTag(card.testTag),
     ) {
-        if (compact) {
-            TimelineCompactCardContent(card)
-        } else {
-            TimelineHandCardContent(card)
-        }
-    }
-}
-
-@Composable
-private fun TimelineHandCardContent(card: TimelineCardUi) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(5.dp),
-        modifier = Modifier.padding(6.dp),
-    ) {
-        AstroCardPreviewSurface(
-            displayCard = card.displayCard,
-            mode = AstroCardSurfaceMode.Thumbnail,
+        TimelinePlayableCardContent(
+            card = card,
             modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-        )
-        Text(
-            text = card.displayCard.definition.name,
-            color = Color.White,
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
+                .fillMaxSize()
+                .testTag("timeline-card-preview-${card.id}"),
         )
     }
 }
 
-@Composable
-private fun TimelineCompactCardContent(card: TimelineCardUi) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(2.dp),
-        modifier = Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
-    ) {
-        Text(
-            text = card.displayCard.definition.name,
-            color = Color.White,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Text(
-            text = card.valueLabel,
-            color = Color(0xFFD6E7F7),
-            style = MaterialTheme.typography.labelSmall,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+private fun resolveTimelineDropTarget(
+    startBounds: Rect?,
+    dragOffset: Offset,
+    slotBounds: Map<Int, Rect>,
+): Int? {
+    val cardCenter = movedCardCenter(
+        startBounds = startBounds,
+        dragOffset = dragOffset,
+    ) ?: return null
+    return slotBounds.entries.firstOrNull { (_, slotRect) ->
+        slotRect.contains(cardCenter)
+    }?.key
+}
+
+private fun resolveTimelineHandDropTarget(
+    startBounds: Rect?,
+    dragOffset: Offset,
+    handSlotBounds: Map<Int, Rect>,
+    emptyHandSlotIndexes: Set<Int>,
+): Int? {
+    val cardCenter = movedCardCenter(
+        startBounds = startBounds,
+        dragOffset = dragOffset,
+    ) ?: return null
+    return handSlotBounds.entries.firstOrNull { (index, bounds) ->
+        index in emptyHandSlotIndexes && bounds.contains(cardCenter)
+    }?.key
+}
+
+private fun movedCardCenter(
+    startBounds: Rect?,
+    dragOffset: Offset,
+): Offset? = startBounds?.let { bounds ->
+    Offset(
+        x = bounds.center.x + dragOffset.x,
+        y = bounds.center.y + dragOffset.y,
+    )
+}
+
+private fun MiniGamesScreenUiState.TimelinePlaying.emptyHandSlotIndexes(): Set<Int> =
+    handSlots.mapIndexedNotNullTo(mutableSetOf()) { index, card ->
+        index.takeIf { card == null }
     }
+
+@Composable
+private fun TimelinePlayableCardContent(
+    card: TimelineCardUi,
+    modifier: Modifier = Modifier,
+) {
+    AstroCardPreviewSurface(
+        displayCard = card.displayCard,
+        mode = AstroCardSurfaceMode.Thumbnail,
+        modifier = modifier,
+    )
 }
 
 @Composable
