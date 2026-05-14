@@ -16,6 +16,10 @@ internal data class MiniGamesUiState(
     val timelineStatusLabel: String = "Chargement",
     val timelinePlayedToday: Boolean = false,
     val timelineRewardLabel: String? = null,
+    val observatoryStatusLabel: String = "Chargement",
+    val observatoryPlayedToday: Boolean = false,
+    val observatoryRewardLabel: String? = null,
+    val observatoryDifficultyChoices: List<ObservatoryDifficultyChoiceUi> = emptyList(),
     val screen: MiniGamesScreenUiState = MiniGamesScreenUiState.Menu,
     val errorMessage: String? = null,
 )
@@ -104,6 +108,45 @@ internal sealed interface MiniGamesScreenUiState {
     ) : MiniGamesScreenUiState
 
     data class TimelineUnavailable(
+        val message: String,
+    ) : MiniGamesScreenUiState
+
+    data object ObservatoryDifficultySelection : MiniGamesScreenUiState
+
+    data class ObservatoryPlaying(
+        val difficultyName: String,
+        val rewardLabel: String,
+        val targetIndex: Int,
+        val targetCount: Int,
+        val targetCard: DisplayCard,
+        val step: ObservatoryStep,
+        val stepTitle: String,
+        val stepInstruction: String,
+        val domeProgress: Float,
+        val azimuth: Float,
+        val altitude: Float,
+        val focus: Float,
+        val targetAzimuthLabel: String,
+        val targetAltitudeLabel: String,
+        val targetFocusLabel: String,
+        val toleranceLabel: String,
+        val domeReady: Boolean,
+        val alignmentReady: Boolean,
+        val focusReady: Boolean,
+        val canClearCloud: Boolean,
+        val canCapture: Boolean,
+        val feedbackEvent: MiniGameFeedbackEvent?,
+    ) : MiniGamesScreenUiState
+
+    data class ObservatoryResult(
+        val difficultyName: String,
+        val rewardLabel: String,
+        val targetCount: Int,
+        val nextDifficultyName: String?,
+        val feedbackEvent: MiniGameFeedbackEvent? = null,
+    ) : MiniGamesScreenUiState
+
+    data class ObservatoryUnavailable(
         val message: String,
     ) : MiniGamesScreenUiState
 }

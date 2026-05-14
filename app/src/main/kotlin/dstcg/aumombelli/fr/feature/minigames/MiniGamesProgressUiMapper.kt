@@ -28,6 +28,10 @@ internal fun MiniGamesProgress.toUiState(
     val timelineDailyState = dailyStateFor(MiniGameId.Timeline, todayUtc)
     val timelineRewardLabel = timelineDailyState.reward?.let(::formatReward)
     val timelinePlayedToday = timelineDailyState.hasPlayed || timelineDailyState.reward != null
+    val observatoryDailyState = dailyStateFor(MiniGameId.Observatory, todayUtc)
+    val observatoryUnlockedDifficulty = unlockedDifficultyFor(MiniGameId.Observatory)
+    val observatoryRewardLabel = observatoryDailyState.reward?.let(::formatReward)
+    val observatoryPlayedToday = observatoryDailyState.hasPlayed || observatoryDailyState.reward != null
     return MiniGamesUiState(
         isLoading = false,
         todayUtc = todayUtc,
@@ -86,6 +90,31 @@ internal fun MiniGamesProgress.toUiState(
         },
         timelinePlayedToday = timelinePlayedToday,
         timelineRewardLabel = timelineRewardLabel,
+        observatoryStatusLabel = when {
+            observatoryRewardLabel != null -> "Joué aujourd'hui - $observatoryRewardLabel gagnées"
+            observatoryPlayedToday -> "Essai utilisé aujourd'hui"
+            else -> "Disponible - ${observatoryUnlockedDifficulty.displayName}"
+        },
+        observatoryPlayedToday = observatoryPlayedToday,
+        observatoryRewardLabel = observatoryRewardLabel,
+        observatoryDifficultyChoices = MiniGameDifficulty.entries.map { difficulty ->
+            val unlocked = difficulty.level <= observatoryUnlockedDifficulty.level
+            val spec = ObservatoryDifficultySpec.forDifficulty(difficulty)
+            ObservatoryDifficultyChoiceUi(
+                difficulty = difficulty,
+                title = difficulty.displayName,
+                targetLabel = spec.targetLabel,
+                precisionLabel = spec.precisionLabel,
+                rewardLabel = formatReward(difficulty.reward),
+                enabled = unlocked && !observatoryPlayedToday,
+                locked = !unlocked,
+                statusLabel = when {
+                    observatoryPlayedToday -> "Déjà joué"
+                    unlocked -> "Disponible"
+                    else -> "À débloquer"
+                },
+            )
+        },
         screen = screen,
     )
 }

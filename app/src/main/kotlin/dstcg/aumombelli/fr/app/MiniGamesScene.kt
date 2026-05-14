@@ -11,6 +11,7 @@ import fr.aumombelli.dstcg.feature.minigames.MemoryGameScreen
 import fr.aumombelli.dstcg.feature.minigames.MiniGamesMenuScreen
 import fr.aumombelli.dstcg.feature.minigames.MiniGamesScreenUiState
 import fr.aumombelli.dstcg.feature.minigames.MiniGamesViewModel
+import fr.aumombelli.dstcg.feature.minigames.ObservatoryGameScreen
 import fr.aumombelli.dstcg.feature.minigames.QuizGameScreen
 import fr.aumombelli.dstcg.feature.minigames.TimelineGameScreen
 import fr.aumombelli.dstcg.ui.viewmodel.DstcgViewModelFactory
@@ -68,6 +69,7 @@ internal fun MiniGamesScene(
             onOpenMemory = miniGamesViewModel::openMemory,
             onResetDailyAttempts = miniGamesViewModel::resetDailyAttemptsForDebug,
             onOpenTimeline = miniGamesViewModel::openTimeline,
+            onOpenObservatory = miniGamesViewModel::openObservatory,
             contentVisible = sceneState.miniGamesMenuContentVisible,
             interactionsEnabled = !sceneState.transitionLocked,
         )
@@ -91,6 +93,21 @@ internal fun MiniGamesScene(
             onPlaceCard = miniGamesViewModel::placeTimelineCard,
             onReturnCardToHand = miniGamesViewModel::returnTimelineCardToHand,
             onValidate = miniGamesViewModel::validateTimeline,
+        )
+
+        is MiniGamesScreenUiState.ObservatoryDifficultySelection,
+        is MiniGamesScreenUiState.ObservatoryPlaying,
+        is MiniGamesScreenUiState.ObservatoryResult,
+        is MiniGamesScreenUiState.ObservatoryUnavailable -> ObservatoryGameScreen(
+            state = uiState,
+            onBackToMenu = miniGamesViewModel::backToMenu,
+            onSelectDifficulty = miniGamesViewModel::selectObservatoryDifficulty,
+            onSetDomeProgress = miniGamesViewModel::setObservatoryDomeProgress,
+            onSetAzimuth = miniGamesViewModel::setObservatoryAzimuth,
+            onSetAltitude = miniGamesViewModel::setObservatoryAltitude,
+            onSetFocus = miniGamesViewModel::setObservatoryFocus,
+            onClearCloud = miniGamesViewModel::clearObservatoryCloud,
+            onCapture = miniGamesViewModel::captureObservatoryTarget,
         )
 
         else -> MemoryGameScreen(

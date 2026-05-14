@@ -27,3 +27,7 @@ private fun formatRewardDuration(duration: Duration): String {
 internal fun memoryDifficultyNameForReward(rewardLabel: String): String =
     MiniGameDifficulty.entries.firstOrNull { formatReward(it.reward) == rewardLabel }?.displayName
         ?: "Memory"
+
+internal fun observatoryDifficultyNameForReward(rewardLabel: String): String =
+    MiniGameDifficulty.entries.firstOrNull { formatReward(it.reward) == rewardLabel }?.displayName
+        ?: "Observatoire"

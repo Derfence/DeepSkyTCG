@@ -52,6 +52,7 @@ internal fun MiniGamesMenuScreen(
     onOpenQuiz: () -> Unit,
     onOpenMemory: () -> Unit,
     onOpenTimeline: () -> Unit,
+    onOpenObservatory: () -> Unit,
     onResetDailyAttempts: () -> Unit,
     contentVisible: Boolean = true,
     interactionsEnabled: Boolean = true,
@@ -139,12 +140,16 @@ internal fun MiniGamesMenuScreen(
             MiniGameMapNode(
                 index = "4",
                 title = "Observatoire",
-                status = "À venir",
+                status = state.observatoryStatusLabel,
                 anchorX = 0.74f,
                 anchorY = 0.26f,
-                buttonState = MiniGameMenuButtonState.Disabled,
-                interactionsEnabled = false,
-                onClick = {},
+                buttonState = when {
+                    state.isLoading -> MiniGameMenuButtonState.Loading
+                    state.observatoryPlayedToday -> MiniGameMenuButtonState.Consumed
+                    else -> MiniGameMenuButtonState.Available
+                },
+                interactionsEnabled = interactionsEnabled && !state.isLoading,
+                onClick = onOpenObservatory,
                 testTag = "mini-games-observatory",
             )
         }

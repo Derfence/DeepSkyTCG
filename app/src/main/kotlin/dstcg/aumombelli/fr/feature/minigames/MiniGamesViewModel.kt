@@ -44,6 +44,13 @@ internal class MiniGamesViewModel(
         feedbackEmitter = feedbackEmitter,
         launch = ::launchControllerWork,
     )
+    private val observatoryController = ObservatoryMiniGameController(
+        miniGamesRepository = miniGamesRepository,
+        catalogRepository = catalogRepository,
+        uiState = _uiState,
+        feedbackEmitter = feedbackEmitter,
+        launch = ::launchControllerWork,
+    )
 
     init {
         refresh()
@@ -71,6 +78,7 @@ internal class MiniGamesViewModel(
         if (_uiState.value.isLoading) return
         memoryController.clear()
         timelineController.clear()
+        observatoryController.clear()
         quizController.open()
     }
 
@@ -78,6 +86,7 @@ internal class MiniGamesViewModel(
         if (_uiState.value.isLoading) return
         quizController.clear()
         timelineController.clear()
+        observatoryController.clear()
         memoryController.open()
     }
 
@@ -85,13 +94,23 @@ internal class MiniGamesViewModel(
         if (_uiState.value.isLoading) return
         memoryController.clear()
         quizController.clear()
+        observatoryController.clear()
         timelineController.open()
+    }
+
+    fun openObservatory() {
+        if (_uiState.value.isLoading) return
+        memoryController.clear()
+        quizController.clear()
+        timelineController.clear()
+        observatoryController.open()
     }
 
     fun backToMenu() {
         memoryController.clear()
         quizController.clear()
         timelineController.clear()
+        observatoryController.clear()
         refresh()
     }
 
@@ -100,6 +119,7 @@ internal class MiniGamesViewModel(
         memoryController.clear()
         quizController.clear()
         timelineController.clear()
+        observatoryController.clear()
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             runCatching {
@@ -159,6 +179,34 @@ internal class MiniGamesViewModel(
 
     fun validateTimeline() {
         timelineController.validate()
+    }
+
+    fun selectObservatoryDifficulty(difficulty: MiniGameDifficulty) {
+        observatoryController.selectDifficulty(difficulty)
+    }
+
+    fun setObservatoryDomeProgress(progress: Float) {
+        observatoryController.setDomeProgress(progress)
+    }
+
+    fun setObservatoryAzimuth(value: Float) {
+        observatoryController.setAzimuth(value)
+    }
+
+    fun setObservatoryAltitude(value: Float) {
+        observatoryController.setAltitude(value)
+    }
+
+    fun setObservatoryFocus(value: Float) {
+        observatoryController.setFocus(value)
+    }
+
+    fun clearObservatoryCloud() {
+        observatoryController.clearCloud()
+    }
+
+    fun captureObservatoryTarget() {
+        observatoryController.captureTarget()
     }
 
     private fun launchControllerWork(block: suspend () -> Unit) {

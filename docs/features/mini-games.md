@@ -33,17 +33,18 @@ Les quatre lieux sont positionnés sur une diagonale bas-gauche vers haut-droite
 - Timeline / Campagne ;
 - Observatoire / Montagne.
 
-Les boutons `Quiz / Ville`, `Memory / Périurbain` et `Timeline / Campagne` sont actifs et utilisent le halo de node commun. Le bouton Observatoire reste visible mais désactivé tant que son gameplay n'est pas implémenté.
+Les boutons `Quiz / Ville`, `Memory / Périurbain`, `Timeline / Campagne` et `Observatoire / Montagne` sont actifs et utilisent le halo de node commun.
 
 ## Jeux implémentés
 
 - [Quiz](quiz.md)
 - [Memory](memory.md)
 - [Timeline](timeline.md)
+- [Observatoire](observatory.md)
 
 ## Socle commun
 
-Le socle commun est utilisé par Quiz et Memory, et reste prêt pour les futurs jeux :
+Le socle commun est utilisé par les mini-jeux quotidiens :
 
 - `MiniGameId` identifie Quiz, Memory, Timeline et Observatoire ;
 - `MiniGameDifficulty` porte les quatre niveaux communs et leurs réductions maximales de `15`, `30`, `45` et `60` minutes ;

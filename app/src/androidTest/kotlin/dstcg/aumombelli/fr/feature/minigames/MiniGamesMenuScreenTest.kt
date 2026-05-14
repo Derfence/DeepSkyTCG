@@ -5,7 +5,6 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -27,6 +26,8 @@ class MiniGamesMenuScreenTest {
                 quizPlayedToday = false,
                 memoryStatusLabel = "Essai utilisé aujourd'hui",
                 memoryPlayedToday = true,
+                observatoryStatusLabel = "Disponible Observatoire",
+                observatoryPlayedToday = false,
             ),
         )
 
@@ -44,8 +45,8 @@ class MiniGamesMenuScreenTest {
             .assert(hasStateDescription("Disponible"))
         composeRule.onNodeWithTag("mini-games-observatory")
             .assertIsDisplayed()
-            .assertIsNotEnabled()
-            .assert(hasStateDescription("Indisponible"))
+            .assertIsEnabled()
+            .assert(hasStateDescription("Disponible"))
 
         composeRule.onNodeWithText("Quiz universitaire").assertIsDisplayed()
         composeRule.onNodeWithText("Disponible aujourd'hui").assertIsDisplayed()
@@ -53,6 +54,7 @@ class MiniGamesMenuScreenTest {
         composeRule.onNodeWithText("Essai utilisé aujourd'hui").assertIsDisplayed()
         composeRule.onNodeWithText("Timeline").assertIsDisplayed()
         composeRule.onNodeWithText("Observatoire").assertIsDisplayed()
+        composeRule.onNodeWithText("Disponible Observatoire").assertIsDisplayed()
     }
 
     @Test
@@ -89,6 +91,7 @@ class MiniGamesMenuScreenTest {
                     onOpenQuiz = {},
                     onOpenMemory = {},
                     onOpenTimeline = {},
+                    onOpenObservatory = {},
                     onResetDailyAttempts = {},
                 )
             }

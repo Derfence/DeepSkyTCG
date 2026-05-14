@@ -6,6 +6,10 @@ import fr.aumombelli.dstcg.feature.minigames.MemoryCellState
 import fr.aumombelli.dstcg.feature.minigames.MiniGameFeedbackTone
 import fr.aumombelli.dstcg.feature.minigames.MiniGamesScreenUiState
 import fr.aumombelli.dstcg.feature.minigames.MiniGamesViewModel
+import fr.aumombelli.dstcg.feature.minigames.ObservatoryGame
+import fr.aumombelli.dstcg.feature.minigames.ObservatoryGameBuildResult
+import fr.aumombelli.dstcg.feature.minigames.ObservatoryStep
+import fr.aumombelli.dstcg.feature.minigames.buildObservatoryGame
 import fr.aumombelli.dstcg.feature.minigames.QuizAnswerState
 import fr.aumombelli.dstcg.feature.minigames.QuizGame
 import fr.aumombelli.dstcg.feature.minigames.QuizGameBuildResult
@@ -83,6 +87,23 @@ class MiniGamesViewModelTest {
 
         val dailyState = fixture.progressGateway.progress.miniGamesProgress
             .dailyStateFor(MiniGameId.Quiz, "2026-05-10")
+        assertTrue(viewModel.uiState.value.screen is MiniGamesScreenUiState.Menu)
+        assertTrue(!dailyState.hasPlayed)
+        assertNull(dailyState.reward)
+    }
+
+    @Test
+    fun `opening observatory then returning before difficulty does not consume attempt`() = runTest {
+        val fixture = newFixture(cardCount = 2)
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openObservatory()
+        viewModel.backToMenu()
+        advanceUntilIdle()
+
+        val dailyState = fixture.progressGateway.progress.miniGamesProgress
+            .dailyStateFor(MiniGameId.Observatory, "2026-05-10")
         assertTrue(viewModel.uiState.value.screen is MiniGamesScreenUiState.Menu)
         assertTrue(!dailyState.hasPlayed)
         assertNull(dailyState.reward)
@@ -270,6 +291,82 @@ class MiniGamesViewModelTest {
         assertTrue(viewModel.uiState.value.screen is MiniGamesScreenUiState.TimelineUnavailable)
         assertTrue(!dailyState.hasPlayed)
         assertNull(dailyState.reward)
+    }
+
+    @Test
+    fun `locked observatory difficulty is ignored`() = runTest {
+        val fixture = newFixture(cardCount = 4)
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openObservatory()
+        viewModel.selectObservatoryDifficulty(MiniGameDifficulty.Observer)
+        advanceUntilIdle()
+
+        val dailyState = fixture.progressGateway.progress.miniGamesProgress
+            .dailyStateFor(MiniGameId.Observatory, "2026-05-10")
+        assertTrue(viewModel.uiState.value.screen is MiniGamesScreenUiState.ObservatoryDifficultySelection)
+        assertTrue(!dailyState.hasPlayed)
+        assertNull(dailyState.reward)
+    }
+
+    @Test
+    fun `selecting observatory difficulty consumes attempt without reward`() = runTest {
+        val fixture = newFixture(cardCount = 2)
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openObservatory()
+        viewModel.selectObservatoryDifficulty(MiniGameDifficulty.Apprentice)
+        advanceUntilIdle()
+
+        val dailyState = fixture.progressGateway.progress.miniGamesProgress
+            .dailyStateFor(MiniGameId.Observatory, "2026-05-10")
+        val playing = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        assertTrue(dailyState.hasPlayed)
+        assertNull(dailyState.reward)
+        assertEquals(0, playing.targetIndex)
+        assertEquals(1, playing.targetCount)
+        assertEquals(ObservatoryStep.OpenDome, playing.step)
+    }
+
+    @Test
+    fun `leaving observatory after difficulty consumes attempt without reward`() = runTest {
+        val fixture = newFixture(cardCount = 2)
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openObservatory()
+        viewModel.selectObservatoryDifficulty(MiniGameDifficulty.Apprentice)
+        advanceUntilIdle()
+        viewModel.backToMenu()
+        advanceUntilIdle()
+
+        val dailyState = fixture.progressGateway.progress.miniGamesProgress
+            .dailyStateFor(MiniGameId.Observatory, "2026-05-10")
+        assertTrue(dailyState.hasPlayed)
+        assertNull(dailyState.reward)
+    }
+
+    @Test
+    fun `completing apprentice observatory grants reward and unlocks observer`() = runTest {
+        val fixture = newFixture(cardCount = 2)
+        val expectedGame = fixture.buildObservatory(MiniGameDifficulty.Apprentice)
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openObservatory()
+        viewModel.selectObservatoryDifficulty(MiniGameDifficulty.Apprentice)
+        advanceUntilIdle()
+        completeObservatory(viewModel, expectedGame)
+        advanceUntilIdle()
+
+        val progress = fixture.progressGateway.progress.miniGamesProgress
+        val dailyState = progress.dailyStateFor(MiniGameId.Observatory, "2026-05-10")
+        val result = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryResult
+        assertEquals(MiniGameReward.fromMinutes(15L), dailyState.reward)
+        assertEquals("15min", result.rewardLabel)
+        assertEquals(MiniGameDifficulty.Observer, progress.unlockedDifficultyFor(MiniGameId.Observatory))
     }
 
     @Test
@@ -606,6 +703,23 @@ class MiniGamesViewModelTest {
         }
     }
 
+    private fun completeObservatory(
+        viewModel: MiniGamesViewModel,
+        game: ObservatoryGame,
+    ) {
+        game.targets.forEach { target ->
+            viewModel.setObservatoryDomeProgress(1f)
+            viewModel.setObservatoryAzimuth(target.azimuth)
+            viewModel.setObservatoryAltitude(target.altitude)
+            val afterAlignment = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+            if (afterAlignment.step == ObservatoryStep.ClearCloud) {
+                viewModel.clearObservatoryCloud()
+            }
+            viewModel.setObservatoryFocus(target.focus)
+            viewModel.captureObservatoryTarget()
+        }
+    }
+
     private fun selectQuizAnswer(
         viewModel: MiniGamesViewModel,
         answer: String,
@@ -644,6 +758,7 @@ class MiniGamesViewModelTest {
         cardCount: Int,
         unlockedDifficulty: MiniGameDifficulty = MiniGameDifficulty.Apprentice,
         quizUnlockedDifficulty: MiniGameDifficulty = MiniGameDifficulty.Apprentice,
+        observatoryUnlockedDifficulty: MiniGameDifficulty = MiniGameDifficulty.Apprentice,
         cardDefinitions: List<CardDefinition> = (1..cardCount).map { index ->
             testCardDefinition(
                 id = "ALP-${index.toString().padStart(3, '0')}",
@@ -677,6 +792,7 @@ class MiniGamesViewModelTest {
                     unlockedDifficulties = mapOf(
                         MiniGameId.Memory to unlockedDifficulty,
                         MiniGameId.Quiz to quizUnlockedDifficulty,
+                        MiniGameId.Observatory to observatoryUnlockedDifficulty,
                     ),
                 ),
             )
@@ -763,6 +879,27 @@ class MiniGamesViewModelTest {
             return when (result) {
                 is TimelineGameBuildResult.Ready -> result.game
                 is TimelineGameBuildResult.Unavailable -> error(result.message)
+            }
+        }
+
+        suspend fun buildObservatory(difficulty: MiniGameDifficulty): ObservatoryGame {
+            val state = repository.loadMiniGamesState()
+            val resolvedCards = repository.prepareResolvedCardsForToday(
+                miniGameId = MiniGameId.Observatory,
+                slotCount = difficulty.level,
+                distinctOwnedCards = true,
+            )
+            val result = buildObservatoryGame(
+                difficulty = difficulty,
+                dateUtc = state.todayUtc,
+                resolvedCards = resolvedCards,
+                cards = catalogGateway.cards,
+                extensions = catalogGateway.extensions,
+                variantProfiles = catalogGateway.variantProfiles,
+            )
+            return when (result) {
+                is ObservatoryGameBuildResult.Ready -> result.game
+                is ObservatoryGameBuildResult.Unavailable -> error(result.message)
             }
         }
     }
