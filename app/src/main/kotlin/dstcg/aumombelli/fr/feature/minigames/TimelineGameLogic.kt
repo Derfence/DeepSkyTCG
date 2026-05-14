@@ -45,6 +45,11 @@ internal enum class TimelineCriterion(
         title = "Luminosité",
         instruction = "Classe les cartes de la plus lumineuse à la moins lumineuse.",
     ),
+    SkyPosition(
+        id = "sky-position",
+        title = "Position dans le ciel",
+        instruction = "Classe les cartes du sud vers le nord.",
+    ),
 }
 
 internal data class TimelineCriterionValue(
@@ -90,7 +95,23 @@ internal data class TimelineSlotResult(
 )
 
 internal fun selectTimelineCriterion(dateUtc: String): TimelineCriterion =
-    TimelineCriterion.entries.minWith(
+    sortedTimelineCriteria(dateUtc).first()
+
+internal fun selectPlayableTimelineCriterion(
+    dateUtc: String,
+    cards: List<CardDefinition>,
+    ownedCardIds: Set<String>,
+): TimelineCriterion? =
+    sortedTimelineCriteria(dateUtc).firstOrNull { criterion ->
+        eligibleTimelineCardIds(
+            criterion = criterion,
+            cards = cards,
+        ).count { it in ownedCardIds } >= TimelineMinimumCardCount
+    }
+
+private fun sortedTimelineCriteria(dateUtc: String): List<TimelineCriterion> {
+    val primaryCriteria = TimelineCriterion.entries.filterNot { it == TimelineCriterion.SkyPosition }
+    return primaryCriteria.sortedWith(
         compareBy<TimelineCriterion> {
             stableMiniGameHash(
                 "timeline-criterion",
@@ -99,7 +120,8 @@ internal fun selectTimelineCriterion(dateUtc: String): TimelineCriterion =
                 it.id,
             )
         }.thenBy { it.id },
-    )
+    ) + TimelineCriterion.SkyPosition
+}
 
 internal fun eligibleTimelineCardIds(
     criterion: TimelineCriterion,
@@ -240,6 +262,11 @@ private fun TimelineCriterion.valueFor(card: CardDefinition): TimelineCriterionV
         is DeepSkyDetails -> details.absoluteMagnitude?.toTimelineValue()
         else -> null
     }
+
+    TimelineCriterion.SkyPosition -> TimelineCriterionValue(
+        sortValue = card.astronomy.coordinates.declination.toSignedDegrees(),
+        label = card.astronomy.coordinates.declination.label,
+    )
 }
 
 private fun fr.aumombelli.dstcg.model.AstronomyDetails.timelineVisualSize():
@@ -262,6 +289,11 @@ private fun fr.aumombelli.dstcg.model.AbsoluteMagnitudeMeasurement.toTimelineVal
         sortValue = value,
         label = label,
     )
+
+private fun fr.aumombelli.dstcg.model.Declination.toSignedDegrees(): Double {
+    val absoluteDegrees = degrees + (arcMinutes / 60.0) + (arcSeconds / 3600.0)
+    return if (sign == "-") -absoluteDegrees else absoluteDegrees
+}
 
 private data class TimelineCardEntry(
     val card: TimelineCard,

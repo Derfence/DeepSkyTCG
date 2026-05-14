@@ -15,7 +15,7 @@ import fr.aumombelli.dstcg.feature.minigames.TimelinePreferredCardCount
 import fr.aumombelli.dstcg.feature.minigames.buildQuizGame
 import fr.aumombelli.dstcg.feature.minigames.buildTimelineGame
 import fr.aumombelli.dstcg.feature.minigames.eligibleTimelineCardIds
-import fr.aumombelli.dstcg.feature.minigames.selectTimelineCriterion
+import fr.aumombelli.dstcg.feature.minigames.selectPlayableTimelineCriterion
 import fr.aumombelli.dstcg.model.AbsoluteMagnitudeMeasurement
 import fr.aumombelli.dstcg.model.AngularMeasurement
 import fr.aumombelli.dstcg.model.CardDefinition
@@ -637,7 +637,11 @@ class MiniGamesViewModelTest {
 
         suspend fun buildTimeline(): TimelineGame {
             val state = repository.loadMiniGamesState()
-            val criterion = selectTimelineCriterion(state.todayUtc)
+            val criterion = selectPlayableTimelineCriterion(
+                dateUtc = state.todayUtc,
+                cards = catalogGateway.cards,
+                ownedCardIds = progressGateway.progress.collection.cards.keys,
+            ) ?: error("Expected playable timeline criterion")
             val eligibleCardIds = eligibleTimelineCardIds(
                 criterion = criterion,
                 cards = catalogGateway.cards,

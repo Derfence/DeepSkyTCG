@@ -14,6 +14,7 @@ import fr.aumombelli.dstcg.model.MiniGameId
 import fr.aumombelli.dstcg.model.MiniGameReward
 import fr.aumombelli.dstcg.model.MiniGamesProgress
 import fr.aumombelli.dstcg.model.dailyStateFor
+import fr.aumombelli.dstcg.model.normalized
 import fr.aumombelli.dstcg.model.unlockedDifficultyFor
 import java.time.Duration
 import kotlinx.coroutines.delay
@@ -772,7 +773,17 @@ internal class MiniGamesViewModel(
 
     private suspend fun buildTimelineForToday(todayUtc: String): TimelineGameBuildResult {
         val cards = catalogRepository.loadCards()
-        val criterion = selectTimelineCriterion(todayUtc)
+        val loadedProgress = progressRepository.loadProgress().requireUsableProgress()
+        val ownedCardIds = loadedProgress.progress.collection.normalized().cards
+            .filter { (_, entry) -> entry.totalOwned > 0 }
+            .keys
+        val criterion = selectPlayableTimelineCriterion(
+            dateUtc = todayUtc,
+            cards = cards,
+            ownedCardIds = ownedCardIds,
+        ) ?: return TimelineGameBuildResult.Unavailable(
+            message = "Tu dois posséder au moins deux cartes pour préparer la Timeline.",
+        )
         val eligibleCardIds = eligibleTimelineCardIds(
             criterion = criterion,
             cards = cards,

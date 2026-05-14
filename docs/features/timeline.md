@@ -14,11 +14,13 @@ Si le joueur quitte avant de valider :
 - aucune récompense n'est attribuée ;
 - Timeline ne peut pas être rejouée avant le prochain jour UTC.
 
-Si le joueur n'a pas au moins deux cartes compatibles avec le critère du jour, l'écran affiche une indisponibilité et l'essai n'est pas consommé.
+Si le joueur possède moins de deux cartes au total, l'écran affiche une indisponibilité et l'essai n'est pas consommé. À partir de deux cartes possédées, la Timeline choisit toujours un critère jouable.
 
 ## Critère du jour
 
-Le critère est choisi de manière déterministe depuis la date UTC, indépendamment de la collection du joueur. La V1 utilise une liste fermée de critères calculables avec le catalogue actuel :
+Les critères principaux sont ordonnés de manière déterministe depuis la date UTC. Le jeu prend le premier critère qui possède au moins deux cartes compatibles dans la bibliothèque du joueur.
+
+La V1 utilise une liste fermée de critères calculables avec le catalogue actuel :
 
 - distance des étoiles et objets du ciel profond, du plus proche au plus lointain ;
 - taille réelle des objets du ciel profond, du plus petit au plus grand ;
@@ -26,7 +28,9 @@ Le critère est choisi de manière déterministe depuis la date UTC, indépendam
 - taille apparente, de la plus petite à la plus grande dans le ciel ;
 - luminosité des étoiles et objets du ciel profond, du plus lumineux au moins lumineux.
 
-Le critère filtre aussi les cartes éligibles au tirage et aux fallbacks, pour éviter de demander un classement impossible à calculer.
+Si aucun critère principal ne peut utiliser au moins deux cartes possédées, le jeu utilise le critère de secours `Position dans le ciel`, qui classe les cartes du sud vers le nord à partir de leur déclinaison. Ce secours reste limité aux cartes de la bibliothèque et évite les cartes invitées.
+
+Le critère retenu filtre aussi les cartes éligibles au tirage et aux fallbacks, pour éviter de demander un classement impossible à calculer.
 
 ## Déroulement
 

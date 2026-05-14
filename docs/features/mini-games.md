@@ -63,7 +63,7 @@ Le socle visuel partage les briques Compose réutilisables :
 
 Le tirage global des cartes est déterministe et ne dépend jamais de l'état du joueur. Il utilise le jeu, la date UTC, le slot, l'extension cible éventuelle et la version d'algorithme. Si le joueur ne possède pas la carte globale, `MiniGameCardResolver` choisit un fallback déterministe parmi ses cartes de la même extension, puis parmi ses cartes des autres extensions si besoin. La carte résolue est persistée pour rester stable pendant la journée, même si la collection évolue.
 
-Timeline ajoute un filtre d'éligibilité au tirage commun : le critère du jour est choisi avant les cartes, puis seules les cartes compatibles avec ce critère peuvent être tirées ou utilisées comme fallback. Ce filtre est optionnel et ne modifie pas Quiz ou Memory.
+Timeline ajoute un filtre d'éligibilité au tirage commun : les critères sont ordonnés de manière déterministe pour le jour, le premier critère jouable avec la bibliothèque est retenu, puis seules les cartes compatibles avec ce critère peuvent être tirées ou utilisées comme fallback. Si aucun critère principal n'a assez de cartes, le critère de secours `Position dans le ciel` permet de jouer avec n'importe quelles cartes possédées. Ce filtre est optionnel et ne modifie pas Quiz ou Memory.
 
 ## Assets
 

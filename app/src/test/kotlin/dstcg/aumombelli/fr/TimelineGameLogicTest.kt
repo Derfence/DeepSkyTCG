@@ -5,6 +5,7 @@ import fr.aumombelli.dstcg.feature.minigames.TimelineGameBuildResult
 import fr.aumombelli.dstcg.feature.minigames.buildTimelineGame
 import fr.aumombelli.dstcg.feature.minigames.calculateTimelineReward
 import fr.aumombelli.dstcg.feature.minigames.eligibleTimelineCardIds
+import fr.aumombelli.dstcg.feature.minigames.selectPlayableTimelineCriterion
 import fr.aumombelli.dstcg.model.AbsoluteMagnitudeMeasurement
 import fr.aumombelli.dstcg.model.AngularMeasurement
 import fr.aumombelli.dstcg.model.CardDefinition
@@ -65,6 +66,20 @@ class TimelineGameLogicTest {
 
         assertEquals(setOf("ALP-001"), deepSkySizeIds)
         assertEquals(setOf("SOL-001"), solarDiameterIds)
+    }
+
+    @Test
+    fun `playable criterion falls back to sky position when primary criteria cannot use two owned cards`() {
+        val deepSky = deepSkyCard("ALP-001")
+        val solarWithoutDiameter = solarSystemCard("SOL-001", diameter = null)
+
+        val criterion = selectPlayableTimelineCriterion(
+            dateUtc = "2026-05-10",
+            cards = listOf(deepSky, solarWithoutDiameter),
+            ownedCardIds = setOf(deepSky.id, solarWithoutDiameter.id),
+        )
+
+        assertEquals(TimelineCriterion.SkyPosition, criterion)
     }
 
     @Test
@@ -196,7 +211,7 @@ class TimelineGameLogicTest {
 
     private fun solarSystemCard(
         id: String,
-        diameter: Double = 12_742.0,
+        diameter: Double? = 12_742.0,
     ): CardDefinition {
         val base = testCardDefinition(
             id = id,
@@ -207,7 +222,7 @@ class TimelineGameLogicTest {
             astronomy = base.astronomy.copy(
                 objectFamily = "solar_system",
                 details = SolarSystemDetails(
-                    realSize = LightYearMeasurement(diameter, "$diameter km"),
+                    realSize = diameter?.let { LightYearMeasurement(it, "$it km") },
                 ),
             ),
         )
