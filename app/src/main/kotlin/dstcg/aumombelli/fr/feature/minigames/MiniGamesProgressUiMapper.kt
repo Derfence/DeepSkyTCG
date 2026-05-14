@@ -1,0 +1,91 @@
+package fr.aumombelli.dstcg.feature.minigames
+
+import fr.aumombelli.dstcg.model.MiniGameDifficulty
+import fr.aumombelli.dstcg.model.MiniGameId
+import fr.aumombelli.dstcg.model.MiniGamesProgress
+import fr.aumombelli.dstcg.model.dailyStateFor
+import fr.aumombelli.dstcg.model.unlockedDifficultyFor
+
+internal fun fr.aumombelli.dstcg.data.MiniGamesState.toUiState(
+    screen: MiniGamesScreenUiState,
+): MiniGamesUiState = progress.toUiState(
+    todayUtc = todayUtc,
+    screen = screen,
+)
+
+internal fun MiniGamesProgress.toUiState(
+    todayUtc: String,
+    screen: MiniGamesScreenUiState,
+): MiniGamesUiState {
+    val quizDailyState = dailyStateFor(MiniGameId.Quiz, todayUtc)
+    val quizUnlockedDifficulty = unlockedDifficultyFor(MiniGameId.Quiz)
+    val quizRewardLabel = quizDailyState.reward?.let(::formatReward)
+    val quizPlayedToday = quizDailyState.hasPlayed || quizDailyState.reward != null
+    val memoryDailyState = dailyStateFor(MiniGameId.Memory, todayUtc)
+    val memoryUnlockedDifficulty = unlockedDifficultyFor(MiniGameId.Memory)
+    val memoryRewardLabel = memoryDailyState.reward?.let(::formatReward)
+    val memoryPlayedToday = memoryDailyState.hasPlayed || memoryDailyState.reward != null
+    val timelineDailyState = dailyStateFor(MiniGameId.Timeline, todayUtc)
+    val timelineRewardLabel = timelineDailyState.reward?.let(::formatReward)
+    val timelinePlayedToday = timelineDailyState.hasPlayed || timelineDailyState.reward != null
+    return MiniGamesUiState(
+        isLoading = false,
+        todayUtc = todayUtc,
+        quizStatusLabel = when {
+            quizRewardLabel != null -> "Joué aujourd'hui - $quizRewardLabel gagnées"
+            quizPlayedToday -> "Essai utilisé aujourd'hui"
+            else -> "Disponible - ${quizUnlockedDifficulty.displayName}"
+        },
+        quizPlayedToday = quizPlayedToday,
+        quizRewardLabel = quizRewardLabel,
+        quizDifficultyChoices = MiniGameDifficulty.entries.map { difficulty ->
+            val unlocked = difficulty.level <= quizUnlockedDifficulty.level
+            val spec = QuizDifficultySpec.forDifficulty(difficulty)
+            QuizDifficultyChoiceUi(
+                difficulty = difficulty,
+                title = difficulty.displayName,
+                questionLabel = spec.questionLabel,
+                rewardLabel = formatReward(difficulty.reward),
+                enabled = unlocked && !quizPlayedToday,
+                locked = !unlocked,
+                statusLabel = when {
+                    quizPlayedToday -> "Déjà joué"
+                    unlocked -> "Disponible"
+                    else -> "À débloquer"
+                },
+            )
+        },
+        memoryStatusLabel = when {
+            memoryRewardLabel != null -> "Joué aujourd'hui - $memoryRewardLabel gagnées"
+            memoryPlayedToday -> "Essai utilisé aujourd'hui"
+            else -> "Disponible - ${memoryUnlockedDifficulty.displayName}"
+        },
+        memoryPlayedToday = memoryPlayedToday,
+        memoryRewardLabel = memoryRewardLabel,
+        memoryDifficultyChoices = MiniGameDifficulty.entries.map { difficulty ->
+            val unlocked = difficulty.level <= memoryUnlockedDifficulty.level
+            val spec = MemoryDifficultySpec.forDifficulty(difficulty)
+            MemoryDifficultyChoiceUi(
+                difficulty = difficulty,
+                title = difficulty.displayName,
+                gridLabel = spec.gridLabel,
+                rewardLabel = formatReward(difficulty.reward),
+                enabled = unlocked && !memoryPlayedToday,
+                locked = !unlocked,
+                statusLabel = when {
+                    memoryPlayedToday -> "Déjà joué"
+                    unlocked -> "Disponible"
+                    else -> "À débloquer"
+                },
+            )
+        },
+        timelineStatusLabel = when {
+            timelineRewardLabel != null -> "Joué aujourd'hui - $timelineRewardLabel gagnées"
+            timelinePlayedToday -> "Essai utilisé aujourd'hui"
+            else -> "Disponible - 1h max"
+        },
+        timelinePlayedToday = timelinePlayedToday,
+        timelineRewardLabel = timelineRewardLabel,
+        screen = screen,
+    )
+}
