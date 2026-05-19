@@ -9,6 +9,7 @@ import fr.aumombelli.dstcg.model.MiniGameId
 import fr.aumombelli.dstcg.model.MiniGameReward
 import fr.aumombelli.dstcg.model.dailyStateFor
 import fr.aumombelli.dstcg.model.unlockedDifficultyFor
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
@@ -23,9 +24,17 @@ internal class ObservatoryMiniGameController(
     private var targetIndex: Int = 0
     private var step: ObservatoryStep = ObservatoryStep.OpenDome
     private var domeProgress: Float = 0f
-    private var azimuth: Float = 0f
-    private var altitude: Float = 0f
+    private var azimuth: Float = ObservatoryCenteredSetting
+    private var altitude: Float = ObservatoryCenteredSetting
     private var focus: Float = 0f
+    private var captureProgress: Float = 0f
+    private var cloudProgress: Float = 0f
+    private var cloudPausedStep: ObservatoryStep? = null
+    private var cloudCycleGeneration: Long = 0L
+    private var cloudCycleActive: Boolean = false
+    private var captureDecayGeneration: Long = 0L
+    private var captureValidationGeneration: Long = 0L
+    private var captureValidationPending: Boolean = false
     private var completionStarted: Boolean = false
     private var feedbackEvent: MiniGameFeedbackEvent? = null
 
@@ -78,25 +87,50 @@ internal class ObservatoryMiniGameController(
 
     fun setDomeProgress(progress: Float) {
         val game = activeGame ?: return
-        if (completionStarted || step != ObservatoryStep.OpenDome) return
-        domeProgress = progress.coerceIn(0f, 1f)
-        if (domeProgress >= ObservatoryDomeReadyThreshold) {
-            feedbackEvent = feedbackEmitter.next(
-                tone = MiniGameFeedbackTone.Success,
-                sourceIndexes = setOf(targetIndex),
-            )
-            step = ObservatoryStep.Align
-        } else {
-            feedbackEvent = null
+        if (
+            completionStarted ||
+            (step != ObservatoryStep.OpenDome && step != ObservatoryStep.CloseDome)
+        ) {
+            return
         }
+        domeProgress = progress.coerceIn(0f, 1f)
+        feedbackEvent = null
         publishPlayingState(game)
+    }
+
+    fun validateDomeProgress() {
+        val game = activeGame ?: return
+        if (completionStarted) return
+        when (step) {
+            ObservatoryStep.OpenDome -> {
+                if (domeProgress >= ObservatoryDomeReadyThreshold) {
+                    feedbackEvent = feedbackEmitter.next(
+                        tone = MiniGameFeedbackTone.Success,
+                        sourceIndexes = setOf(targetIndex),
+                    )
+                    step = ObservatoryStep.Align
+                    startCloudCycleIfNeeded(game)
+                }
+                publishPlayingState(game)
+            }
+
+            ObservatoryStep.CloseDome -> {
+                if (domeProgress <= ObservatoryDomeClosedThreshold) {
+                    completeObservatory(game)
+                    return
+                }
+                publishPlayingState(game)
+            }
+
+            else -> Unit
+        }
     }
 
     fun setAzimuth(value: Float) {
         val game = activeGame ?: return
         if (completionStarted || step != ObservatoryStep.Align) return
         azimuth = value.coerceIn(0f, 1f)
-        advanceFromAlignmentIfReady(game)
+        feedbackEvent = null
         publishPlayingState(game)
     }
 
@@ -104,18 +138,46 @@ internal class ObservatoryMiniGameController(
         val game = activeGame ?: return
         if (completionStarted || step != ObservatoryStep.Align) return
         altitude = value.coerceIn(0f, 1f)
+        feedbackEvent = null
+        publishPlayingState(game)
+    }
+
+    fun validateAlignment() {
+        val game = activeGame ?: return
+        if (completionStarted || step != ObservatoryStep.Align) return
         advanceFromAlignmentIfReady(game)
         publishPlayingState(game)
     }
 
-    fun clearCloud() {
+    fun scrubCloud(amount: Float) {
         val game = activeGame ?: return
         if (completionStarted || step != ObservatoryStep.ClearCloud) return
+        cloudProgress = (cloudProgress - amount.coerceAtLeast(0f)).coerceIn(0f, 1f)
+        if (cloudProgress > ObservatoryCloudClearedThreshold) {
+            feedbackEvent = null
+            publishPlayingState(game)
+            return
+        }
+        resumeAfterCloud(game)
+    }
+
+    fun clearCloud() {
+        scrubCloud(1f)
+    }
+
+    private fun resumeAfterCloud(game: ObservatoryGame) {
+        val resumedStep = cloudPausedStep ?: ObservatoryStep.Focus
+        cloudPausedStep = null
+        cloudProgress = 0f
         feedbackEvent = feedbackEmitter.next(
             tone = MiniGameFeedbackTone.Special,
             sourceIndexes = setOf(targetIndex),
         )
-        step = ObservatoryStep.Focus
+        step = resumedStep
+        if (resumedStep == ObservatoryStep.Capture && !captureValidationPending) {
+            startCaptureDecay(game)
+        }
+        startCloudCycleIfNeeded(game)
         publishPlayingState(game)
     }
 
@@ -123,39 +185,51 @@ internal class ObservatoryMiniGameController(
         val game = activeGame ?: return
         if (completionStarted || step != ObservatoryStep.Focus) return
         focus = value.coerceIn(0f, 1f)
+        feedbackEvent = null
+        publishPlayingState(game)
+    }
+
+    fun validateFocus() {
+        val game = activeGame ?: return
+        if (completionStarted || step != ObservatoryStep.Focus) return
         val target = game.targets[targetIndex]
         if (isObservatorySettingReady(focus, target.focus, game.tolerance)) {
             feedbackEvent = feedbackEmitter.next(
                 tone = MiniGameFeedbackTone.Success,
                 sourceIndexes = setOf(targetIndex),
             )
-            step = ObservatoryStep.Capture
-        } else {
-            feedbackEvent = null
+            beginCaptureStep(game)
         }
         publishPlayingState(game)
     }
 
     fun captureTarget() {
         val game = activeGame ?: return
-        if (completionStarted || step != ObservatoryStep.Capture) return
-        if (targetIndex < game.targets.lastIndex) {
-            feedbackEvent = feedbackEmitter.next(
-                tone = MiniGameFeedbackTone.Success,
-                sourceIndexes = setOf(targetIndex),
-            )
-            targetIndex += 1
-            resetTargetInputs()
+        if (completionStarted || step != ObservatoryStep.Capture || captureValidationPending) return
+        captureProgress = (captureProgress + ObservatoryCapturePressBoost).coerceIn(0f, 1f)
+        if (captureProgress < ObservatoryCaptureReadyThreshold) {
+            feedbackEvent = null
             publishPlayingState(game)
             return
         }
-        completeObservatory(game)
+        captureProgress = 1f
+        captureValidationPending = true
+        stopCaptureDecay()
+        feedbackEvent = feedbackEmitter.next(
+            tone = MiniGameFeedbackTone.Success,
+            sourceIndexes = setOf(targetIndex),
+        )
+        publishPlayingState(game)
+        scheduleCaptureResolution(game)
     }
 
     fun clear() {
         activeGame = null
         targetIndex = 0
-        resetTargetInputs()
+        stopCloudCycle()
+        stopCaptureDecay()
+        cancelCaptureValidation()
+        resetSessionInputs()
         completionStarted = false
         feedbackEvent = null
     }
@@ -211,7 +285,7 @@ internal class ObservatoryMiniGameController(
             is MiniGameAttemptConsumeResult.Consumed -> {
                 activeGame = game
                 targetIndex = 0
-                resetTargetInputs()
+                resetSessionInputs()
                 completionStarted = false
                 feedbackEvent = null
                 uiState.value = consumed.miniGamesProgress.toUiState(
@@ -242,16 +316,16 @@ internal class ObservatoryMiniGameController(
             tone = MiniGameFeedbackTone.Success,
             sourceIndexes = setOf(targetIndex),
         )
-        step = if (target.hasCloudEvent) {
-            ObservatoryStep.ClearCloud
-        } else {
-            ObservatoryStep.Focus
-        }
+        azimuth = target.azimuth
+        altitude = target.altitude
+        step = ObservatoryStep.Focus
+        startCloudCycleIfNeeded(game)
     }
 
     private fun completeObservatory(game: ObservatoryGame) {
         if (completionStarted) return
         completionStarted = true
+        stopCloudCycle()
         feedbackEvent = feedbackEmitter.next(
             tone = MiniGameFeedbackTone.Completion,
             sourceIndexes = emptySet(),
@@ -304,12 +378,207 @@ internal class ObservatoryMiniGameController(
         }
     }
 
-    private fun resetTargetInputs() {
+    private fun resetSessionInputs() {
+        stopCloudCycle()
         step = ObservatoryStep.OpenDome
         domeProgress = 0f
-        azimuth = 0f
-        altitude = 0f
+        azimuth = ObservatoryCenteredSetting
+        altitude = ObservatoryCenteredSetting
         focus = 0f
+        captureProgress = 0f
+        cloudProgress = 0f
+        cloudPausedStep = null
+        captureValidationPending = false
+    }
+
+    private fun prepareNextTarget() {
+        stopCaptureDecay()
+        cancelCaptureValidation()
+        step = ObservatoryStep.Align
+        domeProgress = 1f
+        focus = 0f
+        captureProgress = 0f
+        cloudPausedStep = null
+        activeGame?.let(::startCloudCycleIfNeeded)
+    }
+
+    private fun beginCaptureStep(game: ObservatoryGame) {
+        step = ObservatoryStep.Capture
+        captureProgress = 0f
+        captureValidationPending = false
+        startCaptureDecay(game)
+        startCloudCycleIfNeeded(game)
+    }
+
+    private fun scheduleCaptureResolution(game: ObservatoryGame) {
+        captureValidationGeneration += 1L
+        val generation = captureValidationGeneration
+        launch {
+            delay(ObservatoryCaptureValidationDelayMillis)
+            if (
+                generation != captureValidationGeneration ||
+                activeGame !== game ||
+                completionStarted ||
+                step != ObservatoryStep.Capture ||
+                !captureValidationPending
+            ) {
+                return@launch
+            }
+            finishCapturedTarget(game)
+        }
+    }
+
+    private fun finishCapturedTarget(game: ObservatoryGame) {
+        captureValidationPending = false
+        captureProgress = 0f
+        cloudPausedStep = null
+        if (targetIndex < game.targets.lastIndex) {
+            targetIndex += 1
+            prepareNextTarget()
+            feedbackEvent = null
+            publishPlayingState(game)
+            return
+        }
+        step = ObservatoryStep.CloseDome
+        domeProgress = 1f
+        focus = 0f
+        feedbackEvent = null
+        startCloudCycleIfNeeded(game)
+        publishPlayingState(game)
+    }
+
+    private fun startCaptureDecay(game: ObservatoryGame) {
+        captureDecayGeneration += 1L
+        val generation = captureDecayGeneration
+        launch {
+            while (true) {
+                delay(ObservatoryCaptureDecayTickMillis)
+                if (
+                    generation != captureDecayGeneration ||
+                    activeGame !== game ||
+                    completionStarted ||
+                    step != ObservatoryStep.Capture
+                ) {
+                    return@launch
+                }
+
+                val decay = game.difficulty.observatoryCaptureDecayPerSecond() *
+                    (ObservatoryCaptureDecayTickMillis / 1_000f)
+                val nextProgress = (captureProgress - decay).coerceAtLeast(0f)
+                if (nextProgress != captureProgress) {
+                    captureProgress = nextProgress
+                    feedbackEvent = null
+                    publishPlayingState(game)
+                }
+            }
+        }
+    }
+
+    private fun stopCaptureDecay() {
+        captureDecayGeneration += 1L
+    }
+
+    private fun startCloudCycleIfNeeded(game: ObservatoryGame) {
+        if (!shouldRunCloudCycle(game)) {
+            stopCloudCycle()
+            return
+        }
+        if (cloudCycleActive) return
+
+        cloudCycleActive = true
+        cloudCycleGeneration += 1L
+        val generation = cloudCycleGeneration
+        launch {
+            delay(observatoryRandomCloudInterCycleWaitMillis())
+            if (generation != cloudCycleGeneration) {
+                return@launch
+            }
+            if (!shouldRunCloudCycle(game)) {
+                cloudCycleActive = false
+                return@launch
+            }
+
+            while (true) {
+                delay(ObservatoryCloudAccumulationTickMillis)
+                if (generation != cloudCycleGeneration) {
+                    return@launch
+                }
+                if (!shouldRunCloudCycle(game)) {
+                    cloudCycleActive = false
+                    return@launch
+                }
+
+                val nextProgress = observatoryCloudProgressAfterTick(cloudProgress)
+                if (nextProgress >= 1f) {
+                    val wasAlreadyFull = cloudProgress >= 1f
+                    cloudProgress = 1f
+                    if (!isCloudInterruptibleStep()) {
+                        if (!wasAlreadyFull) {
+                            publishPlayingState(game)
+                        }
+                        continue
+                    }
+                    pauseForCloud(game)
+                    cloudCycleActive = false
+                    return@launch
+                }
+                cloudProgress = nextProgress
+                feedbackEvent = null
+                publishPlayingState(game)
+            }
+        }
+    }
+
+    private fun stopCloudCycle() {
+        cloudCycleGeneration += 1L
+        cloudCycleActive = false
+    }
+
+    private fun shouldRunCloudCycle(game: ObservatoryGame): Boolean {
+        if (activeGame !== game || completionStarted || cloudPausedStep != null) return false
+        return game.targets.getOrNull(targetIndex) != null && isCloudCycleStep()
+    }
+
+    private fun isCloudCycleStep(): Boolean =
+        when (step) {
+            ObservatoryStep.Align,
+            ObservatoryStep.Focus,
+            ObservatoryStep.Capture,
+            ObservatoryStep.CloseDome -> true
+
+            ObservatoryStep.OpenDome,
+            ObservatoryStep.ClearCloud -> false
+        }
+
+    private fun isCloudInterruptibleStep(): Boolean =
+        when (step) {
+            ObservatoryStep.Align,
+            ObservatoryStep.Focus,
+            ObservatoryStep.CloseDome -> true
+
+            ObservatoryStep.Capture -> !captureValidationPending
+
+            ObservatoryStep.OpenDome,
+            ObservatoryStep.ClearCloud -> false
+        }
+
+    private fun pauseForCloud(game: ObservatoryGame) {
+        if (!isCloudInterruptibleStep()) return
+        cloudPausedStep = step
+        if (step == ObservatoryStep.Capture) {
+            stopCaptureDecay()
+        }
+        step = ObservatoryStep.ClearCloud
+        feedbackEvent = feedbackEmitter.next(
+            tone = MiniGameFeedbackTone.Special,
+            sourceIndexes = setOf(targetIndex),
+        )
+        publishPlayingState(game)
+    }
+
+    private fun cancelCaptureValidation() {
+        captureValidationGeneration += 1L
+        captureValidationPending = false
     }
 
     private fun publishPlayingState(game: ObservatoryGame) {
@@ -340,15 +609,19 @@ internal class ObservatoryMiniGameController(
             azimuth = azimuth,
             altitude = altitude,
             focus = focus,
-            targetAzimuthLabel = target.azimuthLabel,
-            targetAltitudeLabel = target.altitudeLabel,
-            targetFocusLabel = target.focusLabel,
+            captureProgress = captureProgress,
+            cloudProgress = cloudProgress,
+            targetAzimuth = target.azimuth,
+            targetAltitude = target.altitude,
+            targetFocus = target.focus,
+            tolerance = game.tolerance,
             toleranceLabel = spec.precisionLabel,
             domeReady = domeProgress >= ObservatoryDomeReadyThreshold,
+            domeClosed = domeProgress <= ObservatoryDomeClosedThreshold,
             alignmentReady = alignmentReady,
             focusReady = focusReady,
             canClearCloud = step == ObservatoryStep.ClearCloud,
-            canCapture = step == ObservatoryStep.Capture && !completionStarted,
+            canCapture = step == ObservatoryStep.Capture && !completionStarted && !captureValidationPending,
             feedbackEvent = feedbackEvent,
         )
     }
@@ -376,15 +649,22 @@ private val ObservatoryStep.title: String
         ObservatoryStep.ClearCloud -> "Nuage de passage"
         ObservatoryStep.Focus -> "Mise au point"
         ObservatoryStep.Capture -> "Capture"
+        ObservatoryStep.CloseDome -> "Fermeture de la coupole"
     }
 
 private val ObservatoryStep.instruction: String
     get() = when (this) {
         ObservatoryStep.OpenDome -> "Glisse jusqu'au bout pour ouvrir le panneau."
-        ObservatoryStep.Align -> "Rapproche l'azimut et l'altitude de leurs repères."
-        ObservatoryStep.ClearCloud -> "Patiente un instant et dégage la fenêtre d'observation."
-        ObservatoryStep.Focus -> "Ajuste la netteté avant la capture."
-        ObservatoryStep.Capture -> "La cible est prête."
+        ObservatoryStep.Align -> "Aligne le réticule mobile sur la cible lumineuse."
+        ObservatoryStep.ClearCloud -> "Efface-le avec ton doigt"
+        ObservatoryStep.Focus -> "Fais coïncider l'anneau du réticule avec la cible."
+        ObservatoryStep.Capture -> "Appuie plusieurs fois pour stabiliser la capture."
+        ObservatoryStep.CloseDome -> "Referme la coupole pour terminer l'observation."
     }
 
 private const val ObservatoryDomeReadyThreshold: Float = 0.98f
+private const val ObservatoryDomeClosedThreshold: Float = 0.02f
+private const val ObservatoryCenteredSetting: Float = 0.5f
+private const val ObservatoryCaptureReadyThreshold: Float = 0.999f
+private const val ObservatoryCaptureValidationDelayMillis: Long = 720L
+private const val ObservatoryCloudClearedThreshold: Float = 0.02f

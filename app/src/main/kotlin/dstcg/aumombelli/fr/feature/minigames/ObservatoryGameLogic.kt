@@ -12,6 +12,7 @@ import fr.aumombelli.dstcg.model.VariantProfile
 import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.model.toDisplayVariant
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 internal data class ObservatoryDifficultySpec(
     val difficulty: MiniGameDifficulty,
@@ -23,15 +24,24 @@ internal data class ObservatoryDifficultySpec(
     } else {
         "$targetCount cibles"
     }
-    val precisionLabel: String = "±${(tolerance * 100f).toInt()}%"
+    val precisionLabel: String = "±${tolerance.toObservatoryPrecisionLabel()}%"
 
     companion object {
         fun forDifficulty(difficulty: MiniGameDifficulty): ObservatoryDifficultySpec = when (difficulty) {
-            MiniGameDifficulty.Apprentice -> ObservatoryDifficultySpec(difficulty, targetCount = 1, tolerance = 0.12f)
-            MiniGameDifficulty.Observer -> ObservatoryDifficultySpec(difficulty, targetCount = 2, tolerance = 0.09f)
-            MiniGameDifficulty.Scientist -> ObservatoryDifficultySpec(difficulty, targetCount = 3, tolerance = 0.06f)
-            MiniGameDifficulty.Explorer -> ObservatoryDifficultySpec(difficulty, targetCount = 4, tolerance = 0.04f)
+            MiniGameDifficulty.Apprentice -> ObservatoryDifficultySpec(difficulty, targetCount = 1, tolerance = 0.06f)
+            MiniGameDifficulty.Observer -> ObservatoryDifficultySpec(difficulty, targetCount = 2, tolerance = 0.045f)
+            MiniGameDifficulty.Scientist -> ObservatoryDifficultySpec(difficulty, targetCount = 3, tolerance = 0.03f)
+            MiniGameDifficulty.Explorer -> ObservatoryDifficultySpec(difficulty, targetCount = 4, tolerance = 0.02f)
         }
+    }
+}
+
+private fun Float.toObservatoryPrecisionLabel(): String {
+    val tenths = (this * 1_000f).roundToInt()
+    return if (tenths % 10 == 0) {
+        (tenths / 10).toString()
+    } else {
+        "${tenths / 10},${tenths % 10}"
     }
 }
 
@@ -41,7 +51,6 @@ internal data class ObservatoryTarget(
     val azimuth: Float,
     val altitude: Float,
     val focus: Float,
-    val hasCloudEvent: Boolean,
 ) {
     val azimuthLabel: String = azimuth.toPercentLabel()
     val altitudeLabel: String = altitude.toPercentLabel()
@@ -92,11 +101,6 @@ internal fun buildObservatoryGame(
     }
 
     val selectedEntries = entries.take(spec.targetCount)
-    val cloudTargetIndex = deterministicCloudTargetIndex(
-        dateUtc = dateUtc,
-        difficulty = difficulty,
-        targetCount = spec.targetCount,
-    )
     val targets = selectedEntries.mapIndexed { index, entry ->
         ObservatoryTarget(
             id = entry.definition.id,
@@ -122,7 +126,6 @@ internal fun buildObservatoryGame(
                 targetIndex = index,
                 settingId = "focus",
             ),
-            hasCloudEvent = index == cloudTargetIndex,
         )
     }
 
@@ -141,21 +144,6 @@ internal fun isObservatorySettingReady(
     target: Float,
     tolerance: Float,
 ): Boolean = abs(value.coerceIn(0f, 1f) - target) <= tolerance
-
-private fun deterministicCloudTargetIndex(
-    dateUtc: String,
-    difficulty: MiniGameDifficulty,
-    targetCount: Int,
-): Int {
-    if (targetCount <= 1) return 0
-    return (stableMiniGameHash(
-        "observatory-cloud-target",
-        "v${MiniGameDeterministicDrawPolicy.CurrentAlgorithmVersion}",
-        dateUtc,
-        difficulty.name,
-        targetCount.toString(),
-    ).take(8).toLong(radix = 16) % targetCount).toInt()
-}
 
 private fun deterministicSetting(
     dateUtc: String,

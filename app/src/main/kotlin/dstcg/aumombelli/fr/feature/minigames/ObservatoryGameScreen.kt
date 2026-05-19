@@ -5,9 +5,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
@@ -15,7 +17,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,8 +29,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.model.MiniGameDifficulty
-import fr.aumombelli.dstcg.ui.component.AstroCardPreviewSurface
-import fr.aumombelli.dstcg.ui.component.AstroCardSurfaceMode
 import fr.aumombelli.dstcg.ui.component.SceneNavigationButton
 import fr.aumombelli.dstcg.ui.component.SceneNavigationIcon
 import fr.aumombelli.dstcg.ui.motion.SkyBackdropVariant
@@ -41,31 +40,62 @@ internal fun ObservatoryGameScreen(
     onBackToMenu: () -> Unit,
     onSelectDifficulty: (MiniGameDifficulty) -> Unit,
     onSetDomeProgress: (Float) -> Unit,
+    onValidateDomeProgress: () -> Unit,
     onSetAzimuth: (Float) -> Unit,
     onSetAltitude: (Float) -> Unit,
+    onValidateAlignment: () -> Unit,
     onSetFocus: (Float) -> Unit,
-    onClearCloud: () -> Unit,
+    onValidateFocus: () -> Unit,
+    onScrubCloud: (Float) -> Unit,
     onCapture: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val resultScreen = state.screen as? MiniGamesScreenUiState.ObservatoryResult
-    val playingCue = (state.screen as? MiniGamesScreenUiState.ObservatoryPlaying)?.feedbackEvent
+    val playingScreen = state.screen as? MiniGamesScreenUiState.ObservatoryPlaying
+    val playingCue = playingScreen?.feedbackEvent
 
     Box(
         modifier = modifier
             .fillMaxSize()
             .testTag("observatory-screen"),
     ) {
-        MiniGameSceneBackdrop(
-            variant = SkyBackdropVariant.Mountain,
-            mountainBlendProgress = 1f,
-            sparkleBoost = if (state.screen is MiniGamesScreenUiState.ObservatoryPlaying) 0.36f else 0.24f,
-            modifier = Modifier.fillMaxSize(),
-        )
+        if (playingScreen != null) {
+            ObservatoryPlayingScene(
+                playing = playingScreen,
+                modifier = Modifier.fillMaxSize(),
+            )
+        } else {
+            MiniGameSceneBackdrop(
+                variant = SkyBackdropVariant.Mountain,
+                mountainBlendProgress = 1f,
+                sparkleBoost = 0.24f,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
         MiniGameFeedbackOverlay(
             cue = playingCue ?: resultScreen?.feedbackEvent,
             modifier = Modifier.fillMaxSize(),
         )
+        if (playingScreen?.step == ObservatoryStep.ClearCloud) {
+            ObservatoryCloudScrubOverlay(
+                onScrubCloud = onScrubCloud,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+        if (playingScreen != null) {
+            ObservatoryPlayingForeground(
+                playing = playingScreen,
+                onSetDomeProgress = onSetDomeProgress,
+                onValidateDomeProgress = onValidateDomeProgress,
+                onSetAzimuth = onSetAzimuth,
+                onSetAltitude = onSetAltitude,
+                onValidateAlignment = onValidateAlignment,
+                onSetFocus = onSetFocus,
+                onValidateFocus = onValidateFocus,
+                onCapture = onCapture,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -100,18 +130,7 @@ internal fun ObservatoryGameScreen(
                         .fillMaxWidth(),
                 )
 
-                is MiniGamesScreenUiState.ObservatoryPlaying -> ObservatoryPlayingPanel(
-                    playing = screen,
-                    onSetDomeProgress = onSetDomeProgress,
-                    onSetAzimuth = onSetAzimuth,
-                    onSetAltitude = onSetAltitude,
-                    onSetFocus = onSetFocus,
-                    onClearCloud = onClearCloud,
-                    onCapture = onCapture,
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .fillMaxSize(),
-                )
+                is MiniGamesScreenUiState.ObservatoryPlaying -> Unit
 
                 is MiniGamesScreenUiState.ObservatoryResult -> ObservatoryResultPanel(
                     result = screen,
@@ -207,115 +226,148 @@ private fun ObservatoryDifficultyRow(
 }
 
 @Composable
-private fun ObservatoryPlayingPanel(
+private fun ObservatoryPlayingScene(
     playing: MiniGamesScreenUiState.ObservatoryPlaying,
-    onSetDomeProgress: (Float) -> Unit,
-    onSetAzimuth: (Float) -> Unit,
-    onSetAltitude: (Float) -> Unit,
-    onSetFocus: (Float) -> Unit,
-    onClearCloud: () -> Unit,
-    onCapture: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
+    Box(
         modifier = modifier
             .fillMaxSize()
             .testTag("observatory-playing"),
     ) {
-        Spacer(modifier = Modifier.height(58.dp))
-        ObservatoryHud(
-            playing = playing,
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 10.dp),
-        )
-        MiniGameBoardSurface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f),
+                .fillMaxSize()
+                .testTag("observatory-stage"),
+        ) {
+            ObservatoryIllustrationScene(
+                targetCard = playing.targetCard,
+                step = playing.step,
+                domeProgress = playing.domeProgress,
+                azimuth = playing.azimuth,
+                altitude = playing.altitude,
+                focus = playing.focus,
+                captureProgress = playing.captureProgress,
+                cloudProgress = playing.cloudProgress,
+                domeReady = playing.domeReady,
+                targetAzimuth = playing.targetAzimuth,
+                targetAltitude = playing.targetAltitude,
+                targetFocus = playing.targetFocus,
+                tolerance = playing.tolerance,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ObservatoryPlayingForeground(
+    playing: MiniGamesScreenUiState.ObservatoryPlaying,
+    onSetDomeProgress: (Float) -> Unit,
+    onValidateDomeProgress: () -> Unit,
+    onSetAzimuth: (Float) -> Unit,
+    onSetAltitude: (Float) -> Unit,
+    onValidateAlignment: () -> Unit,
+    onSetFocus: (Float) -> Unit,
+    onValidateFocus: () -> Unit,
+    onCapture: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .dstcgContentInsetsPadding(includeBottom = true)
+            .padding(horizontal = 18.dp, vertical = 18.dp)
+            .testTag("observatory-board"),
+    ) {
+        Column(
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxSize(),
         ) {
             Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
                 modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .testTag("observatory-board"),
+                    .fillMaxWidth()
+                    .padding(top = 58.dp),
             ) {
-                AstroCardPreviewSurface(
-                    displayCard = playing.targetCard,
-                    mode = AstroCardSurfaceMode.Thumbnail,
-                    modifier = Modifier
-                        .widthIn(max = 150.dp)
-                        .testTag("observatory-target-card"),
-                )
-                Text(
-                    text = playing.stepTitle,
-                    color = Color.White,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                )
-                Text(
-                    text = playing.stepInstruction,
-                    color = Color(0xFFD6E7F7),
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
+                ObservatoryHud(
+                    playing = playing,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                ObservatoryControlSlider(
-                    label = "Coupole",
-                    value = playing.domeProgress,
-                    targetLabel = "100%",
-                    enabled = playing.step == ObservatoryStep.OpenDome,
-                    ready = playing.domeReady,
-                    onValueChange = onSetDomeProgress,
-                    testTag = "observatory-dome-slider",
-                )
-                ObservatoryControlSlider(
-                    label = "Azimut",
-                    value = playing.azimuth,
-                    targetLabel = playing.targetAzimuthLabel,
-                    enabled = playing.step == ObservatoryStep.Align,
-                    ready = playing.alignmentReady,
-                    onValueChange = onSetAzimuth,
-                    testTag = "observatory-azimuth-slider",
-                )
-                ObservatoryControlSlider(
-                    label = "Altitude",
-                    value = playing.altitude,
-                    targetLabel = playing.targetAltitudeLabel,
-                    enabled = playing.step == ObservatoryStep.Align,
-                    ready = playing.alignmentReady,
-                    onValueChange = onSetAltitude,
-                    testTag = "observatory-altitude-slider",
-                )
-                Button(
-                    onClick = onClearCloud,
-                    enabled = playing.canClearCloud,
-                    modifier = Modifier.testTag("observatory-clear-cloud"),
+            }
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = Color(0xD407111A),
+                contentColor = Color.White,
+                shadowElevation = 10.dp,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp),
                 ) {
-                    Text("Dégager le nuage")
-                }
-                ObservatoryControlSlider(
-                    label = "Netteté",
-                    value = playing.focus,
-                    targetLabel = playing.targetFocusLabel,
-                    enabled = playing.step == ObservatoryStep.Focus,
-                    ready = playing.focusReady,
-                    onValueChange = onSetFocus,
-                    testTag = "observatory-focus-slider",
-                )
-                Button(
-                    onClick = onCapture,
-                    enabled = playing.canCapture,
-                    modifier = Modifier.testTag("observatory-capture"),
-                ) {
-                    Text("Capturer")
+                    ObservatoryStageHeader(
+                        title = playing.stepTitle,
+                        instruction = playing.stepInstruction,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    ObservatoryControlTray(
+                        playing = playing,
+                        onSetDomeProgress = onSetDomeProgress,
+                        onValidateDomeProgress = onValidateDomeProgress,
+                        onSetAzimuth = onSetAzimuth,
+                        onValidateAlignment = onValidateAlignment,
+                        onSetFocus = onSetFocus,
+                        onValidateFocus = onValidateFocus,
+                        onCapture = onCapture,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 }
             }
         }
+        if (playing.step == ObservatoryStep.Align) {
+            ObservatoryAltitudeSideControl(
+                value = playing.altitude,
+                ready = playing.alignmentReady,
+                onValueChange = onSetAltitude,
+                onValueChangeFinished = onValidateAlignment,
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .fillMaxHeight(0.65f)
+                    .offset(x = -15.dp, y = -30.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ObservatoryStageHeader(
+    title: String,
+    instruction: String,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+        modifier = modifier,
+    ) {
+        Text(
+            text = title,
+            color = Color.White,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+        )
+        Text(
+            text = instruction,
+            color = Color(0xFFD6E7F7),
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 
@@ -345,50 +397,6 @@ private fun ObservatoryHud(
             value = playing.toleranceLabel,
             tint = Color(0xFF9AEAFF),
             modifier = Modifier.weight(1f),
-        )
-    }
-}
-
-@Composable
-private fun ObservatoryControlSlider(
-    label: String,
-    value: Float,
-    targetLabel: String,
-    enabled: Boolean,
-    ready: Boolean,
-    onValueChange: (Float) -> Unit,
-    testTag: String,
-) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag("$testTag-row"),
-    ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(
-                text = label,
-                color = Color.White,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f),
-            )
-            Text(
-                text = "Repère $targetLabel",
-                color = if (ready) Color(0xFF88E6D2) else Color(0xFFD6E7F7),
-                style = MaterialTheme.typography.labelMedium,
-                maxLines = 1,
-            )
-        }
-        Slider(
-            value = value.coerceIn(0f, 1f),
-            onValueChange = onValueChange,
-            enabled = enabled,
-            modifier = Modifier.testTag(testTag),
         )
     }
 }

@@ -189,6 +189,10 @@ internal class MiniGamesViewModel(
         observatoryController.setDomeProgress(progress)
     }
 
+    fun validateObservatoryDomeProgress() {
+        observatoryController.validateDomeProgress()
+    }
+
     fun setObservatoryAzimuth(value: Float) {
         observatoryController.setAzimuth(value)
     }
@@ -197,8 +201,20 @@ internal class MiniGamesViewModel(
         observatoryController.setAltitude(value)
     }
 
+    fun validateObservatoryAlignment() {
+        observatoryController.validateAlignment()
+    }
+
     fun setObservatoryFocus(value: Float) {
         observatoryController.setFocus(value)
+    }
+
+    fun validateObservatoryFocus() {
+        observatoryController.validateFocus()
+    }
+
+    fun scrubObservatoryCloud(amount: Float) {
+        observatoryController.scrubCloud(amount)
     }
 
     fun clearObservatoryCloud() {

@@ -6,9 +6,13 @@ import fr.aumombelli.dstcg.feature.minigames.MemoryCellState
 import fr.aumombelli.dstcg.feature.minigames.MiniGameFeedbackTone
 import fr.aumombelli.dstcg.feature.minigames.MiniGamesScreenUiState
 import fr.aumombelli.dstcg.feature.minigames.MiniGamesViewModel
+import fr.aumombelli.dstcg.feature.minigames.ObservatoryCloudAccumulationDurationMillis
+import fr.aumombelli.dstcg.feature.minigames.ObservatoryCloudAccumulationTickMillis
+import fr.aumombelli.dstcg.feature.minigames.ObservatoryCloudInterCycleWaitMaxMillis
 import fr.aumombelli.dstcg.feature.minigames.ObservatoryGame
 import fr.aumombelli.dstcg.feature.minigames.ObservatoryGameBuildResult
 import fr.aumombelli.dstcg.feature.minigames.ObservatoryStep
+import fr.aumombelli.dstcg.feature.minigames.ObservatoryTarget
 import fr.aumombelli.dstcg.feature.minigames.buildObservatoryGame
 import fr.aumombelli.dstcg.feature.minigames.QuizAnswerState
 import fr.aumombelli.dstcg.feature.minigames.QuizGame
@@ -41,6 +45,7 @@ import fr.aumombelli.dstcg.model.dailyStateFor
 import fr.aumombelli.dstcg.model.unlockedDifficultyFor
 import java.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -328,6 +333,357 @@ class MiniGamesViewModelTest {
         assertEquals(0, playing.targetIndex)
         assertEquals(1, playing.targetCount)
         assertEquals(ObservatoryStep.OpenDome, playing.step)
+        assertEquals(0.5f, playing.azimuth, 0.001f)
+        assertEquals(0.5f, playing.altitude, 0.001f)
+    }
+
+    @Test
+    fun `observatory alignment snaps only after slider release`() = runTest {
+        val fixture = newFixture(cardCount = 2)
+        val expectedGame = fixture.buildObservatory(MiniGameDifficulty.Apprentice)
+        val target = expectedGame.targets.first()
+        val azimuthInTolerance = target.azimuth + valueOffsetInsideTolerance(
+            targetValue = target.azimuth,
+            tolerance = expectedGame.tolerance,
+        )
+        val altitudeInTolerance = target.altitude + valueOffsetInsideTolerance(
+            targetValue = target.altitude,
+            tolerance = expectedGame.tolerance,
+        )
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openObservatory()
+        viewModel.selectObservatoryDifficulty(MiniGameDifficulty.Apprentice)
+        advanceUntilIdle()
+        viewModel.setObservatoryDomeProgress(1f)
+        val afterDomeDrag = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        assertEquals(ObservatoryStep.OpenDome, afterDomeDrag.step)
+        assertTrue(afterDomeDrag.domeReady)
+
+        viewModel.validateObservatoryDomeProgress()
+        viewModel.setObservatoryAzimuth(azimuthInTolerance)
+        viewModel.setObservatoryAltitude(altitudeInTolerance)
+
+        val afterAlignmentDrag = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        assertEquals(ObservatoryStep.Align, afterAlignmentDrag.step)
+        assertTrue(afterAlignmentDrag.alignmentReady)
+        assertEquals(azimuthInTolerance, afterAlignmentDrag.azimuth, 0.001f)
+        assertEquals(altitudeInTolerance, afterAlignmentDrag.altitude, 0.001f)
+
+        viewModel.validateObservatoryAlignment()
+
+        val afterAlignmentRelease = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        assertEquals(ObservatoryStep.Focus, afterAlignmentRelease.step)
+        assertEquals(target.azimuth, afterAlignmentRelease.azimuth, 0.001f)
+        assertEquals(target.altitude, afterAlignmentRelease.altitude, 0.001f)
+    }
+
+    @Test
+    fun `observatory cloud accumulates over time and pauses alignment`() = runTest {
+        val fixture = newFixture(cardCount = 2)
+        val expectedGame = fixture.buildObservatory(MiniGameDifficulty.Apprentice)
+        val target = expectedGame.targets.first()
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openObservatory()
+        viewModel.selectObservatoryDifficulty(MiniGameDifficulty.Apprentice)
+        advanceUntilIdle()
+        openObservatoryDome(viewModel)
+
+        val afterOpening = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        assertEquals(ObservatoryStep.Align, afterOpening.step)
+        assertEquals(0f, afterOpening.cloudProgress, 0.001f)
+
+        advanceObservatoryCloudCycle()
+
+        val cloudPause = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        assertEquals(ObservatoryStep.ClearCloud, cloudPause.step)
+        assertEquals(1f, cloudPause.cloudProgress, 0.001f)
+        assertTrue(cloudPause.canClearCloud)
+
+        viewModel.setObservatoryAzimuth(target.azimuth)
+        val stillPaused = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        assertEquals(ObservatoryStep.ClearCloud, stillPaused.step)
+
+        viewModel.scrubObservatoryCloud(0.40f)
+
+        val partiallyCleared = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        assertEquals(ObservatoryStep.ClearCloud, partiallyCleared.step)
+        assertEquals(0.60f, partiallyCleared.cloudProgress, 0.001f)
+
+        viewModel.scrubObservatoryCloud(1f)
+
+        val resumed = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        assertEquals(ObservatoryStep.Align, resumed.step)
+        assertEquals(0f, resumed.cloudProgress, 0.001f)
+
+        advanceObservatoryCloudCycle()
+
+        val secondCloudPause = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        assertEquals(ObservatoryStep.ClearCloud, secondCloudPause.step)
+        assertEquals(1f, secondCloudPause.cloudProgress, 0.001f)
+    }
+
+    @Test
+    fun `observatory cloud resumes interrupted focus step after clearing`() = runTest {
+        val fixture = newFixture(cardCount = 2)
+        val expectedGame = fixture.buildObservatory(MiniGameDifficulty.Apprentice)
+        val target = expectedGame.targets.first()
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openObservatory()
+        viewModel.selectObservatoryDifficulty(MiniGameDifficulty.Apprentice)
+        advanceUntilIdle()
+        openObservatoryDome(viewModel)
+        alignObservatory(viewModel, target)
+
+        val afterAlignment = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        assertEquals(ObservatoryStep.Focus, afterAlignment.step)
+
+        advanceObservatoryCloudCycle()
+
+        val cloudPause = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        assertEquals(ObservatoryStep.ClearCloud, cloudPause.step)
+
+        viewModel.scrubObservatoryCloud(1f)
+
+        val resumed = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        assertEquals(ObservatoryStep.Focus, resumed.step)
+        assertEquals(0f, resumed.cloudProgress, 0.001f)
+    }
+
+    @Test
+    fun `observatory cloud keeps cycling after target change`() = runTest {
+        val fixture = newFixture(
+            cardCount = 3,
+            observatoryUnlockedDifficulty = MiniGameDifficulty.Observer,
+        )
+        val expectedGame = fixture.buildObservatory(MiniGameDifficulty.Observer)
+        val firstTarget = expectedGame.targets.first()
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openObservatory()
+        viewModel.selectObservatoryDifficulty(MiniGameDifficulty.Observer)
+        advanceUntilIdle()
+        openObservatoryDome(viewModel)
+        alignObservatory(viewModel, firstTarget)
+        focusObservatory(viewModel, firstTarget)
+        mashObservatoryCapture(viewModel)
+        advanceTimeBy(720L)
+        advanceUntilIdle()
+
+        val nextTarget = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        assertEquals(1, nextTarget.targetIndex)
+        assertEquals(ObservatoryStep.Align, nextTarget.step)
+
+        advanceObservatoryCloudCycle()
+
+        val cloudPause = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        assertEquals(1, cloudPause.targetIndex)
+        assertEquals(ObservatoryStep.ClearCloud, cloudPause.step)
+        assertEquals(1f, cloudPause.cloudProgress, 0.001f)
+    }
+
+    @Test
+    fun `observatory focus waits for slider release before capture`() = runTest {
+        val fixture = newFixture(cardCount = 2)
+        val expectedGame = fixture.buildObservatory(MiniGameDifficulty.Apprentice)
+        val target = expectedGame.targets.first()
+        val focusInTolerance = target.focus + valueOffsetInsideTolerance(
+            targetValue = target.focus,
+            tolerance = expectedGame.tolerance,
+        )
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openObservatory()
+        viewModel.selectObservatoryDifficulty(MiniGameDifficulty.Apprentice)
+        advanceUntilIdle()
+        openObservatoryDome(viewModel)
+        alignObservatory(viewModel, target)
+        val afterAlignment = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        if (afterAlignment.step == ObservatoryStep.ClearCloud) {
+            viewModel.clearObservatoryCloud()
+        }
+
+        viewModel.setObservatoryFocus(focusInTolerance)
+
+        val afterFocusDrag = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        assertEquals(ObservatoryStep.Focus, afterFocusDrag.step)
+        assertTrue(afterFocusDrag.focusReady)
+        assertEquals(focusInTolerance, afterFocusDrag.focus, 0.001f)
+
+        viewModel.validateObservatoryFocus()
+
+        val afterFocusRelease = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        assertEquals(ObservatoryStep.Capture, afterFocusRelease.step)
+        assertEquals(focusInTolerance, afterFocusRelease.focus, 0.001f)
+    }
+
+    @Test
+    fun `observatory keeps dome open and reticle position for next target`() = runTest {
+        val fixture = newFixture(
+            cardCount = 3,
+            observatoryUnlockedDifficulty = MiniGameDifficulty.Observer,
+        )
+        val expectedGame = fixture.buildObservatory(MiniGameDifficulty.Observer)
+        val firstTarget = expectedGame.targets[0]
+        val secondTarget = expectedGame.targets[1]
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openObservatory()
+        viewModel.selectObservatoryDifficulty(MiniGameDifficulty.Observer)
+        advanceUntilIdle()
+        openObservatoryDome(viewModel)
+        alignObservatory(viewModel, firstTarget)
+        val afterAlignment = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        if (afterAlignment.step == ObservatoryStep.ClearCloud) {
+            viewModel.clearObservatoryCloud()
+        }
+        focusObservatory(viewModel, firstTarget)
+        mashObservatoryCapture(viewModel)
+        advanceUntilIdle()
+
+        val nextTarget = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        assertEquals(1, nextTarget.targetIndex)
+        assertEquals(ObservatoryStep.Align, nextTarget.step)
+        assertEquals(1f, nextTarget.domeProgress, 0.001f)
+        assertEquals(firstTarget.azimuth, nextTarget.azimuth, 0.001f)
+        assertEquals(firstTarget.altitude, nextTarget.altitude, 0.001f)
+        assertEquals(0f, nextTarget.focus, 0.001f)
+        assertEquals(secondTarget.azimuth, nextTarget.targetAzimuth, 0.001f)
+        assertEquals(secondTarget.altitude, nextTarget.targetAltitude, 0.001f)
+    }
+
+    @Test
+    fun `observatory capture button increases capture progress by twenty percent`() = runTest {
+        val fixture = newFixture(cardCount = 2)
+        val expectedGame = fixture.buildObservatory(MiniGameDifficulty.Apprentice)
+        val target = expectedGame.targets.first()
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openObservatory()
+        viewModel.selectObservatoryDifficulty(MiniGameDifficulty.Apprentice)
+        advanceUntilIdle()
+        advanceObservatoryToCapture(viewModel, target)
+
+        viewModel.captureObservatoryTarget()
+
+        val afterPress = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        assertEquals(ObservatoryStep.Capture, afterPress.step)
+        assertEquals(0.20f, afterPress.captureProgress, 0.001f)
+
+        viewModel.backToMenu()
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun `observatory capture progress decays before one tenth of a second`() = runTest {
+        val fixture = newFixture(cardCount = 2)
+        val expectedGame = fixture.buildObservatory(MiniGameDifficulty.Apprentice)
+        val target = expectedGame.targets.first()
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openObservatory()
+        viewModel.selectObservatoryDifficulty(MiniGameDifficulty.Apprentice)
+        advanceUntilIdle()
+        advanceObservatoryToCapture(viewModel, target)
+        viewModel.captureObservatoryTarget()
+
+        advanceTimeBy(50L)
+
+        val afterShortDelay = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        assertTrue(afterShortDelay.captureProgress < 0.20f)
+        assertTrue(afterShortDelay.captureProgress > 0f)
+
+        viewModel.backToMenu()
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun `observatory capture progress decays faster on harder difficulty`() = runTest {
+        val apprenticeFixture = newFixture(cardCount = 2)
+        val explorerFixture = newFixture(
+            cardCount = 4,
+            observatoryUnlockedDifficulty = MiniGameDifficulty.Explorer,
+        )
+        val apprenticeGame = apprenticeFixture.buildObservatory(MiniGameDifficulty.Apprentice)
+        val explorerGame = explorerFixture.buildObservatory(MiniGameDifficulty.Explorer)
+        val apprenticeViewModel = apprenticeFixture.newViewModel()
+        val explorerViewModel = explorerFixture.newViewModel()
+        advanceUntilIdle()
+
+        apprenticeViewModel.openObservatory()
+        apprenticeViewModel.selectObservatoryDifficulty(MiniGameDifficulty.Apprentice)
+        explorerViewModel.openObservatory()
+        explorerViewModel.selectObservatoryDifficulty(MiniGameDifficulty.Explorer)
+        advanceUntilIdle()
+        advanceObservatoryToCapture(apprenticeViewModel, apprenticeGame.targets.first())
+        advanceObservatoryToCapture(explorerViewModel, explorerGame.targets.first())
+        apprenticeViewModel.captureObservatoryTarget()
+        explorerViewModel.captureObservatoryTarget()
+
+        advanceTimeBy(300L)
+
+        val apprenticeCapture = apprenticeViewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        val explorerCapture = explorerViewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        assertTrue(explorerCapture.captureProgress < apprenticeCapture.captureProgress)
+
+        apprenticeViewModel.backToMenu()
+        explorerViewModel.backToMenu()
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun `observatory closes dome after final target before granting reward`() = runTest {
+        val fixture = newFixture(cardCount = 2)
+        val expectedGame = fixture.buildObservatory(MiniGameDifficulty.Apprentice)
+        val target = expectedGame.targets.first()
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openObservatory()
+        viewModel.selectObservatoryDifficulty(MiniGameDifficulty.Apprentice)
+        advanceUntilIdle()
+        openObservatoryDome(viewModel)
+        alignObservatory(viewModel, target)
+        val afterAlignment = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        if (afterAlignment.step == ObservatoryStep.ClearCloud) {
+            viewModel.clearObservatoryCloud()
+        }
+        focusObservatory(viewModel, target)
+        mashObservatoryCapture(viewModel)
+
+        val validating = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        val dailyStateBeforeClose = fixture.progressGateway.progress.miniGamesProgress
+            .dailyStateFor(MiniGameId.Observatory, "2026-05-10")
+        assertEquals(ObservatoryStep.Capture, validating.step)
+        assertEquals(1f, validating.captureProgress, 0.001f)
+        assertTrue(!validating.canCapture)
+        assertNull(dailyStateBeforeClose.reward)
+
+        advanceTimeBy(720L)
+        advanceUntilIdle()
+
+        val closing = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        assertEquals(ObservatoryStep.CloseDome, closing.step)
+        assertEquals(1f, closing.domeProgress, 0.001f)
+        assertTrue(!closing.domeClosed)
+
+        closeObservatoryDome(viewModel)
+        advanceUntilIdle()
+
+        val dailyStateAfterClose = fixture.progressGateway.progress.miniGamesProgress
+            .dailyStateFor(MiniGameId.Observatory, "2026-05-10")
+        assertTrue(viewModel.uiState.value.screen is MiniGamesScreenUiState.ObservatoryResult)
+        assertEquals(MiniGameReward.fromMinutes(15L), dailyStateAfterClose.reward)
     }
 
     @Test
@@ -703,21 +1059,95 @@ class MiniGamesViewModelTest {
         }
     }
 
-    private fun completeObservatory(
+    private fun TestScope.completeObservatory(
         viewModel: MiniGamesViewModel,
         game: ObservatoryGame,
     ) {
         game.targets.forEach { target ->
-            viewModel.setObservatoryDomeProgress(1f)
-            viewModel.setObservatoryAzimuth(target.azimuth)
-            viewModel.setObservatoryAltitude(target.altitude)
+            val beforeTarget = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+            if (beforeTarget.step == ObservatoryStep.OpenDome) {
+                openObservatoryDome(viewModel)
+            }
+            alignObservatory(viewModel, target)
             val afterAlignment = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
             if (afterAlignment.step == ObservatoryStep.ClearCloud) {
                 viewModel.clearObservatoryCloud()
             }
-            viewModel.setObservatoryFocus(target.focus)
+            focusObservatory(viewModel, target)
+            mashObservatoryCapture(viewModel)
+            advanceTimeBy(720L)
+            advanceUntilIdle()
+        }
+        val afterTargets = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        if (afterTargets.step == ObservatoryStep.CloseDome) {
+            closeObservatoryDome(viewModel)
+            advanceUntilIdle()
+        }
+    }
+
+    private fun advanceObservatoryToCapture(
+        viewModel: MiniGamesViewModel,
+        target: ObservatoryTarget,
+    ) {
+        val beforeTarget = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        if (beforeTarget.step == ObservatoryStep.OpenDome) {
+            openObservatoryDome(viewModel)
+        }
+        alignObservatory(viewModel, target)
+        val afterAlignment = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
+        if (afterAlignment.step == ObservatoryStep.ClearCloud) {
+            viewModel.clearObservatoryCloud()
+        }
+        focusObservatory(viewModel, target)
+    }
+
+    private fun openObservatoryDome(viewModel: MiniGamesViewModel) {
+        viewModel.setObservatoryDomeProgress(1f)
+        viewModel.validateObservatoryDomeProgress()
+    }
+
+    private fun closeObservatoryDome(viewModel: MiniGamesViewModel) {
+        viewModel.setObservatoryDomeProgress(0f)
+        viewModel.validateObservatoryDomeProgress()
+    }
+
+    private fun alignObservatory(
+        viewModel: MiniGamesViewModel,
+        target: ObservatoryTarget,
+    ) {
+        viewModel.setObservatoryAzimuth(target.azimuth)
+        viewModel.setObservatoryAltitude(target.altitude)
+        viewModel.validateObservatoryAlignment()
+    }
+
+    private fun focusObservatory(
+        viewModel: MiniGamesViewModel,
+        target: ObservatoryTarget,
+    ) {
+        viewModel.setObservatoryFocus(target.focus)
+        viewModel.validateObservatoryFocus()
+    }
+
+    private fun valueOffsetInsideTolerance(
+        targetValue: Float,
+        tolerance: Float,
+    ): Float {
+        val offset = tolerance / 2f
+        return if (targetValue <= 0.5f) offset else -offset
+    }
+
+    private fun mashObservatoryCapture(viewModel: MiniGamesViewModel) {
+        repeat(5) {
             viewModel.captureObservatoryTarget()
         }
+    }
+
+    private fun TestScope.advanceObservatoryCloudCycle() {
+        advanceTimeBy(
+            ObservatoryCloudInterCycleWaitMaxMillis +
+                ObservatoryCloudAccumulationDurationMillis +
+                ObservatoryCloudAccumulationTickMillis,
+        )
     }
 
     private fun selectQuizAnswer(

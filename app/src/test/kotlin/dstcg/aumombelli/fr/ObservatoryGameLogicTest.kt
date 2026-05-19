@@ -29,10 +29,11 @@ class ObservatoryGameLogicTest {
         assertEquals(3, ObservatoryDifficultySpec.forDifficulty(MiniGameDifficulty.Scientist).targetCount)
         assertEquals(4, ObservatoryDifficultySpec.forDifficulty(MiniGameDifficulty.Explorer).targetCount)
 
-        assertEquals(0.12f, ObservatoryDifficultySpec.forDifficulty(MiniGameDifficulty.Apprentice).tolerance)
-        assertEquals(0.09f, ObservatoryDifficultySpec.forDifficulty(MiniGameDifficulty.Observer).tolerance)
-        assertEquals(0.06f, ObservatoryDifficultySpec.forDifficulty(MiniGameDifficulty.Scientist).tolerance)
-        assertEquals(0.04f, ObservatoryDifficultySpec.forDifficulty(MiniGameDifficulty.Explorer).tolerance)
+        assertEquals(0.06f, ObservatoryDifficultySpec.forDifficulty(MiniGameDifficulty.Apprentice).tolerance)
+        assertEquals(0.045f, ObservatoryDifficultySpec.forDifficulty(MiniGameDifficulty.Observer).tolerance)
+        assertEquals(0.03f, ObservatoryDifficultySpec.forDifficulty(MiniGameDifficulty.Scientist).tolerance)
+        assertEquals(0.02f, ObservatoryDifficultySpec.forDifficulty(MiniGameDifficulty.Explorer).tolerance)
+        assertEquals("±4,5%", ObservatoryDifficultySpec.forDifficulty(MiniGameDifficulty.Observer).precisionLabel)
     }
 
     @Test
@@ -44,15 +45,13 @@ class ObservatoryGameLogicTest {
     }
 
     @Test
-    fun `settings and cloud target are stable for the same day`() {
+    fun `settings are stable for the same day`() {
         val first = buildReadyGame(MiniGameDifficulty.Scientist)
         val second = buildReadyGame(MiniGameDifficulty.Scientist)
 
         assertEquals(first.targets.map { it.azimuth }, second.targets.map { it.azimuth })
         assertEquals(first.targets.map { it.altitude }, second.targets.map { it.altitude })
         assertEquals(first.targets.map { it.focus }, second.targets.map { it.focus })
-        assertEquals(first.targets.map { it.hasCloudEvent }, second.targets.map { it.hasCloudEvent })
-        assertEquals(1, first.targets.count { it.hasCloudEvent })
     }
 
     @Test

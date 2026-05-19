@@ -21,4 +21,5 @@ internal enum class ObservatoryStep {
     ClearCloud,
     Focus,
     Capture,
+    CloseDome,
 }

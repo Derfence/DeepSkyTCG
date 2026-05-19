@@ -103,10 +103,13 @@ internal fun MiniGamesScene(
             onBackToMenu = miniGamesViewModel::backToMenu,
             onSelectDifficulty = miniGamesViewModel::selectObservatoryDifficulty,
             onSetDomeProgress = miniGamesViewModel::setObservatoryDomeProgress,
+            onValidateDomeProgress = miniGamesViewModel::validateObservatoryDomeProgress,
             onSetAzimuth = miniGamesViewModel::setObservatoryAzimuth,
             onSetAltitude = miniGamesViewModel::setObservatoryAltitude,
+            onValidateAlignment = miniGamesViewModel::validateObservatoryAlignment,
             onSetFocus = miniGamesViewModel::setObservatoryFocus,
-            onClearCloud = miniGamesViewModel::clearObservatoryCloud,
+            onValidateFocus = miniGamesViewModel::validateObservatoryFocus,
+            onScrubCloud = miniGamesViewModel::scrubObservatoryCloud,
             onCapture = miniGamesViewModel::captureObservatoryTarget,
         )
 
