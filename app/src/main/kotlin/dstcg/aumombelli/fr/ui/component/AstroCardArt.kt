@@ -38,6 +38,7 @@ internal fun CardArtBackground(
     inset: Dp = 0.dp,
     artShape: Shape = RectangleShape,
     artVisibility: CardArtVisibility = CardArtVisibility.Visible,
+    contentScale: ContentScale = ContentScale.Crop,
     modifier: Modifier = Modifier,
 ) {
     val artModifier = Modifier
@@ -90,6 +91,7 @@ internal fun CardArtBackground(
                 cardArt.primary != null -> {
                     CardArtImage(
                         bitmap = cardArt.primary,
+                        contentScale = contentScale,
                         modifier = artModifier.testTag(CardBackgroundArtTag),
                     )
                 }
@@ -98,6 +100,7 @@ internal fun CardArtBackground(
                     Box(modifier = artModifier.testTag(CardBackgroundFallbackAssetTag)) {
                         CardArtImage(
                             bitmap = cardArt.fallback,
+                            contentScale = contentScale,
                             modifier = Modifier.fillMaxSize(),
                         )
                     }
@@ -173,13 +176,14 @@ private fun HiddenCardArtPlaceholder(
 @Composable
 private fun CardArtImage(
     bitmap: Bitmap,
+    contentScale: ContentScale = ContentScale.Crop,
     modifier: Modifier = Modifier,
 ) {
     val imageBitmap = remember(bitmap) { bitmap.asImageBitmap() }
     Image(
         bitmap = imageBitmap,
         contentDescription = null,
-        contentScale = ContentScale.Crop,
+        contentScale = contentScale,
         modifier = modifier.fillMaxSize(),
     )
 }

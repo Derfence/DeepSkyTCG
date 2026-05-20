@@ -3,12 +3,14 @@ package fr.aumombelli.dstcg.feature.minigames
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -39,11 +42,13 @@ import fr.aumombelli.dstcg.model.DisplayCard
 import fr.aumombelli.dstcg.model.MiniGameDifficulty
 import fr.aumombelli.dstcg.ui.component.AstroCardPreviewSurface
 import fr.aumombelli.dstcg.ui.component.AstroCardSurfaceMode
+import fr.aumombelli.dstcg.ui.component.CardArtBackground
 import fr.aumombelli.dstcg.ui.component.SceneNavigationButton
 import fr.aumombelli.dstcg.ui.component.SceneNavigationIcon
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.motion.SkyBackdropVariant
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
+import fr.aumombelli.dstcg.ui.theme.skyQualityPalette
 import kotlinx.coroutines.delay
 
 @Composable
@@ -236,10 +241,28 @@ private fun QuizPlayingPanel(
     ) {
         val questionProgress = entranceProgress.value
         val answersProgress = ((questionProgress - 0.72f) / 0.28f).coerceIn(0f, 1f)
-        val questionStartY = maxHeight * 0.46f
-        val questionEndY = maxHeight * 0.30f
-        val questionY = questionStartY + ((questionEndY - questionStartY) * questionProgress)
+        val questionStartCenterY = maxHeight * 0.46f
+        val questionEndCenterY = maxHeight * 0.34f
+        val questionCenterY = questionStartCenterY + ((questionEndCenterY - questionStartCenterY) * questionProgress)
         val answersOffsetY = 72.dp * (1f - answersProgress)
+        val observationWidth = when {
+            maxWidth < 360.dp -> 104.dp
+            maxWidth < 520.dp -> 124.dp
+            else -> 152.dp
+        }
+        val observationHeight = observationWidth / TRADING_CARD_WIDTH_OVER_HEIGHT
+        val questionLaneWidth = (maxWidth - observationWidth - 18.dp)
+            .coerceAtLeast(maxWidth * 0.54f)
+            .coerceAtMost(maxWidth)
+        val questionBandHeight = when {
+            maxHeight < 620.dp -> 108.dp
+            maxWidth < 420.dp -> 132.dp
+            else -> 148.dp
+        }
+        val questionTopY = (questionCenterY - (questionBandHeight / 2f))
+            .coerceIn(0.dp, maxOf(0.dp, maxHeight - questionBandHeight))
+        val observationTopY = (questionEndCenterY - (observationHeight / 2f))
+            .coerceIn(0.dp, maxOf(0.dp, maxHeight - observationHeight))
 
         QuizHud(
             playing = playing,
@@ -250,19 +273,34 @@ private fun QuizPlayingPanel(
                 .testTag("quiz-fixed-hud"),
         )
 
-        Text(
-            text = playing.prompt,
-            color = Color.White,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
+        QuizObservationImage(
+            card = playing.card,
             modifier = Modifier
-                .align(Alignment.TopCenter)
-                .offset(y = questionY)
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .testTag("quiz-question-prompt"),
+                .align(Alignment.TopEnd)
+                .offset(y = observationTopY)
+                .width(observationWidth)
+                .testTag("quiz-observation-image"),
         )
+
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .offset(y = questionTopY)
+                .width(questionLaneWidth)
+                .height(questionBandHeight)
+                .padding(start = 6.dp, end = 12.dp)
+                .testTag("quiz-question-prompt"),
+        ) {
+            Text(
+                text = playing.prompt,
+                color = Color.White,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -307,6 +345,30 @@ private fun QuizPlayingPanel(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun QuizObservationImage(
+    card: DisplayCard,
+    modifier: Modifier = Modifier,
+) {
+    val shape = RoundedCornerShape(16.dp)
+    Surface(
+        shape = shape,
+        color = Color(0xCC0A1724),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.32f)),
+        shadowElevation = 6.dp,
+        modifier = modifier.aspectRatio(TRADING_CARD_WIDTH_OVER_HEIGHT),
+    ) {
+        CardArtBackground(
+            definition = card.definition,
+            mode = AstroCardSurfaceMode.Thumbnail,
+            palette = skyQualityPalette(card.activeVariant.skyQuality),
+            artShape = shape,
+            contentScale = ContentScale.Fit,
+            modifier = Modifier.fillMaxSize(),
+        )
     }
 }
 
