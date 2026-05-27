@@ -177,6 +177,10 @@ internal class MiniGamesViewModel(
         timelineController.returnCardToHand(cardId, handSlotIndex)
     }
 
+    fun selectTimelineDifficulty(difficulty: MiniGameDifficulty) {
+        timelineController.selectDifficulty(difficulty)
+    }
+
     fun validateTimeline() {
         timelineController.validate()
     }

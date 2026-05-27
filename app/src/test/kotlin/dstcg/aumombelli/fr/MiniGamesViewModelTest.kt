@@ -19,11 +19,11 @@ import fr.aumombelli.dstcg.feature.minigames.QuizGame
 import fr.aumombelli.dstcg.feature.minigames.QuizGameBuildResult
 import fr.aumombelli.dstcg.feature.minigames.TimelineGame
 import fr.aumombelli.dstcg.feature.minigames.TimelineGameBuildResult
-import fr.aumombelli.dstcg.feature.minigames.TimelinePreferredCardCount
 import fr.aumombelli.dstcg.feature.minigames.buildQuizGame
 import fr.aumombelli.dstcg.feature.minigames.buildTimelineGame
 import fr.aumombelli.dstcg.feature.minigames.eligibleTimelineCardIds
 import fr.aumombelli.dstcg.feature.minigames.selectPlayableTimelineCriterion
+import fr.aumombelli.dstcg.feature.minigames.timelineResolvedCardCountForDifficulty
 import fr.aumombelli.dstcg.model.AbsoluteMagnitudeMeasurement
 import fr.aumombelli.dstcg.model.AngularMeasurement
 import fr.aumombelli.dstcg.model.CardDefinition
@@ -115,111 +115,80 @@ class MiniGamesViewModelTest {
     }
 
     @Test
-    fun `opening timeline consumes attempt without reward`() = runTest {
+    fun `opening timeline then returning before difficulty does not consume attempt`() = runTest {
         val fixture = newTimelineFixture()
         val viewModel = fixture.newViewModel()
         advanceUntilIdle()
 
         viewModel.openTimeline()
         advanceUntilIdle()
+        viewModel.backToMenu()
+        advanceUntilIdle()
+
+        val dailyState = fixture.progressGateway.progress.miniGamesProgress
+            .dailyStateFor(MiniGameId.Timeline, "2026-05-10")
+        assertTrue(viewModel.uiState.value.screen is MiniGamesScreenUiState.Menu)
+        assertTrue(!dailyState.hasPlayed)
+        assertNull(dailyState.reward)
+    }
+
+    @Test
+    fun `locked timeline difficulty is ignored`() = runTest {
+        val fixture = newTimelineFixture()
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openTimeline()
+        advanceUntilIdle()
+        viewModel.selectTimelineDifficulty(MiniGameDifficulty.Observer)
+        advanceUntilIdle()
+
+        val dailyState = fixture.progressGateway.progress.miniGamesProgress
+            .dailyStateFor(MiniGameId.Timeline, "2026-05-10")
+        assertTrue(viewModel.uiState.value.screen is MiniGamesScreenUiState.TimelineDifficultySelection)
+        assertTrue(!dailyState.hasPlayed)
+        assertNull(dailyState.reward)
+    }
+
+    @Test
+    fun `selecting timeline difficulty consumes attempt without reward`() = runTest {
+        val fixture = newTimelineFixture()
+        val expectedTimeline = fixture.buildTimeline(MiniGameDifficulty.Apprentice)
+        val viewModel = fixture.newViewModel()
+        advanceUntilIdle()
+
+        viewModel.openTimeline()
+        advanceUntilIdle()
+        viewModel.selectTimelineDifficulty(MiniGameDifficulty.Apprentice)
+        advanceUntilIdle()
 
         val dailyState = fixture.progressGateway.progress.miniGamesProgress
             .dailyStateFor(MiniGameId.Timeline, "2026-05-10")
         val playing = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelinePlaying
-        val expectedTimeline = fixture.buildTimeline()
         assertTrue(dailyState.hasPlayed)
         assertNull(dailyState.reward)
-        assertEquals(playing.slots.size, playing.handCards.size)
-        assertEquals(playing.slots.size, playing.handSlots.size)
+        assertEquals(1, playing.comparisonCount)
+        assertEquals(0, playing.score)
+        assertEquals(2, playing.slots.size)
+        assertEquals(2, playing.handSlots.size)
         assertEquals(expectedTimeline.criterion.firstSlotLabel, playing.slots.first().emptyLabel)
         assertEquals(expectedTimeline.criterion.lastSlotLabel, playing.slots.last().emptyLabel)
         assertTrue(!playing.canValidate)
     }
 
     @Test
-    fun `placing a timeline card keeps hand positions stable`() = runTest {
+    fun `placing timeline cards can swap occupied comparison slots`() = runTest {
         val fixture = newTimelineFixture()
         val viewModel = fixture.newViewModel()
         advanceUntilIdle()
 
         viewModel.openTimeline()
         advanceUntilIdle()
-        val initial = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelinePlaying
-        val firstHandCard = initial.handSlots.filterNotNull().first()
-        val secondHandCard = initial.handSlots.filterNotNull()[1]
-        val firstIndex = initial.handSlots.indexOf(firstHandCard)
-        val secondIndex = initial.handSlots.indexOf(secondHandCard)
-
-        viewModel.placeTimelineCard(firstHandCard.id, slotIndex = 0)
-        val updated = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelinePlaying
-
-        assertEquals(initial.handSlots.size, updated.handSlots.size)
-        assertNull(updated.handSlots[firstIndex])
-        assertEquals(secondHandCard.id, updated.handSlots[secondIndex]?.id)
-        assertEquals(firstHandCard.id, updated.slots[0].placedCard?.id)
-    }
-
-    @Test
-    fun `returning a placed timeline card fills selected empty hand slot`() = runTest {
-        val fixture = newTimelineFixture()
-        val viewModel = fixture.newViewModel()
-        advanceUntilIdle()
-
-        viewModel.openTimeline()
+        viewModel.selectTimelineDifficulty(MiniGameDifficulty.Apprentice)
         advanceUntilIdle()
         val initial = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelinePlaying
         val firstHandCard = initial.handSlots.filterNotNull().first()
         val secondHandCard = initial.handSlots.filterNotNull()[1]
-        val firstIndex = initial.handSlots.indexOf(firstHandCard)
-        val secondIndex = initial.handSlots.indexOf(secondHandCard)
-
-        viewModel.placeTimelineCard(firstHandCard.id, slotIndex = 0)
-        viewModel.placeTimelineCard(secondHandCard.id, slotIndex = 1)
-        viewModel.returnTimelineCardToHand(firstHandCard.id, handSlotIndex = secondIndex)
-        val updated = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelinePlaying
-
-        assertNull(updated.slots[0].placedCard)
-        assertEquals(firstHandCard.id, updated.handSlots[secondIndex]?.id)
-        assertNull(updated.handSlots[firstIndex])
-        assertEquals(secondHandCard.id, updated.slots[1].placedCard?.id)
-    }
-
-    @Test
-    fun `placing a hand timeline card on occupied slot swaps with hand origin`() = runTest {
-        val fixture = newTimelineFixture()
-        val viewModel = fixture.newViewModel()
-        advanceUntilIdle()
-
-        viewModel.openTimeline()
-        advanceUntilIdle()
-        val initial = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelinePlaying
-        val firstHandCard = initial.handSlots.filterNotNull().first()
-        val secondHandCard = initial.handSlots.filterNotNull()[1]
-        val firstIndex = initial.handSlots.indexOf(firstHandCard)
-        val secondIndex = initial.handSlots.indexOf(secondHandCard)
-
-        viewModel.placeTimelineCard(firstHandCard.id, slotIndex = 0)
-        viewModel.placeTimelineCard(secondHandCard.id, slotIndex = 0)
-        val updated = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelinePlaying
-
-        assertEquals(secondHandCard.id, updated.slots[0].placedCard?.id)
-        assertNull(updated.handSlots[firstIndex])
-        assertEquals(firstHandCard.id, updated.handSlots[secondIndex]?.id)
-    }
-
-    @Test
-    fun `placing a slotted timeline card on occupied slot swaps slots`() = runTest {
-        val fixture = newTimelineFixture()
-        val viewModel = fixture.newViewModel()
-        advanceUntilIdle()
-
-        viewModel.openTimeline()
-        advanceUntilIdle()
-        val initial = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelinePlaying
-        val firstHandCard = initial.handSlots.filterNotNull().first()
-        val secondHandCard = initial.handSlots.filterNotNull()[1]
-        val firstIndex = initial.handSlots.indexOf(firstHandCard)
-        val secondIndex = initial.handSlots.indexOf(secondHandCard)
 
         viewModel.placeTimelineCard(firstHandCard.id, slotIndex = 0)
         viewModel.placeTimelineCard(secondHandCard.id, slotIndex = 1)
@@ -228,17 +197,17 @@ class MiniGamesViewModelTest {
 
         assertEquals(secondHandCard.id, updated.slots[0].placedCard?.id)
         assertEquals(firstHandCard.id, updated.slots[1].placedCard?.id)
-        assertNull(updated.handSlots[firstIndex])
-        assertNull(updated.handSlots[secondIndex])
     }
 
     @Test
-    fun `leaving timeline after launch consumes attempt without reward`() = runTest {
+    fun `leaving timeline after difficulty consumes attempt without reward`() = runTest {
         val fixture = newTimelineFixture()
         val viewModel = fixture.newViewModel()
         advanceUntilIdle()
 
         viewModel.openTimeline()
+        advanceUntilIdle()
+        viewModel.selectTimelineDifficulty(MiniGameDifficulty.Apprentice)
         advanceUntilIdle()
         viewModel.backToMenu()
         advanceUntilIdle()
@@ -251,15 +220,17 @@ class MiniGamesViewModelTest {
     }
 
     @Test
-    fun `perfect timeline grants one hour reward`() = runTest {
+    fun `perfect apprentice timeline grants reward and unlocks observer`() = runTest {
         val fixture = newTimelineFixture()
+        val timeline = fixture.buildTimeline(MiniGameDifficulty.Apprentice)
         val viewModel = fixture.newViewModel()
         advanceUntilIdle()
 
         viewModel.openTimeline()
         advanceUntilIdle()
-        val timeline = fixture.buildTimeline()
-        timeline.correctOrder.forEachIndexed { index, card ->
+        viewModel.selectTimelineDifficulty(MiniGameDifficulty.Apprentice)
+        advanceUntilIdle()
+        timeline.comparisons.single().correctSlots.forEachIndexed { index, card ->
             viewModel.placeTimelineCard(card.id, index)
         }
         val ready = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelinePlaying
@@ -271,10 +242,11 @@ class MiniGamesViewModelTest {
         val progress = fixture.progressGateway.progress.miniGamesProgress
         val dailyState = progress.dailyStateFor(MiniGameId.Timeline, "2026-05-10")
         val result = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelineResult
-        assertEquals(MiniGameReward.fromMinutes(60L), dailyState.reward)
-        assertEquals("${timeline.correctOrder.size}/${timeline.correctOrder.size}", result.scoreLabel)
-        assertEquals("1h", result.rewardLabel)
-        assertTrue(!result.showCorrectOrder)
+        assertEquals(MiniGameReward.fromMinutes(15L), dailyState.reward)
+        assertEquals("1/1", result.scoreLabel)
+        assertEquals("15min", result.rewardLabel)
+        assertEquals(1, result.corrections.size)
+        assertEquals(MiniGameDifficulty.Observer, progress.unlockedDifficultyFor(MiniGameId.Timeline))
     }
 
     @Test
@@ -1188,6 +1160,7 @@ class MiniGamesViewModelTest {
         cardCount: Int,
         unlockedDifficulty: MiniGameDifficulty = MiniGameDifficulty.Apprentice,
         quizUnlockedDifficulty: MiniGameDifficulty = MiniGameDifficulty.Apprentice,
+        timelineUnlockedDifficulty: MiniGameDifficulty = MiniGameDifficulty.Apprentice,
         observatoryUnlockedDifficulty: MiniGameDifficulty = MiniGameDifficulty.Apprentice,
         cardDefinitions: List<CardDefinition> = (1..cardCount).map { index ->
             testCardDefinition(
@@ -1222,6 +1195,7 @@ class MiniGamesViewModelTest {
                     unlockedDifficulties = mapOf(
                         MiniGameId.Memory to unlockedDifficulty,
                         MiniGameId.Quiz to quizUnlockedDifficulty,
+                        MiniGameId.Timeline to timelineUnlockedDifficulty,
                         MiniGameId.Observatory to observatoryUnlockedDifficulty,
                     ),
                 ),
@@ -1281,7 +1255,7 @@ class MiniGamesViewModelTest {
             }
         }
 
-        suspend fun buildTimeline(): TimelineGame {
+        suspend fun buildTimeline(difficulty: MiniGameDifficulty): TimelineGame {
             val state = repository.loadMiniGamesState()
             val criterion = selectPlayableTimelineCriterion(
                 dateUtc = state.todayUtc,
@@ -1294,11 +1268,12 @@ class MiniGamesViewModelTest {
             )
             val resolvedCards = repository.prepareResolvedCardsForToday(
                 miniGameId = MiniGameId.Timeline,
-                slotCount = TimelinePreferredCardCount,
+                slotCount = timelineResolvedCardCountForDifficulty(difficulty),
                 eligibleCardIds = eligibleCardIds,
                 distinctOwnedCards = true,
             )
             val result = buildTimelineGame(
+                difficulty = difficulty,
                 criterion = criterion,
                 dateUtc = state.todayUtc,
                 resolvedCards = resolvedCards,

@@ -16,6 +16,7 @@ internal data class MiniGamesUiState(
     val timelineStatusLabel: String = "Chargement",
     val timelinePlayedToday: Boolean = false,
     val timelineRewardLabel: String? = null,
+    val timelineDifficultyChoices: List<TimelineDifficultyChoiceUi> = emptyList(),
     val observatoryStatusLabel: String = "Chargement",
     val observatoryPlayedToday: Boolean = false,
     val observatoryRewardLabel: String? = null,
@@ -86,10 +87,16 @@ internal sealed interface MiniGamesScreenUiState {
         val message: String,
     ) : MiniGamesScreenUiState
 
+    data object TimelineDifficultySelection : MiniGamesScreenUiState
+
     data class TimelinePlaying(
+        val difficultyName: String,
         val criterionTitle: String,
         val instruction: String,
         val rewardLabel: String,
+        val comparisonIndex: Int,
+        val comparisonCount: Int,
+        val score: Int,
         val slots: List<TimelineSlotUi>,
         val handCards: List<TimelineCardUi>,
         val handSlots: List<TimelineCardUi?> = handCards,
@@ -98,12 +105,12 @@ internal sealed interface MiniGamesScreenUiState {
     ) : MiniGamesScreenUiState
 
     data class TimelineResult(
+        val difficultyName: String,
         val criterionTitle: String,
         val scoreLabel: String,
         val rewardLabel: String,
-        val slotResults: List<TimelineSlotResultUi>,
-        val correctOrder: List<TimelineCardUi>,
-        val showCorrectOrder: Boolean,
+        val corrections: List<TimelineComparisonResultUi>,
+        val nextDifficultyName: String?,
         val feedbackEvent: MiniGameFeedbackEvent? = null,
     ) : MiniGamesScreenUiState
 

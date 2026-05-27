@@ -1,6 +1,19 @@
 package fr.aumombelli.dstcg.feature.minigames
 
 import fr.aumombelli.dstcg.model.DisplayCard
+import fr.aumombelli.dstcg.model.MiniGameDifficulty
+
+internal data class TimelineDifficultyChoiceUi(
+    val difficulty: MiniGameDifficulty,
+    val title: String,
+    val comparisonLabel: String,
+    val rewardLabel: String,
+    val enabled: Boolean,
+    val locked: Boolean,
+    val statusLabel: String,
+) {
+    val testTag: String = "timeline-difficulty-${difficulty.name.lowercase()}"
+}
 
 internal data class TimelineCardUi(
     val id: String,
@@ -33,3 +46,14 @@ internal fun TimelineCard.toUi(): TimelineCardUi =
         displayCard = displayCard,
         valueLabel = valueLabel,
     )
+
+internal data class TimelineComparisonResultUi(
+    val index: Int,
+    val firstSlotLabel: String,
+    val lastSlotLabel: String,
+    val placedCards: List<TimelineCardUi>,
+    val correctCards: List<TimelineCardUi>,
+    val isCorrect: Boolean,
+) {
+    val testTag: String = "timeline-result-comparison-$index"
+}

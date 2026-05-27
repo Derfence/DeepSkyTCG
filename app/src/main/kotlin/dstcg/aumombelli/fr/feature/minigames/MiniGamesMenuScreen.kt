@@ -124,7 +124,7 @@ internal fun MiniGamesMenuScreen(
             )
             MiniGameMapNode(
                 index = "3",
-                title = "Timeline",
+                title = "Comparaison",
                 status = state.timelineStatusLabel,
                 anchorX = 0.57f,
                 anchorY = 0.42f,

@@ -6,9 +6,10 @@ import fr.aumombelli.dstcg.model.CardDefinition
 import fr.aumombelli.dstcg.model.DeepSkyDetails
 import fr.aumombelli.dstcg.model.DisplayCard
 import fr.aumombelli.dstcg.model.ExtensionDefinition
+import fr.aumombelli.dstcg.model.MiniGameDifficulty
+import fr.aumombelli.dstcg.model.MiniGameOwnedVariantRef
 import fr.aumombelli.dstcg.model.MiniGameResolvedCardRef
 import fr.aumombelli.dstcg.model.MiniGameReward
-import fr.aumombelli.dstcg.model.MiniGameOwnedVariantRef
 import fr.aumombelli.dstcg.model.SolarSystemDetails
 import fr.aumombelli.dstcg.model.StarDetails
 import fr.aumombelli.dstcg.model.VariantProfile
@@ -25,45 +26,64 @@ internal enum class TimelineCriterion(
     StellarDistance(
         id = "stellar-distance",
         title = "Distance",
-        instruction = "Classe les cartes de la plus proche à la plus lointaine.",
+        instruction = "Compare les deux cartes selon leur distance.",
         firstSlotLabel = "La plus proche",
         lastSlotLabel = "La plus lointaine",
     ),
     DeepSkyRealSize(
         id = "deep-sky-real-size",
         title = "Taille réelle",
-        instruction = "Classe les objets du ciel profond du plus petit au plus grand.",
+        instruction = "Compare les deux objets du ciel profond selon leur taille réelle.",
         firstSlotLabel = "Le plus petit",
         lastSlotLabel = "Le plus grand",
     ),
     SolarSystemDiameter(
         id = "solar-system-diameter",
         title = "Diamètre",
-        instruction = "Classe les objets du Système solaire du plus petit au plus grand.",
+        instruction = "Compare les deux objets du Système solaire selon leur diamètre.",
         firstSlotLabel = "Le plus petit",
         lastSlotLabel = "Le plus grand",
     ),
     VisualSize(
         id = "visual-size",
         title = "Taille apparente",
-        instruction = "Classe les cartes de la plus petite à la plus grande dans le ciel.",
+        instruction = "Compare les deux cartes selon leur taille apparente dans le ciel.",
         firstSlotLabel = "La plus petite",
         lastSlotLabel = "La plus grande",
     ),
     Luminosity(
         id = "luminosity",
         title = "Luminosité",
-        instruction = "Classe les cartes de la plus lumineuse à la moins lumineuse.",
+        instruction = "Compare les deux cartes selon leur luminosité.",
         firstSlotLabel = "La plus lumineuse",
         lastSlotLabel = "La moins lumineuse",
     ),
     SkyPosition(
         id = "sky-position",
         title = "Position dans le ciel",
-        instruction = "Classe les cartes du sud vers le nord.",
+        instruction = "Compare les deux cartes selon leur position du sud vers le nord.",
         firstSlotLabel = "Le plus au sud",
         lastSlotLabel = "Le plus au nord",
     ),
+}
+
+internal data class TimelineDifficultySpec(
+    val difficulty: MiniGameDifficulty,
+    val comparisonCount: Int,
+) {
+    val comparisonLabel: String = if (comparisonCount == 1) {
+        "1 comparaison"
+    } else {
+        "$comparisonCount comparaisons"
+    }
+
+    companion object {
+        fun forDifficulty(difficulty: MiniGameDifficulty): TimelineDifficultySpec =
+            TimelineDifficultySpec(
+                difficulty = difficulty,
+                comparisonCount = difficulty.level,
+            )
+    }
 }
 
 internal data class TimelineCriterionValue(
@@ -77,10 +97,16 @@ internal data class TimelineCard(
     val valueLabel: String,
 )
 
-internal data class TimelineGame(
-    val criterion: TimelineCriterion,
+internal data class TimelineComparison(
+    val index: Int,
     val cards: List<TimelineCard>,
-    val correctOrder: List<TimelineCard>,
+    val correctSlots: List<TimelineCard>,
+)
+
+internal data class TimelineGame(
+    val difficulty: MiniGameDifficulty,
+    val criterion: TimelineCriterion,
+    val comparisons: List<TimelineComparison>,
 )
 
 internal sealed interface TimelineGameBuildResult {
@@ -93,18 +119,10 @@ internal sealed interface TimelineGameBuildResult {
     ) : TimelineGameBuildResult
 }
 
-internal data class TimelineEvaluation(
-    val correctCount: Int,
-    val totalCount: Int,
-    val slotResults: List<TimelineSlotResult>,
-) {
-    val isPerfect: Boolean = correctCount == totalCount
-}
-
-internal data class TimelineSlotResult(
-    val slotIndex: Int,
-    val placedCard: TimelineCard,
-    val correctCard: TimelineCard,
+internal data class TimelineComparisonEvaluation(
+    val comparisonIndex: Int,
+    val placedCards: List<TimelineCard>,
+    val correctCards: List<TimelineCard>,
     val isCorrect: Boolean,
 )
 
@@ -117,10 +135,12 @@ internal fun selectPlayableTimelineCriterion(
     ownedCardIds: Set<String>,
 ): TimelineCriterion? =
     sortedTimelineCriteria(dateUtc).firstOrNull { criterion ->
-        eligibleTimelineCardIds(
-            criterion = criterion,
-            cards = cards,
-        ).count { it in ownedCardIds } >= TimelineMinimumCardCount
+        cards.asSequence()
+            .filter { it.id in ownedCardIds }
+            .mapNotNull { criterion.valueFor(it)?.sortValue }
+            .distinct()
+            .take(TimelineMinimumCardCount)
+            .count() >= TimelineMinimumCardCount
     }
 
 private fun sortedTimelineCriteria(dateUtc: String): List<TimelineCriterion> {
@@ -144,7 +164,13 @@ internal fun eligibleTimelineCardIds(
     .filter { criterion.valueFor(it) != null }
     .mapTo(mutableSetOf(), CardDefinition::id)
 
+internal fun timelineResolvedCardCountForDifficulty(difficulty: MiniGameDifficulty): Int =
+    (difficulty.level + 1)
+        .coerceAtLeast(TimelineMinimumCardCount)
+        .coerceAtMost(TimelinePreferredCardCount)
+
 internal fun buildTimelineGame(
+    difficulty: MiniGameDifficulty,
     criterion: TimelineCriterion,
     dateUtc: String,
     resolvedCards: List<MiniGameResolvedCardRef>,
@@ -152,6 +178,7 @@ internal fun buildTimelineGame(
     extensions: List<ExtensionDefinition>,
     variantProfiles: List<VariantProfile>,
 ): TimelineGameBuildResult {
+    val spec = TimelineDifficultySpec.forDifficulty(difficulty)
     val catalog = TimelineCatalogLookup(
         cards = cards,
         extensions = extensions,
@@ -171,80 +198,132 @@ internal fun buildTimelineGame(
             )
         }
         .distinctBy { it.card.id }
+        .sortedWith(
+            compareBy<TimelineCardEntry> {
+                stableMiniGameHash(
+                    "timeline-pool",
+                    "v${MiniGameDeterministicDrawPolicy.CurrentAlgorithmVersion}",
+                    dateUtc,
+                    criterion.id,
+                    difficulty.name,
+                    it.card.id,
+                )
+            }.thenBy { it.card.id },
+        )
 
     if (entries.size < TimelineMinimumCardCount) {
         return TimelineGameBuildResult.Unavailable(
-            message = "Pas assez de cartes compatibles dans ta bibliothèque pour préparer la Timeline.",
+            message = "Pas assez de cartes compatibles dans ta bibliothèque pour préparer Comparaison.",
         )
     }
 
-    val selectedEntries = entries.take(TimelinePreferredCardCount)
-    val correctOrderEntries = selectedEntries.sortedWith(
-        compareBy<TimelineCardEntry> { it.value.sortValue }
-            .thenBy {
-                stableMiniGameHash(
-                    "timeline-order-tie",
-                    "v${MiniGameDeterministicDrawPolicy.CurrentAlgorithmVersion}",
-                    dateUtc,
-                    criterion.id,
-                    it.card.id,
-                )
-            }
-            .thenBy { it.card.id },
+    val comparisons = buildTimelineComparisons(
+        difficulty = difficulty,
+        criterion = criterion,
+        dateUtc = dateUtc,
+        entries = entries,
     )
-    val handCards = selectedEntries
-        .map(TimelineCardEntry::card)
-        .sortedWith(
-            compareBy<TimelineCard> {
-                stableMiniGameHash(
-                    "timeline-hand",
-                    "v${MiniGameDeterministicDrawPolicy.CurrentAlgorithmVersion}",
-                    dateUtc,
-                    criterion.id,
-                    it.id,
-                )
-            }.thenBy { it.id },
+
+    if (comparisons.size < spec.comparisonCount) {
+        return TimelineGameBuildResult.Unavailable(
+            message = "Pas assez de comparaisons possibles dans ta bibliothèque pour cette difficulté.",
         )
+    }
 
     return TimelineGameBuildResult.Ready(
         game = TimelineGame(
+            difficulty = difficulty,
             criterion = criterion,
-            cards = handCards,
-            correctOrder = correctOrderEntries.map(TimelineCardEntry::card),
+            comparisons = comparisons.take(spec.comparisonCount).mapIndexed { index, comparison ->
+                comparison.copy(index = index)
+            },
         ),
     )
 }
 
-internal fun evaluateTimelinePlacement(
-    game: TimelineGame,
-    placedCardIds: List<String?>,
-): TimelineEvaluation {
-    val cardsById = game.cards.associateBy(TimelineCard::id)
-    val slotResults = game.correctOrder.mapIndexedNotNull { slotIndex, correctCard ->
-        val placedCardId = placedCardIds.getOrNull(slotIndex) ?: return@mapIndexedNotNull null
-        val placedCard = cardsById[placedCardId] ?: return@mapIndexedNotNull null
-        TimelineSlotResult(
-            slotIndex = slotIndex,
-            placedCard = placedCard,
-            correctCard = correctCard,
-            isCorrect = placedCard.id == correctCard.id,
+private fun buildTimelineComparisons(
+    difficulty: MiniGameDifficulty,
+    criterion: TimelineCriterion,
+    dateUtc: String,
+    entries: List<TimelineCardEntry>,
+): List<TimelineComparison> =
+    entries
+        .flatMapIndexed { leftIndex, left ->
+            entries.drop(leftIndex + 1).mapNotNull { right ->
+                if (left.value.sortValue == right.value.sortValue) {
+                    null
+                } else {
+                    val ordered = listOf(left, right).sortedBy { it.value.sortValue }
+                    val displayCards = ordered
+                        .map(TimelineCardEntry::card)
+                        .sortedWith(
+                            compareBy<TimelineCard> {
+                                stableMiniGameHash(
+                                    "timeline-comparison-hand",
+                                    "v${MiniGameDeterministicDrawPolicy.CurrentAlgorithmVersion}",
+                                    dateUtc,
+                                    criterion.id,
+                                    difficulty.name,
+                                    left.card.id,
+                                    right.card.id,
+                                    it.id,
+                                )
+                            }.thenBy { it.id },
+                        )
+                    TimelineComparisonCandidate(
+                        cardIds = listOf(left.card.id, right.card.id).sorted(),
+                        comparison = TimelineComparison(
+                            index = 0,
+                            cards = displayCards,
+                            correctSlots = ordered.map(TimelineCardEntry::card),
+                        ),
+                    )
+                }
+            }
+        }
+        .sortedWith(
+            compareBy<TimelineComparisonCandidate> {
+                stableMiniGameHash(
+                    "timeline-comparison",
+                    "v${MiniGameDeterministicDrawPolicy.CurrentAlgorithmVersion}",
+                    dateUtc,
+                    criterion.id,
+                    difficulty.name,
+                    it.cardIds.joinToString(":"),
+                )
+            }.thenBy { it.cardIds.joinToString(":") },
         )
+        .map(TimelineComparisonCandidate::comparison)
+
+internal fun evaluateTimelineComparison(
+    game: TimelineGame,
+    comparisonIndex: Int,
+    placedCardIds: List<String?>,
+): TimelineComparisonEvaluation? {
+    val comparison = game.comparisons.getOrNull(comparisonIndex) ?: return null
+    val cardsById = comparison.cards.associateBy(TimelineCard::id)
+    val placedCards = comparison.correctSlots.indices.map { slotIndex ->
+        val placedCardId = placedCardIds.getOrNull(slotIndex) ?: return null
+        cardsById[placedCardId] ?: return null
     }
-    return TimelineEvaluation(
-        correctCount = slotResults.count(TimelineSlotResult::isCorrect),
-        totalCount = game.correctOrder.size,
-        slotResults = slotResults,
+    return TimelineComparisonEvaluation(
+        comparisonIndex = comparison.index,
+        placedCards = placedCards,
+        correctCards = comparison.correctSlots,
+        isCorrect = placedCards.map(TimelineCard::id) == comparison.correctSlots.map(TimelineCard::id),
     )
 }
 
 internal fun calculateTimelineReward(
+    difficulty: MiniGameDifficulty,
     correctCount: Int,
-    totalCount: Int,
+    comparisonCount: Int,
 ): MiniGameReward {
-    val safeTotalCount = totalCount.coerceAtLeast(1)
-    val clampedCorrectCount = correctCount.coerceIn(0, safeTotalCount)
-    val baseRewardSeconds = TimelineMaxRewardSeconds / 2L
-    val scoreBonusSeconds = (baseRewardSeconds * clampedCorrectCount) / safeTotalCount
+    val safeComparisonCount = comparisonCount.coerceAtLeast(1)
+    val clampedCorrectCount = correctCount.coerceIn(0, safeComparisonCount)
+    val maxRewardSeconds = difficulty.reward.reductionSeconds.coerceAtLeast(0L)
+    val baseRewardSeconds = maxRewardSeconds / 2L
+    val scoreBonusSeconds = (baseRewardSeconds * clampedCorrectCount) / safeComparisonCount
     return MiniGameReward.fromSeconds(baseRewardSeconds + scoreBonusSeconds)
 }
 
@@ -314,6 +393,11 @@ private data class TimelineCardEntry(
     val value: TimelineCriterionValue,
 )
 
+private data class TimelineComparisonCandidate(
+    val cardIds: List<String>,
+    val comparison: TimelineComparison,
+)
+
 private data class TimelineCatalogLookup(
     val cards: List<CardDefinition>,
     val extensions: List<ExtensionDefinition>,
@@ -349,4 +433,3 @@ private data class TimelineDisplayCardEntry(
 
 internal const val TimelinePreferredCardCount: Int = 5
 internal const val TimelineMinimumCardCount: Int = 2
-private const val TimelineMaxRewardSeconds: Long = 60L * 60L

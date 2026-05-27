@@ -2,13 +2,16 @@ package fr.aumombelli.dstcg.feature.minigames
 
 import fr.aumombelli.dstcg.data.CatalogGateway
 import fr.aumombelli.dstcg.data.MiniGameAttemptConsumeResult
+import fr.aumombelli.dstcg.data.MiniGameRewardGrantResult
 import fr.aumombelli.dstcg.data.MiniGamesGateway
 import fr.aumombelli.dstcg.data.ProgressGateway
 import fr.aumombelli.dstcg.data.requireUsableProgress
+import fr.aumombelli.dstcg.model.MiniGameDifficulty
 import fr.aumombelli.dstcg.model.MiniGameId
 import fr.aumombelli.dstcg.model.MiniGameReward
 import fr.aumombelli.dstcg.model.dailyStateFor
 import fr.aumombelli.dstcg.model.normalized
+import fr.aumombelli.dstcg.model.unlockedDifficultyFor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
@@ -21,8 +24,11 @@ internal class TimelineMiniGameController(
     private val launch: (suspend () -> Unit) -> Unit,
 ) {
     private var activeTimeline: TimelineGame? = null
+    private var comparisonIndex: Int = 0
     private var placements: List<String?> = emptyList()
     private var handSlots: List<String?> = emptyList()
+    private var score: Int = 0
+    private var corrections: List<TimelineComparisonResultUi> = emptyList()
     private var completionStarted: Boolean = false
     private var feedbackEvent: MiniGameFeedbackEvent? = null
 
@@ -30,14 +36,39 @@ internal class TimelineMiniGameController(
         launch {
             uiState.update { it.copy(isLoading = true, errorMessage = null) }
             runCatching {
-                startTimeline()
+                openTimelineScreen()
             }.onFailure { error ->
                 clear()
                 uiState.update {
                     it.copy(
                         isLoading = false,
                         screen = MiniGamesScreenUiState.TimelineUnavailable(
-                            message = error.message ?: "Impossible de préparer la Timeline.",
+                            message = error.message ?: "Impossible de préparer Comparaison.",
+                        ),
+                    )
+                }
+            }
+        }
+    }
+
+    fun selectDifficulty(difficulty: MiniGameDifficulty) {
+        val current = uiState.value
+        val choice = current.timelineDifficultyChoices.firstOrNull { it.difficulty == difficulty }
+        if (current.isLoading || choice?.enabled != true) {
+            return
+        }
+
+        launch {
+            uiState.update { it.copy(isLoading = true, errorMessage = null) }
+            runCatching {
+                startTimeline(difficulty)
+            }.onFailure { error ->
+                clear()
+                uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        screen = MiniGamesScreenUiState.TimelineUnavailable(
+                            message = error.message ?: "Impossible de préparer Comparaison.",
                         ),
                     )
                 }
@@ -46,14 +77,14 @@ internal class TimelineMiniGameController(
     }
 
     fun placeCard(cardId: String, slotIndex: Int) {
-        val timeline = activeTimeline ?: return
+        val comparison = activeComparison() ?: return
         if (completionStarted) return
-        if (slotIndex !in timeline.correctOrder.indices) return
-        if (timeline.cards.none { it.id == cardId }) return
+        if (slotIndex !in comparison.correctSlots.indices) return
+        if (comparison.cards.none { it.id == cardId }) return
 
         val updatedPlacements = placements.toMutableList()
         val updatedHandSlots = normalizedHandSlots(
-            timeline = timeline,
+            comparison = comparison,
             handSlots = handSlots,
             placements = placements,
         ).toMutableList()
@@ -77,16 +108,16 @@ internal class TimelineMiniGameController(
     }
 
     fun returnCardToHand(cardId: String, handSlotIndex: Int) {
-        val timeline = activeTimeline ?: return
+        val comparison = activeComparison() ?: return
         if (completionStarted) return
-        if (handSlotIndex !in timeline.cards.indices) return
-        if (timeline.cards.none { it.id == cardId }) return
+        if (handSlotIndex !in comparison.cards.indices) return
+        if (comparison.cards.none { it.id == cardId }) return
 
         val previousSlot = placements.indexOf(cardId)
         if (previousSlot < 0) return
 
         val updatedHandSlots = normalizedHandSlots(
-            timeline = timeline,
+            comparison = comparison,
             handSlots = handSlots,
             placements = placements,
         ).toMutableList()
@@ -106,28 +137,207 @@ internal class TimelineMiniGameController(
     fun validate() {
         val timeline = activeTimeline ?: return
         if (completionStarted || placements.any { it == null }) return
+
+        val evaluation = evaluateTimelineComparison(
+            game = timeline,
+            comparisonIndex = comparisonIndex,
+            placedCardIds = placements,
+        ) ?: return
+
+        if (evaluation.isCorrect) {
+            score += 1
+        }
+        corrections += evaluation.toUi(timeline.criterion)
+
+        if (comparisonIndex < timeline.comparisons.lastIndex) {
+            feedbackEvent = feedbackEmitter.next(
+                tone = if (evaluation.isCorrect) MiniGameFeedbackTone.Success else MiniGameFeedbackTone.Error,
+                sourceIndexes = setOf(0, 1),
+            )
+            comparisonIndex += 1
+            resetComparisonState(timeline.comparisons[comparisonIndex])
+            publishPlayingState()
+            return
+        }
+
         completionStarted = true
         feedbackEvent = feedbackEmitter.next(
             tone = MiniGameFeedbackTone.Completion,
             sourceIndexes = emptySet(),
         )
         publishPlayingState()
+        completeTimeline(timeline)
+    }
 
-        val completedPlacements = placements
+    fun clear() {
+        activeTimeline = null
+        comparisonIndex = 0
+        placements = emptyList()
+        handSlots = emptyList()
+        score = 0
+        corrections = emptyList()
+        completionStarted = false
+        feedbackEvent = null
+    }
+
+    private suspend fun openTimelineScreen() {
+        val miniGamesState = miniGamesRepository.loadMiniGamesState()
+        val dailyState = miniGamesState.progress.dailyStateFor(
+            miniGameId = MiniGameId.Timeline,
+            dateUtc = miniGamesState.todayUtc,
+        )
+        if (dailyState.hasPlayed || dailyState.reward != null) {
+            uiState.value = miniGamesState.toUiState(
+                screen = alreadyPlayedTimelineScreen(dailyState.reward),
+            )
+            return
+        }
+
+        val criterion = selectPlayableTimelineCriterionForToday(miniGamesState.todayUtc)
+        val screen = if (criterion == null) {
+            MiniGamesScreenUiState.TimelineUnavailable(
+                message = "Tu dois posséder au moins deux cartes comparables pour préparer Comparaison.",
+            )
+        } else {
+            MiniGamesScreenUiState.TimelineDifficultySelection
+        }
+        uiState.value = miniGamesState.toUiState(screen = screen)
+    }
+
+    private suspend fun startTimeline(difficulty: MiniGameDifficulty) {
+        val miniGamesState = miniGamesRepository.loadMiniGamesState()
+        val dailyState = miniGamesState.progress.dailyStateFor(
+            miniGameId = MiniGameId.Timeline,
+            dateUtc = miniGamesState.todayUtc,
+        )
+        if (dailyState.hasPlayed || dailyState.reward != null) {
+            uiState.value = miniGamesState.toUiState(
+                screen = alreadyPlayedTimelineScreen(dailyState.reward),
+            )
+            return
+        }
+        val unlockedDifficulty = miniGamesState.progress.unlockedDifficultyFor(MiniGameId.Timeline)
+        if (difficulty.level > unlockedDifficulty.level) {
+            uiState.value = miniGamesState.toUiState(
+                screen = MiniGamesScreenUiState.TimelineUnavailable(
+                    message = "Cette difficulté n'est pas encore débloquée.",
+                ),
+            )
+            return
+        }
+
+        val game = when (
+            val timelineResult = buildTimelineForDifficulty(
+                difficulty = difficulty,
+                todayUtc = miniGamesState.todayUtc,
+            )
+        ) {
+            is TimelineGameBuildResult.Ready -> timelineResult.game
+            is TimelineGameBuildResult.Unavailable -> {
+                uiState.value = miniGamesState.toUiState(
+                    screen = MiniGamesScreenUiState.TimelineUnavailable(timelineResult.message),
+                )
+                return
+            }
+        }
+
+        when (val consumed = miniGamesRepository.consumeAttemptForToday(MiniGameId.Timeline)) {
+            is MiniGameAttemptConsumeResult.Consumed -> {
+                activeTimeline = game
+                comparisonIndex = 0
+                score = 0
+                corrections = emptyList()
+                completionStarted = false
+                feedbackEvent = null
+                resetComparisonState(game.comparisons.first())
+                uiState.value = consumed.miniGamesProgress.toUiState(
+                    todayUtc = miniGamesState.todayUtc,
+                    screen = buildPlayingState(game),
+                )
+            }
+
+            is MiniGameAttemptConsumeResult.AlreadyConsumed -> {
+                clear()
+                uiState.value = consumed.miniGamesProgress.toUiState(
+                    todayUtc = miniGamesState.todayUtc,
+                    screen = alreadyPlayedTimelineScreen(consumed.dailyState.reward),
+                )
+            }
+        }
+    }
+
+    private suspend fun buildTimelineForDifficulty(
+        difficulty: MiniGameDifficulty,
+        todayUtc: String,
+    ): TimelineGameBuildResult {
+        val cards = catalogRepository.loadCards()
+        val loadedProgress = progressRepository.loadProgress().requireUsableProgress()
+        val ownedCardIds = loadedProgress.progress.collection.normalized().cards
+            .filter { (_, entry) -> entry.totalOwned > 0 }
+            .keys
+        val criterion = selectPlayableTimelineCriterion(
+            dateUtc = todayUtc,
+            cards = cards,
+            ownedCardIds = ownedCardIds,
+        ) ?: return TimelineGameBuildResult.Unavailable(
+            message = "Tu dois posséder au moins deux cartes comparables pour préparer Comparaison.",
+        )
+        val eligibleCardIds = eligibleTimelineCardIds(
+            criterion = criterion,
+            cards = cards,
+        )
+        val resolvedCards = miniGamesRepository.prepareResolvedCardsForToday(
+            miniGameId = MiniGameId.Timeline,
+            slotCount = timelineResolvedCardCountForDifficulty(difficulty),
+            eligibleCardIds = eligibleCardIds,
+            distinctOwnedCards = true,
+        )
+        return buildTimelineGame(
+            difficulty = difficulty,
+            criterion = criterion,
+            dateUtc = todayUtc,
+            resolvedCards = resolvedCards,
+            cards = cards,
+            extensions = catalogRepository.loadExtensions(),
+            variantProfiles = catalogRepository.loadVariantProfiles(),
+        )
+    }
+
+    private suspend fun selectPlayableTimelineCriterionForToday(todayUtc: String): TimelineCriterion? {
+        val cards = catalogRepository.loadCards()
+        val loadedProgress = progressRepository.loadProgress().requireUsableProgress()
+        val ownedCardIds = loadedProgress.progress.collection.normalized().cards
+            .filter { (_, entry) -> entry.totalOwned > 0 }
+            .keys
+        return selectPlayableTimelineCriterion(
+            dateUtc = todayUtc,
+            cards = cards,
+            ownedCardIds = ownedCardIds,
+        )
+    }
+
+    private fun completeTimeline(timeline: TimelineGame) {
+        val finalScore = score
+        val finalCorrections = corrections
         launch {
             runCatching {
-                val evaluation = evaluateTimelinePlacement(
-                    game = timeline,
-                    placedCardIds = completedPlacements,
-                )
                 val reward = calculateTimelineReward(
-                    correctCount = evaluation.correctCount,
-                    totalCount = evaluation.totalCount,
+                    difficulty = timeline.difficulty,
+                    correctCount = finalScore,
+                    comparisonCount = timeline.comparisons.size,
                 )
-                miniGamesRepository.grantRewardForToday(
+                val grantResult = miniGamesRepository.grantRewardForToday(
                     miniGameId = MiniGameId.Timeline,
                     reward = reward,
                 )
+                val nextDifficulty = timeline.difficulty.next()
+                    ?.takeIf { finalScore == timeline.comparisons.size }
+                if (grantResult is MiniGameRewardGrantResult.Granted && nextDifficulty != null) {
+                    miniGamesRepository.unlockDifficulty(
+                        miniGameId = MiniGameId.Timeline,
+                        difficulty = nextDifficulty,
+                    )
+                }
                 val refreshed = miniGamesRepository.loadMiniGamesState()
                 val resultFeedbackEvent = feedbackEmitter.next(
                     tone = MiniGameFeedbackTone.Completion,
@@ -135,8 +345,12 @@ internal class TimelineMiniGameController(
                 )
                 val resultScreen = buildResultState(
                     timeline = timeline,
-                    evaluation = evaluation,
+                    score = finalScore,
                     reward = reward,
+                    corrections = finalCorrections,
+                    nextDifficultyName = nextDifficulty
+                        ?.takeIf { grantResult is MiniGameRewardGrantResult.Granted }
+                        ?.displayName,
                     feedbackEvent = resultFeedbackEvent,
                     alreadyPlayed = false,
                 )
@@ -158,110 +372,6 @@ internal class TimelineMiniGameController(
         }
     }
 
-    fun clear() {
-        activeTimeline = null
-        placements = emptyList()
-        handSlots = emptyList()
-        completionStarted = false
-        feedbackEvent = null
-    }
-
-    private suspend fun startTimeline() {
-        val miniGamesState = miniGamesRepository.loadMiniGamesState()
-        val dailyState = miniGamesState.progress.dailyStateFor(
-            miniGameId = MiniGameId.Timeline,
-            dateUtc = miniGamesState.todayUtc,
-        )
-        if (dailyState.hasPlayed) {
-            if (dailyState.reward != null) {
-                val timeline = (buildTimelineForToday(miniGamesState.todayUtc) as? TimelineGameBuildResult.Ready)
-                    ?.game
-                uiState.value = miniGamesState.toUiState(
-                    screen = alreadyPlayedTimelineScreen(
-                        reward = dailyState.reward,
-                        timeline = timeline,
-                    ),
-                )
-                return
-            }
-            uiState.value = miniGamesState.toUiState(
-                screen = MiniGamesScreenUiState.TimelineUnavailable(
-                    message = "Ton essai Timeline est déjà utilisé pour aujourd'hui.",
-                ),
-            )
-            return
-        }
-
-        val timelineResult = buildTimelineForToday(miniGamesState.todayUtc)
-        val game = when (timelineResult) {
-            is TimelineGameBuildResult.Ready -> timelineResult.game
-            is TimelineGameBuildResult.Unavailable -> {
-                uiState.value = miniGamesState.toUiState(
-                    screen = MiniGamesScreenUiState.TimelineUnavailable(timelineResult.message),
-                )
-                return
-            }
-        }
-
-        when (val consumed = miniGamesRepository.consumeAttemptForToday(MiniGameId.Timeline)) {
-            is MiniGameAttemptConsumeResult.Consumed -> {
-                activeTimeline = game
-                placements = List(game.cards.size) { null }
-                handSlots = game.cards.map(TimelineCard::id)
-                completionStarted = false
-                feedbackEvent = null
-                uiState.value = consumed.miniGamesProgress.toUiState(
-                    todayUtc = miniGamesState.todayUtc,
-                    screen = buildPlayingState(game),
-                )
-            }
-
-            is MiniGameAttemptConsumeResult.AlreadyConsumed -> {
-                clear()
-                uiState.value = consumed.miniGamesProgress.toUiState(
-                    todayUtc = miniGamesState.todayUtc,
-                    screen = alreadyPlayedTimelineScreen(
-                        reward = consumed.dailyState.reward,
-                        timeline = game,
-                    ),
-                )
-            }
-        }
-    }
-
-    private suspend fun buildTimelineForToday(todayUtc: String): TimelineGameBuildResult {
-        val cards = catalogRepository.loadCards()
-        val loadedProgress = progressRepository.loadProgress().requireUsableProgress()
-        val ownedCardIds = loadedProgress.progress.collection.normalized().cards
-            .filter { (_, entry) -> entry.totalOwned > 0 }
-            .keys
-        val criterion = selectPlayableTimelineCriterion(
-            dateUtc = todayUtc,
-            cards = cards,
-            ownedCardIds = ownedCardIds,
-        ) ?: return TimelineGameBuildResult.Unavailable(
-            message = "Tu dois posséder au moins deux cartes pour préparer la Timeline.",
-        )
-        val eligibleCardIds = eligibleTimelineCardIds(
-            criterion = criterion,
-            cards = cards,
-        )
-        val resolvedCards = miniGamesRepository.prepareResolvedCardsForToday(
-            miniGameId = MiniGameId.Timeline,
-            slotCount = TimelinePreferredCardCount,
-            eligibleCardIds = eligibleCardIds,
-            distinctOwnedCards = true,
-        )
-        return buildTimelineGame(
-            criterion = criterion,
-            dateUtc = todayUtc,
-            resolvedCards = resolvedCards,
-            cards = cards,
-            extensions = catalogRepository.loadExtensions(),
-            variantProfiles = catalogRepository.loadVariantProfiles(),
-        )
-    }
-
     private fun publishPlayingState() {
         val timeline = activeTimeline ?: return
         uiState.update {
@@ -273,33 +383,35 @@ internal class TimelineMiniGameController(
     }
 
     private fun buildPlayingState(timeline: TimelineGame): MiniGamesScreenUiState.TimelinePlaying {
+        val comparison = timeline.comparisons[comparisonIndex]
         val handSlotIds = normalizedHandSlots(
-            timeline = timeline,
+            comparison = comparison,
             handSlots = handSlots,
             placements = placements,
         )
-        val cardsById = timeline.cards.associateBy(TimelineCard::id)
+        val cardsById = comparison.cards.associateBy(TimelineCard::id)
         return MiniGamesScreenUiState.TimelinePlaying(
+            difficultyName = timeline.difficulty.displayName,
             criterionTitle = timeline.criterion.title,
             instruction = timeline.criterion.instruction,
-            rewardLabel = formatReward(MiniGameReward.fromMinutes(60L)),
-            slots = timeline.correctOrder.mapIndexed { index, _ ->
+            rewardLabel = formatReward(timeline.difficulty.reward),
+            comparisonIndex = comparisonIndex,
+            comparisonCount = timeline.comparisons.size,
+            score = score,
+            slots = comparison.correctSlots.mapIndexed { index, _ ->
                 TimelineSlotUi(
                     index = index,
                     placedCard = placements.getOrNull(index)
-                        ?.let { cardId -> timeline.cards.firstOrNull { it.id == cardId } }
+                        ?.let { cardId -> comparison.cards.firstOrNull { it.id == cardId } }
                         ?.toUi(),
-                    emptyLabel = timeline.criterion.emptySlotLabelFor(
-                        index = index,
-                        slotCount = timeline.correctOrder.size,
-                    ),
+                    emptyLabel = timeline.criterion.emptySlotLabelFor(index),
                 )
             },
             handCards = handSlotIds
                 .mapNotNull { cardId -> cardId?.let(cardsById::get) }
                 .map(TimelineCard::toUi),
             handSlots = handSlotIds.map { cardId -> cardId?.let(cardsById::get)?.toUi() },
-            canValidate = placements.size == timeline.cards.size &&
+            canValidate = placements.size == comparison.correctSlots.size &&
                 placements.all { it != null } &&
                 !completionStarted,
             feedbackEvent = feedbackEvent,
@@ -308,94 +420,71 @@ internal class TimelineMiniGameController(
 
     private fun buildResultState(
         timeline: TimelineGame,
-        evaluation: TimelineEvaluation,
+        score: Int,
         reward: MiniGameReward,
+        corrections: List<TimelineComparisonResultUi>,
+        nextDifficultyName: String?,
         feedbackEvent: MiniGameFeedbackEvent?,
         alreadyPlayed: Boolean,
     ): MiniGamesScreenUiState.TimelineResult =
         MiniGamesScreenUiState.TimelineResult(
+            difficultyName = if (alreadyPlayed) "Comparaison" else timeline.difficulty.displayName,
             criterionTitle = timeline.criterion.title,
             scoreLabel = if (alreadyPlayed) {
                 "Déjà joué aujourd'hui"
             } else {
-                "${evaluation.correctCount}/${evaluation.totalCount}"
+                "$score/${timeline.comparisons.size}"
             },
             rewardLabel = formatReward(reward),
-            slotResults = evaluation.slotResults.map { result ->
-                TimelineSlotResultUi(
-                    index = result.slotIndex,
-                    placedCard = result.placedCard.toUi(),
-                    correctCard = result.correctCard.toUi(),
-                    isCorrect = result.isCorrect,
-                )
-            },
-            correctOrder = timeline.correctOrder.map(TimelineCard::toUi),
-            showCorrectOrder = !alreadyPlayed && !evaluation.isPerfect,
+            corrections = corrections,
+            nextDifficultyName = nextDifficultyName,
             feedbackEvent = feedbackEvent,
         )
 
     private fun alreadyPlayedTimelineScreen(
         reward: MiniGameReward?,
-        timeline: TimelineGame?,
     ): MiniGamesScreenUiState =
-        when {
-            reward != null && timeline != null -> {
-                val evaluation = TimelineEvaluation(
-                    correctCount = timeline.correctOrder.size,
-                    totalCount = timeline.correctOrder.size,
-                    slotResults = timeline.correctOrder.mapIndexed { index, card ->
-                        TimelineSlotResult(
-                            slotIndex = index,
-                            placedCard = card,
-                            correctCard = card,
-                            isCorrect = true,
-                        )
-                    },
-                )
-                buildResultState(
-                    timeline = timeline,
-                    evaluation = evaluation,
-                    reward = reward,
-                    feedbackEvent = null,
-                    alreadyPlayed = true,
-                )
-            }
-
-            reward != null -> MiniGamesScreenUiState.TimelineResult(
-                criterionTitle = "Timeline",
+        if (reward != null) {
+            MiniGamesScreenUiState.TimelineResult(
+                difficultyName = "Comparaison",
+                criterionTitle = "Comparaison",
                 scoreLabel = "Déjà joué aujourd'hui",
                 rewardLabel = formatReward(reward),
-                slotResults = emptyList(),
-                correctOrder = emptyList(),
-                showCorrectOrder = false,
+                corrections = emptyList(),
+                nextDifficultyName = null,
                 feedbackEvent = null,
             )
-
-            else -> MiniGamesScreenUiState.TimelineUnavailable(
-                message = "Ton essai Timeline est déjà utilisé pour aujourd'hui.",
+        } else {
+            MiniGamesScreenUiState.TimelineUnavailable(
+                message = "Ton essai Comparaison est déjà utilisé pour aujourd'hui.",
             )
         }
+
+    private fun activeComparison(): TimelineComparison? =
+        activeTimeline?.comparisons?.getOrNull(comparisonIndex)
+
+    private fun resetComparisonState(comparison: TimelineComparison) {
+        placements = List(comparison.correctSlots.size) { null }
+        handSlots = comparison.cards.map(TimelineCard::id)
+    }
 }
 
-private fun TimelineCriterion.emptySlotLabelFor(
-    index: Int,
-    slotCount: Int,
-): String? = when (index) {
-    0 -> firstSlotLabel
-    slotCount - 1 -> lastSlotLabel
-    else -> null
-}
+private fun TimelineCriterion.emptySlotLabelFor(index: Int): String =
+    when (index) {
+        0 -> firstSlotLabel
+        else -> lastSlotLabel
+    }
 
 private fun normalizedHandSlots(
-    timeline: TimelineGame,
+    comparison: TimelineComparison,
     handSlots: List<String?>,
     placements: List<String?>,
 ): List<String?> {
-    if (handSlots.size == timeline.cards.size) {
+    if (handSlots.size == comparison.cards.size) {
         return handSlots
     }
     val placedIds = placements.filterNotNull().toSet()
-    return timeline.cards.map { card ->
+    return comparison.cards.map { card ->
         card.id.takeIf { it !in placedIds }
     }
 }
@@ -406,3 +495,15 @@ private fun MutableList<String?>.removeTimelineHandCard(cardId: String) {
         this[currentIndex] = null
     }
 }
+
+private fun TimelineComparisonEvaluation.toUi(
+    criterion: TimelineCriterion,
+): TimelineComparisonResultUi =
+    TimelineComparisonResultUi(
+        index = comparisonIndex,
+        firstSlotLabel = criterion.firstSlotLabel,
+        lastSlotLabel = criterion.lastSlotLabel,
+        placedCards = placedCards.map(TimelineCard::toUi),
+        correctCards = correctCards.map(TimelineCard::toUi),
+        isCorrect = isCorrect,
+    )

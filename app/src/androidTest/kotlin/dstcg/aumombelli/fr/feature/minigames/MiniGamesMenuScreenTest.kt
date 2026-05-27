@@ -52,7 +52,7 @@ class MiniGamesMenuScreenTest {
         composeRule.onNodeWithText("Disponible aujourd'hui").assertIsDisplayed()
         composeRule.onNodeWithText("Memory amateur").assertIsDisplayed()
         composeRule.onNodeWithText("Essai utilisé aujourd'hui").assertIsDisplayed()
-        composeRule.onNodeWithText("Timeline").assertIsDisplayed()
+        composeRule.onNodeWithText("Comparaison").assertIsDisplayed()
         composeRule.onNodeWithText("Observatoire").assertIsDisplayed()
         composeRule.onNodeWithText("Disponible Observatoire").assertIsDisplayed()
     }

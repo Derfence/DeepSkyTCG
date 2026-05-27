@@ -85,11 +85,13 @@ internal fun MiniGamesScene(
             onContinue = miniGamesViewModel::continueQuiz,
         )
 
+        is MiniGamesScreenUiState.TimelineDifficultySelection,
         is MiniGamesScreenUiState.TimelinePlaying,
         is MiniGamesScreenUiState.TimelineResult,
         is MiniGamesScreenUiState.TimelineUnavailable -> TimelineGameScreen(
             state = uiState,
             onBackToMenu = miniGamesViewModel::backToMenu,
+            onSelectDifficulty = miniGamesViewModel::selectTimelineDifficulty,
             onPlaceCard = miniGamesViewModel::placeTimelineCard,
             onReturnCardToHand = miniGamesViewModel::returnTimelineCardToHand,
             onValidate = miniGamesViewModel::validateTimeline,

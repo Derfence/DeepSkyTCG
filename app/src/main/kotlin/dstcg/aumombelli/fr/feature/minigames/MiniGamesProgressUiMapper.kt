@@ -26,6 +26,7 @@ internal fun MiniGamesProgress.toUiState(
     val memoryRewardLabel = memoryDailyState.reward?.let(::formatReward)
     val memoryPlayedToday = memoryDailyState.hasPlayed || memoryDailyState.reward != null
     val timelineDailyState = dailyStateFor(MiniGameId.Timeline, todayUtc)
+    val timelineUnlockedDifficulty = unlockedDifficultyFor(MiniGameId.Timeline)
     val timelineRewardLabel = timelineDailyState.reward?.let(::formatReward)
     val timelinePlayedToday = timelineDailyState.hasPlayed || timelineDailyState.reward != null
     val observatoryDailyState = dailyStateFor(MiniGameId.Observatory, todayUtc)
@@ -86,10 +87,27 @@ internal fun MiniGamesProgress.toUiState(
         timelineStatusLabel = when {
             timelineRewardLabel != null -> "Joué aujourd'hui - $timelineRewardLabel gagnées"
             timelinePlayedToday -> "Essai utilisé aujourd'hui"
-            else -> "Disponible - 1h max"
+            else -> "Disponible - ${timelineUnlockedDifficulty.displayName}"
         },
         timelinePlayedToday = timelinePlayedToday,
         timelineRewardLabel = timelineRewardLabel,
+        timelineDifficultyChoices = MiniGameDifficulty.entries.map { difficulty ->
+            val unlocked = difficulty.level <= timelineUnlockedDifficulty.level
+            val spec = TimelineDifficultySpec.forDifficulty(difficulty)
+            TimelineDifficultyChoiceUi(
+                difficulty = difficulty,
+                title = difficulty.displayName,
+                comparisonLabel = spec.comparisonLabel,
+                rewardLabel = formatReward(difficulty.reward),
+                enabled = unlocked && !timelinePlayedToday,
+                locked = !unlocked,
+                statusLabel = when {
+                    timelinePlayedToday -> "Déjà joué"
+                    unlocked -> "Disponible"
+                    else -> "À débloquer"
+                },
+            )
+        },
         observatoryStatusLabel = when {
             observatoryRewardLabel != null -> "Joué aujourd'hui - $observatoryRewardLabel gagnées"
             observatoryPlayedToday -> "Essai utilisé aujourd'hui"
