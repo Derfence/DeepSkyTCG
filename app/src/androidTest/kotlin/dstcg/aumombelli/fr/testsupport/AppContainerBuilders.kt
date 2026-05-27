@@ -23,8 +23,10 @@ import fr.aumombelli.dstcg.data.ProgressRepository
 import fr.aumombelli.dstcg.data.RandomEntropySource
 import fr.aumombelli.dstcg.data.StandaloneGameSettings
 import fr.aumombelli.dstcg.data.TradeRepository
+import fr.aumombelli.dstcg.model.AbsoluteMagnitudeMeasurement
 import fr.aumombelli.dstcg.model.CardDefinition
 import fr.aumombelli.dstcg.model.CardFinishDefinition
+import fr.aumombelli.dstcg.model.DeepSkyDetails
 import fr.aumombelli.dstcg.model.DrawPackResponse
 import fr.aumombelli.dstcg.model.EquipmentCardDefinition
 import fr.aumombelli.dstcg.model.EquipmentSettingsDefinition
@@ -32,7 +34,9 @@ import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.GameBalanceDefinition
 import fr.aumombelli.dstcg.model.HomeMenuNoveltyState
 import fr.aumombelli.dstcg.model.LibraryCardNoveltyState
+import fr.aumombelli.dstcg.model.LightYearMeasurement
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
+import fr.aumombelli.dstcg.model.OwnedCardEntry
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.OwnedEquipmentCardEntry
 import fr.aumombelli.dstcg.model.OwnedEquipmentInventory
@@ -211,10 +215,11 @@ internal fun homeMenuNoveltyTestAppContainer(): AppContainer {
 internal fun miniGamesMenuTestAppContainer(
     initialOnboardingStep: NewPlayerOnboardingStep? = null,
 ): AppContainer {
+    val cardIds = (1..10).map { index -> "ALP-${index.toString().padStart(3, '0')}" }
     return navigationTestAppContainer(
         initialCollection = OwnedCollection(
-            cards = mapOf(
-                "ALP-001" to fr.aumombelli.dstcg.model.OwnedCardEntry(
+            cards = cardIds.associateWith {
+                OwnedCardEntry(
                     totalOwned = 1,
                     variants = listOf(
                         OwnedVariantCount(
@@ -223,8 +228,8 @@ internal fun miniGamesMenuTestAppContainer(
                             count = 1,
                         ),
                     ),
-                ),
-            ),
+                )
+            },
         ),
         miniGamesMenuUnlocked = true,
         homeMenuNoveltyState = HomeMenuNoveltyState(
@@ -247,7 +252,10 @@ private fun navigationTestAppContainer(
         name = "Astronomes en herbe",
         coverImageRef = "cover",
     )
-    val cardDefinition = testCardDefinition("ALP-001")
+    val cardDefinitions = initialCollection.cards.keys
+        .ifEmpty { setOf("ALP-001") }
+        .sorted()
+        .map(::navigationCardDefinition)
     val progressRepository = MutableProgressGateway(
         initialProgress = StandaloneProgress(
             collection = initialCollection,
@@ -275,7 +283,7 @@ private fun navigationTestAppContainer(
     val collectionRepository = NavigationCollectionGateway(progressRepository)
     val catalogRepository = NavigationCatalogGateway(
         extensions = listOf(extension),
-        cards = listOf(cardDefinition),
+        cards = cardDefinitions,
         variantProfiles = listOf(navigationVariantProfile()),
     )
     val gameSettings = StandaloneGameSettings(
@@ -322,6 +330,37 @@ private fun navigationTestAppContainer(
             progressRepository = progressRepository,
         ),
         gameSettings = gameSettings,
+    )
+}
+
+private fun navigationCardDefinition(cardId: String): CardDefinition {
+    val index = cardId.substringAfterLast("-").toIntOrNull() ?: 1
+    val base = testCardDefinition(
+        id = cardId,
+        name = if (index == 1) "Nebuleuse d'Orion" else "Carte $index",
+        catalogNumber = cardId,
+    )
+    val deepSkyDetails = base.astronomy.details as? DeepSkyDetails ?: return base
+    val distance = 1_000.0 + index * 125.0
+    val realSize = 15.0 + index * 2.0
+    val absoluteMagnitude = -5.0 + index * 0.25
+    return base.copy(
+        astronomy = base.astronomy.copy(
+            details = deepSkyDetails.copy(
+                distance = LightYearMeasurement(
+                    lightYears = distance,
+                    label = "${distance.toInt()} annees-lumiere",
+                ),
+                realSize = LightYearMeasurement(
+                    lightYears = realSize,
+                    label = "${realSize.toInt()} annees-lumiere",
+                ),
+                absoluteMagnitude = AbsoluteMagnitudeMeasurement(
+                    value = absoluteMagnitude,
+                    label = absoluteMagnitude.toString(),
+                ),
+            ),
+        ),
     )
 }
 

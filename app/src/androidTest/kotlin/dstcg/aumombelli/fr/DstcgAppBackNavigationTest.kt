@@ -4,7 +4,6 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -182,8 +181,8 @@ class DstcgAppBackNavigationTest {
 
         composeRule.onNodeWithTag("mini-games-quiz").assertIsDisplayed().assertIsEnabled()
         composeRule.onNodeWithTag("mini-games-memory").assertIsDisplayed().assertIsEnabled()
-        composeRule.onNodeWithTag("mini-games-timeline").assertIsDisplayed().assertIsNotEnabled()
-        composeRule.onNodeWithTag("mini-games-observatory").assertIsDisplayed().assertIsNotEnabled()
+        composeRule.onNodeWithTag("mini-games-timeline").assertIsDisplayed().assertIsEnabled()
+        composeRule.onNodeWithTag("mini-games-observatory").assertIsDisplayed().assertIsEnabled()
 
         composeRule.onNodeWithTag("mini-games-menu-back").performClick()
         advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
