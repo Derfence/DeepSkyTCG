@@ -111,6 +111,7 @@ fun AstroCardDetailsSurface(
                 MeasurementsSection(displayCard)
                 ImageCreditLine(
                     artistName = cardArtCreditArtistName(imageCredit?.artist),
+                    licenseName = cardArtCreditLicenseName(imageCredit?.license),
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(modifier = Modifier.height(24.dp))
@@ -122,6 +123,7 @@ fun AstroCardDetailsSurface(
 @Composable
 private fun ImageCreditLine(
     artistName: String,
+    licenseName: String,
     modifier: Modifier = Modifier,
 ) {
     androidx.compose.foundation.layout.Column(
@@ -140,6 +142,14 @@ private fun ImageCreditLine(
             fontWeight = FontWeight.Medium,
             modifier = Modifier.testTag(CardImageCreditTag),
             maxLines = 3,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            text = "Licence : $licenseName",
+            color = Color(0xFFE9F2FC),
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.testTag(CardImageLicenseTag),
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
         )
     }

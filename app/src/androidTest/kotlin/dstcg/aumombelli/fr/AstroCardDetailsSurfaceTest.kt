@@ -81,6 +81,10 @@ class AstroCardDetailsSurfaceTest {
             "Min Xie",
             substring = true,
         )
+        composeRule.onNodeWithTag("astro-card-image-license").assertTextContains(
+            "Licence : CC BY-NC",
+            substring = true,
+        )
     }
 
     @Test
@@ -106,6 +110,10 @@ class AstroCardDetailsSurfaceTest {
 
         composeRule.onNodeWithTag("astro-card-image-credit").assertTextContains(
             "Inconnu",
+            substring = true,
+        )
+        composeRule.onNodeWithTag("astro-card-image-license").assertTextContains(
+            "Licence : Inconnue",
             substring = true,
         )
     }

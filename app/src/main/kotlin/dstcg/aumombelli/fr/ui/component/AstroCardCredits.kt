@@ -10,6 +10,7 @@ import kotlinx.serialization.json.Json
 
 internal const val CardArtCreditsAssetPath = "card_art/card_art_credits.json"
 internal const val CardImageCreditTag = "astro-card-image-credit"
+internal const val CardImageLicenseTag = "astro-card-image-license"
 
 @Serializable
 internal data class CardArtCreditEntry(
@@ -38,6 +39,9 @@ internal fun rememberCardArtCredit(definition: CardDefinition): CardArtCreditEnt
 
 internal fun cardArtCreditArtistName(artist: String?): String =
     artist?.trim()?.takeIf { it.isNotEmpty() } ?: "Inconnu"
+
+internal fun cardArtCreditLicenseName(license: String?): String =
+    license?.trim()?.takeIf { it.isNotEmpty() } ?: "Inconnue"
 
 private fun loadCardArtCredits(contextAssets: AssetManager): CardArtCreditsCatalog {
     synchronized(cardArtCreditsCacheLock) {
