@@ -9,7 +9,6 @@ import fr.aumombelli.dstcg.model.dailyStateFor
 import fr.aumombelli.dstcg.model.withDailyState
 import fr.aumombelli.dstcg.model.withUnlockedDifficulty
 import java.time.Instant
-import java.time.ZoneOffset
 
 class MiniGamesRepository(
     private val progressRepository: ProgressGateway,
@@ -202,4 +201,4 @@ class MiniGamesRepository(
 }
 
 internal fun Instant.toMiniGameDateUtc(): String =
-    atZone(ZoneOffset.UTC).toLocalDate().toString()
+    toUtcLocalDateCompat().toString()

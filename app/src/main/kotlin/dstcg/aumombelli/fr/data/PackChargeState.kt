@@ -4,7 +4,6 @@ import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.StandaloneProgress
 import java.time.Duration
 import java.time.Instant
-import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 import kotlin.math.ceil
 import kotlin.math.roundToLong
@@ -103,7 +102,7 @@ internal fun normalizePackRechargeState(
 
     var cursor = lastChargeEvaluationAt
     while (cursor.isBefore(normalizedNow) && availableDrawCount < maxStoredDraws) {
-        val nextDayStart = cursor.nextUtcDayStart()
+        val nextDayStart = cursor.nextUtcDayStartCompat()
         val segmentEnd = minOf(nextDayStart, normalizedNow)
         val elapsedSeconds = Duration.between(cursor, segmentEnd).seconds.coerceAtLeast(0L)
         val unitsPerSecond = weatherPolicy.weatherAt(cursor).rechargeUnitsPerSecond
@@ -403,7 +402,7 @@ private fun computeNextChargeAt(
     }
 
     while (true) {
-        val nextDayStart = cursor.nextUtcDayStart()
+        val nextDayStart = cursor.nextUtcDayStartCompat()
         val unitsPerSecond = weatherPolicy.weatherAt(cursor).rechargeUnitsPerSecond
         if (unitsPerSecond <= 0L) {
             cursor = nextDayStart
@@ -456,7 +455,7 @@ private fun rechargeUnitsBetween(
     var cursor = normalizedStart
     var accumulatedUnits = 0L
     while (cursor.isBefore(normalizedEnd)) {
-        val segmentEnd = minOf(cursor.nextUtcDayStart(), normalizedEnd)
+        val segmentEnd = minOf(cursor.nextUtcDayStartCompat(), normalizedEnd)
         val elapsedSeconds = Duration.between(cursor, segmentEnd).seconds.coerceAtLeast(0L)
         val unitsPerSecond = weatherPolicy.weatherAt(cursor).rechargeUnitsPerSecond
         if (elapsedSeconds > 0L && unitsPerSecond > 0L) {
@@ -471,12 +470,5 @@ private fun rechargeUnitsBetween(
 }
 
 private fun Instant.normalizedRechargeInstant(): Instant = truncatedTo(ChronoUnit.SECONDS)
-
-private fun Instant.nextUtcDayStart(): Instant =
-    atZone(ZoneOffset.UTC)
-        .toLocalDate()
-        .plusDays(1)
-        .atStartOfDay(ZoneOffset.UTC)
-        .toInstant()
 
 private const val RECHARGE_MULTIPLIER_SCALE = 1_000L

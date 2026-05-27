@@ -2,7 +2,6 @@ package fr.aumombelli.dstcg.data
 
 import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 
 /**
@@ -56,7 +55,7 @@ object DeterministicWeatherCalendar : WeatherPolicy {
     private val anchorDate: LocalDate = LocalDate.of(2026, 1, 1)
 
     override fun weatherAt(instant: Instant): WeatherState =
-        weatherOn(instant.atZone(ZoneOffset.UTC).toLocalDate())
+        weatherOn(instant.toUtcLocalDateCompat())
 
     /**
      * Resolves the weather for a UTC calendar day.

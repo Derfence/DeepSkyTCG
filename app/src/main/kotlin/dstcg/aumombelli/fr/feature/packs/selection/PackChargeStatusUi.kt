@@ -26,12 +26,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.data.buildPackChargeUiStatus
+import fr.aumombelli.dstcg.data.nextUtcDayStartCompat
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.motion.GenericPackCardShell
 import fr.aumombelli.dstcg.ui.motion.MotionCard
 import java.time.Duration
 import java.time.Instant
-import java.time.ZoneOffset
 
 internal fun PackSelectionUiState.buildLiveChargeStatus(now: Instant) = buildPackChargeUiStatus(
     rechargeState = rechargeState,
@@ -216,10 +216,6 @@ private fun PackStockSlot(
 }
 
 internal fun millisUntilNextUtcDayStart(now: Instant): Long {
-    val nextUtcDayStart = now.atZone(ZoneOffset.UTC)
-        .toLocalDate()
-        .plusDays(1)
-        .atStartOfDay(ZoneOffset.UTC)
-        .toInstant()
+    val nextUtcDayStart = now.nextUtcDayStartCompat()
     return Duration.between(now, nextUtcDayStart).toMillis().coerceAtLeast(0L)
 }
