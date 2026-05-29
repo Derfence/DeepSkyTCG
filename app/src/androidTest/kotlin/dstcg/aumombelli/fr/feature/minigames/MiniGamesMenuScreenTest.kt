@@ -82,6 +82,41 @@ class MiniGamesMenuScreenTest {
         assertTrue(observatoryInfo.right <= observatoryButton.left)
     }
 
+    @Test
+    fun game_buttons_keep_a_wide_bottom_left_to_top_right_diagonal() {
+        setMenuContent(
+            MiniGamesUiState(
+                isLoading = false,
+                quizStatusLabel = "Disponible",
+                memoryStatusLabel = "Disponible",
+            ),
+        )
+
+        val root = composeRule.onNodeWithTag("mini-games-menu-screen").fetchSemanticsNode().boundsInRoot
+        val quizButton = composeRule.onNodeWithTag("mini-games-quiz").fetchSemanticsNode().boundsInRoot
+        val memoryButton = composeRule.onNodeWithTag("mini-games-memory").fetchSemanticsNode().boundsInRoot
+        val timelineButton = composeRule.onNodeWithTag("mini-games-timeline").fetchSemanticsNode().boundsInRoot
+        val observatoryButton = composeRule.onNodeWithTag("mini-games-observatory").fetchSemanticsNode().boundsInRoot
+
+        val quizCenterX = centerX(quizButton)
+        val quizCenterY = centerY(quizButton)
+        val memoryCenterX = centerX(memoryButton)
+        val memoryCenterY = centerY(memoryButton)
+        val timelineCenterX = centerX(timelineButton)
+        val timelineCenterY = centerY(timelineButton)
+        val observatoryCenterX = centerX(observatoryButton)
+        val observatoryCenterY = centerY(observatoryButton)
+
+        assertTrue(quizCenterX < memoryCenterX)
+        assertTrue(memoryCenterX < timelineCenterX)
+        assertTrue(timelineCenterX < observatoryCenterX)
+        assertTrue(quizCenterY > memoryCenterY)
+        assertTrue(memoryCenterY > timelineCenterY)
+        assertTrue(timelineCenterY > observatoryCenterY)
+        assertTrue(observatoryCenterX - quizCenterX >= (root.right - root.left) * 0.55f)
+        assertTrue(quizCenterY - observatoryCenterY >= (root.bottom - root.top) * 0.55f)
+    }
+
     private fun setMenuContent(state: MiniGamesUiState) {
         composeRule.setContent {
             DstcgTheme {
@@ -99,4 +134,10 @@ class MiniGamesMenuScreenTest {
 
     private fun hasStateDescription(value: String): SemanticsMatcher =
         SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, value)
+
+    private fun centerX(bounds: androidx.compose.ui.geometry.Rect): Float =
+        (bounds.left + bounds.right) / 2f
+
+    private fun centerY(bounds: androidx.compose.ui.geometry.Rect): Float =
+        (bounds.top + bounds.bottom) / 2f
 }

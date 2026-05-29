@@ -1,10 +1,5 @@
 package fr.aumombelli.dstcg.feature.home
 
-import android.annotation.SuppressLint
-import android.graphics.Color as AndroidColor
-import android.view.ViewGroup
-import android.webkit.WebSettings
-import android.webkit.WebView
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -52,9 +47,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.ui.component.NewContentIndicator
+import fr.aumombelli.dstcg.ui.component.SvgHtmlImage
 import fr.aumombelli.dstcg.ui.motion.MotionCard
 
 @Composable
@@ -351,67 +346,13 @@ private fun HomeCardSvgOrFallback(
     }
 }
 
-@SuppressLint("SetJavaScriptEnabled")
 @Composable
 private fun HomeCardSvgBackground(
     svgMarkup: String,
     modifier: Modifier = Modifier,
 ) {
-    val htmlDocument = remember(svgMarkup) {
-        """
-        <html>
-          <head>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-            <style>
-              html, body {
-                margin: 0;
-                padding: 0;
-                width: 100%;
-                height: 100%;
-                overflow: hidden;
-                background: transparent;
-              }
-              svg {
-                display: block;
-                width: 100%;
-                height: 100%;
-              }
-            </style>
-          </head>
-          <body>
-            $svgMarkup
-          </body>
-        </html>
-        """.trimIndent()
-    }
-
-    AndroidView(
-        factory = { viewContext ->
-            WebView(viewContext).apply {
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                )
-                setBackgroundColor(AndroidColor.TRANSPARENT)
-                overScrollMode = WebView.OVER_SCROLL_NEVER
-                isVerticalScrollBarEnabled = false
-                isHorizontalScrollBarEnabled = false
-                isLongClickable = false
-                settings.javaScriptEnabled = false
-                settings.cacheMode = WebSettings.LOAD_NO_CACHE
-                settings.loadsImagesAutomatically = true
-                settings.allowFileAccess = false
-                settings.allowContentAccess = false
-                settings.blockNetworkLoads = true
-                loadDataWithBaseURL(
-                    "file:///android_asset/",
-                    htmlDocument,
-                    "text/html",
-                    "utf-8",
-                    null,
-                )
-            }
-        },
+    SvgHtmlImage(
+        bodyMarkup = svgMarkup,
         modifier = modifier,
     )
 }
@@ -651,4 +592,4 @@ private fun LegacyHomeMiniGamesCardBackground(
 }
 
 private const val HomePackCardSvgAssetName: String = "carte_finale.svg"
-private const val HomeMiniGamesCardSvgAssetName: String = "home-mini-games-card.svg"
+private const val HomeMiniGamesCardSvgAssetName: String = "mini-games-card.svg"

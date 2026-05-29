@@ -86,16 +86,14 @@ internal fun MiniGamesMenuScreen(
         }
 
         BoxWithConstraints(
-            modifier = Modifier
-                .fillMaxSize()
-                .dstcgContentInsetsPadding(includeBottom = true),
+            modifier = Modifier.fillMaxSize(),
         ) {
             MiniGameMapNode(
                 index = "1",
                 title = "Quiz universitaire",
                 status = state.quizStatusLabel,
-                anchorX = 0.24f,
-                anchorY = 0.74f,
+                anchorX = MiniGamesQuizAnchorX,
+                anchorY = MiniGamesQuizAnchorY,
                 buttonState = when {
                     state.isLoading -> MiniGameMenuButtonState.Loading
                     state.quizPlayedToday -> MiniGameMenuButtonState.Consumed
@@ -109,8 +107,8 @@ internal fun MiniGamesMenuScreen(
                 index = "2",
                 title = "Memory amateur",
                 status = state.memoryStatusLabel,
-                anchorX = 0.40f,
-                anchorY = 0.58f,
+                anchorX = MiniGamesMemoryAnchorX,
+                anchorY = MiniGamesMemoryAnchorY,
                 buttonState = when {
                     state.isLoading -> MiniGameMenuButtonState.Loading
                     state.memoryPlayedToday -> MiniGameMenuButtonState.Consumed
@@ -124,8 +122,8 @@ internal fun MiniGamesMenuScreen(
                 index = "3",
                 title = "Comparaison",
                 status = state.timelineStatusLabel,
-                anchorX = 0.57f,
-                anchorY = 0.42f,
+                anchorX = MiniGamesTimelineAnchorX,
+                anchorY = MiniGamesTimelineAnchorY,
                 buttonState = when {
                     state.isLoading -> MiniGameMenuButtonState.Loading
                     state.timelinePlayedToday -> MiniGameMenuButtonState.Consumed
@@ -139,8 +137,8 @@ internal fun MiniGamesMenuScreen(
                 index = "4",
                 title = "Observatoire",
                 status = state.observatoryStatusLabel,
-                anchorX = 0.74f,
-                anchorY = 0.26f,
+                anchorX = MiniGamesObservatoryAnchorX,
+                anchorY = MiniGamesObservatoryAnchorY,
                 buttonState = when {
                     state.isLoading -> MiniGameMenuButtonState.Loading
                     state.observatoryPlayedToday -> MiniGameMenuButtonState.Consumed
@@ -309,10 +307,10 @@ private fun MiniGamesFallbackMap(
             ),
         )
         val points = listOf(
-            Offset(size.width * 0.24f, size.height * 0.74f),
-            Offset(size.width * 0.40f, size.height * 0.58f),
-            Offset(size.width * 0.57f, size.height * 0.42f),
-            Offset(size.width * 0.74f, size.height * 0.26f),
+            Offset(size.width * MiniGamesQuizAnchorX, size.height * MiniGamesQuizAnchorY),
+            Offset(size.width * MiniGamesMemoryAnchorX, size.height * MiniGamesMemoryAnchorY),
+            Offset(size.width * MiniGamesTimelineAnchorX, size.height * MiniGamesTimelineAnchorY),
+            Offset(size.width * MiniGamesObservatoryAnchorX, size.height * MiniGamesObservatoryAnchorY),
         )
         points.zipWithNext().forEach { (start, end) ->
             drawLine(
@@ -422,4 +420,13 @@ private fun MiniGameMenuButtonState.colors(): MiniGameMenuButtonColors = when (t
 private val MiniGameMenuButtonState.isInteractive: Boolean
     get() = this == MiniGameMenuButtonState.Available || this == MiniGameMenuButtonState.Consumed
 
+// Coordinates mirror the center of the circles in mini-games-map.svg node-platforms.
+private const val MiniGamesQuizAnchorX = 180f / 1000f
+private const val MiniGamesQuizAnchorY = 1422f / 1778f
+private const val MiniGamesMemoryAnchorX = 360f / 1000f
+private const val MiniGamesMemoryAnchorY = 1084f / 1778f
+private const val MiniGamesTimelineAnchorX = 620f / 1000f
+private const val MiniGamesTimelineAnchorY = 711f / 1778f
+private const val MiniGamesObservatoryAnchorX = 820f / 1000f
+private const val MiniGamesObservatoryAnchorY = 356f / 1778f
 private const val MiniGamesMapSvgAssetName = "mini-games-map.svg"

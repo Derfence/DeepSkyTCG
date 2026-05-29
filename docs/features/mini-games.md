@@ -25,13 +25,17 @@ Pendant `DiscoverMiniGames`, le coachmark Home explique que la carte centrale a 
 ## Menu
 
 Le menu affiche un fond ciel animé commun aux mini-jeux, puis la carte SVG plein écran `mini-games-map.svg`.
+Le SVG est étiré pour remplir l'écran (`preserveAspectRatio="none"`), et les boutons utilisent le même repère plein écran que le SVG, sans insets de contenu.
+Cette carte est construite comme une fusion de quatre calques superposables, avec des transitions de lumière circulaires centrées sur la Ville.
 
-Les quatre lieux sont positionnés sur une diagonale bas-gauche vers haut-droite :
+Les quatre lieux sont positionnés sur une diagonale bas-gauche vers haut-droite, avec des ancres volontairement écartées pour laisser de la place aux décors :
 
 - Quiz / Ville ;
 - Memory / Périurbain ;
 - Timeline / Campagne ;
 - Observatoire / Montagne.
+
+Ancres UI de référence, issues du groupe SVG `node-platforms` : Quiz `180/1000`, `1422/1778` ; Memory `360/1000`, `1084/1778` ; Timeline `620/1000`, `711/1778` ; Observatoire `820/1000`, `356/1778`.
 
 Les boutons `Quiz / Ville`, `Memory / Périurbain`, `Timeline / Campagne` et `Observatoire / Montagne` sont actifs et utilisent le halo de node commun.
 
@@ -70,8 +74,9 @@ Timeline ajoute un filtre d'éligibilité au tirage commun : les critères sont 
 
 Sources attendues :
 
-- `design-explorations/mini-games/home-mini-games-card.svg`
+- `design-explorations/mini-games/mini-games-card.svg`
 - `design-explorations/mini-games/mini-games-map.svg`
+- `design-explorations/mini-games/layers/*.svg` pour les calques sources de la carte.
 
 Ces fichiers sont synchronisés vers les assets runtime par Gradle. Si un SVG manque, l'application affiche un fallback Compose pour éviter un écran vide.
 

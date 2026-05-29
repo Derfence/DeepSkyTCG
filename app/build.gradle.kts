@@ -23,7 +23,7 @@ val syncAsterAssets by tasks.registering(Sync::class) {
 
 val syncMiniGamesAssets by tasks.registering(Sync::class) {
     from(rootProject.file("design-explorations/mini-games")) {
-        include("home-mini-games-card.svg")
+        include("mini-games-card.svg")
         include("mini-games-map.svg")
     }
     into(generatedMiniGamesAssetDir)
