@@ -1,5 +1,6 @@
 package fr.aumombelli.dstcg
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.Modifier
@@ -103,6 +104,28 @@ class AstroCardThumbnailTest {
         composeRule.onAllNodesWithText("M31").assertCountEquals(1)
         composeRule.onAllNodesWithTag(CARD_EXTENSION_LOGO_TAG, useUnmergedTree = true).assertCountEquals(1)
         composeRule.onAllNodesWithTag("astro-card-rarity-common", useUnmergedTree = true).assertCountEquals(1)
+    }
+
+    @Test
+    fun thumbnail_shows_new_indicator_when_card_is_marked_as_new() {
+        val item = LibraryCardItem(
+            definition = testCardDefinition("M42", name = "Nebuleuse d'Orion"),
+            extensionName = "Astronomes en herbe",
+            ownedCount = 1,
+            showNewIndicator = true,
+            availableVariants = listOf(
+                DisplayCardVariant("city", "Ville", "standard", "Standard", false, 1),
+            ),
+        )
+
+        composeRule.setContent {
+            AstroCardThumbnail(
+                item = item,
+                onClick = {},
+            )
+        }
+
+        composeRule.onNodeWithTag("library-card-new-indicator-M42", useUnmergedTree = true).assertIsDisplayed()
     }
 
     @Test
@@ -325,6 +348,48 @@ class AstroCardThumbnailTest {
 
         assertTrue("Expected preview art width to leave a visible border", artBounds.width < surfaceBounds.width - 1f)
         assertTrue("Expected preview art height to leave a visible border", artBounds.height < surfaceBounds.height - 1f)
+    }
+
+    @Test
+    fun holographic_thumbnail_and_preview_keep_foil_border_without_explicit_motion() {
+        val holographicVariant = DisplayCardVariant(
+            skyQuality = "holographic",
+            skyQualityLabel = "Holographique",
+            finish = "standard",
+            finishLabel = "Standard",
+            isHolographic = true,
+            count = 1,
+        )
+        val item = LibraryCardItem(
+            definition = testCardDefinition("M42", name = "Nebuleuse d'Orion"),
+            extensionName = "Astronomes en herbe",
+            ownedCount = 1,
+            availableVariants = listOf(holographicVariant),
+        )
+        val displayCard = item.toDisplayCard() ?: error("Expected display card")
+
+        composeRule.setContent {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                AstroCardThumbnail(
+                    item = item,
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {},
+                )
+                AstroCardPreviewSurface(
+                    displayCard = displayCard,
+                    mode = AstroCardSurfaceMode.Preview,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("preview-card-surface"),
+                )
+            }
+        }
+
+        composeRule.onAllNodesWithTag("astro-card-holo-foil", useUnmergedTree = true).assertCountEquals(2)
+        composeRule.onAllNodesWithTag("astro-card-holo-glare", useUnmergedTree = true).assertCountEquals(2)
     }
 
     private companion object {

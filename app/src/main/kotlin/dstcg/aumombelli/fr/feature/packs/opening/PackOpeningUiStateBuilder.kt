@@ -5,9 +5,9 @@ import fr.aumombelli.dstcg.model.AstronomyPackRevealSlot
 import fr.aumombelli.dstcg.model.DisplayCard
 import fr.aumombelli.dstcg.model.DrawPackResponse
 import fr.aumombelli.dstcg.model.EquipmentPackRevealSlot
+import fr.aumombelli.dstcg.model.summarizePackOpening
 import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.model.toDisplayVariant
-import fr.aumombelli.dstcg.ui.motion.summarizePackOpening
 
 internal suspend fun buildPackOpeningUiState(
     catalogRepository: CatalogGateway,
@@ -30,6 +30,7 @@ internal suspend fun buildPackOpeningUiState(
                         extensionName = extensionName,
                         activeVariant = slot.card.variant.toDisplayVariant(),
                     ),
+                    showFirstEncounterIndicator = slot.isFirstEncounter,
                 )
             }
 

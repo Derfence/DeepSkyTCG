@@ -5,8 +5,12 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import fr.aumombelli.dstcg.model.ActiveEquipmentEffect
 import fr.aumombelli.dstcg.model.CardDefinition
+import fr.aumombelli.dstcg.model.EquipmentBadgeProgress
 import fr.aumombelli.dstcg.model.EquipmentCardDefinition
 import fr.aumombelli.dstcg.model.EquipmentType
+import fr.aumombelli.dstcg.model.HomeMenuNoveltyState
+import fr.aumombelli.dstcg.model.LibraryCardNoveltyState
+import fr.aumombelli.dstcg.model.MiniGamesProgress
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.OwnedCardEntry
 import fr.aumombelli.dstcg.model.OwnedCollection
@@ -15,6 +19,7 @@ import fr.aumombelli.dstcg.model.OwnedEquipmentInventory
 import fr.aumombelli.dstcg.model.OwnedVariantCount
 import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.StandaloneProgress
+import fr.aumombelli.dstcg.model.TradeLedgerState
 import fr.aumombelli.dstcg.model.VariantProfile
 import fr.aumombelli.dstcg.model.normalized
 import fr.aumombelli.dstcg.model.normalizedEquipmentState
@@ -23,6 +28,8 @@ import java.time.Duration
 import java.time.Instant
 import java.util.UUID
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 
 internal val Context.secureStandaloneProgressDataStore: DataStore<EncryptedProgressEnvelope> by dataStore(
@@ -38,10 +45,24 @@ class ProgressRepository(
     private val installIdFactory: () -> String = { UUID.randomUUID().toString() },
 ) : ProgressGateway {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+    private val progressMutationMutex = Mutex()
 
     override suspend fun loadProgress(): ProgressLoadResult = loadProgressRecord().result
 
-    override suspend fun saveProgress(progress: StandaloneProgress) {
+    override suspend fun saveProgress(progress: StandaloneProgress) = progressMutationMutex.withLock {
+        persistProgress(progress)
+    }
+
+    override suspend fun updateProgress(transform: (StandaloneProgress) -> StandaloneProgress) =
+        progressMutationMutex.withLock {
+            val loadedProgress = loadProgressRecord().result.requireUsableProgress()
+            val updatedProgress = transform(loadedProgress.progress)
+            if (updatedProgress != loadedProgress.progress) {
+                persistProgress(updatedProgress)
+            }
+        }
+
+    private suspend fun persistProgress(progress: StandaloneProgress) {
         val currentRecord = loadProgressRecord()
         val drawCooldown = currentDrawCooldown()
         val equipmentCards = catalogRepository.loadEquipmentCards()
@@ -65,6 +86,7 @@ class ProgressRepository(
         val effectiveNow = currentRecord.trustedNow ?: timeEvidence.wallClockUtc
         val normalizedProgress = sanitizedProgress.copy(
             openedPackCount = sanitizedProgress.openedPackCount.coerceAtLeast(0),
+            hasOpenedEpicBoostedPack = sanitizedProgress.hasOpenedEpicBoostedPack,
             newPlayerOnboardingStep = sanitizedProgress.newPlayerOnboardingStep,
         ).withNormalizedPackCharge(
             now = effectiveNow,
@@ -80,10 +102,17 @@ class ProgressRepository(
             collection = normalizedProgress.collection,
             rechargeState = normalizedProgress.rechargeState,
             openedPackCount = normalizedProgress.openedPackCount.coerceAtLeast(0),
+            hasOpenedEpicBoostedPack = normalizedProgress.hasOpenedEpicBoostedPack,
             newPlayerOnboardingStep = normalizedProgress.newPlayerOnboardingStep,
             equipmentInventory = normalizedProgress.equipmentInventory,
             activeEquipmentByType = normalizedProgress.activeEquipmentByType,
             lastActivatedCardIdByType = normalizedProgress.lastActivatedCardIdByType,
+            equipmentBadgeProgress = normalizedProgress.equipmentBadgeProgress,
+            homeMenuNoveltyState = normalizedProgress.homeMenuNoveltyState,
+            libraryCardNoveltyState = normalizedProgress.libraryCardNoveltyState,
+            tradeLedgerState = normalizedProgress.tradeLedgerState,
+            miniGamesMenuUnlocked = normalizedProgress.miniGamesMenuUnlocked,
+            miniGamesProgress = normalizedProgress.miniGamesProgress,
             lastTrustedWallClockUtc = effectiveNow.toString(),
             lastTrustedElapsedRealtimeMs = timeEvidence.elapsedRealtimeMs,
             lastObservedBootMarker = timeEvidence.bootSessionId,
@@ -93,14 +122,21 @@ class ProgressRepository(
         writeSnapshot(snapshot)
     }
 
-    override suspend fun resetProgress() {
+    override suspend fun resetProgress() = progressMutationMutex.withLock {
         val timeEvidence = settings.timeSource.now()
         val snapshot = ProgressSnapshot(
             installId = installIdFactory(),
             collection = emptyCollection(),
             rechargeState = PackRechargeState(availableDrawCount = settings.maxStoredDraws),
             openedPackCount = 0,
-            newPlayerOnboardingStep = NewPlayerOnboardingStep.OpenFirstPackMenu,
+            hasOpenedEpicBoostedPack = false,
+            newPlayerOnboardingStep = NewPlayerOnboardingStep.ShowWelcomeIntro,
+            equipmentBadgeProgress = EquipmentBadgeProgress(),
+            homeMenuNoveltyState = HomeMenuNoveltyState(),
+            libraryCardNoveltyState = LibraryCardNoveltyState(),
+            tradeLedgerState = TradeLedgerState(),
+            miniGamesMenuUnlocked = false,
+            miniGamesProgress = MiniGamesProgress(),
             lastTrustedWallClockUtc = timeEvidence.wallClockUtc.toString(),
             lastTrustedElapsedRealtimeMs = timeEvidence.elapsedRealtimeMs,
             lastObservedBootMarker = timeEvidence.bootSessionId,
@@ -133,7 +169,14 @@ class ProgressRepository(
                 collection = emptyCollection(),
                 rechargeState = PackRechargeState(availableDrawCount = settings.maxStoredDraws),
                 openedPackCount = 0,
-                newPlayerOnboardingStep = NewPlayerOnboardingStep.OpenFirstPackMenu,
+                hasOpenedEpicBoostedPack = false,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.ShowWelcomeIntro,
+                equipmentBadgeProgress = EquipmentBadgeProgress(),
+                homeMenuNoveltyState = HomeMenuNoveltyState(),
+                libraryCardNoveltyState = LibraryCardNoveltyState(),
+                tradeLedgerState = TradeLedgerState(),
+                miniGamesMenuUnlocked = false,
+                miniGamesProgress = MiniGamesProgress(),
                 lastTrustedWallClockUtc = timeEvidence.wallClockUtc.toString(),
                 lastTrustedElapsedRealtimeMs = timeEvidence.elapsedRealtimeMs,
                 lastObservedBootMarker = timeEvidence.bootSessionId,
@@ -160,7 +203,7 @@ class ProgressRepository(
         val normalizedOnboardingStep = snapshot.newPlayerOnboardingStep.normalizedForProgress(
             openedPackCount = snapshot.openedPackCount.coerceAtLeast(0),
             collection = sanitizedCollection,
-            isLegacySnapshot = snapshot.schemaVersion < ProgressSnapshot.CURRENT_SCHEMA_VERSION,
+            isLegacySnapshot = snapshot.schemaVersion < ProgressSnapshot.ONBOARDING_STATE_SCHEMA_VERSION,
         )
         val rechargeMultiplier = resolveActiveEquipmentBonus(
             activeEquipmentByType = sanitizedProgress.activeEquipmentByType,
@@ -169,6 +212,7 @@ class ProgressRepository(
         val normalizedProgress = sanitizedProgress.copy(
             rechargeState = snapshot.rechargeState,
             openedPackCount = snapshot.openedPackCount.coerceAtLeast(0),
+            hasOpenedEpicBoostedPack = snapshot.hasOpenedEpicBoostedPack,
             newPlayerOnboardingStep = normalizedOnboardingStep,
         ).withNormalizedPackCharge(
             now = trustedTime.trustedNow,
@@ -183,10 +227,17 @@ class ProgressRepository(
             collection = normalizedProgress.collection,
             rechargeState = normalizedProgress.rechargeState,
             openedPackCount = normalizedProgress.openedPackCount.coerceAtLeast(0),
+            hasOpenedEpicBoostedPack = normalizedProgress.hasOpenedEpicBoostedPack,
             newPlayerOnboardingStep = normalizedProgress.newPlayerOnboardingStep,
             equipmentInventory = normalizedProgress.equipmentInventory,
             activeEquipmentByType = normalizedProgress.activeEquipmentByType,
             lastActivatedCardIdByType = normalizedProgress.lastActivatedCardIdByType,
+            equipmentBadgeProgress = normalizedProgress.equipmentBadgeProgress,
+            homeMenuNoveltyState = normalizedProgress.homeMenuNoveltyState,
+            libraryCardNoveltyState = normalizedProgress.libraryCardNoveltyState,
+            tradeLedgerState = normalizedProgress.tradeLedgerState,
+            miniGamesMenuUnlocked = normalizedProgress.miniGamesMenuUnlocked,
+            miniGamesProgress = normalizedProgress.miniGamesProgress,
             lastTrustedWallClockUtc = trustedTime.trustedNow.toString(),
             lastTrustedElapsedRealtimeMs = trustedTime.timeEvidence.elapsedRealtimeMs,
             lastObservedBootMarker = trustedTime.timeEvidence.bootSessionId,
@@ -197,10 +248,17 @@ class ProgressRepository(
             snapshot.collection != normalizedSnapshot.collection ||
             snapshot.rechargeState != normalizedSnapshot.rechargeState ||
             snapshot.openedPackCount != normalizedSnapshot.openedPackCount ||
+            snapshot.hasOpenedEpicBoostedPack != normalizedSnapshot.hasOpenedEpicBoostedPack ||
             snapshot.newPlayerOnboardingStep != normalizedSnapshot.newPlayerOnboardingStep ||
             snapshot.equipmentInventory != normalizedSnapshot.equipmentInventory ||
             snapshot.activeEquipmentByType != normalizedSnapshot.activeEquipmentByType ||
             snapshot.lastActivatedCardIdByType != normalizedSnapshot.lastActivatedCardIdByType ||
+            snapshot.equipmentBadgeProgress != normalizedSnapshot.equipmentBadgeProgress ||
+            snapshot.homeMenuNoveltyState != normalizedSnapshot.homeMenuNoveltyState ||
+            snapshot.libraryCardNoveltyState != normalizedSnapshot.libraryCardNoveltyState ||
+            snapshot.tradeLedgerState != normalizedSnapshot.tradeLedgerState ||
+            snapshot.miniGamesMenuUnlocked != normalizedSnapshot.miniGamesMenuUnlocked ||
+            snapshot.miniGamesProgress != normalizedSnapshot.miniGamesProgress ||
             snapshot.tamperFlag ||
             trustedTime.tamperDetected
 

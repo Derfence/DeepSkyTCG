@@ -42,7 +42,7 @@ class EquipmentRuntimeTest {
         )
 
         assertEquals(100.0, bonus.rarityBoostPercent, 0.0001)
-        assertEquals(100.0, bonus.holographicPercent, 0.0001)
+        assertEquals(100.0, bonus.holographicQualityPercent, 0.0001)
         assertEquals(2.0, bonus.rechargeMultiplier, 0.0001)
 
         val chargeStatus = buildPackChargeUiStatus(

@@ -7,17 +7,40 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import fr.aumombelli.dstcg.feature.badges.BadgeBookScreen
 import fr.aumombelli.dstcg.feature.badges.BadgeBookUiState
+import fr.aumombelli.dstcg.feature.badges.BadgeCenterMarkKind
 import fr.aumombelli.dstcg.feature.badges.BadgeItem
 import fr.aumombelli.dstcg.feature.badges.BadgeProgress
 import fr.aumombelli.dstcg.feature.badges.BadgeRequirementType
 import fr.aumombelli.dstcg.feature.badges.BadgeSection
+import fr.aumombelli.dstcg.feature.badges.BadgeSectionType
 import fr.aumombelli.dstcg.ui.theme.DstcgTheme
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
 class BadgeBookScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun back_button_is_visible_only_with_callback_and_invokes_it() {
+        var backClicks = 0
+
+        composeRule.setContent {
+            DstcgTheme {
+                BadgeBookScreen(
+                    state = BadgeBookUiState(isLoading = false),
+                    onRefresh = {},
+                    onBack = { backClicks += 1 },
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("badge-book-back").assertIsDisplayed()
+        composeRule.onNodeWithTag("badge-book-back").performClick()
+
+        assertEquals(1, backClicks)
+    }
 
     @Test
     fun clicking_a_badge_opens_detail_with_progress_and_description() {
@@ -33,16 +56,17 @@ class BadgeBookScreenTest {
                                 extensionName = "Astronomes en herbe",
                                 badges = listOf(
                                     BadgeItem(
-                                        id = "astronomes-en-herbe::finish::holographic",
+                                        id = "astronomes-en-herbe::finish::stamped",
                                         extensionId = "astronomes-en-herbe",
                                         extensionName = "Astronomes en herbe",
-                                        title = "Holographique",
-                                        description = "Obtiens chaque carte de Astronomes en herbe en holographique, quelle que soit la qualite du ciel.",
-                                        requirementType = BadgeRequirementType.Holographic,
+                                        title = "Tamponnee",
+                                        description = "Obtiens chaque carte de Astronomes en herbe en finition tamponnee, quelle que soit la qualite du ciel.",
+                                        requirementType = BadgeRequirementType.Stamped,
                                         progress = BadgeProgress(
                                             matchedCards = 1,
                                             totalCards = 3,
                                         ),
+                                        centerMarkKind = BadgeCenterMarkKind.ExtensionLogo,
                                     ),
                                 ),
                             ),
@@ -54,7 +78,7 @@ class BadgeBookScreenTest {
         }
 
         composeRule.waitForIdle()
-        composeRule.onNodeWithTag("badge-coin-astronomes-en-herbe::finish::holographic").performClick()
+        composeRule.onNodeWithTag("badge-coin-astronomes-en-herbe::finish::stamped").performClick()
         composeRule.mainClock.advanceTimeBy(700)
         composeRule.waitForIdle()
 
@@ -64,8 +88,114 @@ class BadgeBookScreenTest {
             substring = true,
         )
         composeRule.onNodeWithTag("badge-detail-description").assertTextContains(
-            "holographique",
+            "tamponnee",
             substring = true,
         )
+    }
+
+    @Test
+    fun general_badge_logo_keeps_same_ratio_when_detail_coin_expands() {
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            DstcgTheme {
+                BadgeBookScreen(
+                    state = BadgeBookUiState(
+                        isLoading = false,
+                        sections = listOf(
+                            BadgeSection(
+                                extensionId = "general",
+                                extensionName = "Badges generaux",
+                                sectionType = BadgeSectionType.General,
+                                badges = listOf(
+                                    BadgeItem(
+                                        id = "general::pack::first-opened",
+                                        extensionId = "general",
+                                        extensionName = "Badges generaux",
+                                        title = "Premier pack",
+                                        description = "Ouvre ton premier pack.",
+                                        requirementType = BadgeRequirementType.FirstPackOpened,
+                                        progress = BadgeProgress(
+                                            matchedCards = 1,
+                                            totalCards = 1,
+                                            unitLabel = "packs",
+                                        ),
+                                        centerMarkKind = BadgeCenterMarkKind.GeneralLogo,
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                    onRefresh = {},
+                )
+            }
+        }
+
+        composeRule.waitForIdle()
+        val gridCoinBounds = composeRule
+            .onNodeWithTag("badge-coin-general::pack::first-opened")
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val gridMarkBounds = composeRule
+            .onNodeWithTag("badge-center-mark-general::pack::first-opened", useUnmergedTree = true)
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val gridRatio = gridMarkBounds.width / gridCoinBounds.width
+
+        composeRule.onNodeWithTag("badge-coin-general::pack::first-opened").performClick()
+        composeRule.mainClock.advanceTimeBy(700)
+        composeRule.waitForIdle()
+
+        val detailCoinBounds = composeRule
+            .onNodeWithTag("badge-detail-coin")
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val detailMarkBounds = composeRule
+            .onNodeWithTag("badge-detail-center-mark", useUnmergedTree = true)
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val detailRatio = detailMarkBounds.width / detailCoinBounds.width
+
+        assertEquals(gridRatio, detailRatio, 0.02f)
+    }
+
+    @Test
+    fun equipment_general_badge_uses_mount_center_mark() {
+        composeRule.setContent {
+            DstcgTheme {
+                BadgeBookScreen(
+                    state = BadgeBookUiState(
+                        isLoading = false,
+                        sections = listOf(
+                            BadgeSection(
+                                extensionId = "general",
+                                extensionName = "Badges generaux",
+                                sectionType = BadgeSectionType.General,
+                                badges = listOf(
+                                    BadgeItem(
+                                        id = "general::equipment::three-types-active",
+                                        extensionId = "general",
+                                        extensionName = "Badges generaux",
+                                        title = "Trois équipements actifs",
+                                        description = "Cumule les trois types en meme temps.",
+                                        requirementType = BadgeRequirementType.EquipmentThreeTypesActiveSimultaneously,
+                                        progress = BadgeProgress(
+                                            matchedCards = 2,
+                                            totalCards = 3,
+                                            unitLabel = "équipements actifs en même temps",
+                                        ),
+                                        centerMarkKind = BadgeCenterMarkKind.EquipmentMountGlyph,
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                    onRefresh = {},
+                )
+            }
+        }
+
+        composeRule
+            .onNodeWithTag("badge-center-mark-general::equipment::three-types-active", useUnmergedTree = true)
+            .assertIsDisplayed()
     }
 }

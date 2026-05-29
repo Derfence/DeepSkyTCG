@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 1280 981" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;">
+    <g id="main-5" serif:id="main 5" transform="matrix(-1.43867,-0.57936,-0.57936,1.43867,687.120058,379.69995)">
+        <g transform="matrix(-0.405727,0.060251,0.23584,1.58812,162.738591,-145.55914)">
+            <rect x="76.384" y="277.923" width="12.639" height="66.589" style="stroke:black;stroke-opacity:0;stroke-width:1.87px;"/>
+        </g>
+        <g transform="matrix(-0.387109,-0.135614,-0.530827,1.515246,374.922136,-123.266509)">
+            <rect x="76.384" y="277.923" width="12.639" height="66.589" style="stroke:black;stroke-opacity:0;stroke-width:1.87px;"/>
+        </g>
+        <g transform="matrix(-0.247152,-0.327353,-1.281347,0.967418,566.93462,57.873844)">
+            <rect x="76.384" y="277.923" width="12.639" height="66.589" style="stroke:black;stroke-opacity:0;stroke-width:1.87px;"/>
+        </g>
+        <g transform="matrix(-0.20245,-0.081528,-0.12277,0.304864,269.458593,304.074338)">
+            <path d="M111.142,360.311L52.159,360.311C52.159,348.386 65.363,338.719 81.65,338.719C97.938,338.719 111.142,348.386 111.142,360.311Z" style="stroke:black;stroke-opacity:0;stroke-width:7.86px;"/>
+        </g>
+        <g transform="matrix(-0.20245,-0.081528,-0.12277,0.304864,219.77233,284.06542)">
+            <path d="M111.142,360.311L52.159,360.311C52.159,348.386 65.363,338.719 81.65,338.719C97.938,338.719 111.142,348.386 111.142,360.311Z" style="stroke:black;stroke-opacity:0;stroke-width:7.86px;"/>
+        </g>
+        <g transform="matrix(-0.20245,-0.081528,-0.12277,0.304864,165.885242,262.364808)">
+            <path d="M111.142,360.311L52.159,360.311C52.159,348.386 65.363,338.719 81.65,338.719C97.938,338.719 111.142,348.386 111.142,360.311Z" style="stroke:black;stroke-opacity:0;stroke-width:7.86px;"/>
+        </g>
+        <g transform="matrix(0.69403,0,0,0.69403,25.876333,91.266525)">
+            <rect x="84.571" y="243" width="172.286" height="55.286" style="fill:rgb(13,24,42);stroke:rgb(246,183,60);stroke-width:3.16px;"/>
+        </g>
+        <g transform="matrix(0.090023,0,0,0.259663,61.448424,208.824692)">
+            <rect x="84.571" y="243" width="172.286" height="55.286" style="fill:rgb(13,24,42);stroke:rgb(246,183,60);stroke-width:11.29px;"/>
+        </g>
+        <g transform="matrix(0.886792,0,0,0.661972,46.253369,102.496119)">
+            <rect x="136" y="221.143" width="136.286" height="91.286" style="fill:rgb(13,24,42);stroke:rgb(246,183,60);stroke-width:2.8px;"/>
+        </g>
+        <g transform="matrix(0.734375,0,0,1.223269,46.209821,-69.060431)">
+            <path d="M328.857,309.315L328.857,259.916C351.58,259.916 370,270.974 370,284.615C370,298.257 351.58,309.315 328.857,309.315Z" style="fill:rgb(114,251,255);stroke:rgb(246,183,60);stroke-opacity:0.98;stroke-width:2.17px;"/>
+        </g>
+        <g transform="matrix(0.499216,0,-0,0.444041,-339.419057,189.053399)">
+            <path d="M1217.479,148.921L1222.25,171.599L1235.146,179.991L1222.25,188.382L1217.479,211.06L1212.707,188.382L1199.812,179.991L1212.707,171.599L1217.479,148.921Z" style="fill:rgb(114,251,255);"/>
+        </g>
+        <g transform="matrix(0.523063,0,-0,0.199962,-423.434401,256.081677)">
+            <path d="M1217.479,148.921L1222.25,171.599L1235.146,179.991L1222.25,188.382L1217.479,211.06L1212.707,188.382L1199.812,179.991L1212.707,171.599L1217.479,148.921Z" style="fill:rgb(114,251,255);"/>
+        </g>
+        <g transform="matrix(0.210498,0,-0,0.137755,-64.411904,246.160598)">
+            <path d="M1217.479,148.921L1222.25,171.599L1235.146,179.991L1222.25,188.382L1217.479,211.06L1212.707,188.382L1199.812,179.991L1212.707,171.599L1217.479,148.921Z" style="fill:rgb(114,251,255);"/>
+        </g>
+    </g>
+</svg>

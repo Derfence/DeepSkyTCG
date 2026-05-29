@@ -2,303 +2,593 @@
   "astronomes-en-herbe": {
     "albireo": {
       "artist": "Robert Gillette",
-      "credit": "Albireo",
+      "title": "Albireo",
       "license": "CC BY",
       "sourcePage": "https://app.astrobin.com/i/4ifviu"
     },
     "algol": {
       "artist": "ESO/L. Calçada",
-      "credit": "Vue d'artiste",
+      "title": "Vue d'artiste",
       "license": "CC BY-SA",
       "sourcePage": "https://www.eso.org/public/france/images/eso1311a/?lang"
     },
     "almach": {
       "artist": "Damian Peach",
-      "credit": "Almach star system showing A, B and C components",
+      "title": "Almach star system showing A, B and C components",
       "license": "CC BY-SA",
       "sourcePage": "https://x.com/peachastro/status/1820856581313192079"
     },
     "altair": {
       "artist": "Joostie",
-      "credit": "Barnard 142",
+      "title": "Barnard 142",
       "license": "CC BY-NC-ND",
       "sourcePage": "https://app.astrobin.com/i/sz5495"
     },
     "andromeda_constellation": {
       "artist": "Stellarium software",
-      "credit": "Capture d'écran",
+      "title": "Capture d'écran",
       "license": "CC BY",
       "sourcePage": "https://stellarium-web.org/"
     },
     "arcturus": {
       "artist": "Vital",
-      "credit": "Stars",
+      "title": "Stars",
       "license": "CC BY-ND",
       "sourcePage": "https://app.astrobin.com/i/227129?r=I"
     },
     "aurora_borealis": {
       "artist": "Profpcde",
-      "credit": "Own work",
+      "title": "Own work",
       "license": "CC0",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Aurora_borealis_near_Salzdahlum_2024-10-10.jpg"
     },
     "betelgeuse": {
       "artist": "Eric Coles (coles44)",
-      "credit": "The Unexpected Betelgeuse",
+      "title": "The Unexpected Betelgeuse",
       "license": "CC BY-NC-ND",
       "sourcePage": "https://app.astrobin.com/i/7lsw64"
     },
     "capella": {
       "artist": "Harold Freckhaus",
-      "credit": "Capella",
+      "title": "Capella",
       "license": "CC BY-NC-ND",
       "sourcePage": "https://app.astrobin.com/i/397388"
     },
     "cassiopeia_constellation": {
       "artist": "Wolfgang Rafelt",
-      "credit": "Constellation Cassiopeia",
+      "title": "Constellation Cassiopeia",
       "license": "CC BY",
       "sourcePage": "https://app.astrobin.com/i/cpgza9"
     },
     "coathanger": {
       "artist": "Jim Morse",
-      "credit": "Brocchi's Cluster (the Coathanger) and lots of Dark Nebulosity in the Heart of the Vulpecula Milky Way",
+      "title": "Brocchi's Cluster (the Coathanger) and lots of Dark Nebulosity in the Heart of the Vulpecula Milky Way",
       "license": "CC BY",
       "sourcePage": "https://app.astrobin.com/i/q1n0bt"
     },
     "comet_neowise": {
       "artist": "Igorzinchenko",
-      "credit": "Own work",
+      "title": "Own work",
       "license": "CC BY",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Comet_NEOWISE_and_meteor.jpg"
     },
     "cygnus_constellation": {
       "artist": "Wolfgang Rafelt ",
-      "credit": "Constellation Cygnus",
+      "title": "Constellation Cygnus",
       "license": "CC BY",
       "sourcePage": "https://app.astrobin.com/i/7inlpn"
     },
     "double_cluster": {
       "artist": "Andy Weeks",
-      "credit": "Double Cluster in Perseus",
+      "title": "Double Cluster in Perseus",
       "license": "CC0",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Double_Cluster_in_Perseus_-_Flickr_-_astrophotography_andy.jpg"
     },
     "gemini_constellation": {
       "artist": "Stellarium software",
-      "credit": "Capture d'écran",
+      "title": "Capture d'écran",
       "license": "CC BY",
       "sourcePage": "https://stellarium-web.org/"
     },
     "geminids_meteor_shower": {
       "artist": "International Gemini Observatory/NOIRLab/NSF/AURA",
-      "credit": "Geminids over Gemini North 2020",
+      "title": "Geminids over Gemini North 2020",
       "license": "CC BY",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Geminids_over_Gemini_North_2020_(20201213_sworl-cc).tiff"
     },
     "halley_comet": {
       "artist": "John Reed",
-      "credit": "Halley's Comet 1986",
+      "title": "Halley's Comet 1986",
       "license": "CC BY-NC",
       "sourcePage": "https://app.astrobin.com/i/kpv7oe"
     },
     "hyades": {
       "artist": "NOIRLab/NSF/AURA/Digitized Sky Survey",
-      "credit": "Location of K2-25 (No Annotations)",
+      "title": "Location of K2-25 (No Annotations)",
       "license": "CC BY",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Location_of_K2-25_(No_Annotations)_(Hyades_DSS_16b_B-RI-Aug2020).jpg"
     },
     "leonids_meteor_shower": {
       "artist": "Francisco Bitto",
-      "credit": "Geminids meteor shower 2023",
+      "title": "Geminids meteor shower 2023",
       "license": "CC BY-NC-ND",
       "sourcePage": "https://app.astrobin.com/i/a7suzp"
     },
     "lyra_constellation": {
       "artist": "Stellarium software",
-      "credit": "Capture d'écran",
+      "title": "Capture d'écran",
       "license": "CC BY",
       "sourcePage": "https://stellarium-web.org/"
     },
     "m11_wild_duck_cluster": {
       "artist": "Brian Diaz",
-      "credit": "The Wild Duck Cluster M11",
+      "title": "The Wild Duck Cluster M11",
       "license": "CC BY",
       "sourcePage": "https://app.astrobin.com/i/7w83fb"
     },
     "m13_hercules": {
       "artist": "Eric Coles (coles44)",
-      "credit": "Hercules Globular Cluster - APOD March 19, 2020",
+      "title": "Hercules Globular Cluster - APOD March 19, 2020",
       "license": "CC BY-NC-ND",
       "sourcePage": "https://app.astrobin.com/i/cw4303"
     },
     "m16_eagle_nebula": {
       "artist": "Min Xie",
-      "credit": "Messier 16 (The Eagle Nebula) in Hubble SHO Palette",
+      "title": "Messier 16 (The Eagle Nebula) in Hubble SHO Palette",
       "license": "CC BY-NC",
       "sourcePage": "https://app.astrobin.com/i/lqnbr1"
     },
     "m17_swan_nebula": {
       "artist": "Jeff Coldrey",
-      "credit": "m17 Swan Nebula in HOO",
+      "title": "m17 Swan Nebula in HOO",
       "license": "CC BY",
       "sourcePage": "https://app.astrobin.com/i/ac5bde"
     },
     "m22_globular_cluster": {
       "artist": "Frédéric Ruciak",
-      "credit": "M22 (data set from TL)",
+      "title": "M22 (data set from TL)",
       "license": "CC BY-NC-ND",
       "sourcePage": "https://app.astrobin.com/i/b9hkof"
     },
     "m24_star_cloud": {
-      "artist": "Vanessa Harvey, REU program/NOIRLab/ NSF /AURA",
-      "credit": "Sagittarius Star Cloud",
+      "artist": "Rudy Siggs",
+      "title": "A true colour image of Messier 24, taken with amateur equipment",
       "license": "CC BY",
-      "sourcePage": "https://commons.wikimedia.org/wiki/File:Sagittarius_Star_Cloud_(noao-m24).jpg"
+      "sourcePage": "https://fr.wikipedia.org/wiki/M24_(amas_stellaire)#/media/Fichier:Messier_24,_by_Rudy_Siggs.jpg"
     },
     "m27_dumbbell": {
       "artist": "Eric Coles (coles44)",
-      "credit": "M27 - The Dumbbell Nebula",
+      "title": "M27 - The Dumbbell Nebula",
       "license": "CC BY-NC-ND",
       "sourcePage": "https://app.astrobin.com/i/7gfe4v"
     },
     "m31_andromeda": {
       "artist": "Deep Sky West (Lloyd)",
-      "credit": "M31 - Deep Sky West Remote Observatory",
+      "title": "M31 - Deep Sky West Remote Observatory",
       "license": "CC BY-NC-ND",
       "sourcePage": "https://app.astrobin.com/i/366493?r=H"
     },
     "m33_triangulum": {
       "artist": "NASA/JPL-Caltech",
-      "credit": "http://photojournal.jpl.nasa.gov/gallery/universe?subselect=Target:M33",
+      "title": "http://photojournal.jpl.nasa.gov/gallery/universe?subselect=Target:M33",
       "license": "Public domain",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:M33.jpg"
     },
     "m37_open_cluster": {
       "artist": "Seokhee Kim",
-      "credit": "M37",
+      "title": "M37",
       "license": "CC BY-NC",
       "sourcePage": "https://app.astrobin.com/i/ncajra"
     },
     "m38_open_cluster": {
       "artist": "Giuseppe Donatiello",
-      "credit": "IC 405 - IC 410 - M38 dss B",
+      "title": "IC 405 - IC 410 - M38 dss B",
       "license": "CC0",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:IC_405_-_IC_410_-_M38_dss_B_(18857141595).jpg"
     },
     "m39_open_cluster": {
       "artist": "Chuck Ayoub",
-      "credit": "Own work",
+      "title": "Own work",
       "license": "CC0",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:M39-Star-Cluster.png"
     },
     "m41_open_cluster": {
       "artist": "Giuseppe Donatiello from Oria (Brindisi), Italy",
-      "credit": "Messier 41",
+      "title": "Messier 41",
       "license": "CC0",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Messier_41_(55014509491).jpg"
     },
     "m42_orion_nebula": {
       "artist": "Min Xie",
-      "credit": "Messier 42 & Neighborhood",
+      "title": "Messier 42 & Neighborhood",
       "license": "CC BY-NC",
       "sourcePage": "https://app.astrobin.com/i/lqs9k8"
     },
     "m45_pleiades": {
       "artist": "Taavi Niittee",
-      "credit": "Own work",
+      "title": "Own work",
       "license": "CC0",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Plejades_(M45).jpg"
     },
     "m46_open_cluster": {
       "artist": "Gary Imm",
-      "credit": "M46",
+      "title": "M46",
       "license": "CC BY-NC",
       "sourcePage": "https://app.astrobin.com/i/r7fjbl"
     },
     "m57_ring": {
       "artist": "Gary Imm",
-      "credit": "M57",
+      "title": "M57",
       "license": "CC BY-NC",
       "sourcePage": "https://app.astrobin.com/i/orfb6q?r=0"
     },
     "m6_butterfly_cluster": {
       "artist": "Stephen Rahn from Acworth, GA, USA",
-      "credit": "Messier 6 - The Butterfly Cluster",
-      "license": "CC By",
+      "title": "Messier 6 - The Butterfly Cluster",
+      "license": "CC BY",
       "sourcePage": "https://app.astrobin.com/i/h521pd"
     },
     "m81_bode": {
       "artist": "Viktor Antokhov ",
-      "credit": "The Butterfly Cluster",
+      "title": "The Butterfly Cluster",
       "license": "CC0",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Bode_and_Cigar_galaxies.jpg"
     },
     "m82_cigar": {
       "artist": "Taavi Niittee",
-      "credit": "Own work",
+      "title": "Own work",
       "license": "CC0",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Bode_and_Cigar_galaxies.jpg"
     },
     "m8_lagoon_nebula": {
       "artist": "Dylan O'Donnell, deography.com",
-      "credit": "https://deography.com/the-blue-lagoon-nebula-4k-resolution/",
+      "title": "https://deography.com/the-blue-lagoon-nebula-4k-resolution/",
       "license": "CC0",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:M8_Lagoon_Nebula_Blue_4K.jpg"
     },
     "mira": {
       "artist": "DSS 2/ESO",
-      "credit": "http://www.eso.org/public/images/eso1212d/",
+      "title": "http://www.eso.org/public/images/eso1212d/",
       "license": "CC BY",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:A_Wide-field_view_of_the_sky_around_a_field_studied_in_the_MASSIV_survey.jpg"
     },
     "mizar_alcor": {
       "artist": "Thomas Bresson",
-      "credit": "Own work",
+      "title": "Own work",
       "license": "CC BY",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:2012-03-12_22-07-31-mizar-32f-19d-20o.jpg"
     },
     "ngc7000_north_america": {
       "artist": "Carsten Frenzl from Deutschland",
-      "credit": "NGC7000, IC5070 - North America and Pelican Nebula",
+      "title": "NGC7000, IC5070 - North America and Pelican Nebula",
       "license": "CC BY",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:NGC7000,_IC5070_-_North_America_and_Pelican_Nebula_-_Flickr_-_castro.pic.jpg"
     },
     "orion_constellation": {
       "artist": "Taavi Niittee",
-      "credit": "Own work",
+      "title": "Own work",
       "license": "CC0",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Orion_constellation.jpg"
     },
     "perseids_meteor_shower": {
       "artist": "tjm8874",
-      "credit": "Tau Herculids meteor shower",
+      "title": "Tau Herculids meteor shower",
       "license": "CC BY-ND",
       "sourcePage": "https://app.astrobin.com/i/m56aj5"
     },
     "perseus_constellation": {
       "artist": "Stellarium software",
-      "credit": "Capture d'écran",
+      "title": "Capture d'écran",
       "license": "CC BY",
       "sourcePage": "https://stellarium-web.org/"
     },
     "polaris": {
       "artist": "Prath Pavaskar",
-      "credit": "Polaris region: IFN",
+      "title": "Polaris region: IFN",
       "license": "CC BY-ND",
       "sourcePage": "https://app.astrobin.com/i/ziyhun"
     },
     "sirius": {
       "artist": "NASA, ESA and G. Bacon (STScI)",
-      "credit": "http://www.spacetelescope.org/images/heic0516b/",
+      "title": "http://www.spacetelescope.org/images/heic0516b/",
       "license": "Public domain",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:Sirius_A_and_B_artwork.jpg"
     },
     "ursa_major_constellation": {
       "artist": "Anne-Catherine Leblanc",
-      "credit": "Own work",
+      "title": "Own work",
       "license": "CC0",
       "sourcePage": "https://commons.wikimedia.org/wiki/File:The_constellation_Ursa_Major.jpg"
+    }
+  },
+  "systeme-solaire": {
+    "dwarf_ceres": {
+      "artist": "Justin Cowart",
+      "title": "Ceres - RC3 - Haulani Crater (22381131691) (cropped).jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Ceres_-_RC3_-_Haulani_Crater_(22381131691)_(cropped).jpg"
+    },
+    "dwarf_eris": {
+      "artist": "ESO/L. Calçada and Nick Risinger (skysurvey.org)",
+      "title": "Artist's impression dwarf planet Eris.jpg",
+      "license": "CC BY",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Artist%27s_impression_dwarf_planet_Eris.jpg"
+    },
+    "dwarf_makemake": {
+      "artist": "IAU, M. Kornmesser (ESA/Hubble)",
+      "title": "Illustration of the dwarf planet Makemake (iau0806a).jpg",
+      "license": "CC BY",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Illustration_of_the_dwarf_planet_Makemake_(iau0806a).jpg"
+    },
+    "dwarf_pluto": {
+      "artist": "NASA / Johns Hopkins University Applied Physics Laboratory / Southwest Research Institute",
+      "title": "Pluto-01 Stern 03 Pluto Color TXT.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Pluto-01_Stern_03_Pluto_Color_TXT.jpg"
+    },
+    "feature_caloris_basin": {
+      "artist": "NASA",
+      "title": "The Mighty Caloris (PIA19213).png",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:The_Mighty_Caloris_(PIA19213).png"
+    },
+    "feature_enceladus_geysers": {
+      "artist": "NASA/JPL/SSI",
+      "title": "Enceladus geysers June 2009.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Enceladus_geysers_June_2009.jpg"
+    },
+    "feature_great_red_spot": {
+      "artist": "Kevin M. Gill",
+      "title": "Jupiter - Great Red Spot - PJ21-32-33-36 (48408812057).jpg",
+      "license": "CC BY",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Jupiter_-_Great_Red_Spot_-_PJ21-32-33-36_(48408812057).jpg"
+    },
+    "feature_jupiter_auroras": {
+      "artist": "NASA, ESA",
+      "title": "Auroras on Jupiter in 2014.jpg",
+      "license": "CC BY",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Auroras_on_Jupiter_in_2014.jpg"
+    },
+    "feature_jupiter_rings": {
+      "artist": "Kevin Gill from Los Angeles, CA, United States",
+      "title": "The Rings of Jupiter (39392026834).jpg",
+      "license": "CC BY",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:The_Rings_of_Jupiter_(39392026834).jpg"
+    },
+    "feature_mars_polar_caps": {
+      "artist": "NASA/JPL/MSSS",
+      "title": "PIA01928 Mars Polar Cap During Transition Phase Instrument Checkout.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:PIA01928_Mars_Polar_Cap_During_Transition_Phase_Instrument_Checkout.jpg"
+    },
+    "feature_occator_bright_spots": {
+      "artist": "NASA/JPL-Caltech/UCLA/MPS/DLR/IDA",
+      "title": "Bright Spots on Ceres by Dawn on 6 June 2015.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Bright_Spots_on_Ceres_by_Dawn_on_6_June_2015.jpg"
+    },
+    "feature_olympus_mons": {
+      "artist": "Image by NASA, modifications by Seddon",
+      "title": "Olympus Mons alt.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Olympus_Mons_alt.jpg"
+    },
+    "feature_saturn_hexagon": {
+      "artist": "Kevin Gill from Los Angeles, CA, United States",
+      "title": "Saturn - July 24 2013 (48594309686).jpg",
+      "license": "CC BY",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Saturn_-_July_24_2013_(48594309686).jpg"
+    },
+    "feature_saturn_rings": {
+      "artist": "NASA, ESA, J. Clarke (Boston University), and Z. Levay (STScI)",
+      "title": "Saturn with auroras.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Saturn_with_auroras.jpg"
+    },
+    "feature_titan_seas": {
+      "artist": "NASA / JPL / Cassini-ISS / Justin Cowart",
+      "title": "Titan - Rev 293 (30701331397).png",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Titan_-_Rev_293_(30701331397).png"
+    },
+    "feature_tombaugh_regio": {
+      "artist": "NASA/Johns Hopkins University Applied Physics Laboratory/Southwest Research Institute",
+      "title": "PIA19945-Pluto-SputnikPlanum-Detail-20150917.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:PIA19945-Pluto-SputnikPlanum-Detail-20150917.jpg"
+    },
+    "feature_valles_marineris": {
+      "artist": "Lošmi from NASA picture",
+      "title": "Mars Valles Marineris EDIT.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Mars_Valles_Marineris_EDIT.jpg"
+    },
+    "moon_amalthea": {
+      "artist": "NASA / JPL / Voyager ISS / Justin Cowart",
+      "title": "Jupiter and Amalthea - Voyager 2 (30464937848).png",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Jupiter_and_Amalthea_-_Voyager_2_(30464937848).png"
+    },
+    "moon_ariel": {
+      "artist": "Kevin M. Gill",
+      "title": "Ariel in monochrome.jpg",
+      "license": "CC BY",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Ariel_in_monochrome.jpg"
+    },
+    "moon_callisto": {
+      "artist": "NASA/JPL-Caltech/Kevin M. Gill",
+      "title": "Callisto - July 8 1979 (38926064465).jpg",
+      "license": "CC BY",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Callisto_-_July_8_1979_(38926064465).jpg"
+    },
+    "moon_deimos": {
+      "artist": "NASA/JPL/AndreaLuck",
+      "title": "Deimos - NASA 's Viking 2 1977 (52696575864).png",
+      "license": "CC BY",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Deimos_-_NASA_%27s_Viking_2_1977_(52696575864).png"
+    },
+    "moon_dione": {
+      "artist": "Wikideas1",
+      "title": "Dione moon 2.png",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Dione_moon_2.png"
+    },
+    "moon_earth": {
+      "artist": "NASA",
+      "title": "A New View of the Moon.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:A_New_View_of_the_Moon.jpg"
+    },
+    "moon_enceladus": {
+      "artist": "NASA/JPL",
+      "title": "PIA17202 - Approaching Enceladus.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:PIA17202_-_Approaching_Enceladus.jpg"
+    },
+    "moon_europa": {
+      "artist": "NASA/JPL/SETI Institute",
+      "title": "PIA19048 realistic color Europa mosaic edited.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:PIA19048_realistic_color_Europa_mosaic_edited.jpg"
+    },
+    "moon_ganymede": {
+      "artist": "NASA/JPL-Caltech/SwRI/MSSS/Kevin M. Gill",
+      "title": "Ganymede - Perijove 34 Composite.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Ganymede_-_Perijove_34_Composite.jpg"
+    },
+    "moon_hyperion": {
+      "artist": "NASA/JPL/SSI/Gordan Ugarkovic",
+      "title": "Hyperion true.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Hyperion_true.jpg"
+    },
+    "moon_iapetus": {
+      "artist": "NASA/JPL/SSI",
+      "title": "Iapetus as seen by the Cassini probe - 20071008.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Iapetus_as_seen_by_the_Cassini_probe_-_20071008.jpg"
+    },
+    "moon_io": {
+      "artist": "NASA/JPL/University of Arizona",
+      "title": "Io highest resolution true color.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Io_highest_resolution_true_color.jpg"
+    },
+    "moon_mimas": {
+      "artist": "NASA/JPL-Caltech/SSI",
+      "title": "Mimas Cassini.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Mimas_Cassini.jpg"
+    },
+    "moon_miranda": {
+      "artist": "zelario12 from NASA images",
+      "title": "Miranda mosaic in color - Voyager 2.png",
+      "license": "CC BY",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Miranda_mosaic_in_color_-_Voyager_2.png"
+    },
+    "moon_nereid": {
+      "artist": "The Singing Badger",
+      "title": "Nereid-Neptune.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Nereid-Neptune.jpg"
+    },
+    "moon_phobos": {
+      "artist": "NASA/JPL-Caltech/University of Arizona",
+      "title": "Phobos colour 2008.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Phobos_colour_2008.jpg"
+    },
+    "moon_phoebe": {
+      "artist": "NASA/JPL/Space Science Institute",
+      "title": "Phoebe cassini full.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Phoebe_cassini_full.jpg"
+    },
+    "moon_rhea": {
+      "artist": "NASA/JPL/Space Science Institute",
+      "title": "PIA07763 Rhea full globe5.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:PIA07763_Rhea_full_globe5.jpg"
+    },
+    "moon_tethys": {
+      "artist": "Voyager 2",
+      "title": "Saturn (planet) large",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Saturn_(planet)_large.jpg"
+    },
+    "moon_titan": {
+      "artist": "NASA/JPL/Space Science Institute",
+      "title": "Titan globe.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Titan_globe.jpg"
+    },
+    "moon_titania": {
+      "artist": "NASA/JPL",
+      "title": "PIA00039 Titania.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:PIA00039_Titania.jpg"
+    },
+    "moon_triton": {
+      "artist": "NASA/JPL/U.S. Geological Survey",
+      "title": "Triton moon mosaic Voyager 2 (large).jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Triton_moon_mosaic_Voyager_2_(large).jpg"
+    },
+    "moon_umbriel": {
+      "artist": "CactiStaccingCrane from NASA pictures",
+      "title": "Uranian moon montage.png",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Uranian_moon_montage.png"
+    },
+    "planet_earth": {
+      "artist": "NASA/Apollo 17 crew; taken by either Harrison Schmitt or Ron Evans",
+      "title": "The Blue Marble",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:The_Earth_seen_from_Apollo_17.jpg"
+    },
+    "planet_jupiter": {
+      "artist": "NASA/JPL/SSI",
+      "title": "Portrait of Jupiter from Cassini.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Portrait_of_Jupiter_from_Cassini.jpg"
+    },
+    "planet_mars": {
+      "artist": "ESA & MPS for OSIRIS Team MPS/UPD/LAM/IAA/RSSD/INTA/UPM/DASP/IDA",
+      "title": "OSIRIS Mars true color.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:OSIRIS_Mars_true_color.jpg"
+    },
+    "planet_mercury": {
+      "artist": "NASA/JPL, Papa Lima Whiskey",
+      "title": "Mercury in color - Prockter07 centered",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Mercury_in_color_-_Prockter07_centered.jpg"
+    },
+    "planet_neptune": {
+      "artist": "NASA",
+      "title": "Neptune Full.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Neptune_Full.jpg"
+    },
+    "planet_saturn": {
+      "artist": "NASA / JPL-Caltech / Space Science Institute",
+      "title": "PIA17172 Saturn eclipse mosaic bright crop.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:PIA17172_Saturn_eclipse_mosaic_bright_crop.jpg"
+    },
+    "planet_uranus": {
+      "artist": "NASA/JPL/Voyager ISS",
+      "title": "Uranus2.jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Uranus2.jpg"
+    },
+    "planet_venus": {
+      "artist": "NASA/JPL-Caltech",
+      "title": "PIA23791-Venus-RealAndEnhancedContrastViews-20200608 (cropped).jpg",
+      "license": "CC0",
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:PIA23791-Venus-RealAndEnhancedContrastViews-20200608_(cropped).jpg"
     }
   }
 }

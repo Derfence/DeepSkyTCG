@@ -20,6 +20,8 @@ internal class AppSceneTransitionController(
     private val bookOverlayAlpha: Animatable<Float, AnimationVector1D>,
     private val chestProgress: Animatable<Float, AnimationVector1D>,
     private val chestOverlayAlpha: Animatable<Float, AnimationVector1D>,
+    private val equipmentProgress: Animatable<Float, AnimationVector1D>,
+    private val equipmentOverlayAlpha: Animatable<Float, AnimationVector1D>,
     private val readState: () -> AppSceneUiState,
     private val writeState: (AppSceneUiState) -> Unit,
     private val awaitNextFrame: suspend () -> Unit,
@@ -45,6 +47,21 @@ internal class AppSceneTransitionController(
         }
     }
 
+    suspend fun finishPackOpeningToPackSelection() {
+        val state = readState()
+        if (state.transitionLocked) return
+
+        writeState(state.lockTransitions().preparePackOpeningReturnToPackSelection())
+        awaitNextFrame()
+        appContainer.packRepository.clearCurrentPackResult()
+        writeState(
+            readState()
+                .showPackScene()
+                .showPackExtensionList(),
+        )
+        unlockTransitionsAndRevealOnboardingHints()
+    }
+
     fun completeBadgeCelebration() {
         writeState(
             readState()
@@ -64,7 +81,6 @@ internal class AppSceneTransitionController(
         writeState(readState().showHomeContent())
         delay(260)
         writeState(readState().hideLaunchLogo())
-        revealOnboardingHintsAfterTransition()
     }
 
     suspend fun animateHomeToPackSelection() {
@@ -114,20 +130,58 @@ internal class AppSceneTransitionController(
         unlockTransitionsAndRevealOnboardingHints()
     }
 
+    suspend fun animateHomeToCrafting() {
+        val state = readState()
+        if (state.transitionLocked) return
+
+        writeState(
+            state.lockTransitions()
+                .hideLaunchLogo()
+                .hideHomeContent()
+                .hideCraftingContent()
+                .prepareCraftingEntry(nextCraftingRefreshSignal = state.craftingRefreshSignal + 1),
+        )
+        delay(520)
+        writeState(readState().enterCrafting())
+        awaitNextFrame()
+        writeState(readState().showCraftingContent())
+        delay(420)
+        unlockTransitionsAndRevealOnboardingHints()
+    }
+
     suspend fun animateHomeToEquipment() {
         val state = readState()
         if (state.transitionLocked) return
 
         writeState(
             state.lockTransitions()
-                .hideHomeContent()
                 .hideLaunchLogo()
-                .hideEquipmentContent(),
+                .hideHomeContent()
+                .hideEquipmentContent()
+                .prepareEquipmentEntry(nextEquipmentRefreshSignal = state.equipmentRefreshSignal + 1),
         )
-        delay(520)
-        writeState(readState().prepareEquipmentEntry(nextEquipmentRefreshSignal = state.equipmentRefreshSignal + 1))
+        equipmentProgress.snapTo(0f)
+        equipmentOverlayAlpha.snapTo(1f)
+        equipmentProgress.animateTo(
+            1f,
+            animationSpec = tween(
+                durationMillis = EquipmentPortalTravelDurationMillis,
+                easing = FastOutSlowInEasing,
+            ),
+        )
         awaitNextFrame()
-        writeState(readState().enterEquipment().showEquipmentContent())
+        writeState(readState().enterEquipment())
+        awaitNextFrame()
+        writeState(readState().showEquipmentContent())
+        equipmentOverlayAlpha.animateTo(
+            0f,
+            animationSpec = tween(
+                durationMillis = EquipmentPortalFadeDurationMillis,
+                easing = FastOutSlowInEasing,
+            ),
+        )
+        equipmentProgress.snapTo(0f)
+        equipmentOverlayAlpha.snapTo(1f)
         unlockTransitionsAndRevealOnboardingHints()
     }
 
@@ -152,6 +206,25 @@ internal class AppSceneTransitionController(
         chestOverlayAlpha.animateTo(0f, animationSpec = tween(durationMillis = 960, easing = FastOutSlowInEasing))
         chestProgress.snapTo(0f)
         chestOverlayAlpha.snapTo(1f)
+        unlockTransitionsAndRevealOnboardingHints()
+    }
+
+    suspend fun animateHomeToMiniGamesMenu() {
+        val state = readState()
+        if (state.transitionLocked) return
+
+        writeState(
+            state.lockTransitions()
+                .hideLaunchLogo()
+                .hideHomeContent()
+                .hideMiniGamesMenuContent()
+                .prepareMiniGamesMenuEntry(),
+        )
+        delay(520)
+        writeState(readState().enterMiniGamesMenu())
+        awaitNextFrame()
+        writeState(readState().showMiniGamesMenuContent())
+        delay(420)
         unlockTransitionsAndRevealOnboardingHints()
     }
 
@@ -201,6 +274,30 @@ internal class AppSceneTransitionController(
         }
     }
 
+    suspend fun animateCraftingToHome() {
+        val state = readState()
+        if (state.transitionLocked) return
+
+        writeState(
+            state.lockTransitions()
+                .hideCraftingContent(),
+        )
+        delay(420)
+        writeState(readState().enterHome())
+        awaitNextFrame()
+        val nextState = readState().showHomeContent()
+        writeState(
+            if (nextState.pendingBadgeCelebration.isNotEmpty() && !nextState.badgeCelebrationDeferred) {
+                nextState
+            } else {
+                nextState.unlockTransitions()
+            },
+        )
+        if (nextState.pendingBadgeCelebration.isEmpty() || nextState.badgeCelebrationDeferred) {
+            revealOnboardingHintsAfterTransition()
+        }
+    }
+
     suspend fun animateBadgeBookToHome() {
         val state = readState()
         if (state.transitionLocked) return
@@ -235,8 +332,56 @@ internal class AppSceneTransitionController(
             state.lockTransitions()
                 .hideEquipmentContent(),
         )
+        equipmentProgress.snapTo(1f)
+        equipmentOverlayAlpha.snapTo(0f)
+        writeState(readState().enterHome())
+        coroutineScope {
+            launch {
+                equipmentOverlayAlpha.animateTo(
+                    1f,
+                    animationSpec = tween(
+                        durationMillis = EquipmentPortalFadeDurationMillis,
+                        easing = FastOutSlowInEasing,
+                    ),
+                )
+            }
+            launch {
+                equipmentProgress.animateTo(
+                    0f,
+                    animationSpec = tween(
+                        durationMillis = EquipmentPortalTravelDurationMillis,
+                        easing = FastOutSlowInEasing,
+                    ),
+                )
+            }
+        }
+        equipmentProgress.snapTo(0f)
+        equipmentOverlayAlpha.snapTo(1f)
+        writeState(readState().enterHome())
+        val nextState = readState().showHomeContent()
+        writeState(
+            if (nextState.pendingBadgeCelebration.isNotEmpty() && !nextState.badgeCelebrationDeferred) {
+                nextState
+            } else {
+                nextState.unlockTransitions()
+            },
+        )
+        if (nextState.pendingBadgeCelebration.isEmpty() || nextState.badgeCelebrationDeferred) {
+            revealOnboardingHintsAfterTransition()
+        }
+    }
+
+    suspend fun animateMiniGamesMenuToHome() {
+        val state = readState()
+        if (state.transitionLocked) return
+
+        writeState(
+            state.lockTransitions()
+                .hideMiniGamesMenuContent(),
+        )
         delay(420)
         writeState(readState().enterHome())
+        awaitNextFrame()
         val nextState = readState().showHomeContent()
         writeState(
             if (nextState.pendingBadgeCelebration.isNotEmpty() && !nextState.badgeCelebrationDeferred) {
@@ -303,8 +448,10 @@ internal class AppSceneTransitionController(
         revealOnboardingHintsAfterTransition()
     }
 
-    private suspend fun revealOnboardingHintsAfterTransition() {
-        delay(OnboardingHintRevealDelayMillis)
+    private suspend fun revealOnboardingHintsAfterTransition(
+        delayMillis: Long = OnboardingHintRevealDelayMillis,
+    ) {
+        delay(delayMillis)
         if (!readState().transitionLocked) {
             writeState(readState().showOnboardingHints())
         }
@@ -312,5 +459,7 @@ internal class AppSceneTransitionController(
 
     private companion object {
         const val OnboardingHintRevealDelayMillis: Long = 220L
+        const val EquipmentPortalTravelDurationMillis: Int = 1440
+        const val EquipmentPortalFadeDurationMillis: Int = 320
     }
 }

@@ -28,7 +28,7 @@ fun ExtensionLogoMark(
         contentAlignment = Alignment.Center,
         modifier = modifier.size(size),
     ) {
-        if (spec.style == ExtensionAnimationStyle.BigDipper) {
+        if (spec.style == ExtensionAnimationStyle.BigDipper || spec.style == ExtensionAnimationStyle.Planet) {
             ExtensionConstellationOverlay(
                 spec = spec,
                 lineProgress = 1f,

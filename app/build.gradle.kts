@@ -6,10 +6,27 @@ plugins {
 }
 
 val generatedHomeCardAssetDir = layout.buildDirectory.dir("generated/assets/homeCard/main")
+val generatedMiniGamesAssetDir = layout.buildDirectory.dir("generated/assets/miniGames/main")
+val generatedAsterAssetDir = layout.buildDirectory.dir("generated/assets/aster/main/aster")
 
 val syncHomeCardAsset by tasks.registering(Sync::class) {
     from(rootProject.file("design-explorations/carte_finale.svg"))
     into(generatedHomeCardAssetDir)
+}
+
+val syncAsterAssets by tasks.registering(Sync::class) {
+    from(rootProject.file("artwork/aster")) {
+        include("*.svg")
+    }
+    into(generatedAsterAssetDir)
+}
+
+val syncMiniGamesAssets by tasks.registering(Sync::class) {
+    from(rootProject.file("design-explorations/mini-games")) {
+        include("mini-games-card.svg")
+        include("mini-games-map.svg")
+    }
+    into(generatedMiniGamesAssetDir)
 }
 
 android {
@@ -26,8 +43,8 @@ android {
         applicationId = "fr.aumombelli.dstcg"
         minSdk = 26
         targetSdk = 36
-        versionCode = 3
-        versionName = "1.3.0"
+        versionCode = 5
+        versionName = "2.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
@@ -66,6 +83,8 @@ android {
     sourceSets {
         getByName("main") {
             assets.srcDir(generatedHomeCardAssetDir)
+            assets.srcDir(generatedMiniGamesAssetDir)
+            assets.srcDir(generatedAsterAssetDir.map { it.asFile.parentFile })
         }
     }
 
@@ -80,6 +99,8 @@ android {
 
 tasks.named("preBuild") {
     dependsOn(syncHomeCardAsset)
+    dependsOn(syncMiniGamesAssets)
+    dependsOn(syncAsterAssets)
 }
 
 dependencies {

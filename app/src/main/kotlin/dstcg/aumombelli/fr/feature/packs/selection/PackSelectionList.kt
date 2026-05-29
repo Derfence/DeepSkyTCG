@@ -1,5 +1,8 @@
 package fr.aumombelli.dstcg.feature.packs.selection
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,6 +15,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
@@ -25,10 +30,14 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.ui.motion.MotionCard
+import kotlinx.coroutines.delay
 
 internal val EXTENSION_CARD_HEIGHT: Dp = 164.dp
 internal val EXTENSION_CARD_SPACING: Dp = 12.dp
 internal val EXTENSION_LIST_TOP_PADDING: Dp = 44.dp
+internal const val EXTENSION_CARD_ENTRANCE_DURATION_MS = 520
+internal const val EXTENSION_CARD_ENTRANCE_STAGGER_MS = 300
+internal const val EXTENSION_CARD_ENTRANCE_OFFSET_PX = 168f
 
 @Composable
 internal fun ExtensionList(
@@ -40,6 +49,7 @@ internal fun ExtensionList(
     highlightProgress: Float,
     badgeAnimationsEnabled: Boolean,
     onFirstEnabledExtensionBoundsChanged: (Rect?) -> Unit = {},
+    entranceSignal: Int = 0,
     modifier: Modifier = Modifier,
 ) {
     val firstEnabledExtensionId = if (!drawLocked) {
@@ -53,6 +63,25 @@ internal fun ExtensionList(
         modifier = modifier,
     ) {
         extensions.forEachIndexed { index, extension ->
+            val entranceProgress = remember(extension.id, entranceSignal) {
+                Animatable(if (entranceSignal > 0) 0f else 1f)
+            }
+            LaunchedEffect(extension.id, entranceSignal) {
+                if (entranceSignal <= 0) {
+                    entranceProgress.snapTo(1f)
+                    return@LaunchedEffect
+                }
+
+                entranceProgress.snapTo(0f)
+                delay(extensionEntranceDelayMillis(index).toLong())
+                entranceProgress.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(
+                        durationMillis = EXTENSION_CARD_ENTRANCE_DURATION_MS,
+                        easing = FastOutSlowInEasing,
+                    ),
+                )
+            }
             val alpha = when {
                 highlightedExtensionId == null -> 1f
                 extension.id == highlightedExtensionId -> (1f - highlightProgress * 4f).coerceIn(0f, 1f)
@@ -63,7 +92,8 @@ internal fun ExtensionList(
                     .fillMaxWidth()
                     .height(EXTENSION_CARD_HEIGHT)
                     .graphicsLayer {
-                        this.alpha = alpha
+                        this.alpha = alpha * extensionEntranceAlpha(entranceProgress.value)
+                        translationY = extensionEntranceTranslationYPx(entranceProgress.value)
                     },
             ) {
                 Column(
@@ -89,7 +119,7 @@ internal fun ExtensionList(
                         ExtensionAnimatedBadge(
                             extensionId = extension.id,
                             animationsEnabled = badgeAnimationsEnabled,
-                            startDelayMillis = 760 + index * 90,
+                            startDelayMillis = extensionBadgeStartDelayMillis(index),
                             modifier = Modifier
                                 .padding(start = 12.dp)
                                 .width(78.dp)
@@ -112,10 +142,22 @@ internal fun ExtensionList(
                             )
                             .testTag("pack-extension-enter-${extension.id}"),
                     ) {
-                        Text(if (drawLocked) "Verrouillé" else "Observer")
+                        Text(if (drawLocked) "Pas de pack disponible" else "Observer")
                     }
                 }
             }
         }
     }
 }
+
+internal fun extensionEntranceDelayMillis(index: Int): Int =
+    index.coerceAtLeast(0) * EXTENSION_CARD_ENTRANCE_STAGGER_MS
+
+internal fun extensionBadgeStartDelayMillis(index: Int): Int =
+    extensionEntranceDelayMillis(index) + EXTENSION_CARD_ENTRANCE_DURATION_MS
+
+internal fun extensionEntranceAlpha(progress: Float): Float =
+    progress.coerceIn(0f, 1f)
+
+internal fun extensionEntranceTranslationYPx(progress: Float): Float =
+    EXTENSION_CARD_ENTRANCE_OFFSET_PX * (1f - progress.coerceIn(0f, 1f))

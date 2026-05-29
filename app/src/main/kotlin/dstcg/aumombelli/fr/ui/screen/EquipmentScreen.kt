@@ -13,14 +13,18 @@ fun EquipmentScreen(
     onActivateEquipment: (String) -> Unit,
     contentVisible: Boolean = true,
     onOnboardingActivationBoundsChanged: (Rect?) -> Unit = {},
+    onOnboardingActivationScrollHintChanged: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier,
+    onBack: (() -> Unit)? = null,
 ) {
     EquipmentFeatureScreen(
         state = state,
         onRefresh = onRefresh,
         onActivateEquipment = onActivateEquipment,
+        onBack = onBack,
         contentVisible = contentVisible,
         onOnboardingActivationBoundsChanged = onOnboardingActivationBoundsChanged,
+        onOnboardingActivationScrollHintChanged = onOnboardingActivationScrollHintChanged,
         modifier = modifier,
     )
 }

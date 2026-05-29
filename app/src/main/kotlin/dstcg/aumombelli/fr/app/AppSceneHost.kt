@@ -9,12 +9,9 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,35 +27,27 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.testTagsAsResourceId
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.aumombelli.dstcg.AppContainer
-import fr.aumombelli.dstcg.feature.badges.BadgeBookScreen
-import fr.aumombelli.dstcg.feature.badges.BadgeBookViewModel
 import fr.aumombelli.dstcg.feature.badges.BadgeUnlockCelebrationOverlay
-import fr.aumombelli.dstcg.feature.equipment.EquipmentScreen
-import fr.aumombelli.dstcg.feature.equipment.EquipmentEvent
-import fr.aumombelli.dstcg.feature.equipment.EquipmentViewModel
-import fr.aumombelli.dstcg.feature.home.HomeScreen
-import fr.aumombelli.dstcg.feature.home.HomeViewModel
-import fr.aumombelli.dstcg.feature.library.LibraryScreen
-import fr.aumombelli.dstcg.feature.library.LibraryViewModel
-import fr.aumombelli.dstcg.feature.packs.opening.PackOpeningScreen
-import fr.aumombelli.dstcg.feature.packs.opening.PackOpeningViewModel
-import fr.aumombelli.dstcg.feature.packs.selection.PackEvent
-import fr.aumombelli.dstcg.feature.packs.selection.PackSelectionScreen
-import fr.aumombelli.dstcg.feature.packs.selection.PackViewModel
+import fr.aumombelli.dstcg.feature.home.HOME_LOGO_LANDING_SCALE
+import fr.aumombelli.dstcg.model.NewPlayerOnboardingContent
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
+import fr.aumombelli.dstcg.model.TradeCardCandidate
+import fr.aumombelli.dstcg.ui.component.AsterMascotOverlay
+import fr.aumombelli.dstcg.ui.component.AsterMascotSpec
+import fr.aumombelli.dstcg.ui.component.asterMascotHeightForContainer
 import fr.aumombelli.dstcg.ui.motion.AppScene
 import fr.aumombelli.dstcg.ui.motion.AppSkyBackdrop
 import fr.aumombelli.dstcg.ui.motion.BrandLogoVariant
 import fr.aumombelli.dstcg.ui.motion.BookPortalOverlay
 import fr.aumombelli.dstcg.ui.motion.ChestPortalOverlay
+import fr.aumombelli.dstcg.ui.motion.EquipmentPortalOverlay
 import fr.aumombelli.dstcg.ui.motion.LaunchLogoMark
 import fr.aumombelli.dstcg.ui.motion.brandLogoLayoutSpec
 import fr.aumombelli.dstcg.ui.motion.homeLogoVariantFor
 import fr.aumombelli.dstcg.ui.motion.randomSkyBackdropVariant
-import fr.aumombelli.dstcg.ui.viewmodel.DstcgViewModelFactory
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -76,6 +65,12 @@ internal fun AppSceneHost(
     }
     val sceneState = sceneStateHolder.value
     val hasEnteredHomeOnce = remember(launchConfig) { mutableStateOf(false) }
+    val homeContentEntranceSettled = remember(launchConfig) { mutableStateOf(false) }
+    val homeLockupEntranceSettled = remember(launchConfig) { mutableStateOf(false) }
+    val selectedTradeCandidate = remember(launchConfig) { mutableStateOf<TradeCardCandidate?>(null) }
+    val launchWelcomeAwaitingHomeEntrance = remember(launchConfig) {
+        mutableStateOf(launchConfig.scene == AppLaunchScene.Start)
+    }
 
     val cameraTilt = remember(launchConfig) { Animatable(0f) }
     val mountainSkyBlend = remember(launchConfig) { Animatable(0f) }
@@ -86,6 +81,8 @@ internal fun AppSceneHost(
     val bookOverlayAlpha = remember { Animatable(1f) }
     val chestProgress = remember { Animatable(0f) }
     val chestOverlayAlpha = remember { Animatable(1f) }
+    val equipmentProgress = remember { Animatable(0f) }
+    val equipmentOverlayAlpha = remember { Animatable(1f) }
 
     val transitions = remember(appContainer, skyVariant) {
         AppSceneTransitionController(
@@ -98,15 +95,24 @@ internal fun AppSceneHost(
             bookOverlayAlpha = bookOverlayAlpha,
             chestProgress = chestProgress,
             chestOverlayAlpha = chestOverlayAlpha,
+            equipmentProgress = equipmentProgress,
+            equipmentOverlayAlpha = equipmentOverlayAlpha,
             readState = { sceneStateHolder.value },
             writeState = { sceneStateHolder.value = it },
             awaitNextFrame = { withFrameNanos { } },
         )
     }
     val onboardingCoordinator = remember(appContainer) {
-        NewPlayerOnboardingCoordinator(appContainer.progressRepository)
+        NewPlayerOnboardingCoordinator(
+            progressRepository = appContainer.progressRepository,
+            craftingRepository = appContainer.craftingRepository,
+        )
     }
     val onboardingStep = onboardingCoordinator.uiState.currentStep
+    val blockingModalSpec = onboardingCoordinator.activeBlockingModal(
+        currentScene = sceneState.currentScene,
+        sceneState = sceneState,
+    )
 
     val launchLogoAlpha by animateFloatAsState(
         targetValue = if (sceneState.launchLogoVisible) 1f else 0f,
@@ -126,15 +132,30 @@ internal fun AppSceneHost(
     val homeLockupRevealProgress by animateFloatAsState(
         targetValue = if (sceneState.currentScene == AppScene.Home && sceneState.homeContentVisible) 1f else 0f,
         animationSpec = tween(durationMillis = 520, easing = FastOutSlowInEasing),
+        finishedListener = { animatedValue ->
+            if (
+                sceneState.currentScene == AppScene.Home &&
+                sceneState.homeContentVisible &&
+                animatedValue >= 0.99f
+            ) {
+                homeLockupEntranceSettled.value = true
+            }
+        },
         label = "home-lockup-reveal",
     )
-    val statusBarInsetPx = WindowInsets.statusBars.getTop(density).toFloat()
-    val launchBadgeBaseSize = 128.dp
-    val launchBadgeLandingSize = launchBadgeBaseSize * 0.88f
-    val launchLogoTargetTranslationY = if (sceneState.rootHeightPx > 0f && sceneState.homeHeroCardTopPx > 0f) {
-        (sceneState.homeHeroCardTopPx / 2f) - (sceneState.rootHeightPx / 2f) + (statusBarInsetPx * 0.18f)
+    val launchBadgeLandingSize = if (sceneState.homeLogoBadgeLandingSizePx > 0f) {
+        with(density) { sceneState.homeLogoBadgeLandingSizePx.toDp() }
     } else {
-        -(220f - statusBarInsetPx * 0.18f)
+        112.dp
+    }
+    val launchBadgeBaseSize = launchBadgeLandingSize / HOME_LOGO_LANDING_SCALE
+    val launchLogoTargetTranslationY = if (
+        sceneState.rootHeightPx > 0f &&
+        sceneState.homeLogoBadgeCenterYPx > 0f
+    ) {
+        sceneState.homeLogoBadgeCenterYPx - (sceneState.rootHeightPx / 2f)
+    } else {
+        -220f
     }
     val homeLogoVariant = remember(skyVariant) { homeLogoVariantFor(skyVariant) }
     val homeLogoLayoutSpec = remember(homeLogoVariant) { brandLogoLayoutSpec(homeLogoVariant) }
@@ -161,6 +182,37 @@ internal fun AppSceneHost(
         }
     }
 
+    LaunchedEffect(sceneState.currentScene, sceneState.homeContentVisible) {
+        if (sceneState.currentScene != AppScene.Home || !sceneState.homeContentVisible) {
+            homeContentEntranceSettled.value = false
+            homeLockupEntranceSettled.value = false
+        }
+        if (sceneState.currentScene != AppScene.Library) {
+            selectedTradeCandidate.value = null
+        }
+    }
+
+    LaunchedEffect(
+        launchWelcomeAwaitingHomeEntrance.value,
+        sceneState.currentScene,
+        sceneState.homeContentVisible,
+        sceneState.onboardingHintsVisible,
+        homeContentEntranceSettled.value,
+        homeLockupEntranceSettled.value,
+    ) {
+        if (
+            launchWelcomeAwaitingHomeEntrance.value &&
+            sceneState.currentScene == AppScene.Home &&
+            sceneState.homeContentVisible &&
+            !sceneState.onboardingHintsVisible &&
+            homeContentEntranceSettled.value &&
+            homeLockupEntranceSettled.value
+        ) {
+            sceneStateHolder.value = sceneStateHolder.value.showOnboardingHints()
+            launchWelcomeAwaitingHomeEntrance.value = false
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -168,9 +220,15 @@ internal fun AppSceneHost(
                 testTagsAsResourceId = true
             }
             .onSizeChanged { size ->
-                sceneStateHolder.value = sceneStateHolder.value.withRootHeight(size.height.toFloat())
+                sceneStateHolder.value = sceneStateHolder.value.withRootSize(
+                    widthPx = size.width.toFloat(),
+                    heightPx = size.height.toFloat(),
+                )
             },
     ) {
+        BackHandler(enabled = sceneState.transitionLocked) {
+        }
+
         AppSkyBackdrop(
             variant = skyVariant,
             cameraTiltProgress = cameraTilt.value,
@@ -178,332 +236,23 @@ internal fun AppSceneHost(
             mountainBlendProgress = mountainSkyBlend.value,
         )
 
-        when (sceneState.currentScene) {
-            AppScene.Home -> {
-                val homeViewModel: HomeViewModel = viewModel(
-                    key = "home",
-                    factory = DstcgViewModelFactory {
-                        HomeViewModel(
-                            progressRepository = appContainer.progressRepository,
-                        )
-                    },
-                )
-                val uiState by homeViewModel.uiState.collectAsState()
-
-                LaunchedEffect(Unit) {
-                    if (hasEnteredHomeOnce.value) {
-                        homeViewModel.refresh()
-                    } else {
-                        hasEnteredHomeOnce.value = true
-                    }
-                }
-
-                BackHandler(
-                    enabled = !sceneState.transitionLocked &&
-                        NewPlayerOnboardingInteractionPolicy.allowsHomeExit(onboardingStep),
-                ) {
-                    activity?.finish()
-                }
-
-                HomeScreen(
-                    state = uiState,
-                    onOpenPack = {
-                        if (
-                            !sceneState.transitionLocked &&
-                            NewPlayerOnboardingInteractionPolicy.allowsHomeOpenPack(onboardingStep)
-                        ) {
-                            scope.launch {
-                                onboardingCoordinator.onHomeOpenPackSelected()
-                                transitions.animateHomeToPackSelection()
-                            }
-                        }
-                    },
-                    onOpenLibrary = {
-                        if (
-                            !sceneState.transitionLocked &&
-                            NewPlayerOnboardingInteractionPolicy.allowsHomeLibrary(onboardingStep)
-                        ) {
-                            scope.launch {
-                                val shouldResumeBadgeCelebration = onboardingCoordinator.onLibraryOpened()
-                                if (shouldResumeBadgeCelebration) {
-                                    sceneStateHolder.value = sceneStateHolder.value.resumePendingBadgeCelebration()
-                                }
-                                transitions.animateHomeToLibrary()
-                            }
-                        }
-                    },
-                    onOpenEquipment = {
-                        if (
-                            !sceneState.transitionLocked &&
-                            NewPlayerOnboardingInteractionPolicy.allowsHomeEquipment(onboardingStep)
-                        ) {
-                            scope.launch {
-                                onboardingCoordinator.onEquipmentOpened()
-                                transitions.animateHomeToEquipment()
-                            }
-                        }
-                    },
-                    onOpenBadgeBook = {
-                        if (
-                            !sceneState.transitionLocked &&
-                            NewPlayerOnboardingInteractionPolicy.allowsHomeBadgeBook(onboardingStep)
-                        ) {
-                            scope.launch {
-                                onboardingCoordinator.onBadgeBookOpened()
-                                transitions.animateHomeToBadgeBook()
-                            }
-                        }
-                    },
-                    onResetProgress = homeViewModel::resetProgress,
-                    showBackground = false,
-                    contentVisible = sceneState.homeContentVisible,
-                    interactionsEnabled = !sceneState.transitionLocked,
-                    allowAuxiliaryActions = NewPlayerOnboardingInteractionPolicy
-                        .allowsHomeAuxiliaryActions(onboardingStep),
-                    onHeroCardTopChanged = { topPx ->
-                        sceneStateHolder.value = sceneStateHolder.value.withHomeHeroCardTop(topPx)
-                    },
-                    onCoachmarkTargetBoundsChanged = { target, bounds ->
-                        sceneStateHolder.value = sceneStateHolder.value.withCoachmarkTargetBounds(target, bounds)
-                    },
-                )
-            }
-
-            AppScene.Library -> {
-                val libraryViewModel: LibraryViewModel = viewModel(
-                    key = "library",
-                    factory = DstcgViewModelFactory {
-                        LibraryViewModel(
-                            catalogRepository = appContainer.catalogRepository,
-                            collectionRepository = appContainer.collectionRepository,
-                        )
-                    },
-                )
-                val uiState by libraryViewModel.uiState.collectAsState()
-
-                LaunchedEffect(sceneState.libraryRefreshSignal) {
-                    if (!uiState.isLoading || uiState.sections.isNotEmpty() || uiState.errorMessage != null) {
-                        libraryViewModel.refresh()
-                    }
-                }
-
-                BackHandler(enabled = !sceneState.transitionLocked) {
-                    scope.launch { transitions.animateLibraryToHome() }
-                }
-
-                LibraryScreen(
-                    state = uiState,
-                    onRefresh = libraryViewModel::refresh,
-                    contentVisible = sceneState.libraryContentVisible,
-                    showOnboardingHint = onboardingCoordinator.uiState.libraryCardHintVisible &&
-                        sceneState.onboardingHintsVisible,
-                    onOnboardingHintConsumed = onboardingCoordinator::onLibraryCardHintConsumed,
-                )
-            }
-
-            AppScene.Equipment -> {
-                val equipmentViewModel: EquipmentViewModel = viewModel(
-                    key = "equipment",
-                    factory = DstcgViewModelFactory {
-                        EquipmentViewModel(
-                            catalogRepository = appContainer.catalogRepository,
-                            equipmentRepository = appContainer.equipmentRepository,
-                        )
-                    },
-                )
-                val uiState by equipmentViewModel.uiState.collectAsState()
-
-                LaunchedEffect(sceneState.equipmentRefreshSignal) {
-                    if (!uiState.isLoading || uiState.sections.isNotEmpty() || uiState.errorMessage != null) {
-                        equipmentViewModel.refresh()
-                    }
-                }
-
-                LaunchedEffect(equipmentViewModel) {
-                    equipmentViewModel.events.collect { event ->
-                        when (event) {
-                            is EquipmentEvent.Activated -> onboardingCoordinator.onEquipmentActivated()
-                        }
-                    }
-                }
-
-                BackHandler(
-                    enabled = !sceneState.transitionLocked &&
-                        NewPlayerOnboardingInteractionPolicy.allowsEquipmentBack(onboardingStep),
-                ) {
-                    scope.launch { transitions.animateEquipmentToHome() }
-                }
-
-                EquipmentScreen(
-                    state = uiState,
-                    onRefresh = equipmentViewModel::refresh,
-                    onActivateEquipment = { cardId ->
-                        if (NewPlayerOnboardingInteractionPolicy.allowsEquipmentActivation(onboardingStep)) {
-                            equipmentViewModel.activateEquipment(cardId)
-                        }
-                    },
-                    contentVisible = sceneState.equipmentContentVisible,
-                    onOnboardingActivationBoundsChanged = { bounds ->
-                        sceneStateHolder.value = sceneStateHolder.value.withCoachmarkTargetBounds(
-                            NewPlayerOnboardingTarget.EquipmentActivation,
-                            bounds,
-                        )
-                    },
-                )
-            }
-
-            AppScene.BadgeBook -> {
-                val badgeBookViewModel: BadgeBookViewModel = viewModel(
-                    key = "badges",
-                    factory = DstcgViewModelFactory {
-                        BadgeBookViewModel(
-                            catalogRepository = appContainer.catalogRepository,
-                            progressRepository = appContainer.progressRepository,
-                        )
-                    },
-                )
-                val uiState by badgeBookViewModel.uiState.collectAsState()
-
-                LaunchedEffect(sceneState.badgeBookRefreshSignal) {
-                    if (!uiState.isLoading || uiState.sections.isNotEmpty() || uiState.errorMessage != null) {
-                        badgeBookViewModel.refresh()
-                    }
-                }
-
-                BackHandler(enabled = !sceneState.transitionLocked) {
-                    scope.launch { transitions.animateBadgeBookToHome() }
-                }
-
-                BadgeBookScreen(
-                    state = uiState,
-                    onRefresh = badgeBookViewModel::refresh,
-                    contentVisible = sceneState.badgeBookContentVisible,
-                )
-            }
-
-            AppScene.PackSelection,
-            AppScene.PackOpening,
-            -> {
-                val packViewModel: PackViewModel = viewModel(
-                    key = "pack",
-                    factory = DstcgViewModelFactory {
-                        PackViewModel(
-                            catalogRepository = appContainer.catalogRepository,
-                            progressRepository = appContainer.progressRepository,
-                            packRepository = appContainer.packRepository,
-                            gameSettings = appContainer.gameSettings,
-                        )
-                    },
-                )
-                val uiState by packViewModel.uiState.collectAsState()
-
-                LaunchedEffect(sceneState.packRefreshSignal) {
-                    if (
-                        !uiState.isLoading ||
-                        uiState.extensions.isNotEmpty() ||
-                        uiState.errorMessage != null ||
-                        uiState.selectedExtensionId != null
-                    ) {
-                        packViewModel.refresh()
-                    }
-                }
-
-                LaunchedEffect(packViewModel) {
-                    packViewModel.events.collect { event ->
-                        when (event) {
-                            is PackEvent.PackReadyForReveal -> {
-                                val shouldDeferBadgeCelebration = onboardingCoordinator.onPackOpened()
-                                sceneStateHolder.value = sceneStateHolder.value.registerPackReady(
-                                    event.newlyUnlockedBadges,
-                                    deferBadgeCelebration = shouldDeferBadgeCelebration,
-                                )
-                            }
-                        }
-                    }
-                }
-
-                if (sceneState.currentScene == AppScene.PackSelection) {
-                    BackHandler(
-                        enabled = !sceneState.transitionLocked &&
-                            !uiState.isAwaitingPackResult &&
-                            NewPlayerOnboardingInteractionPolicy.allowsPackSelectionBack(onboardingStep),
-                    ) {
-                        if (uiState.selectedExtensionId != null) {
-                            packViewModel.clearExtensionSelection()
-                        } else {
-                            scope.launch { transitions.animatePackSelectionToHome() }
-                        }
-                    }
-                } else {
-                    BackHandler(enabled = sceneState.packOpeningExitSignal == 0) {
-                        sceneStateHolder.value = sceneStateHolder.value.requestPackOpeningExit()
-                    }
-                }
-
-                PackSelectionScreen(
-                    state = uiState,
-                    onRefresh = packViewModel::refresh,
-                    onSelectExtension = { extensionId ->
-                        if (NewPlayerOnboardingInteractionPolicy.allowsPackSelectionExtensionSelection(onboardingStep)) {
-                            packViewModel.selectExtension(extensionId)
-                            scope.launch { onboardingCoordinator.onExtensionSelected() }
-                        }
-                    },
-                    onSelectBooster = { boosterIndex ->
-                        if (NewPlayerOnboardingInteractionPolicy.allowsPackSelectionBoosterSelection(onboardingStep)) {
-                            packViewModel.selectBooster(boosterIndex)
-                        }
-                    },
-                    onOpenPack = { extensionId ->
-                        if (NewPlayerOnboardingInteractionPolicy.allowsPackSelectionBoosterSelection(onboardingStep)) {
-                            packViewModel.openPack(extensionId)
-                        }
-                    },
-                    onPackRevealReady = {
-                        sceneStateHolder.value = sceneStateHolder.value.enterPackOpening()
-                    },
-                    onSelectedBoosterBoundsChanged = { bounds ->
-                        sceneStateHolder.value = sceneStateHolder.value.withPackRevealBounds(bounds)
-                    },
-                    onCoachmarkTargetBoundsChanged = { target, bounds ->
-                        sceneStateHolder.value = sceneStateHolder.value.withCoachmarkTargetBounds(target, bounds)
-                    },
-                    packReadySignal = sceneState.packReadySignal,
-                    showBackground = false,
-                    sceneVisible = sceneState.currentScene == AppScene.PackSelection && sceneState.packSceneVisible,
-                    extensionListVisible = sceneState.currentScene == AppScene.PackSelection &&
-                        sceneState.packExtensionListVisible,
-                    interactionsEnabled = !sceneState.transitionLocked && sceneState.currentScene == AppScene.PackSelection,
-                )
-
-                if (sceneState.currentScene == AppScene.PackOpening) {
-                    val openingViewModel: PackOpeningViewModel = viewModel(
-                        key = "pack-opening",
-                        factory = DstcgViewModelFactory {
-                            PackOpeningViewModel(
-                                catalogRepository = appContainer.catalogRepository,
-                                packRepository = appContainer.packRepository,
-                            )
-                        },
-                    )
-                    val openingUiState by openingViewModel.uiState.collectAsState()
-                    val showPersistentDismissHint =
-                        sceneState.onboardingHintsVisible &&
-                            onboardingCoordinator.uiState.currentStep != null &&
-                            onboardingCoordinator.uiState.currentStep != NewPlayerOnboardingStep.Completed
-
-                    PackOpeningScreen(
-                        state = openingUiState,
-                        showPersistentDismissHint = showPersistentDismissHint,
-                        initialBoosterBounds = sceneState.selectedPackRevealBounds,
-                        dismissSignal = sceneState.packOpeningExitSignal,
-                        onDone = {
-                            scope.launch { transitions.finishPackOpeningToHome() }
-                        },
-                    )
-                }
-            }
-        }
+        AppSceneContent(
+            appContainer = appContainer,
+            activity = activity,
+            sceneState = sceneState,
+            onboardingCoordinator = onboardingCoordinator,
+            onboardingStep = onboardingStep,
+            blockingModalSpec = blockingModalSpec,
+            selectedTradeCandidate = selectedTradeCandidate,
+            hasEnteredHomeOnce = hasEnteredHomeOnce,
+            homeContentEntranceSettled = homeContentEntranceSettled,
+            homeLogoVariant = homeLogoVariant,
+            transitions = transitions,
+            scope = scope,
+            updateSceneState = { transform ->
+                sceneStateHolder.value = transform(sceneStateHolder.value)
+            },
+        )
 
         if (homeLockupAlpha > 0.01f) {
             LaunchLogoMark(
@@ -550,32 +299,127 @@ internal fun AppSceneHost(
             overlayAlpha = chestOverlayAlpha.value,
         )
 
+        EquipmentPortalOverlay(
+            progress = equipmentProgress.value,
+            overlayAlpha = equipmentOverlayAlpha.value,
+        )
+
+        val badgeCelebrationTargetBounds =
+            sceneState.coachmarkTargetBounds[NewPlayerOnboardingTarget.HomeBadges]
         val badgeCelebrationVisible = sceneState.currentScene == AppScene.Home &&
             sceneState.homeContentVisible &&
             sceneState.pendingBadgeCelebration.isNotEmpty() &&
-            !sceneState.badgeCelebrationDeferred
+            !sceneState.badgeCelebrationDeferred &&
+            badgeCelebrationTargetBounds != null
+        val activeCoachmarkSpec = if (blockingModalSpec == null) {
+            onboardingCoordinator.activeCoachmark(
+                currentScene = sceneState.currentScene,
+                sceneState = sceneState,
+                badgeCelebrationVisible = badgeCelebrationVisible,
+            )
+        } else {
+            null
+        }
 
-        onboardingCoordinator.activeCoachmark(
-            currentScene = sceneState.currentScene,
-            sceneState = sceneState,
-            badgeCelebrationVisible = badgeCelebrationVisible,
-        )?.let { spec ->
-            sceneState.coachmarkTargetBounds[spec.target]?.let { targetBounds ->
-                NewPlayerCoachmarkOverlay(
+        if (blockingModalSpec?.kind == NewPlayerBlockingModalKind.WelcomeIntro) {
+            val welcomeMascotSpec = resolveNewPlayerBlockingModalMascotSpec(
+                NewPlayerBlockingModalKind.WelcomeIntro,
+            )
+            NewPlayerBlockingModal(
+                testTag = "new-player-modal-welcome",
+                pages = listOf(
+                    NewPlayerBlockingModalPage(
+                        title = NewPlayerOnboardingContent.welcomeIntro.title,
+                        message = NewPlayerOnboardingContent.welcomeIntro.message,
+                    ),
+                ),
+                finishButtonLabel = "Commencer",
+                onFinished = {
+                    scope.launch { onboardingCoordinator.onWelcomeIntroAcknowledged() }
+                },
+                decorativeBottomAvoidanceHeight = {
+                    welcomeMascotSpec?.modalBottomAvoidanceHeight(maxWidth.value) ?: 0.dp
+                },
+                decorativeOverlay = {
+                    welcomeMascotSpec?.let { spec ->
+                        AsterMascotOverlay(
+                            spec = spec,
+                            bottomPadding = CenteredModalAsterBottomPadding,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                },
+            )
+        }
+
+        if (blockingModalSpec?.kind == NewPlayerBlockingModalKind.Conclusion) {
+            val conclusionMascotSpec = resolveNewPlayerBlockingModalMascotSpec(
+                NewPlayerBlockingModalKind.Conclusion,
+            )
+            NewPlayerBlockingModal(
+                testTag = "new-player-modal-conclusion",
+                pages = listOf(
+                    NewPlayerBlockingModalPage(
+                        title = NewPlayerOnboardingContent.conclusion.title,
+                        message = NewPlayerOnboardingContent.conclusion.message,
+                    ),
+                ),
+                finishButtonLabel = "Terminer",
+                onFinished = {
+                    scope.launch { onboardingCoordinator.onConclusionAcknowledged() }
+                },
+                decorativeBottomAvoidanceHeight = {
+                    conclusionMascotSpec?.modalBottomAvoidanceHeight(maxWidth.value) ?: 0.dp
+                },
+                decorativeOverlay = {
+                    conclusionMascotSpec?.let { spec ->
+                        AsterMascotOverlay(
+                            spec = spec,
+                            bottomPadding = CenteredModalAsterBottomPadding,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                },
+            )
+        }
+
+        if (blockingModalSpec == null) {
+            resolveNewPlayerSceneMascotSpec(
+                currentStep = onboardingStep,
+                currentScene = sceneState.currentScene,
+                sceneState = sceneState,
+                activeCoachmarkSpec = activeCoachmarkSpec,
+                badgeCelebrationVisible = badgeCelebrationVisible,
+            )?.let { spec ->
+                AsterMascotOverlay(
                     spec = spec,
-                    targetBounds = targetBounds,
                     modifier = Modifier.fillMaxSize(),
                 )
             }
-        }
 
-        BadgeUnlockCelebrationOverlay(
-            badges = sceneState.pendingBadgeCelebration,
-            targetBounds = sceneState.coachmarkTargetBounds[NewPlayerOnboardingTarget.HomeBadges],
-            visible = badgeCelebrationVisible,
-            onFinished = transitions::completeBadgeCelebration,
-            modifier = Modifier.fillMaxSize(),
-        )
+            activeCoachmarkSpec?.let { spec ->
+                val targetBounds = sceneState.coachmarkTargetBounds[spec.target]
+                val forceScrollDownHint =
+                    spec.target == NewPlayerOnboardingTarget.EquipmentActivation &&
+                        sceneState.equipmentActivationScrollHintVisible
+                if (targetBounds != null || forceScrollDownHint) {
+                    NewPlayerCoachmarkOverlay(
+                        spec = spec,
+                        targetBounds = targetBounds,
+                        forceScrollDownHint = forceScrollDownHint,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+            }
+
+            BadgeUnlockCelebrationOverlay(
+                badges = sceneState.pendingBadgeCelebration,
+                targetBounds = badgeCelebrationTargetBounds,
+                visible = badgeCelebrationVisible,
+                onFinished = transitions::completeBadgeCelebration,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
     }
 }
 
@@ -584,3 +428,12 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
     is ContextWrapper -> baseContext.findActivity()
     else -> null
 }
+
+private fun AsterMascotSpec.modalBottomAvoidanceHeight(containerWidth: Float): Dp =
+    asterMascotHeightForContainer(
+        containerWidth = containerWidth,
+        scale = scale,
+        sizeMultiplier = sizeMultiplier,
+    ).dp + CenteredModalAsterBottomPadding
+
+private val CenteredModalAsterBottomPadding = 92.dp

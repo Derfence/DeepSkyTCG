@@ -5,11 +5,12 @@
       { "code": "city", "label": "Ville" },
       { "code": "suburban", "label": "Periurbain" },
       { "code": "rural", "label": "Campagne" },
-      { "code": "mountain", "label": "Montagne" }
+      { "code": "mountain", "label": "Montagne" },
+      { "code": "holographic", "label": "Holographique", "isHolographic": true }
     ],
     "finishes": [
-      { "code": "standard", "label": "Standard", "isHolographic": false },
-      { "code": "holographic", "label": "Holographique", "isHolographic": true }
+      { "code": "standard", "label": "Standard" },
+      { "code": "stamped", "label": "Tamponnee", "isStamped": true }
     ]
   }
 ]

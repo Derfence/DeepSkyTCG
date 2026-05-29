@@ -1,10 +1,14 @@
 package fr.aumombelli.dstcg
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -20,7 +24,9 @@ import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.dp
+import fr.aumombelli.dstcg.feature.packs.opening.AstroPackRevealUiItem
 import fr.aumombelli.dstcg.feature.packs.opening.EquipmentPackRevealUiItem
+import fr.aumombelli.dstcg.feature.packs.opening.PackOpeningRevealSlotProbe
 import fr.aumombelli.dstcg.model.CardDefinition
 import fr.aumombelli.dstcg.model.DrawPackResponse
 import fr.aumombelli.dstcg.model.EquipmentPackRevealSlot
@@ -38,9 +44,57 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
+private const val PACK_OPENING_INITIAL_BOOSTER_ASSERTION_MS = 300L
+private const val PACK_OPENING_REVEAL_SETTLE_MS = 4_100L
+
 class PackOpeningScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun close_button_waits_for_first_card_and_invokes_callback() {
+        val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
+        val packResult = DrawPackResponse.fromCards(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
+            cards = listOf(testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox")),
+        )
+        var dismissClicks = 0
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackOpeningScreen(
+                state = PackOpeningUiState(
+                    packResult = packResult,
+                    displayCards = listOf(
+                        firstCard.toDisplayCard(
+                            extensionName = "Astronomes en herbe",
+                            activeVariant = packResult.cards[0].variant.toDisplayVariant(),
+                        ),
+                    ),
+                ),
+                onDone = {},
+                onDismissRequest = { dismissClicks += 1 },
+            )
+        }
+
+        composeRule.mainClock.advanceTimeBy(PACK_OPENING_INITIAL_BOOSTER_ASSERTION_MS)
+        composeRule.runOnIdle { }
+        composeRule.onAllNodesWithTag("pack-opening-close").assertCountEquals(0)
+
+        composeRule.mainClock.advanceTimeBy(
+            PACK_OPENING_REVEAL_SETTLE_MS - PACK_OPENING_INITIAL_BOOSTER_ASSERTION_MS,
+        )
+        composeRule.runOnIdle { }
+        composeRule.onNodeWithTag("pack-opening-close").assertIsDisplayed()
+        composeRule.onNodeWithTag("pack-opening-close").performClick()
+
+        assertEquals(1, dismissClicks)
+    }
 
     @Test
     fun pack_opening_reveals_cards_supports_swipe_and_fullscreen() {
@@ -89,13 +143,16 @@ class PackOpeningScreenTest {
             )
         }
 
-        composeRule.mainClock.advanceTimeBy(1_200)
+        composeRule.mainClock.advanceTimeBy(PACK_OPENING_INITIAL_BOOSTER_ASSERTION_MS)
         composeRule.runOnIdle { }
         composeRule.onNodeWithTag("pack-opening-booster").assertIsDisplayed()
         composeRule.assertApproxCardRatio("pack-opening-booster")
+        val boosterBoundsBeforeReveal = composeRule.boosterBounds()
         composeRule.onAllNodesWithText("Booster").assertCountEquals(0)
 
-        composeRule.mainClock.advanceTimeBy(4_500)
+        composeRule.mainClock.advanceTimeBy(
+            PACK_OPENING_REVEAL_SETTLE_MS - PACK_OPENING_INITIAL_BOOSTER_ASSERTION_MS,
+        )
         composeRule.runOnIdle { }
 
         composeRule.onNodeWithTag("pack-opening-burst").assertIsDisplayed()
@@ -105,7 +162,15 @@ class PackOpeningScreenTest {
         composeRule.onAllNodesWithTag("pack-opening-arrow-left").assertCountEquals(0)
         composeRule.onAllNodesWithTag("pack-opening-arrow-right").assertCountEquals(1)
         composeRule.onAllNodesWithTag("pack-opening-card-name").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("astro-card-holo-foil", useUnmergedTree = true).assertCountEquals(0)
+        composeRule.onAllNodesWithTag("astro-card-holo-glare", useUnmergedTree = true).assertCountEquals(0)
+        composeRule.onAllNodesWithTag("astro-card-holo-sparkles", useUnmergedTree = true).assertCountEquals(0)
         composeRule.assertApproxCardRatio("pack-opening-current-card-surface")
+        composeRule.assertBoundsClose(
+            expected = boosterBoundsBeforeReveal,
+            actual = composeRule.currentCardBounds(),
+            tolerancePx = 2.5f,
+        )
         composeRule.mainClock.autoAdvance = true
         composeRule.firstNodeWithTag("pack-opening-current-card-surface").performClick()
         composeRule.waitUntil(timeoutMillis = 5_000) {
@@ -137,6 +202,121 @@ class PackOpeningScreenTest {
     }
 
     @Test
+    fun pack_opening_displays_first_encounter_indicator_on_new_cards() {
+        val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
+        val packResult = DrawPackResponse.fromCards(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
+            cards = listOf(
+                testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
+            ),
+        )
+        val displayCard = firstCard.toDisplayCard(
+            extensionName = "Astronomes en herbe",
+            activeVariant = packResult.cards[0].variant.toDisplayVariant(),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackOpeningScreen(
+                state = PackOpeningUiState(
+                    packResult = packResult,
+                    revealItems = listOf(
+                        AstroPackRevealUiItem(
+                            displayCard = displayCard,
+                            showFirstEncounterIndicator = true,
+                        ),
+                    ),
+                    displayCards = listOf(displayCard),
+                    highestBurstRarity = "Common",
+                    hasHolographicBurst = false,
+                ),
+                onDone = {},
+            )
+        }
+
+        composeRule.advanceToRevealedCards()
+
+        composeRule.onNodeWithTag(
+            "pack-opening-first-encounter-indicator-ALP-001",
+            useUnmergedTree = true,
+        ).assertIsDisplayed()
+    }
+
+    @Test
+    fun reveal_slot_probe_matches_pack_opening_booster_slot() {
+        val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
+        val packResult = DrawPackResponse.fromCards(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
+            cards = listOf(
+                testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
+            ),
+        )
+        var showOpeningScreen by mutableStateOf(false)
+        var probeBounds by mutableStateOf<Rect?>(null)
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            Box(modifier = Modifier.size(width = 411.dp, height = 731.dp)) {
+                if (!showOpeningScreen) {
+                    PackOpeningRevealSlotProbe(
+                        extensionLabel = "Astronomes en herbe",
+                        totalItems = 1,
+                        onBoundsChanged = { bounds ->
+                            probeBounds = bounds?.let {
+                                Rect(
+                                    left = it.leftPx,
+                                    top = it.topPx,
+                                    right = it.leftPx + it.widthPx,
+                                    bottom = it.topPx + it.heightPx,
+                                )
+                            }
+                        },
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                } else {
+                    PackOpeningScreen(
+                        state = PackOpeningUiState(
+                            packResult = packResult,
+                            displayCards = listOf(
+                                firstCard.toDisplayCard(
+                                    extensionName = "Astronomes en herbe",
+                                    activeVariant = packResult.cards[0].variant.toDisplayVariant(),
+                                ),
+                            ),
+                            highestBurstRarity = "Common",
+                            hasHolographicBurst = false,
+                        ),
+                        onDone = {},
+                    )
+                }
+            }
+        }
+
+        composeRule.waitForIdle()
+        val measuredProbeBounds = requireNotNull(probeBounds)
+
+        composeRule.runOnIdle { showOpeningScreen = true }
+        composeRule.mainClock.advanceTimeBy(300)
+        composeRule.waitForIdle()
+
+        composeRule.assertBoundsClose(
+            expected = measuredProbeBounds,
+            actual = composeRule.boosterBounds(),
+            tolerancePx = 3f,
+        )
+    }
+
+    @Test
     fun pack_opening_holographic_burst_adds_falling_stars() {
         val holoCard = testCardDefinition("ALP-777", rarityLabel = "Epic")
         val packResult = DrawPackResponse.fromCards(
@@ -152,8 +332,8 @@ class PackOpeningScreenTest {
                     "Comete",
                     "Epic",
                     "comet",
-                    finish = "holographic",
-                    finishLabel = "Holographique",
+                    skyQuality = "holographic",
+                    skyQualityLabel = "Holographique",
                     isHolographic = true,
                 ),
             ),
@@ -181,6 +361,199 @@ class PackOpeningScreenTest {
 
         composeRule.onNodeWithTag("pack-opening-burst").assertIsDisplayed()
         composeRule.onNodeWithTag("pack-opening-burst-rain").assertIsDisplayed()
+        composeRule.onNodeWithTag("pack-opening-burst-orbit").assertIsDisplayed()
+    }
+
+    @Test
+    fun pack_opening_swiping_onto_holographic_card_triggers_arrival_animation() {
+        val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
+        val holoCard = testCardDefinition("ALP-777", name = "Comete", rarityLabel = "Epic")
+        val packResult = DrawPackResponse.fromCards(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
+            cards = listOf(
+                testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
+                testPackCard(
+                    "ALP-777",
+                    "Comete",
+                    "Epic",
+                    "comet",
+                    skyQuality = "holographic",
+                    skyQualityLabel = "Holographique",
+                    isHolographic = true,
+                ),
+            ),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackOpeningScreen(
+                state = PackOpeningUiState(
+                    packResult = packResult,
+                    displayCards = listOf(
+                        firstCard.toDisplayCard(
+                            extensionName = "Astronomes en herbe",
+                            activeVariant = packResult.cards[0].variant.toDisplayVariant(),
+                        ),
+                        holoCard.toDisplayCard(
+                            extensionName = "Astronomes en herbe",
+                            activeVariant = packResult.cards[1].variant.toDisplayVariant(),
+                        ),
+                    ),
+                    highestBurstRarity = "Epic",
+                    hasHolographicBurst = true,
+                ),
+                onDone = {},
+            )
+        }
+
+        composeRule.advanceToRevealedCards()
+        composeRule.onAllNodesWithTag("pack-opening-holo-arrival", useUnmergedTree = true).assertCountEquals(0)
+        composeRule.onAllNodesWithTag("pack-opening-holo-celebration", useUnmergedTree = true).assertCountEquals(0)
+
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeLeft() }
+        composeRule.mainClock.advanceTimeBy(700)
+        composeRule.runOnIdle { }
+        composeRule.onNodeWithTag("pack-opening-holo-arrival", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("pack-opening-holo-celebration", useUnmergedTree = true).assertIsDisplayed()
+        assertEquals("ALP-777", composeRule.readCurrentPackOpeningCardId())
+    }
+
+    @Test
+    fun pack_opening_holographic_arrival_animation_only_plays_once_per_card() {
+        val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
+        val holoCard = testCardDefinition("ALP-777", name = "Comete", rarityLabel = "Epic")
+        val packResult = DrawPackResponse.fromCards(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
+            cards = listOf(
+                testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
+                testPackCard(
+                    "ALP-777",
+                    "Comete",
+                    "Epic",
+                    "comet",
+                    skyQuality = "holographic",
+                    skyQualityLabel = "Holographique",
+                    isHolographic = true,
+                ),
+            ),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackOpeningScreen(
+                state = PackOpeningUiState(
+                    packResult = packResult,
+                    displayCards = listOf(
+                        firstCard.toDisplayCard(
+                            extensionName = "Astronomes en herbe",
+                            activeVariant = packResult.cards[0].variant.toDisplayVariant(),
+                        ),
+                        holoCard.toDisplayCard(
+                            extensionName = "Astronomes en herbe",
+                            activeVariant = packResult.cards[1].variant.toDisplayVariant(),
+                        ),
+                    ),
+                    highestBurstRarity = "Epic",
+                    hasHolographicBurst = true,
+                ),
+                onDone = {},
+            )
+        }
+
+        composeRule.advanceToRevealedCards()
+
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeLeft() }
+        composeRule.mainClock.advanceTimeBy(700)
+        composeRule.runOnIdle { }
+        assertEquals("ALP-777", composeRule.readCurrentPackOpeningCardId())
+        composeRule.onNodeWithTag("pack-opening-holo-arrival", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("pack-opening-holo-celebration", useUnmergedTree = true).assertIsDisplayed()
+
+        composeRule.mainClock.advanceTimeBy(1_800)
+        composeRule.runOnIdle { }
+        composeRule.onAllNodesWithTag("pack-opening-holo-arrival", useUnmergedTree = true).assertCountEquals(0)
+        composeRule.onAllNodesWithTag("pack-opening-holo-celebration", useUnmergedTree = true).assertCountEquals(0)
+
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeRight() }
+        composeRule.mainClock.advanceTimeBy(700)
+        composeRule.runOnIdle { }
+        assertEquals("ALP-001", composeRule.readCurrentPackOpeningCardId())
+
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeLeft() }
+        composeRule.mainClock.advanceTimeBy(700)
+        composeRule.runOnIdle { }
+        assertEquals("ALP-777", composeRule.readCurrentPackOpeningCardId())
+        composeRule.onAllNodesWithTag("pack-opening-holo-arrival", useUnmergedTree = true).assertCountEquals(0)
+        composeRule.onAllNodesWithTag("pack-opening-holo-celebration", useUnmergedTree = true).assertCountEquals(0)
+    }
+
+    @Test
+    fun pack_opening_holographic_cards_render_foil_layers_in_pack_and_fullscreen() {
+        val holoCard = testCardDefinition("ALP-777", rarityLabel = "Epic")
+        val packResult = DrawPackResponse.fromCards(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
+            cards = listOf(
+                testPackCard(
+                    "ALP-777",
+                    "Comete",
+                    "Epic",
+                    "comet",
+                    skyQuality = "holographic",
+                    skyQualityLabel = "Holographique",
+                    isHolographic = true,
+                ),
+            ),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackOpeningScreen(
+                state = PackOpeningUiState(
+                    packResult = packResult,
+                    displayCards = listOf(
+                        holoCard.toDisplayCard(
+                            extensionName = "Astronomes en herbe",
+                            activeVariant = packResult.cards[0].variant.toDisplayVariant(),
+                        ),
+                    ),
+                    highestBurstRarity = "Epic",
+                    hasHolographicBurst = true,
+                ),
+                onDone = {},
+            )
+        }
+
+        composeRule.advanceToRevealedCards()
+
+        composeRule.onNodeWithTag("astro-card-holo-foil", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("astro-card-holo-glare", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("astro-card-holo-sparkles", useUnmergedTree = true).assertIsDisplayed()
+
+        composeRule.mainClock.autoAdvance = true
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("astro-card-holo-foil", useUnmergedTree = true)
+                .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                .size >= 2
+        }
+        composeRule.onNodeWithTag("astro-card-fullscreen-close").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("astro-card-holo-glare", useUnmergedTree = true)
+            .assertCountEquals(2)
     }
 
     @Test
@@ -190,6 +563,7 @@ class PackOpeningScreenTest {
             type = EquipmentType.Mount,
             displayName = "Monture Niveau 2",
             level = 2,
+            imageRef = "equipment_mount_2",
             packsAffected = 4,
             bonusValue = 18.0,
             description = "Augmente nettement la chance de promotion de rarete.",
@@ -224,6 +598,14 @@ class PackOpeningScreenTest {
 
         composeRule.onNodeWithTag("pack-opening-current-card-surface").assertIsDisplayed()
         assertEquals(definition.id, composeRule.readCurrentPackOpeningCardId())
+        composeRule.onAllNodesWithTag(
+            "pack-opening-equipment-art-mount-advanced",
+            useUnmergedTree = true,
+        ).assertCountEquals(1)
+        composeRule.onAllNodesWithTag(
+            "pack-opening-equipment-icon-mount-advanced",
+            useUnmergedTree = true,
+        ).assertCountEquals(1)
         composeRule.onNodeWithText("Monture").assertIsDisplayed()
         composeRule.onNodeWithText("Monture Niveau 2").assertIsDisplayed()
         composeRule.onNodeWithText("Actif pendant 4 packs").assertIsDisplayed()
@@ -298,14 +680,14 @@ class PackOpeningScreenTest {
         composeRule.assertCurrentCardCentered()
 
         composeRule.mainClock.autoAdvance = false
-        composeRule.mainClock.advanceTimeBy(2_400)
+        composeRule.mainClock.advanceTimeBy(2_600)
         composeRule.runOnIdle { }
         composeRule.onAllNodesWithTag("pack-opening-last-card-nudge").assertCountEquals(1)
-        composeRule.onNodeWithTag("pack-opening-swipe-hint-label").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("pack-opening-swipe-hint-label").assertCountEquals(0)
     }
 
     @Test
-    fun pack_opening_reveals_unlocked_hint_after_fullscreen_closes() {
+    fun pack_opening_reveals_unlocked_nudge_after_fullscreen_closes() {
         val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
         val secondCard = testCardDefinition("ALP-002", name = "Galaxie d'Andromede")
         val packResult = DrawPackResponse.fromCards(
@@ -365,7 +747,7 @@ class PackOpeningScreenTest {
                 .fetchSemanticsNodes(atLeastOneRootRequired = false)
                 .size == 1
         }
-        composeRule.onNodeWithTag("pack-opening-swipe-hint-label").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("pack-opening-swipe-hint-label").assertCountEquals(0)
     }
 
     @Test
@@ -448,7 +830,7 @@ class PackOpeningScreenTest {
     }
 
     @Test
-    fun pack_opening_persistent_hint_stays_visible_during_onboarding_navigation() {
+    fun pack_opening_onboarding_hint_appears_after_first_nudge_then_stays_visible_during_navigation() {
         val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
         val secondCard = testCardDefinition("ALP-002", name = "Galaxie d'Andromede")
         val packResult = DrawPackResponse.fromCards(
@@ -488,14 +870,144 @@ class PackOpeningScreenTest {
         }
 
         composeRule.advanceToRevealedCards()
-        composeRule.onNodeWithTag("pack-opening-swipe-hint-label").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("pack-opening-swipe-hint-label").assertCountEquals(0)
 
         composeRule.mainClock.autoAdvance = true
         composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeLeft() }
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.safeReadCurrentPackOpeningCardId() == "ALP-002"
         }
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.mainClock.advanceTimeBy(2_600)
+        composeRule.runOnIdle { }
         composeRule.onNodeWithTag("pack-opening-swipe-hint-label").assertIsDisplayed()
+
+        composeRule.mainClock.autoAdvance = true
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeRight() }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.safeReadCurrentPackOpeningCardId() == "ALP-001"
+        }
+        composeRule.onNodeWithTag("pack-opening-swipe-hint-label").assertIsDisplayed()
+    }
+
+    @Test
+    fun pack_opening_swipe_hint_nudges_current_card_upward_once_unlocked() {
+        val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
+        val secondCard = testCardDefinition("ALP-002", name = "Galaxie d'Andromede")
+        val packResult = DrawPackResponse.fromCards(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 7,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
+            cards = listOf(
+                testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
+                testPackCard("ALP-002", "Galaxie d'Andromede", "Rare", "steam_golem"),
+            ),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackOpeningScreen(
+                state = PackOpeningUiState(
+                    packResult = packResult,
+                    displayCards = listOf(
+                        firstCard.toDisplayCard(
+                            extensionName = "Astronomes en herbe",
+                            activeVariant = packResult.cards[0].variant.toDisplayVariant(),
+                        ),
+                        secondCard.toDisplayCard(
+                            extensionName = "Astronomes en herbe",
+                            activeVariant = packResult.cards[1].variant.toDisplayVariant(),
+                        ),
+                    ),
+                    highestBurstRarity = "Rare",
+                    hasHolographicBurst = false,
+                ),
+                onDone = {},
+            )
+        }
+
+        composeRule.advanceToRevealedCards()
+        composeRule.mainClock.autoAdvance = true
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeLeft() }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.safeReadCurrentPackOpeningCardId() == "ALP-002"
+        }
+
+        composeRule.mainClock.autoAdvance = false
+        val restingBounds = composeRule.currentCardBounds()
+        composeRule.mainClock.advanceTimeBy(2_600)
+        composeRule.runOnIdle { }
+        val nudgedBounds = composeRule.currentCardBounds()
+
+        assertTrue(
+            "Expected onboarding nudge to lift the current card upward. Rest=$restingBounds Nudged=$nudgedBounds",
+            nudgedBounds.top < restingBounds.top - 3f,
+        )
+        composeRule.onAllNodesWithTag("pack-opening-swipe-hint-label").assertCountEquals(0)
+    }
+
+    @Test
+    fun pack_opening_swipe_hint_label_does_not_push_card_down_when_it_appears() {
+        val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
+        val secondCard = testCardDefinition("ALP-002", name = "Galaxie d'Andromede")
+        val packResult = DrawPackResponse.fromCards(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 7,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
+            cards = listOf(
+                testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
+                testPackCard("ALP-002", "Galaxie d'Andromede", "Rare", "steam_golem"),
+            ),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackOpeningScreen(
+                state = PackOpeningUiState(
+                    packResult = packResult,
+                    displayCards = listOf(
+                        firstCard.toDisplayCard(
+                            extensionName = "Astronomes en herbe",
+                            activeVariant = packResult.cards[0].variant.toDisplayVariant(),
+                        ),
+                        secondCard.toDisplayCard(
+                            extensionName = "Astronomes en herbe",
+                            activeVariant = packResult.cards[1].variant.toDisplayVariant(),
+                        ),
+                    ),
+                    highestBurstRarity = "Rare",
+                    hasHolographicBurst = false,
+                ),
+                showPersistentDismissHint = true,
+                onDone = {},
+            )
+        }
+
+        composeRule.advanceToRevealedCards()
+        composeRule.mainClock.autoAdvance = true
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeLeft() }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.safeReadCurrentPackOpeningCardId() == "ALP-002"
+        }
+
+        composeRule.mainClock.autoAdvance = false
+        val beforeHintBounds = composeRule.currentCardBounds()
+        composeRule.mainClock.advanceTimeBy(2_600)
+        composeRule.runOnIdle { }
+        val afterHintBounds = composeRule.currentCardBounds()
+
+        composeRule.onNodeWithTag("pack-opening-swipe-hint-label").assertIsDisplayed()
+        assertTrue(
+            "Expected the onboarding hint label to avoid pushing the card downward. Before=$beforeHintBounds After=$afterHintBounds",
+            afterHintBounds.top <= beforeHintBounds.top + 2f,
+        )
     }
 
     @Test
@@ -703,6 +1215,52 @@ class PackOpeningScreenTest {
         )
     }
 
+    @Test
+    fun pack_opening_compact_phone_keeps_revealed_card_large_enough() {
+        val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
+        val packResult = DrawPackResponse.fromCards(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
+            cards = listOf(
+                testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
+            ),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            Box(modifier = Modifier.size(width = 320.dp, height = 420.dp)) {
+                PackOpeningScreen(
+                    state = PackOpeningUiState(
+                        packResult = packResult,
+                        displayCards = listOf(
+                            firstCard.toDisplayCard(
+                                extensionName = "Astronomes en herbe",
+                                activeVariant = packResult.cards[0].variant.toDisplayVariant(),
+                            ),
+                        ),
+                        highestBurstRarity = "Common",
+                        hasHolographicBurst = false,
+                    ),
+                    onDone = {},
+                )
+            }
+        }
+
+        composeRule.advanceToRevealedCards()
+
+        val rootBounds = composeRule.onRoot(useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val cardBounds = composeRule.currentCardBounds()
+
+        assertTrue(
+            "Expected the revealed card to keep a strong visual presence on compact phones. Root=$rootBounds Card=$cardBounds",
+            (cardBounds.height / rootBounds.height) >= 0.53f,
+        )
+    }
+
     private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertApproxCardRatio(
         tag: String,
         tolerance: Float = 0.03f,
@@ -734,13 +1292,31 @@ class PackOpeningScreenTest {
 
     private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.advanceToRevealedCards() {
         mainClock.autoAdvance = false
-        mainClock.advanceTimeBy(5_700)
+        mainClock.advanceTimeBy(PACK_OPENING_REVEAL_SETTLE_MS)
         runOnIdle { }
     }
 
     private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.currentCardBounds() =
         firstNodeWithTag("pack-opening-current-card-surface", useUnmergedTree = true)
             .fetchSemanticsNode().boundsInRoot
+
+    private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.boosterBounds() =
+        onNodeWithTag("pack-opening-booster", useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot
+
+    private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertBoundsClose(
+        expected: androidx.compose.ui.geometry.Rect,
+        actual: androidx.compose.ui.geometry.Rect,
+        tolerancePx: Float,
+    ) {
+        assertTrue(
+            "Expected bounds to stay aligned. Expected=$expected Actual=$actual",
+            abs(expected.left - actual.left) <= tolerancePx &&
+                abs(expected.top - actual.top) <= tolerancePx &&
+                abs(expected.width - actual.width) <= tolerancePx &&
+                abs(expected.height - actual.height) <= tolerancePx,
+        )
+    }
 
     private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.performDismissSwipeOnCurrentCard() {
         firstNodeWithTag("pack-opening-current-card-surface").performTouchInput {

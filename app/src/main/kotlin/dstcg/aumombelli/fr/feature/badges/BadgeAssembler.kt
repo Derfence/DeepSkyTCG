@@ -1,17 +1,22 @@
 package fr.aumombelli.dstcg.feature.badges
 
 import fr.aumombelli.dstcg.model.CardDefinition
+import fr.aumombelli.dstcg.model.EquipmentCardDefinition
+import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.OwnedVariantCount
 import fr.aumombelli.dstcg.model.SkyQualityDefinition
 import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.model.VariantProfile
+import fr.aumombelli.dstcg.model.activatedEquipmentCardCount
 import fr.aumombelli.dstcg.model.normalized
+import fr.aumombelli.dstcg.model.totalEquipmentActivationCount
 
 internal fun buildBadgeBookSections(
     extensions: List<ExtensionDefinition>,
     cards: List<CardDefinition>,
+    equipmentCards: List<EquipmentCardDefinition>,
     variantProfiles: List<VariantProfile>,
     progress: StandaloneProgress,
 ): List<BadgeSection> {
@@ -19,7 +24,7 @@ internal fun buildBadgeBookSections(
     val collection = progress.collection
 
     return buildList {
-        add(buildGeneralSection(progress))
+        add(buildGeneralSection(progress = progress, equipmentCards = equipmentCards))
         addAll(
             extensions.map { extension ->
                 val extensionCards = cards
@@ -49,9 +54,9 @@ internal fun buildBadgeBookSections(
                             )
                         }
 
-                        if (supportsHolographicBadges(profiles)) {
+                        if (supportsStampedBadges(profiles)) {
                             add(
-                                buildHolographicBadge(
+                                buildStampedBadge(
                                     extension = extension,
                                     cards = extensionCards,
                                     collection = collection,
@@ -60,9 +65,9 @@ internal fun buildBadgeBookSections(
                             )
                         }
 
-                        if (supportsMountainHolographicBadges(profiles)) {
+                        if (supportsHolographicStampedBadges(profiles)) {
                             add(
-                                buildMountainHolographicBadge(
+                                buildHolographicStampedBadge(
                                     extension = extension,
                                     cards = extensionCards,
                                     collection = collection,
@@ -88,11 +93,22 @@ internal fun buildBadgeBookSections(
     }
 }
 
-private fun buildGeneralSection(progress: StandaloneProgress): BadgeSection = BadgeSection(
+private fun buildGeneralSection(
+    progress: StandaloneProgress,
+    equipmentCards: List<EquipmentCardDefinition>,
+): BadgeSection = BadgeSection(
     extensionId = GeneralBadgeSectionId,
     extensionName = "Général",
     sectionType = BadgeSectionType.General,
-    badges = listOf(buildFirstPackOpenedBadge(progress)),
+    badges = listOf(
+        buildFirstPackOpenedBadge(progress),
+        buildEpicBoostedPackOpenedBadge(progress),
+        buildEquipmentAllCardsActivatedOnceBadge(progress, equipmentCards),
+        buildEquipmentThreeTypesActiveSimultaneouslyBadge(progress),
+        buildEquipmentThreeLevelThreeTypesActiveSimultaneouslyBadge(progress),
+        buildEquipmentAffectedPacks100Badge(progress),
+        buildEquipmentActivations100Badge(progress, equipmentCards),
+    ),
 )
 
 private fun buildFirstPackOpenedBadge(progress: StandaloneProgress): BadgeItem {
@@ -109,8 +125,119 @@ private fun buildFirstPackOpenedBadge(progress: StandaloneProgress): BadgeItem {
             totalCards = 1,
             unitLabel = "pack ouvert",
         ),
+        centerMarkKind = BadgeCenterMarkKind.GeneralLogo,
     )
 }
+
+private fun buildEpicBoostedPackOpenedBadge(progress: StandaloneProgress): BadgeItem {
+    val matched = if (progress.hasOpenedEpicBoostedPack) 1 else 0
+    return BadgeItem(
+        id = "$GeneralBadgeSectionId::pack::epic-boost-opened",
+        extensionId = GeneralBadgeSectionId,
+        extensionName = "Général",
+        title = "Pack amélioré",
+        description = "Quelque chose a brillé au bon moment.",
+        requirementType = BadgeRequirementType.EpicBoostedPackOpened,
+        progress = BadgeProgress(
+            matchedCards = matched,
+            totalCards = 1,
+            unitLabel = "signe aperçu",
+        ),
+        centerMarkKind = BadgeCenterMarkKind.GeneralLogo,
+    )
+}
+
+private fun buildEquipmentAllCardsActivatedOnceBadge(
+    progress: StandaloneProgress,
+    equipmentCards: List<EquipmentCardDefinition>,
+): BadgeItem {
+    val totalEquipmentCards = equipmentCards.size
+    return BadgeItem(
+        id = "$GeneralBadgeSectionId::equipment::all-used-once",
+        extensionId = GeneralBadgeSectionId,
+        extensionName = "Général",
+        title = "Tous les équipements utilisés",
+        description = "Active au moins une fois chaque carte d'équipement actuelle : les trois niveaux d'Observatoire, de Télescope et de Monture.",
+        requirementType = BadgeRequirementType.EquipmentAllCardsActivatedOnce,
+        progress = BadgeProgress(
+            matchedCards = progress.activatedEquipmentCardCount(equipmentCards).coerceAtMost(totalEquipmentCards),
+            totalCards = totalEquipmentCards,
+            unitLabel = "équipements utilisés",
+        ),
+        centerMarkKind = BadgeCenterMarkKind.EquipmentMountGlyph,
+    )
+}
+
+private fun buildEquipmentThreeTypesActiveSimultaneouslyBadge(
+    progress: StandaloneProgress,
+): BadgeItem = BadgeItem(
+    id = "$GeneralBadgeSectionId::equipment::three-types-active",
+    extensionId = GeneralBadgeSectionId,
+    extensionName = "Général",
+    title = "Trois équipements actifs",
+    description = "Cumule en même temps un Observatoire, un Télescope et une Monture actifs.",
+    requirementType = BadgeRequirementType.EquipmentThreeTypesActiveSimultaneously,
+    progress = BadgeProgress(
+        matchedCards = progress.equipmentBadgeProgress.maxSimultaneouslyActiveEquipmentTypeCount
+            .coerceAtMost(EquipmentType.entries.size),
+        totalCards = EquipmentType.entries.size,
+        unitLabel = "équipements actifs en même temps",
+    ),
+    centerMarkKind = BadgeCenterMarkKind.EquipmentMountGlyph,
+)
+
+private fun buildEquipmentThreeLevelThreeTypesActiveSimultaneouslyBadge(
+    progress: StandaloneProgress,
+): BadgeItem = BadgeItem(
+    id = "$GeneralBadgeSectionId::equipment::three-level-three-active",
+    extensionId = GeneralBadgeSectionId,
+    extensionName = "Général",
+    title = "Trio niveau III",
+    description = "Maintiens en même temps les trois types d'équipements actifs avec leurs cartes de niveau III.",
+    requirementType = BadgeRequirementType.EquipmentThreeLevelThreeTypesActiveSimultaneously,
+    progress = BadgeProgress(
+        matchedCards = progress.equipmentBadgeProgress.maxSimultaneouslyActiveLevelThreeEquipmentTypeCount
+            .coerceAtMost(EquipmentType.entries.size),
+        totalCards = EquipmentType.entries.size,
+        unitLabel = "équipements niv. III actifs en même temps",
+    ),
+    centerMarkKind = BadgeCenterMarkKind.EquipmentMountGlyph,
+)
+
+private fun buildEquipmentAffectedPacks100Badge(
+    progress: StandaloneProgress,
+): BadgeItem = BadgeItem(
+    id = "$GeneralBadgeSectionId::equipment::packs-affected-100",
+    extensionId = GeneralBadgeSectionId,
+    extensionName = "Général",
+    title = "100 packs équipés",
+    description = "Ouvre 100 packs avec au moins un équipement actif au moment du tirage.",
+    requirementType = BadgeRequirementType.EquipmentAffectedPacks100,
+    progress = BadgeProgress(
+        matchedCards = progress.equipmentBadgeProgress.affectedPackCount.coerceAtMost(100),
+        totalCards = 100,
+        unitLabel = "packs affectés",
+    ),
+    centerMarkKind = BadgeCenterMarkKind.EquipmentMountGlyph,
+)
+
+private fun buildEquipmentActivations100Badge(
+    progress: StandaloneProgress,
+    equipmentCards: List<EquipmentCardDefinition>,
+): BadgeItem = BadgeItem(
+    id = "$GeneralBadgeSectionId::equipment::activations-100",
+    extensionId = GeneralBadgeSectionId,
+    extensionName = "Général",
+    title = "100 équipements utilisés",
+    description = "Active des équipements pour un total cumulé de 100 utilisations, tous types et niveaux confondus.",
+    requirementType = BadgeRequirementType.EquipmentActivations100,
+    progress = BadgeProgress(
+        matchedCards = progress.totalEquipmentActivationCount().coerceAtMost(100),
+        totalCards = 100,
+        unitLabel = "équipements utilisés",
+    ),
+    centerMarkKind = BadgeCenterMarkKind.EquipmentMountGlyph,
+)
 
 private fun buildSkyQualityBadge(
     extension: ExtensionDefinition,
@@ -141,10 +268,11 @@ private fun buildSkyQualityBadge(
         requirementType = BadgeRequirementType.SkyQuality,
         progress = progress,
         skyQualityCode = skyQuality.code,
+        centerMarkKind = BadgeCenterMarkKind.ExtensionLogo,
     )
 }
 
-private fun buildHolographicBadge(
+private fun buildStampedBadge(
     extension: ExtensionDefinition,
     cards: List<CardDefinition>,
     collection: OwnedCollection,
@@ -154,24 +282,25 @@ private fun buildHolographicBadge(
         matchedCards = cards.count { card ->
             val profile = checkNotNull(profilesByCardId[card.id])
             cardMatches(collection = collection, card = card, profile = profile) { ownedVariant ->
-                profile.isHolographicFinish(ownedVariant.finish)
+                profile.isStampedFinish(ownedVariant.finish)
             }
         },
         totalCards = cards.size,
     )
 
     return BadgeItem(
-        id = "${extension.id}::finish::holographic",
+        id = "${extension.id}::finish::stamped",
         extensionId = extension.id,
         extensionName = extension.name,
-        title = "Holographique",
-        description = "Obtiens chaque carte de ${extension.name} en holographique, quelle que soit la qualite du ciel.",
-        requirementType = BadgeRequirementType.Holographic,
+        title = "Tamponnee",
+        description = "Obtiens chaque carte de ${extension.name} en version tamponnee, quelle que soit la qualite du ciel.",
+        requirementType = BadgeRequirementType.Stamped,
         progress = progress,
+        centerMarkKind = BadgeCenterMarkKind.ExtensionLogo,
     )
 }
 
-private fun buildMountainHolographicBadge(
+private fun buildHolographicStampedBadge(
     extension: ExtensionDefinition,
     cards: List<CardDefinition>,
     collection: OwnedCollection,
@@ -181,10 +310,10 @@ private fun buildMountainHolographicBadge(
         matchedCards = cards.count { card ->
             val profile = checkNotNull(profilesByCardId[card.id])
             cardMatches(collection = collection, card = card, profile = profile) { ownedVariant ->
-                profile.isHolographicFinish(ownedVariant.finish) &&
+                profile.isStampedFinish(ownedVariant.finish) &&
                     profile.isAtLeastSkyQuality(
                         candidateCode = ownedVariant.skyQuality,
-                        thresholdCode = "mountain",
+                        thresholdCode = "holographic",
                     )
             }
         },
@@ -192,14 +321,15 @@ private fun buildMountainHolographicBadge(
     )
 
     return BadgeItem(
-        id = "${extension.id}::finish::mountain-holographic",
+        id = "${extension.id}::finish::holographic-stamped",
         extensionId = extension.id,
         extensionName = extension.name,
-        title = "Montagne holo",
-        description = "Obtiens chaque carte de ${extension.name} en holographique avec une qualite du ciel Montagne.",
-        requirementType = BadgeRequirementType.MountainHolographic,
+        title = "Holo tamponnee",
+        description = "Obtiens chaque carte de ${extension.name} en qualite holographique et en finition tamponnee.",
+        requirementType = BadgeRequirementType.HolographicStamped,
         progress = progress,
-        skyQualityCode = "mountain",
+        skyQualityCode = "holographic",
+        centerMarkKind = BadgeCenterMarkKind.ExtensionLogo,
     )
 }
 
@@ -226,9 +356,10 @@ private fun buildPerfectCollectionBadge(
         extensionId = extension.id,
         extensionName = extension.name,
         title = "Collection parfaite",
-        description = "Obtiens les huit variations de chaque carte de ${extension.name} : les quatre qualites du ciel en standard et en holographique.",
+        description = "Obtiens les dix variations de chaque carte de ${extension.name} : les cinq qualites du ciel en standard et en tamponnee.",
         requirementType = BadgeRequirementType.PerfectCollection,
         progress = progress,
+        centerMarkKind = BadgeCenterMarkKind.ExtensionLogo,
     )
 }
 
@@ -278,27 +409,27 @@ private fun commonSkyQualities(profiles: List<VariantProfile>): List<SkyQualityD
     }
 }
 
-private fun supportsHolographicBadges(profiles: List<VariantProfile>): Boolean =
+private fun supportsStampedBadges(profiles: List<VariantProfile>): Boolean =
     profiles.isNotEmpty() && profiles.all { profile ->
-        profile.finishes.any { it.isHolographic }
+        profile.finishes.any { it.isStamped }
     }
 
-private fun supportsMountainHolographicBadges(profiles: List<VariantProfile>): Boolean =
-    supportsHolographicBadges(profiles) && profiles.all { profile ->
-        profile.skyQualities.any { it.code == "mountain" }
+private fun supportsHolographicStampedBadges(profiles: List<VariantProfile>): Boolean =
+    supportsStampedBadges(profiles) && profiles.all { profile ->
+        profile.skyQualities.any { it.code == "holographic" }
     }
 
 private fun supportsPerfectCollectionBadge(profiles: List<VariantProfile>): Boolean =
     profiles.isNotEmpty() && profiles.all { profile ->
-        profile.skyQualities.size * profile.finishes.size == 8
+        profile.skyQualities.size * profile.finishes.size == 10
     }
 
 private fun VariantProfile.supportsVariant(variant: OwnedVariantCount): Boolean =
     skyQualities.any { it.code == variant.skyQuality } &&
         finishes.any { it.code == variant.finish }
 
-private fun VariantProfile.isHolographicFinish(finishCode: String): Boolean =
-    finishes.firstOrNull { it.code == finishCode }?.isHolographic == true
+private fun VariantProfile.isStampedFinish(finishCode: String): Boolean =
+    finishes.firstOrNull { it.code == finishCode }?.isStamped == true
 
 private fun VariantProfile.isAtLeastSkyQuality(
     candidateCode: String,

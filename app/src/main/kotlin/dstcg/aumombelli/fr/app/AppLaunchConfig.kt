@@ -36,7 +36,9 @@ internal fun parseAppLaunchConfig(
 }
 
 internal fun initialAppSceneUiState(launchConfig: AppLaunchConfig): AppSceneUiState = when (launchConfig.scene) {
-    AppLaunchScene.Start -> AppSceneUiState()
+    AppLaunchScene.Start -> AppSceneUiState(
+        onboardingHintsVisible = false,
+    )
     AppLaunchScene.Home -> AppSceneUiState(
         currentScene = AppScene.Home,
         homeContentVisible = !launchConfig.resetProgressOnLaunch,

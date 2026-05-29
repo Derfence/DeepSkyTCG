@@ -17,6 +17,7 @@ import java.time.Instant
 import java.time.ZoneOffset
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -108,6 +109,103 @@ class LocalPackEngineEquipmentTest {
 
         assertEquals(1, response.cards.size)
         assertTrue(response.equipmentCards.isEmpty())
+    }
+
+    @Test
+    fun `first onboarding draw only contains common cards`() = runTest {
+        val catalogGateway = FakeCatalogGateway().apply {
+            cards = listOf(
+                testCardDefinition(
+                    id = "ALP-COMMON-1",
+                    rarityLabel = "Common",
+                    variantProfileId = "equipment-pack-profile",
+                ),
+                testCardDefinition(
+                    id = "ALP-COMMON-2",
+                    rarityLabel = "Common",
+                    variantProfileId = "equipment-pack-profile",
+                ),
+                testCardDefinition(
+                    id = "ALP-UNCOMMON-1",
+                    rarityLabel = "Uncommon",
+                    variantProfileId = "equipment-pack-profile",
+                ),
+                testCardDefinition(
+                    id = "ALP-RARE-1",
+                    rarityLabel = "Rare",
+                    variantProfileId = "equipment-pack-profile",
+                ),
+            )
+            variantProfiles = listOf(equipmentPackProfile())
+            gameBalance = testGameBalanceDefinition(
+                cardsPerDraw = 2,
+                percentUncommonPerDay = 40.0,
+                percentRarePerDay = 40.0,
+                percentEpicPerDay = 10.0,
+                suburbanMeanPerDay = 1.0,
+                ruralMeanPerDay = 1.0,
+                mountainMeanPerDay = 1.0,
+            )
+            equipmentCards = listOf(
+                testEquipmentCardDefinition(
+                    id = "mount-beginner",
+                    type = EquipmentType.Mount,
+                    dropWeight = 1,
+                ),
+            )
+            equipmentSettings = EquipmentSettingsDefinition(
+                commonReplacementChancePercent = 100.0,
+            )
+        }
+        val engine = LocalPackEngine(
+            catalogRepository = catalogGateway,
+            settings = onboardingGameSettings(99, 99),
+        )
+
+        val response = engine.drawPack(
+            extensionId = "astronomes-en-herbe",
+            progress = testProgress(
+                openedPackCount = 0,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.SelectFirstBooster,
+            ),
+            now = fixedNow,
+        )
+
+        assertTrue(response.equipmentCards.isEmpty())
+        assertEquals(2, response.cards.size)
+        assertTrue(response.cards.all { it.rarityLabel == "Common" })
+    }
+
+    @Test
+    fun `first onboarding draw blocks holographic and stamped variants`() = runTest {
+        val catalogGateway = FakeCatalogGateway().apply {
+            cards = listOf(
+                testCardDefinition(
+                    id = "ALP-COMMON-1",
+                    rarityLabel = "Common",
+                    variantProfileId = "equipment-pack-profile",
+                ),
+            )
+            variantProfiles = listOf(equipmentPackProfile())
+            gameBalance = variantPressureGameBalance(cardsPerDraw = 1)
+        }
+        val engine = LocalPackEngine(
+            catalogRepository = catalogGateway,
+            settings = onboardingGameSettings(0, 0, 4, 1),
+        )
+
+        val response = engine.drawPack(
+            extensionId = "astronomes-en-herbe",
+            progress = testProgress(
+                openedPackCount = 0,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.SelectFirstBooster,
+            ),
+            now = fixedNow,
+        )
+
+        val card = response.cards.single()
+        assertFalse(card.variant.isHolographic)
+        assertFalse(card.variant.isStamped)
     }
 
     @Test
@@ -268,7 +366,51 @@ class LocalPackEngineEquipmentTest {
         )
 
         assertEquals(listOf(rewardCard.id), response.equipmentCards.map { it.id })
-        assertEquals(listOf("ALP-RARE"), response.cards.map { it.cardId })
+        assertEquals(listOf("ALP-UNCOMMON"), response.cards.map { it.cardId })
+        assertTrue(response.cards.all { it.rarityLabel == "Uncommon" })
+    }
+
+    @Test
+    fun `second onboarding draw also blocks holographic and stamped variants`() = runTest {
+        val rewardCard = testEquipmentCardDefinition(
+            id = "observatory-lv1",
+            type = EquipmentType.Observatory,
+            level = 1,
+            dropWeight = 1,
+        )
+        val catalogGateway = FakeCatalogGateway().apply {
+            cards = listOf(
+                testCardDefinition(
+                    id = "ALP-COMMON",
+                    rarityLabel = "Common",
+                    variantProfileId = "equipment-pack-profile",
+                ),
+            )
+            variantProfiles = listOf(equipmentPackProfile())
+            gameBalance = variantPressureGameBalance(cardsPerDraw = 2)
+            equipmentCards = listOf(rewardCard)
+            equipmentSettings = EquipmentSettingsDefinition(
+                commonReplacementChancePercent = 100.0,
+            )
+        }
+        val engine = LocalPackEngine(
+            catalogRepository = catalogGateway,
+            settings = onboardingGameSettings(0, 0, 0, 0, 4, 1),
+        )
+
+        val response = engine.drawPack(
+            extensionId = "astronomes-en-herbe",
+            progress = testProgress(
+                openedPackCount = 1,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.OpenSecondPackMenu,
+            ),
+            now = fixedNow,
+        )
+
+        assertEquals(listOf(rewardCard.id), response.equipmentCards.map { it.id })
+        val astronomyCard = response.cards.single()
+        assertFalse(astronomyCard.variant.isHolographic)
+        assertFalse(astronomyCard.variant.isStamped)
     }
 
     @Test
@@ -315,6 +457,113 @@ class LocalPackEngineEquipmentTest {
 
         assertTrue(response.cards.isEmpty())
         assertEquals(listOf(rewardCard.id), response.equipmentCards.map { it.id })
+    }
+
+    @Test
+    fun `standard equipment replacement does not duplicate the same equipment inside a pack`() = runTest {
+        val rewardCard = testEquipmentCardDefinition(
+            id = "mount-beginner",
+            type = EquipmentType.Mount,
+            level = 1,
+            dropWeight = 1,
+        )
+        val catalogGateway = FakeCatalogGateway().apply {
+            cards = listOf(
+                testCardDefinition(
+                    id = "ALP-001",
+                    rarityLabel = "Common",
+                    variantProfileId = "equipment-pack-profile",
+                ),
+                testCardDefinition(
+                    id = "ALP-002",
+                    rarityLabel = "Common",
+                    variantProfileId = "equipment-pack-profile",
+                ),
+            )
+            variantProfiles = listOf(equipmentPackProfile())
+            gameBalance = testGameBalanceDefinition(
+                cardsPerDraw = 2,
+                suburbanMeanPerDay = 1.0,
+                ruralMeanPerDay = 1.0,
+                mountainMeanPerDay = 1.0,
+            )
+            equipmentCards = listOf(rewardCard)
+            equipmentSettings = EquipmentSettingsDefinition(
+                commonReplacementChancePercent = 100.0,
+            )
+        }
+        val engine = LocalPackEngine(
+            catalogRepository = catalogGateway,
+            settings = testGameSettings(now = fixedNow, randomSeed = 0),
+        )
+
+        val response = engine.drawPack(
+            extensionId = "astronomes-en-herbe",
+            progress = testProgress(
+                openedPackCount = 2,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.Completed,
+            ),
+            now = fixedNow,
+        )
+
+        assertEquals(listOf(rewardCard.id), response.equipmentCards.map { it.id })
+        assertEquals(1, response.cards.size)
+        assertEquals(1, response.cards.map { it.cardId }.distinct().size)
+    }
+
+    @Test
+    fun `standard packs never contain more than one holographic card`() = runTest {
+        val telescopeCard = testEquipmentCardDefinition(
+            id = "telescope-master",
+            type = EquipmentType.Telescope,
+            bonusValue = 100.0,
+            packsAffected = 2,
+        )
+        val catalogGateway = FakeCatalogGateway().apply {
+            cards = listOf(
+                testCardDefinition(
+                    id = "ALP-001",
+                    rarityLabel = "Common",
+                    variantProfileId = "equipment-pack-profile",
+                ),
+                testCardDefinition(
+                    id = "ALP-002",
+                    rarityLabel = "Common",
+                    variantProfileId = "equipment-pack-profile",
+                ),
+            )
+            variantProfiles = listOf(equipmentPackProfile())
+            gameBalance = testGameBalanceDefinition(
+                cardsPerDraw = 2,
+                suburbanMeanPerDay = 1.0,
+                ruralMeanPerDay = 1.0,
+                mountainMeanPerDay = 1.0,
+            )
+            equipmentCards = listOf(telescopeCard)
+        }
+        val engine = LocalPackEngine(
+            catalogRepository = catalogGateway,
+            settings = onboardingGameSettings(0, 0, 0, 0, 0, 0, 0),
+        )
+
+        val response = engine.drawPack(
+            extensionId = "astronomes-en-herbe",
+            progress = testProgress(
+                openedPackCount = 2,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.Completed,
+                activeEquipmentByType = mapOf(
+                    EquipmentType.Telescope to ActiveEquipmentEffect(
+                        equipmentCardId = telescopeCard.id,
+                        equipmentType = EquipmentType.Telescope,
+                        packsRemaining = 2,
+                    ),
+                ),
+            ),
+            now = fixedNow,
+        )
+
+        assertEquals(2, response.cards.size)
+        assertEquals(1, response.cards.count { it.variant.isHolographic })
     }
 
     @Test
@@ -393,10 +642,11 @@ class LocalPackEngineEquipmentTest {
             SkyQualityDefinition("suburban", "Periurbain"),
             SkyQualityDefinition("rural", "Campagne"),
             SkyQualityDefinition("mountain", "Montagne"),
+            SkyQualityDefinition("holographic", "Holographique", isHolographic = true),
         ),
         finishes = listOf(
             CardFinishDefinition("standard", "Standard"),
-            CardFinishDefinition("holographic", "Holographique", isHolographic = true),
+            CardFinishDefinition("stamped", "Tamponnee", isStamped = true),
         ),
     )
 
@@ -415,6 +665,15 @@ class LocalPackEngineEquipmentTest {
     private fun onboardingGameSettings(vararg values: Int): StandaloneGameSettings = StandaloneGameSettings(
         timeSource = ClockTrustedTimeSource(Clock.fixed(fixedNow, ZoneOffset.UTC)),
         entropySource = QueuedEntropySource(values.toList()),
+    )
+
+    private fun variantPressureGameBalance(cardsPerDraw: Int) = testGameBalanceDefinition(
+        cardsPerDraw = cardsPerDraw,
+        suburbanMeanPerDay = 0.0001,
+        ruralMeanPerDay = 0.0001,
+        mountainMeanPerDay = 0.0001,
+        holographicSkyMeanPerDay = cardsPerDraw * 4.0 - 0.0004,
+        percentStampedPerDay = 99.9999,
     )
 
     private class QueuedEntropySource(

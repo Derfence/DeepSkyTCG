@@ -20,7 +20,7 @@ class CardDisplayModelsTest {
             variants = listOf(
                 OwnedVariantCount("city", "standard", 4),
                 OwnedVariantCount("mountain", "standard", 1),
-                OwnedVariantCount("rural", "holographic", 2),
+                OwnedVariantCount("holographic", "stamped", 2),
             ),
         )
 
@@ -28,13 +28,13 @@ class CardDisplayModelsTest {
 
         assertEquals(
             listOf(
-                "rural::holographic",
+                "holographic::stamped",
                 "mountain::standard",
                 "city::standard",
             ),
             variants.map { it.key },
         )
-        assertEquals("Campagne · Holographique ×2", variants.first().selectorLabel)
+        assertEquals("Holographique · Tamponnee ×2", variants.first().selectorLabel)
     }
 
     @Test

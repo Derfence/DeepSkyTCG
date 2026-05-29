@@ -1,6 +1,8 @@
 package fr.aumombelli.dstcg
 
 import android.os.SystemClock
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -15,15 +17,23 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
+import fr.aumombelli.dstcg.model.DrawPackResponse
 import fr.aumombelli.dstcg.model.ExtensionDefinition
+import fr.aumombelli.dstcg.model.PackRechargeState
+import fr.aumombelli.dstcg.model.toDisplayCard
+import fr.aumombelli.dstcg.model.toDisplayVariant
 import fr.aumombelli.dstcg.testsupport.androidTestRechargeStateWithNextChargeAt
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
+import fr.aumombelli.dstcg.ui.screen.PackOpeningScreen
 import fr.aumombelli.dstcg.ui.screen.PackSelectionScreen
+import fr.aumombelli.dstcg.ui.viewmodel.PackOpeningUiState
 import fr.aumombelli.dstcg.ui.viewmodel.PackSelectionUiState
 import java.time.Duration
 import java.time.Instant
 import kotlin.math.abs
+import kotlin.math.absoluteValue
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -32,6 +42,30 @@ import org.junit.Test
 class PackSelectionScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
+
+    @Test
+    fun back_button_is_visible_only_with_callback_and_invokes_it() {
+        var backClicks = 0
+
+        composeRule.setContent {
+            PackSelectionScreen(
+                state = PackSelectionUiState(isLoading = false),
+                onRefresh = {},
+                onSelectExtension = {},
+                onSelectBooster = {},
+                onOpenPack = {},
+                onPackRevealReady = {},
+                packReadySignal = 0,
+                showBackground = false,
+                onBack = { backClicks += 1 },
+            )
+        }
+
+        composeRule.onNodeWithTag("pack-back").assertIsDisplayed()
+        composeRule.onNodeWithTag("pack-back").performClick()
+
+        assertEquals(1, backClicks)
+    }
 
     @Test
     fun selected_extension_draws_constellation_and_centers_chosen_booster_before_reveal() {
@@ -152,7 +186,27 @@ class PackSelectionScreenTest {
 
         composeRule.mainClock.advanceTimeBy(800)
         composeRule.waitForIdle()
-        assertTrue(latestBoosterCoachmarkBounds != null)
+        val coachmarkBounds = latestBoosterCoachmarkBounds
+            ?: error("Expected booster coachmark bounds after booster intro completion.")
+        val boosterBounds = (0 until 4).map { index ->
+            composeRule.onNodeWithTag("pack-booster-$index")
+                .fetchSemanticsNode()
+                .boundsInRoot
+        }
+        boosterBounds.forEach { bounds ->
+            assertTrue(
+                "Expected coachmark bounds $coachmarkBounds to contain booster bounds $bounds",
+                coachmarkBounds.left <= bounds.left &&
+                    coachmarkBounds.top <= bounds.top &&
+                    coachmarkBounds.right >= bounds.right &&
+                    coachmarkBounds.bottom >= bounds.bottom,
+            )
+        }
+        assertTrue(
+            "Expected booster coachmark to target the full booster group instead of one booster.",
+            coachmarkBounds.width > boosterBounds.first().width &&
+                coachmarkBounds.height > boosterBounds.first().height,
+        )
 
         composeRule.onNodeWithTag("pack-booster-0").performClick()
         composeRule.waitForIdle()
@@ -248,6 +302,309 @@ class PackSelectionScreenTest {
     }
 
     @Test
+    fun booster_idle_motion_keeps_semantic_bounds_stable_and_clickable() {
+        var selectedBooster: Int? = null
+        val state = mutableStateOf(
+            PackSelectionUiState(
+                isLoading = false,
+                extensions = listOf(
+                    ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                ),
+                selectedExtensionId = "astronomes-en-herbe",
+            ),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackSelectionScreen(
+                state = state.value,
+                onRefresh = {},
+                onSelectExtension = {},
+                onSelectBooster = { boosterIndex ->
+                    selectedBooster = boosterIndex
+                    state.value = state.value.copy(
+                        selectedBoosterIndex = boosterIndex,
+                        isAwaitingPackResult = true,
+                    )
+                },
+                onOpenPack = {},
+                onPackRevealReady = {},
+                packReadySignal = 0,
+                showBackground = false,
+            )
+        }
+
+        composeRule.mainClock.advanceTimeBy(1_800)
+        composeRule.waitForIdle()
+
+        val initialBounds = (0 until 4).map { index ->
+            composeRule.onNodeWithTag("pack-booster-$index")
+                .assertIsDisplayed()
+                .fetchSemanticsNode()
+                .boundsInRoot
+        }
+
+        composeRule.mainClock.advanceTimeBy(1_800)
+        composeRule.waitForIdle()
+
+        (0 until 4).forEach { index ->
+            val currentBounds = composeRule.onNodeWithTag("pack-booster-$index")
+                .assertIsDisplayed()
+                .fetchSemanticsNode()
+                .boundsInRoot
+            composeRule.assertBoundsClose(
+                expected = initialBounds[index],
+                actual = currentBounds,
+                tolerancePx = 0.5f,
+            )
+        }
+
+        composeRule.onNodeWithTag("pack-booster-2").performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(2, selectedBooster)
+    }
+
+    @Test
+    fun first_booster_keeps_the_same_node_when_coachmark_becomes_ready() {
+        val state = mutableStateOf(
+            PackSelectionUiState(
+                isLoading = false,
+                extensions = listOf(
+                    ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                ),
+                selectedExtensionId = "astronomes-en-herbe",
+            ),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackSelectionScreen(
+                state = state.value,
+                onRefresh = {},
+                onSelectExtension = {},
+                onSelectBooster = {},
+                onOpenPack = {},
+                onPackRevealReady = {},
+                packReadySignal = 0,
+                showBackground = false,
+            )
+        }
+
+        composeRule.mainClock.advanceTimeBy(1_050)
+        composeRule.waitForIdle()
+
+        val firstNodeId = composeRule.onNodeWithTag("pack-booster-0").fetchSemanticsNode().id
+
+        composeRule.mainClock.advanceTimeBy(1_000)
+        composeRule.waitForIdle()
+
+        val secondNodeId = composeRule.onNodeWithTag("pack-booster-0").fetchSemanticsNode().id
+
+        assertEquals(
+            "Expected the first booster node to stay stable when the coachmark becomes ready.",
+            firstNodeId,
+            secondNodeId,
+        )
+    }
+
+    @Test
+    fun selected_extension_hero_expands_over_header_area() {
+        val state = mutableStateOf(
+            PackSelectionUiState(
+                isLoading = false,
+                extensions = listOf(
+                    ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                ),
+                selectedExtensionId = "astronomes-en-herbe",
+            ),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackSelectionScreen(
+                state = state.value,
+                onRefresh = {},
+                onSelectExtension = {},
+                onSelectBooster = {},
+                onOpenPack = {},
+                onPackRevealReady = {},
+                packReadySignal = 0,
+                showBackground = false,
+            )
+        }
+
+        composeRule.mainClock.advanceTimeBy(1_000)
+        composeRule.waitForIdle()
+
+        val screenBounds = composeRule.onNodeWithTag("pack-screen-root").fetchSemanticsNode().boundsInRoot
+        val titleBounds = composeRule.onNodeWithTag("pack-title").fetchSemanticsNode().boundsInRoot
+        val stageBounds = composeRule.onNodeWithTag("pack-extension-stage").fetchSemanticsNode().boundsInRoot
+        val heroBounds = composeRule.onNodeWithTag("pack-extension-hero").fetchSemanticsNode().boundsInRoot
+
+        assertTrue(
+            "Expected hero top ${heroBounds.top} to be above title top ${titleBounds.top}.",
+            heroBounds.top <= titleBounds.top,
+        )
+        assertTrue(
+            "Expected hero left ${heroBounds.left} to align with screen left ${screenBounds.left}.",
+            (heroBounds.left - screenBounds.left).absoluteValue <= 2f,
+        )
+        assertTrue(
+            "Expected hero top ${heroBounds.top} to align with screen top ${screenBounds.top}.",
+            (heroBounds.top - screenBounds.top).absoluteValue <= 2f,
+        )
+        assertTrue(
+            "Expected hero height ${heroBounds.height} to exceed stage height ${stageBounds.height}.",
+            heroBounds.height > stageBounds.height,
+        )
+        assertTrue(
+            "Expected hero right ${heroBounds.right} to align with screen right ${screenBounds.right}.",
+            (heroBounds.right - screenBounds.right).absoluteValue <= 2f,
+        )
+        assertTrue(
+            "Expected hero bottom ${heroBounds.bottom} to align with screen bottom ${screenBounds.bottom}.",
+            (heroBounds.bottom - screenBounds.bottom).absoluteValue <= 2f,
+        )
+    }
+
+    @Test
+    fun selected_extension_offsets_title_from_screen_top_and_keeps_compact_boosters_large() {
+        val state = mutableStateOf(
+            PackSelectionUiState(
+                isLoading = false,
+                extensions = listOf(
+                    ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                ),
+                selectedExtensionId = "astronomes-en-herbe",
+            ),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            Box(modifier = androidx.compose.ui.Modifier.size(width = 411.dp, height = 731.dp)) {
+                PackSelectionScreen(
+                    state = state.value,
+                    onRefresh = {},
+                    onSelectExtension = {},
+                    onSelectBooster = {},
+                    onOpenPack = {},
+                    onPackRevealReady = {},
+                    packReadySignal = 0,
+                    showBackground = false,
+                )
+            }
+        }
+
+        composeRule.mainClock.advanceTimeBy(1_800)
+        composeRule.waitForIdle()
+
+        val screenBounds = composeRule.onNodeWithTag("pack-screen-root").fetchSemanticsNode().boundsInRoot
+        val titleBounds = composeRule.onNodeWithTag("pack-extension-title").fetchSemanticsNode().boundsInRoot
+        val boosterBounds = composeRule.onNodeWithTag("pack-booster-0").fetchSemanticsNode().boundsInRoot
+
+        assertTrue(
+            "Expected extension title top ${titleBounds.top} to sit below screen top ${screenBounds.top}.",
+            titleBounds.top >= screenBounds.top + 8f,
+        )
+        assertTrue(
+            "Expected first booster top ${boosterBounds.top} to stay below extension title bottom ${titleBounds.bottom}.",
+            boosterBounds.top >= titleBounds.bottom + 4f,
+        )
+        assertTrue(
+            "Expected compact booster width ${boosterBounds.width} to keep a strong presence within screen width ${screenBounds.width}.",
+            boosterBounds.width / screenBounds.width >= 0.40f,
+        )
+    }
+
+    @Test
+    fun selected_booster_finishes_in_the_same_slot_as_pack_opening_booster() {
+        val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
+        val packResult = DrawPackResponse.fromCards(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
+            cards = listOf(
+                testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
+            ),
+        )
+        val selectionState = mutableStateOf(
+            PackSelectionUiState(
+                isLoading = false,
+                extensions = listOf(
+                    ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                ),
+                selectedExtensionId = "astronomes-en-herbe",
+            ),
+        )
+        var showOpeningScreen by mutableStateOf(false)
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            Box(modifier = androidx.compose.ui.Modifier.size(width = 411.dp, height = 731.dp)) {
+                if (!showOpeningScreen) {
+                    PackSelectionScreen(
+                        state = selectionState.value,
+                        onRefresh = {},
+                        onSelectExtension = {},
+                        onSelectBooster = { boosterIndex ->
+                            selectionState.value = selectionState.value.copy(
+                                selectedBoosterIndex = boosterIndex,
+                                isAwaitingPackResult = true,
+                            )
+                        },
+                        onOpenPack = {},
+                        onPackRevealReady = {},
+                        packReadySignal = 0,
+                        showBackground = false,
+                    )
+                } else {
+                    PackOpeningScreen(
+                        state = PackOpeningUiState(
+                            packResult = packResult,
+                            displayCards = listOf(
+                                firstCard.toDisplayCard(
+                                    extensionName = "Astronomes en herbe",
+                                    activeVariant = packResult.cards[0].variant.toDisplayVariant(),
+                                ),
+                            ),
+                            highestBurstRarity = "Common",
+                            hasHolographicBurst = false,
+                        ),
+                        onDone = {},
+                    )
+                }
+            }
+        }
+
+        composeRule.mainClock.advanceTimeBy(1_800)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("pack-booster-0").performClick()
+        composeRule.mainClock.advanceTimeBy(700)
+        composeRule.waitForIdle()
+
+        val selectedBoosterBounds = composeRule.onNodeWithTag("pack-booster-0").fetchSemanticsNode().boundsInRoot
+
+        composeRule.runOnIdle { showOpeningScreen = true }
+
+        composeRule.mainClock.advanceTimeBy(300)
+        composeRule.waitForIdle()
+
+        val openingBoosterBounds = composeRule
+            .onNodeWithTag("pack-opening-booster", useUnmergedTree = true)
+            .fetchSemanticsNode().boundsInRoot
+
+        composeRule.assertBoundsClose(
+            expected = openingBoosterBounds,
+            actual = selectedBoosterBounds,
+            tolerancePx = 3f,
+        )
+    }
+
+    @Test
     fun selected_extension_returns_to_extension_list_when_selection_is_cleared() {
         val state = mutableStateOf(
             PackSelectionUiState(
@@ -329,11 +686,45 @@ class PackSelectionScreenTest {
         composeRule.onNodeWithTag("pack-weather-day-multiplier-0").assertTextContains("x1")
         composeRule.onNodeWithTag("pack-weather-day-multiplier-1").assertTextContains("x0")
         composeRule.onNodeWithTag("pack-status-count").assertTextContains("0/10")
+        composeRule.onNodeWithTag("pack-status-ready-count").assertTextContains("0")
+        composeRule.onAllNodesWithTag("pack-status-pack-slot-filled").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("pack-status-pack-slot-empty").assertCountEquals(10)
         composeRule.onAllNodesWithTag("pack-status-weather").assertCountEquals(0)
         composeRule.onNodeWithTag("pack-status-remaining")
             .assertTextContains("Prochaine charge dans", substring = true)
         composeRule.onNodeWithTag("pack-status-progress").assertIsDisplayed()
         composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").assertIsNotEnabled()
+        composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe")
+            .assertTextContains("Pas de pack disponible")
+    }
+
+    @Test
+    fun stock_status_shows_filled_and_empty_pack_slots() {
+        composeRule.setContent {
+            PackSelectionScreen(
+                state = PackSelectionUiState(
+                    isLoading = false,
+                    extensions = listOf(
+                        ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                    ),
+                    rechargeState = PackRechargeState(availableDrawCount = 4),
+                    trustedNow = Instant.parse("2026-03-24T12:00:00Z"),
+                    trustedElapsedRealtimeMs = SystemClock.elapsedRealtime(),
+                ),
+                onRefresh = {},
+                onSelectExtension = {},
+                onSelectBooster = {},
+                onOpenPack = {},
+                onPackRevealReady = {},
+                packReadySignal = 0,
+                showBackground = false,
+            )
+        }
+
+        composeRule.onNodeWithTag("pack-status-count").assertTextContains("4/10")
+        composeRule.onNodeWithTag("pack-status-ready-count").assertTextContains("4")
+        composeRule.onAllNodesWithTag("pack-status-pack-slot-filled").assertCountEquals(4)
+        composeRule.onAllNodesWithTag("pack-status-pack-slot-empty").assertCountEquals(6)
     }
 
     @Test
@@ -374,6 +765,20 @@ class PackSelectionScreenTest {
         assertTrue(
             "Expected $tag width/height ratio near $TRADING_CARD_WIDTH_OVER_HEIGHT but was $actualRatio",
             abs(actualRatio - TRADING_CARD_WIDTH_OVER_HEIGHT) <= tolerance,
+        )
+    }
+
+    private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertBoundsClose(
+        expected: Rect,
+        actual: Rect,
+        tolerancePx: Float,
+    ) {
+        assertTrue(
+            "Expected bounds to stay aligned. Expected=$expected Actual=$actual",
+            abs(expected.left - actual.left) <= tolerancePx &&
+                abs(expected.top - actual.top) <= tolerancePx &&
+                abs(expected.width - actual.width) <= tolerancePx &&
+                abs(expected.height - actual.height) <= tolerancePx,
         )
     }
 }

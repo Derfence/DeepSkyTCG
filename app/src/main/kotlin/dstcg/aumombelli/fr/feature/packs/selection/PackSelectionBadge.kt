@@ -11,17 +11,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.ui.motion.BrandLogoVariant
+import fr.aumombelli.dstcg.ui.motion.ExtensionPatternDrawStyle
 import fr.aumombelli.dstcg.ui.motion.ExtensionAnimationStyle
 import fr.aumombelli.dstcg.ui.motion.LaunchLogoMark
+import fr.aumombelli.dstcg.ui.motion.drawExtensionPattern
 import fr.aumombelli.dstcg.ui.motion.extensionAnimationSpec
-import fr.aumombelli.dstcg.ui.motion.extensionLineReveal
-import fr.aumombelli.dstcg.ui.motion.extensionPointReveal
-import fr.aumombelli.dstcg.ui.motion.projectExtensionPattern
 import kotlinx.coroutines.delay
 
 @Composable
@@ -48,6 +46,12 @@ internal fun ExtensionAnimatedBadge(
                     animationSpec = tween(durationMillis = 520, easing = FastOutSlowInEasing),
                 )
             }
+            ExtensionAnimationStyle.Planet -> {
+                lineProgress.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(durationMillis = 520, easing = FastOutSlowInEasing),
+                )
+            }
             ExtensionAnimationStyle.NeutralSky -> {
                 emblemAlpha.animateTo(
                     targetValue = 1f,
@@ -61,65 +65,30 @@ internal fun ExtensionAnimatedBadge(
         contentAlignment = Alignment.Center,
         modifier = modifier,
     ) {
-        if (spec.style == ExtensionAnimationStyle.BigDipper) {
+        if (spec.style == ExtensionAnimationStyle.BigDipper || spec.style == ExtensionAnimationStyle.Planet) {
             Canvas(
                 modifier = Modifier.fillMaxSize(),
             ) {
-                val projection = projectExtensionPattern(
+                drawExtensionPattern(
                     spec = spec,
-                    canvasWidth = size.width,
-                    canvasHeight = size.height,
+                    lineProgress = lineProgress.value,
+                    isReversing = false,
+                    revealWindow = 0.28f,
+                    style = ExtensionPatternDrawStyle(
+                        pointCoreBaseRadiusFraction = 0.026f,
+                        pointCoreRevealRadiusFraction = 0.012f,
+                        pointHaloRadiusFraction = 0.074f,
+                        pointHaloAlphaMultiplier = 0.32f,
+                        lineStrokeWidthFraction = 0.038f,
+                        lineAlphaMultiplier = 0.92f,
+                        orbitStrokeWidthFraction = 0.028f,
+                        orbitAlphaMultiplier = 0.72f,
+                        pointColor = Color.White,
+                        pointHaloColor = Color(0xFFFFC85A),
+                        lineColor = Color(0xFFE2F0FF),
+                        orbitColor = Color(0xFFE2F0FF),
+                    ),
                 )
-
-                spec.starPattern.forEachIndexed { index, star ->
-                    val reveal = extensionPointReveal(
-                        spec = spec,
-                        pointIndex = index,
-                        lineProgress = lineProgress.value,
-                        isReversing = false,
-                        revealWindow = 0.28f,
-                    )
-                    if (reveal <= 0f) return@forEachIndexed
-                    val projected = projection.project(star)
-                    val center = Offset(projected.x, projected.y)
-                    drawCircle(
-                        color = Color.White.copy(alpha = reveal),
-                        radius = size.minDimension * (0.026f + reveal * 0.012f),
-                        center = center,
-                    )
-                    drawCircle(
-                        color = Color(0xFFFFC85A).copy(alpha = reveal * 0.32f),
-                        radius = size.minDimension * 0.074f,
-                        center = center,
-                    )
-                }
-
-                spec.lineConnections.forEachIndexed { index, connection ->
-                    val reveal = extensionLineReveal(
-                        lineProgress = lineProgress.value,
-                        lineIndex = index,
-                        lineCount = spec.lineConnections.size,
-                        revealWindow = 0.28f,
-                    )
-                    if (reveal <= 0f) return@forEachIndexed
-
-                    val start = spec.starPattern[connection.first]
-                    val end = spec.starPattern[connection.second]
-                    val projectedStart = projection.project(start)
-                    val projectedEnd = projection.project(end)
-                    val startOffset = Offset(projectedStart.x, projectedStart.y)
-                    val endOffset = Offset(projectedEnd.x, projectedEnd.y)
-                    val currentEnd = Offset(
-                        x = startOffset.x + (endOffset.x - startOffset.x) * reveal,
-                        y = startOffset.y + (endOffset.y - startOffset.y) * reveal,
-                    )
-                    drawLine(
-                        color = Color(0xFFE2F0FF).copy(alpha = reveal * 0.92f),
-                        start = startOffset,
-                        end = currentEnd,
-                        strokeWidth = size.minDimension * 0.038f,
-                    )
-                }
             }
         } else {
             LaunchLogoMark(

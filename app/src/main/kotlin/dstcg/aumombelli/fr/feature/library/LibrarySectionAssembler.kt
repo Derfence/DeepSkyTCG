@@ -15,6 +15,7 @@ internal fun buildLibrarySections(
     cards: List<CardDefinition>,
     variantProfiles: List<VariantProfile>,
     collection: OwnedCollection,
+    newCardIds: Set<String> = emptySet(),
 ): List<LibrarySection> {
     val variantProfilesById = variantProfiles.associateBy { it.id }
 
@@ -41,6 +42,7 @@ internal fun buildLibrarySections(
                         definition = card,
                         extensionName = extension.name,
                         ownedCount = collection.ownedCountFor(card.id),
+                        showNewIndicator = card.id in newCardIds,
                         availableVariants = availableVariants,
                     )
                 },

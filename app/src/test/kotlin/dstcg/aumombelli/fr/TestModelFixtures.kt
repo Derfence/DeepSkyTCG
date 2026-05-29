@@ -26,7 +26,9 @@ fun testGameBalanceDefinition(
     suburbanMeanPerDay: Double = 6.0,
     ruralMeanPerDay: Double = 3.0,
     mountainMeanPerDay: Double = 1.0,
-    percentHoloMeanPerDay: Double = 10.0,
+    holographicSkyMeanPerDay: Double = 0.14285714285714285,
+    percentStampedPerDay: Double = 10.0,
+    skyUpgradeCosts: Map<String, Int> = emptyMap(),
 ) = fixtureTestGameBalanceDefinition(
     cardsPerDraw = cardsPerDraw,
     drawCooldownHours = drawCooldownHours,
@@ -36,7 +38,9 @@ fun testGameBalanceDefinition(
     suburbanMeanPerDay = suburbanMeanPerDay,
     ruralMeanPerDay = ruralMeanPerDay,
     mountainMeanPerDay = mountainMeanPerDay,
-    percentHoloMeanPerDay = percentHoloMeanPerDay,
+    holographicSkyMeanPerDay = holographicSkyMeanPerDay,
+    percentStampedPerDay = percentStampedPerDay,
+    skyUpgradeCosts = skyUpgradeCosts,
 )
 
 fun testCardDefinition(
@@ -71,6 +75,7 @@ fun testPackCard(
     finish: String = "standard",
     finishLabel: String = "Standard",
     isHolographic: Boolean = false,
+    isStamped: Boolean = false,
 ) = fixtureTestPackCard(
     cardId = cardId,
     name = name,
@@ -81,6 +86,7 @@ fun testPackCard(
     finish = finish,
     finishLabel = finishLabel,
     isHolographic = isHolographic,
+    isStamped = isStamped,
 )
 
 fun testEquipmentCardDefinition(
@@ -97,7 +103,7 @@ fun testEquipmentCardDefinition(
     },
     bonusUnit: fr.aumombelli.dstcg.model.EquipmentBonusUnit = when (type) {
         fr.aumombelli.dstcg.model.EquipmentType.Observatory -> fr.aumombelli.dstcg.model.EquipmentBonusUnit.RechargeMultiplier
-        fr.aumombelli.dstcg.model.EquipmentType.Telescope -> fr.aumombelli.dstcg.model.EquipmentBonusUnit.HolographicPercent
+        fr.aumombelli.dstcg.model.EquipmentType.Telescope -> fr.aumombelli.dstcg.model.EquipmentBonusUnit.HolographicQualityPercent
         fr.aumombelli.dstcg.model.EquipmentType.Mount -> fr.aumombelli.dstcg.model.EquipmentBonusUnit.RarityBoost
     },
     dropWeight: Int = 10,

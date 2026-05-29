@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Deep Sky Trading Card Game</string>
+    <string name="nfc_trade_service_label">Echange NFC de cartes</string>
 </resources>

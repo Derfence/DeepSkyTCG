@@ -1,0 +1,83 @@
+# Mini-jeux
+
+[← Index documentation](../README.md) | [Accueil](home.md)
+
+Cette page documente l'accès aux mini-jeux et leur socle commun.
+
+## Déblocage
+
+Le menu `Mini-jeux` se débloque après :
+
+- fabrication guidée terminée (`UseSkyDarkening`) ;
+- passage vers l'étape d'onboarding `DiscoverMiniGames`.
+
+Le déblocage est persisté par `miniGamesMenuUnlocked`. La première disponibilité active aussi l'indicateur de nouveauté `miniGames` sur l'accueil.
+
+Pendant `DiscoverMiniGames`, le coachmark Home explique que la carte centrale a un verso mini-jeux, accessible par bouton ou swipe, puis par clic sur la carte. Il indique aussi le plafond fonctionnel : les quatre jeux peuvent réduire la recharge d'un pack jusqu'à `4 h` par jour. Ouvrir le menu avance l'onboarding vers `ShowConclusion`, mais la conclusion attend le retour du joueur au Home.
+
+## Accès depuis l'accueil
+
+- La carte centrale affiche `Ouvrir un pack` par défaut.
+- Après déblocage, un bouton rond retourne la carte.
+- Un swipe horizontal retourne aussi la carte si le geste commence sur la carte.
+- Le verso affiche `Mini-jeux du jour` et le bouton `Menu des jeux`.
+
+## Menu
+
+Le menu affiche un fond ciel animé commun aux mini-jeux, puis la carte SVG plein écran `mini-games-map.svg`.
+Le SVG est étiré pour remplir l'écran (`preserveAspectRatio="none"`), et les boutons utilisent le même repère plein écran que le SVG, sans insets de contenu.
+Cette carte est construite comme une fusion de quatre calques superposables, avec des transitions de lumière circulaires centrées sur la Ville.
+
+Les quatre lieux sont positionnés sur une diagonale bas-gauche vers haut-droite, avec des ancres volontairement écartées pour laisser de la place aux décors :
+
+- Quiz / Ville ;
+- Memory / Périurbain ;
+- Timeline / Campagne ;
+- Observatoire / Montagne.
+
+Ancres UI de référence, issues du groupe SVG `node-platforms` : Quiz `180/1000`, `1422/1778` ; Memory `360/1000`, `1084/1778` ; Timeline `620/1000`, `711/1778` ; Observatoire `820/1000`, `356/1778`.
+
+Les boutons `Quiz / Ville`, `Memory / Périurbain`, `Timeline / Campagne` et `Observatoire / Montagne` sont actifs et utilisent le halo de node commun.
+
+## Jeux implémentés
+
+- [Quiz](quiz.md)
+- [Memory](memory.md)
+- [Timeline](timeline.md)
+- [Observatoire](observatory.md)
+
+## Socle commun
+
+Le socle commun est utilisé par les mini-jeux quotidiens :
+
+- `MiniGameId` identifie Quiz, Memory, Timeline et Observatoire ;
+- `MiniGameDifficulty` porte les quatre niveaux communs et leurs réductions maximales de `15`, `30`, `45` et `60` minutes ;
+- `MiniGamesProgress` persiste les états quotidiens, les récompenses déjà obtenues et les difficultés débloquées ;
+- `MiniGamesRepository` expose l'état du jour UTC, prépare les cartes résolues et applique les récompenses ;
+- `MiniGameRewardApplier` réduit la recharge des packs une seule fois par jour et par jeu, avec plafonnement au stock maximal.
+- `MiniGameReward` stocke les réductions en secondes pour supporter les gains proportionnels du Quiz.
+- `hasPlayed` signifie que l'essai quotidien du jeu est consommé. Si `reward` vaut `null`, l'essai a été utilisé sans récompense, par exemple après abandon.
+
+Le socle visuel partage les briques Compose réutilisables :
+
+- `MiniGameSceneBackdrop` pour le fond ciel, les constellations et les paillettes adaptées au profil de performance ;
+- `MiniGameBoardSurface` pour encadrer les zones de jeu sans multiplier les styles locaux ;
+- `MiniGameHudPill` pour les compteurs compacts ;
+- `MiniGameFeedbackEvent`, `MiniGameFeedbackTone` et `MiniGameFeedbackOverlay` pour les feedbacks succès, erreur, spécial et fin de partie ;
+- `MiniGamePulsingRing` pour les nodes de carte ou d'objectif.
+
+Le tirage global des cartes est déterministe et ne dépend jamais de l'état du joueur. Il utilise le jeu, la date UTC, le slot, l'extension cible éventuelle et la version d'algorithme. Si le joueur ne possède pas la carte globale, `MiniGameCardResolver` choisit un fallback déterministe parmi ses cartes de la même extension, puis parmi ses cartes des autres extensions si besoin. La carte résolue est persistée pour rester stable pendant la journée, même si la collection évolue.
+
+Timeline ajoute un filtre d'éligibilité au tirage commun : les critères sont ordonnés de manière déterministe pour le jour, le premier critère jouable avec la bibliothèque est retenu, puis seules les cartes compatibles avec ce critère peuvent être tirées ou utilisées comme fallback. Le jeu utilise ensuite ces cartes pour préparer une série de comparaisons à deux cartes, selon la difficulté choisie. Si aucun critère principal n'a assez de cartes, le critère de secours `Position dans le ciel` permet de jouer avec n'importe quelles cartes possédées. Ce filtre est optionnel et ne modifie pas Quiz ou Memory.
+
+## Assets
+
+Sources attendues :
+
+- `design-explorations/mini-games/mini-games-card.svg`
+- `design-explorations/mini-games/mini-games-map.svg`
+- `design-explorations/mini-games/layers/*.svg` pour les calques sources de la carte.
+
+Ces fichiers sont synchronisés vers les assets runtime par Gradle. Si un SVG manque, l'application affiche un fallback Compose pour éviter un écran vide.
+
+[← Index documentation](../README.md)

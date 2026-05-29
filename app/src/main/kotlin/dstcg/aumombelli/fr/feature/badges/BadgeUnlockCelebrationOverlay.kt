@@ -5,10 +5,8 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -54,9 +52,11 @@ internal fun BadgeUnlockCelebrationOverlay(
     val density = LocalDensity.current
     val glowSizePx = with(density) { 220.dp.toPx() }
     val coinSizePx = with(density) { 92.dp.toPx() }
-    val titleTopInsetPx = WindowInsets.statusBars.getTop(density).toFloat() + with(density) { 12.dp.toPx() }
+    val landingGapPx = with(density) { 10.dp.toPx() }
+    val titleGapPx = with(density) { 12.dp.toPx() }
     val latestTargetBounds by rememberUpdatedState(targetBounds)
     var rootSize by remember(sortedBadges) { mutableStateOf(IntSize.Zero) }
+    var titleSize by remember(sortedBadges) { mutableStateOf(IntSize.Zero) }
     var resolvedTargetBounds by remember(sortedBadges) { mutableStateOf<Rect?>(null) }
     var animationStarted by remember(sortedBadges) { mutableStateOf(false) }
     val overlayAlpha = remember(sortedBadges) { Animatable(0f) }
@@ -85,7 +85,7 @@ internal fun BadgeUnlockCelebrationOverlay(
             targetValue = 1f,
             animationSpec = tween(durationMillis = 860, easing = FastOutSlowInEasing),
         )
-        delay(260)
+        delay(80)
         fadeOutProgress.animateTo(
             targetValue = 1f,
             animationSpec = tween(durationMillis = 240, easing = FastOutSlowInEasing),
@@ -97,13 +97,12 @@ internal fun BadgeUnlockCelebrationOverlay(
     val overlayVisibility = overlayAlpha.value * (1f - fadeOutProgress.value)
     val travel = FastOutSlowInEasing.transform(flightProgress.value.coerceIn(0f, 1f))
     val bounce = celebrationBounce(flightProgress.value)
-    val startCenter = Offset(
-        x = rootSize.width * 0.5f,
-        y = rootSize.height * 0.72f,
-    )
-    val endCenter = Offset(
-        x = target.left + ((target.right - target.left) / 2f),
-        y = target.top + ((target.bottom - target.top) / 2f),
+    val startCenter = badgeCelebrationStartCenter(rootSize)
+    val endScale = badgeCelebrationEndScale(sortedBadges.size)
+    val endCenter = badgeCelebrationEndCenter(
+        targetBounds = target,
+        displayedCoinSizePx = coinSizePx * endScale,
+        gapPx = landingGapPx,
     )
     val glowCenterX = lerpFloat(startCenter.x, endCenter.x, travel)
     val glowCenterY = lerpFloat(startCenter.y, endCenter.y, travel)
@@ -111,11 +110,39 @@ internal fun BadgeUnlockCelebrationOverlay(
     val targetWidth = target.right - target.left
     val endRadius = min(targetWidth * 0.24f, 42f).coerceAtLeast(0f)
     val titleText = if (sortedBadges.size == 1) "Badge obtenu !" else "${sortedBadges.size} badges obtenus !"
-    val endScale = when {
-        sortedBadges.size >= 6 -> 0.38f
-        sortedBadges.size >= 4 -> 0.44f
-        else -> 0.50f
+    val initialCoinCenters = badgeCelebrationInitialCoinCenters(
+        badgeCount = sortedBadges.size,
+        startCenter = startCenter,
+        radius = startRadius,
+    )
+    val coinCenters = sortedBadges.indices.map { index ->
+        val endOffset = badgeCelebrationFanOffset(index = index, radius = endRadius)
+        Offset(
+            x = lerpFloat(
+                start = initialCoinCenters[index].x,
+                stop = endCenter.x + endOffset.x,
+                fraction = travel,
+            ),
+            y = lerpFloat(
+                start = initialCoinCenters[index].y,
+                stop = endCenter.y + endOffset.y,
+                fraction = travel,
+            ),
+        )
     }
+    val coinScale = lerpFloat(
+        start = 1.04f,
+        stop = endScale,
+        fraction = travel,
+    ) * (1f + (bounce * 0.06f))
+    val titleTopLeft = badgeCelebrationStaticTitleTopLeft(
+        titleSize = titleSize,
+        startCenter = startCenter,
+        badgeCount = sortedBadges.size,
+        radius = startRadius,
+        displayedCoinSizePx = coinSizePx * 1.04f,
+        gapPx = titleGapPx,
+    )
 
     Box(
         modifier = modifier
@@ -160,47 +187,26 @@ internal fun BadgeUnlockCelebrationOverlay(
                 letterSpacing = 0.3.sp,
             ),
             modifier = Modifier
-                .align(Alignment.TopCenter)
+                .align(Alignment.TopStart)
+                .onSizeChanged { titleSize = it }
                 .graphicsLayer {
                     this.alpha = overlayVisibility
-                    translationY = titleTopInsetPx + 72f - 28f * travel
+                    translationX = titleTopLeft.x
+                    translationY = titleTopLeft.y
                 }
                 .testTag("badge-unlock-celebration-title"),
         )
 
         sortedBadges.forEachIndexed { index, badge ->
-            val startOffset = celebrationFanOffset(
-                index = index,
-                radius = startRadius,
-            )
-            val endOffset = celebrationFanOffset(
-                index = index,
-                radius = endRadius,
-            )
-            val coinCenterX = lerpFloat(
-                start = startCenter.x + startOffset.x,
-                stop = endCenter.x + endOffset.x,
-                fraction = travel,
-            )
-            val coinCenterY = lerpFloat(
-                start = startCenter.y + startOffset.y,
-                stop = endCenter.y + endOffset.y,
-                fraction = travel,
-            )
-            val coinScale = lerpFloat(
-                start = 1.04f,
-                stop = endScale,
-                fraction = travel,
-            ) * (1f + (bounce * 0.06f))
-
+            val coinCenter = coinCenters[index]
             Box(
                 modifier = Modifier
                     .size(92.dp)
                     .align(Alignment.TopStart)
                     .graphicsLayer {
                         this.alpha = overlayVisibility
-                        translationX = coinCenterX - coinSizePx / 2f
-                        translationY = coinCenterY - coinSizePx / 2f
+                        translationX = coinCenter.x - coinSizePx / 2f
+                        translationY = coinCenter.y - coinSizePx / 2f
                         scaleX = coinScale
                         scaleY = coinScale
                     }
@@ -226,21 +232,6 @@ private fun fallbackBadgeCelebrationBounds(rootSize: IntSize): Rect {
         top = top,
         right = left + width,
         bottom = top + height,
-    )
-}
-
-private fun celebrationFanOffset(
-    index: Int,
-    radius: Float,
-): Offset {
-    if (index == 0) return Offset.Zero
-    val step = (index + 1) / 2
-    val side = if (index % 2 == 1) -1f else 1f
-    val angleDegrees = 12f * step * side
-    val angleRadians = angleDegrees * PI.toFloat() / 180f
-    return Offset(
-        x = sin(angleRadians) * radius,
-        y = -step * radius * 0.16f,
     )
 }
 

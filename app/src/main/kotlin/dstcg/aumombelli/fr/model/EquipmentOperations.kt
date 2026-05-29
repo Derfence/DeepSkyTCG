@@ -64,6 +64,7 @@ fun StandaloneProgress.normalizedEquipmentState(): StandaloneProgress = copy(
         }
     }.toMap(),
     lastActivatedCardIdByType = lastActivatedCardIdByType.toSortedMap(compareBy { it.code }),
+    equipmentBadgeProgress = equipmentBadgeProgress.normalized(),
 )
 
 fun StandaloneProgress.consumeEquipmentEffectsAfterPackOpen(): StandaloneProgress = copy(
@@ -83,6 +84,51 @@ fun StandaloneProgress.toEquipmentState(): EquipmentState = EquipmentState(
     }.toMap(),
     lastActivatedCardIdByType = lastActivatedCardIdByType.toSortedMap(compareBy { it.code }),
 )
+
+fun StandaloneProgress.totalEquipmentActivationCount(): Int =
+    equipmentInventory.cards.values.sumOf { entry -> entry.normalized().activationCount }
+
+fun StandaloneProgress.activatedEquipmentCardCount(
+    equipmentCards: List<EquipmentCardDefinition>,
+): Int = equipmentCards.count { definition ->
+    equipmentInventory.entryFor(definition.id).activationCount > 0
+}
+
+fun StandaloneProgress.recordEquipmentActivationSnapshot(
+    equipmentCards: List<EquipmentCardDefinition>,
+): StandaloneProgress {
+    val equipmentCardsById = equipmentCards.associateBy(EquipmentCardDefinition::id)
+    val simultaneouslyActiveTypeCount = activeEquipmentByType.count { (type, effect) ->
+        equipmentCardsById[effect.equipmentCardId]?.type == type
+    }
+    val simultaneouslyActiveLevelThreeTypeCount = activeEquipmentByType.count { (type, effect) ->
+        val definition = equipmentCardsById[effect.equipmentCardId] ?: return@count false
+        definition.type == type && definition.level == 3
+    }
+
+    return copy(
+        equipmentBadgeProgress = equipmentBadgeProgress.copy(
+            maxSimultaneouslyActiveEquipmentTypeCount = maxOf(
+                equipmentBadgeProgress.maxSimultaneouslyActiveEquipmentTypeCount,
+                simultaneouslyActiveTypeCount,
+            ),
+            maxSimultaneouslyActiveLevelThreeEquipmentTypeCount = maxOf(
+                equipmentBadgeProgress.maxSimultaneouslyActiveLevelThreeEquipmentTypeCount,
+                simultaneouslyActiveLevelThreeTypeCount,
+            ),
+        ),
+    ).normalizedEquipmentState()
+}
+
+fun StandaloneProgress.recordAffectedPackIfEquipmentActive(): StandaloneProgress = copy(
+    equipmentBadgeProgress = equipmentBadgeProgress.copy(
+        affectedPackCount = equipmentBadgeProgress.affectedPackCount + if (activeEquipmentByType.isNotEmpty()) {
+            1
+        } else {
+            0
+        },
+    ),
+).normalizedEquipmentState()
 
 fun StandaloneProgress.hasUnlockedEquipmentMenu(): Boolean =
     equipmentInventory.cards.isNotEmpty() ||

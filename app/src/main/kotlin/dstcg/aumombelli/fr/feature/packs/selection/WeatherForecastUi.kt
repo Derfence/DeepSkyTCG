@@ -25,6 +25,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.data.WeatherPolicy
 import fr.aumombelli.dstcg.data.WeatherState
+import fr.aumombelli.dstcg.data.toUtcLocalDateCompat
+import fr.aumombelli.dstcg.data.toUtcStartInstantCompat
 import fr.aumombelli.dstcg.ui.motion.MotionCard
 import java.time.DayOfWeek
 import java.time.Instant
@@ -51,10 +53,10 @@ internal fun buildWeatherForecastDayUiModels(
         return emptyList()
     }
 
-    val startDate = LocalDate.ofInstant(now, ZoneOffset.UTC)
+    val startDate = now.toUtcLocalDateCompat()
     return (0 until dayCount).map { dayOffset ->
         val dateUtc = startDate.plusDays(dayOffset.toLong())
-        val weatherState = weatherPolicy.weatherAt(dateUtc.atStartOfDay(ZoneOffset.UTC).toInstant())
+        val weatherState = weatherPolicy.weatherAt(dateUtc.toUtcStartInstantCompat())
         WeatherForecastDayUiModel(
             dateUtc = dateUtc,
             dayLabel = frenchShortDayLabel(dateUtc.dayOfWeek),

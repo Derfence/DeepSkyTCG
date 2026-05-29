@@ -4,7 +4,6 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
@@ -44,7 +43,7 @@ class LocalEndToEndTest {
         verifyLibraryContainsDrawnCard(firstDrawnCardId)
         openBadgeBookAndLaunchEquipmentChapter()
         openSecondPackAndReachEquipmentMenu()
-        activateFirstEquipmentAndCompleteOnboarding()
+        openEquipmentMenuAndRevealActivationCoachmark()
     }
 
     @After
@@ -55,6 +54,8 @@ class LocalEndToEndTest {
     private fun startAndReachHome() {
         composeRule.waitUntilTagEnabled("home-open-pack", timeoutMillis = 20_000)
         composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
+        composeRule.waitUntilTagDisplayed("new-player-modal-welcome", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("new-player-modal-finish").performClick()
         composeRule.waitUntilTagDisplayed("new-player-coachmark-HomeOpenPack", timeoutMillis = 10_000)
     }
 
@@ -62,9 +63,11 @@ class LocalEndToEndTest {
         composeRule.waitUntilTagEnabled("home-open-pack", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("home-open-pack").performClick()
         composeRule.waitUntilTagEnabled("pack-extension-enter-${LocalE2eConfig.extensionId}", timeoutMillis = 15_000)
+        composeRule.waitUntilTagDisplayed("pack-extension-enter-${LocalE2eConfig.extensionId}", timeoutMillis = 15_000)
         composeRule.waitUntilTagDisplayed("new-player-coachmark-PackSelectionExtension", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("pack-extension-enter-${LocalE2eConfig.extensionId}").performClick()
         composeRule.waitUntilTagEnabled("pack-booster-0", timeoutMillis = 10_000)
+        composeRule.waitUntilTagDisplayed("pack-booster-0", timeoutMillis = 10_000)
         composeRule.waitUntilTagDisplayed("new-player-coachmark-PackSelectionBooster", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("pack-booster-0").performClick()
 
@@ -91,6 +94,8 @@ class LocalEndToEndTest {
     private fun verifyLibraryContainsDrawnCard(cardId: String) {
         composeRule.waitUntilTagEnabled("home-library", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("home-library").performClick()
+        composeRule.waitUntilTagDisplayed("new-player-modal-library-variants", timeoutMillis = 10_000)
+        completeLibraryVariantWalkthrough()
         composeRule.waitUntilTagExists("library-section-${LocalE2eConfig.extensionId}", timeoutMillis = 10_000)
         composeRule.waitUntilTagDisplayed("library-onboarding-hint", timeoutMillis = 10_000)
 
@@ -111,6 +116,17 @@ class LocalEndToEndTest {
         composeRule.waitUntilTagEnabled("home-open-pack", timeoutMillis = 10_000)
     }
 
+    private fun completeLibraryVariantWalkthrough() {
+        composeRule.onNodeWithTag("new-player-modal-page-0").assertIsDisplayed()
+        repeat(3) {
+            composeRule.onNodeWithTag("new-player-modal-next").performClick()
+            composeRule.waitForIdle()
+        }
+        composeRule.onNodeWithTag("new-player-modal-page-3").assertIsDisplayed()
+        composeRule.onNodeWithTag("new-player-modal-finish").performClick()
+        composeRule.waitUntilTagGone("new-player-modal-library-variants", timeoutMillis = 10_000)
+    }
+
     private fun openBadgeBookAndLaunchEquipmentChapter() {
         composeRule.onNodeWithTag("new-player-coachmark-HomeBadges").assertIsDisplayed()
         composeRule.onNodeWithTag("home-badges").performClick()
@@ -124,8 +140,10 @@ class LocalEndToEndTest {
     private fun openSecondPackAndReachEquipmentMenu() {
         composeRule.onNodeWithTag("home-open-pack").performClick()
         composeRule.waitUntilTagEnabled("pack-extension-enter-${LocalE2eConfig.extensionId}", timeoutMillis = 15_000)
+        composeRule.waitUntilTagDisplayed("pack-extension-enter-${LocalE2eConfig.extensionId}", timeoutMillis = 15_000)
         composeRule.onNodeWithTag("pack-extension-enter-${LocalE2eConfig.extensionId}").performClick()
         composeRule.waitUntilTagEnabled("pack-booster-0", timeoutMillis = 10_000)
+        composeRule.waitUntilTagDisplayed("pack-booster-0", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("pack-booster-0").performClick()
         composeRule.waitUntilTagExists("pack-opening-title", timeoutMillis = 20_000)
 
@@ -134,22 +152,23 @@ class LocalEndToEndTest {
             composeRule.waitForIdle()
         }
 
+        composeRule.mainClock.advanceTimeBy(2_800)
+        composeRule.waitForIdle()
+        composeRule.onAllNodesWithTag("pack-opening-swipe-hint-label").assertCountEquals(0)
+
         composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeUp() }
         composeRule.waitForPackReturnToMenu()
         composeRule.waitUntilTagDisplayed("new-player-coachmark-HomeEquipment", timeoutMillis = 10_000)
     }
 
-    private fun activateFirstEquipmentAndCompleteOnboarding() {
+    private fun openEquipmentMenuAndRevealActivationCoachmark() {
         composeRule.onNodeWithTag("home-equipment").performClick()
         composeRule.waitUntilTagExists("equipment-screen", timeoutMillis = 10_000)
-        composeRule.waitUntilTagDisplayed("new-player-coachmark-EquipmentActivation", timeoutMillis = 10_000)
-
-        val activationTag = composeRule.firstTagStartingWith("equipment-activate-")
-            ?: error("No equipment activation button was found.")
-        composeRule.onNodeWithTag(activationTag).performClick()
-
-        composeRule.waitUntilTagGone("new-player-coachmark-EquipmentActivation", timeoutMillis = 10_000)
-        composeRule.waitUntilTagGone("new-player-coachmark-overlay", timeoutMillis = 10_000)
+        composeRule.waitUntilAnyTagDisplayed(
+            "new-player-coachmark-EquipmentActivation",
+            "new-player-coachmark-scroll-down",
+            timeoutMillis = 10_000,
+        )
     }
 
     private fun verifyRechargeStatusIsVisible() {
@@ -199,6 +218,15 @@ class LocalEndToEndTest {
         }
     }
 
+    private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.waitUntilAnyTagDisplayed(
+        vararg tags: String,
+        timeoutMillis: Long = 5_000,
+    ) {
+        waitUntil(timeoutMillis) {
+            tags.any { tag -> isTagDisplayed(tag) }
+        }
+    }
+
     private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.waitUntilTagEnabled(
         tag: String,
         timeoutMillis: Long = 5_000,
@@ -245,29 +273,6 @@ class LocalEndToEndTest {
         if (!node.config.contains(SemanticsProperties.Text)) return null
         val textValues = node.config[SemanticsProperties.Text]
         return textValues.joinToString(separator = "") { annotated -> annotated.toString() }
-    }
-
-    private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.firstTagStartingWith(
-        prefix: String,
-    ): String? {
-        val queue = ArrayDeque(
-            listOf(
-                onRoot(useUnmergedTree = true).fetchSemanticsNode(),
-            ),
-        )
-        while (queue.isNotEmpty()) {
-            val node = queue.removeFirst()
-            val tag = if (node.config.contains(SemanticsProperties.TestTag)) {
-                node.config[SemanticsProperties.TestTag]
-            } else {
-                null
-            }
-            if (tag != null && tag.startsWith(prefix)) {
-                return tag
-            }
-            queue.addAll(node.children)
-        }
-        return null
     }
 
     private fun androidx.compose.ui.test.junit4.AndroidComposeTestRule<*, *>.firstNodeWithTag(

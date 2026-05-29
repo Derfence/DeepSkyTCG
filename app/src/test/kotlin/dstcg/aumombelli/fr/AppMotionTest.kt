@@ -2,19 +2,30 @@ package fr.aumombelli.dstcg
 
 import fr.aumombelli.dstcg.ui.motion.BurstParticleMotion
 import fr.aumombelli.dstcg.ui.motion.BrandLogoVariant
+import fr.aumombelli.dstcg.ui.motion.ExtensionAnimationSpec
 import fr.aumombelli.dstcg.ui.motion.ExtensionAnimationStyle
+import fr.aumombelli.dstcg.ui.motion.ExtensionCircleFromCenterPoint
+import fr.aumombelli.dstcg.ui.motion.FractionalPoint
 import fr.aumombelli.dstcg.ui.motion.SkyBackdropVariant
+import fr.aumombelli.dstcg.ui.motion.autoplayHolographicMotion
 import fr.aumombelli.dstcg.ui.motion.buildBurstParticleSpecs
 import fr.aumombelli.dstcg.ui.motion.burstRarityLabelsUpTo
 import fr.aumombelli.dstcg.ui.motion.calculateBookPose
+import fr.aumombelli.dstcg.ui.motion.extensionCircleReveal
 import fr.aumombelli.dstcg.ui.motion.extensionAnimationSpec
 import fr.aumombelli.dstcg.ui.motion.extensionPointReveal
 import fr.aumombelli.dstcg.ui.motion.homeLogoVariantFor
+import fr.aumombelli.dstcg.ui.motion.packOpeningBurstOrbitOrigin
+import fr.aumombelli.dstcg.ui.motion.packOpeningBurstOrigin
+import fr.aumombelli.dstcg.ui.motion.packOpeningHolographicMotion
+import fr.aumombelli.dstcg.ui.motion.packSelectionBoosterIdlePose
+import fr.aumombelli.dstcg.ui.motion.PackRevealBounds
 import fr.aumombelli.dstcg.ui.motion.pickSkyBackdropVariant
 import fr.aumombelli.dstcg.ui.motion.projectExtensionPattern
-import fr.aumombelli.dstcg.ui.motion.summarizePackOpening
+import fr.aumombelli.dstcg.model.summarizePackOpening
 import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.model.toDisplayVariant
+import kotlin.math.abs
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -77,8 +88,20 @@ class AppMotionTest {
         assertEquals(ExtensionAnimationStyle.BigDipper, astronomesSpec.style)
         assertEquals(7, astronomesSpec.starPattern.size)
         assertEquals(7, astronomesSpec.lineConnections.size)
+        assertTrue(astronomesSpec.circlePatterns.isEmpty())
         assertEquals(ExtensionAnimationStyle.NeutralSky, fallbackSpec.style)
         assertTrue(fallbackSpec.starPattern.isEmpty())
+        assertTrue(fallbackSpec.circlePatterns.isEmpty())
+    }
+
+    @Test
+    fun `extension animation resolves planet for systeme-solaire`() {
+        val systemeSolaireSpec = extensionAnimationSpec("systeme-solaire")
+
+        assertEquals(ExtensionAnimationStyle.Planet, systemeSolaireSpec.style)
+        assertEquals(listOf(FractionalPoint(0.500f, 0.500f)), systemeSolaireSpec.starPattern)
+        assertTrue(systemeSolaireSpec.lineConnections.isEmpty())
+        assertEquals(4, systemeSolaireSpec.circlePatterns.size)
     }
 
     @Test
@@ -124,6 +147,63 @@ class AppMotionTest {
     }
 
     @Test
+    fun `extension pattern projection includes full circle bounds`() {
+        val center = FractionalPoint(0.5f, 0.5f)
+        val spec = ExtensionAnimationSpec(
+            style = ExtensionAnimationStyle.Planet,
+            starPattern = listOf(center),
+            circlePatterns = listOf(
+                ExtensionCircleFromCenterPoint(center, FractionalPoint(0.7f, 0.5f)),
+            ),
+        )
+
+        val projection = projectExtensionPattern(
+            spec = spec,
+            canvasWidth = 100f,
+            canvasHeight = 100f,
+        )
+
+        assertEquals(0f, projection.project(FractionalPoint(0.3f, 0.5f)).x, 0.001f)
+        assertEquals(100f, projection.project(FractionalPoint(0.7f, 0.5f)).x, 0.001f)
+        assertEquals(0f, projection.project(FractionalPoint(0.5f, 0.7f)).y, 0.001f)
+        assertEquals(100f, projection.project(FractionalPoint(0.5f, 0.3f)).y, 0.001f)
+    }
+
+    @Test
+    fun `extension circle reveal supports hidden partial and complete orbit states`() {
+        assertEquals(
+            0f,
+            extensionCircleReveal(
+                lineProgress = 0f,
+                circleIndex = 0,
+                circleCount = 1,
+                revealWindow = 0.25f,
+            ),
+            0.001f,
+        )
+        assertEquals(
+            0.5f,
+            extensionCircleReveal(
+                lineProgress = 0.5f,
+                circleIndex = 0,
+                circleCount = 1,
+                revealWindow = 0.25f,
+            ),
+            0.001f,
+        )
+        assertEquals(
+            1f,
+            extensionCircleReveal(
+                lineProgress = 1f,
+                circleIndex = 0,
+                circleCount = 1,
+                revealWindow = 0.25f,
+            ),
+            0.001f,
+        )
+    }
+
+    @Test
     fun `extension points appear when their first connected line starts`() {
         val spec = extensionAnimationSpec("astronomes-en-herbe")
 
@@ -146,6 +226,23 @@ class AppMotionTest {
                 isReversing = false,
                 revealWindow = 0.25f,
             ) > 0f,
+        )
+    }
+
+    @Test
+    fun `extension standalone points reveal without visible line connections`() {
+        val spec = extensionAnimationSpec("systeme-solaire")
+
+        assertEquals(
+            1f,
+            extensionPointReveal(
+                spec = spec,
+                pointIndex = 0,
+                lineProgress = 1f,
+                isReversing = false,
+                revealWindow = 0.25f,
+            ),
+            0.001f,
         )
     }
 
@@ -178,6 +275,73 @@ class AppMotionTest {
     }
 
     @Test
+    fun `booster idle pose is neutral when disabled`() {
+        val pose = packSelectionBoosterIdlePose(
+            index = 2,
+            loopProgress = 0.42f,
+            enabled = false,
+        )
+
+        assertEquals(0f, pose.translationYDp, 0.001f)
+        assertEquals(0f, pose.rotationZDeg, 0.001f)
+        assertEquals(1f, pose.scale, 0.001f)
+    }
+
+    @Test
+    fun `booster idle pose stays within subtle motion bounds`() {
+        val samples = listOf(0f, 0.125f, 0.25f, 0.375f, 0.5f, 0.625f, 0.75f, 0.875f, 1f)
+
+        for (index in 0 until 4) {
+            samples.forEach { progress ->
+                val pose = packSelectionBoosterIdlePose(
+                    index = index,
+                    loopProgress = progress,
+                    enabled = true,
+                )
+
+                assertTrue(pose.translationYDp in -3f..3f)
+                assertTrue(pose.rotationZDeg in -0.8f..0.8f)
+                assertTrue(pose.scale in 0.994f..1.006f)
+            }
+        }
+    }
+
+    @Test
+    fun `booster idle pose desynchronizes each booster`() {
+        val firstPose = packSelectionBoosterIdlePose(
+            index = 0,
+            loopProgress = 0f,
+            enabled = true,
+        )
+        val secondPose = packSelectionBoosterIdlePose(
+            index = 1,
+            loopProgress = 0f,
+            enabled = true,
+        )
+
+        assertTrue(abs(firstPose.translationYDp - secondPose.translationYDp) > 1f)
+        assertTrue(abs(firstPose.rotationZDeg - secondPose.rotationZDeg) > 0.1f)
+    }
+
+    @Test
+    fun `booster idle pose loops continuously`() {
+        val startPose = packSelectionBoosterIdlePose(
+            index = 3,
+            loopProgress = 0f,
+            enabled = true,
+        )
+        val endPose = packSelectionBoosterIdlePose(
+            index = 3,
+            loopProgress = 1f,
+            enabled = true,
+        )
+
+        assertEquals(startPose.translationYDp, endPose.translationYDp, 0.001f)
+        assertEquals(startPose.rotationZDeg, endPose.rotationZDeg, 0.001f)
+        assertEquals(startPose.scale, endPose.scale, 0.001f)
+    }
+
+    @Test
     fun `pack opening summary exposes max rarity and holographic presence`() {
         val commonCard = testCardDefinition("ALP-001", rarityLabel = "Common").toDisplayCard(
             extensionName = "Astronomes en herbe",
@@ -195,8 +359,8 @@ class AppMotionTest {
                 name = "Comete",
                 rarityLabel = "Epic",
                 imageRef = "comet",
-                finish = "holographic",
-                finishLabel = "Holographique",
+                skyQuality = "holographic",
+                skyQualityLabel = "Holographique",
                 isHolographic = true,
             ).variant.toDisplayVariant(),
         )
@@ -262,5 +426,146 @@ class AppMotionTest {
 
         assertFalse(nonHoloSpecs.any { it.motion == BurstParticleMotion.Falling })
         assertTrue(holoSpecs.any { it.motion == BurstParticleMotion.Falling })
+        assertFalse(nonHoloSpecs.any { it.motion == BurstParticleMotion.Orbital })
+        assertTrue(holoSpecs.any { it.motion == BurstParticleMotion.Orbital })
+        assertTrue(holoSpecs.size > nonHoloSpecs.size)
+    }
+
+    @Test
+    fun `radial burst particles spread horizontal drift on both sides`() {
+        val radialSpecs = buildBurstParticleSpecs(
+            highestRarityLabel = "Epic",
+            hasHolographicBurst = true,
+        ).filter { it.motion == BurstParticleMotion.Radial }
+
+        assertTrue(radialSpecs.any { it.horizontalDrift < 0f })
+        assertTrue(radialSpecs.any { it.horizontalDrift > 0f })
+    }
+
+    @Test
+    fun `pack opening burst origin stays centered for standard pack openings`() {
+        val origin = packOpeningBurstOrigin(
+            originBounds = PackRevealBounds(
+                leftPx = 120f,
+                topPx = 240f,
+                widthPx = 300f,
+                heightPx = 420f,
+            ),
+            canvasWidth = 1080f,
+            canvasHeight = 1920f,
+            hasHolographicBurst = false,
+        )
+
+        assertEquals(270f, origin.x, 0.001f)
+        assertEquals(450f, origin.y, 0.001f)
+    }
+
+    @Test
+    fun `pack opening holo burst origin is slightly lifted toward the visual center`() {
+        val origin = packOpeningBurstOrigin(
+            originBounds = PackRevealBounds(
+                leftPx = 120f,
+                topPx = 240f,
+                widthPx = 300f,
+                heightPx = 420f,
+            ),
+            canvasWidth = 1080f,
+            canvasHeight = 1920f,
+            hasHolographicBurst = true,
+        )
+
+        assertEquals(270f, origin.x, 0.001f)
+        assertEquals(435.3f, origin.y, 0.001f)
+    }
+
+    @Test
+    fun `screen centered standard burst origin aligns with the lowered reveal source`() {
+        val origin = packOpeningBurstOrigin(
+            originBounds = null,
+            canvasWidth = 1080f,
+            canvasHeight = 1920f,
+            hasHolographicBurst = false,
+        )
+
+        assertEquals(540f, origin.x, 0.001f)
+        assertEquals(1344f, origin.y, 0.001f)
+    }
+
+    @Test
+    fun `screen centered holo burst origin stays on the same lowered source`() {
+        val origin = packOpeningBurstOrigin(
+            originBounds = null,
+            canvasWidth = 1080f,
+            canvasHeight = 1920f,
+            hasHolographicBurst = true,
+        )
+
+        assertEquals(540f, origin.x, 0.001f)
+        assertEquals(1344f, origin.y, 0.001f)
+    }
+
+    @Test
+    fun `screen centered holo burst orbit origin can be brought back above the lower offset`() {
+        val origin = packOpeningBurstOrbitOrigin(
+            originBounds = null,
+            canvasWidth = 1080f,
+            canvasHeight = 1920f,
+            hasHolographicBurst = true,
+        )
+
+        assertEquals(540f, origin.x, 0.001f)
+        assertEquals(1344f, origin.y, 0.001f)
+    }
+
+    @Test
+    fun `pack opening holographic motion clamps tilt and boosts cue highlight`() {
+        val restingMotion = packOpeningHolographicMotion(
+            relativePageOffset = 0f,
+            settleCueProgress = 0f,
+            interactiveEffectsEnabled = true,
+        )
+        val swipedMotion = packOpeningHolographicMotion(
+            relativePageOffset = -0.9f,
+            settleCueProgress = 0.75f,
+            interactiveEffectsEnabled = true,
+        )
+
+        assertEquals(0f, restingMotion.rotationYDeg, 0.001f)
+        assertTrue(swipedMotion.rotationYDeg > 0f)
+        assertTrue(kotlin.math.abs(swipedMotion.rotationYDeg) <= 7.5f)
+        assertTrue(swipedMotion.highlightAlpha > restingMotion.highlightAlpha)
+        assertTrue(swipedMotion.sparkleBoost > restingMotion.sparkleBoost)
+        assertTrue(swipedMotion.sweepFraction > 0.5f)
+    }
+
+    @Test
+    fun `pack opening holographic motion disables tilt and sparkles in low effect mode`() {
+        val motion = packOpeningHolographicMotion(
+            relativePageOffset = 0.8f,
+            settleCueProgress = 1f,
+            interactiveEffectsEnabled = false,
+        )
+
+        assertEquals(0f, motion.rotationYDeg, 0.001f)
+        assertEquals(0f, motion.sparkleBoost, 0.001f)
+        assertTrue(motion.highlightAlpha > 0f)
+        assertTrue(motion.edgeGlowAlpha > 0f)
+    }
+
+    @Test
+    fun `autoplay holographic motion stays within the fullscreen sweep bounds`() {
+        val start = autoplayHolographicMotion(
+            loopProgress = 0f,
+            interactiveEffectsEnabled = true,
+        )
+        val middle = autoplayHolographicMotion(
+            loopProgress = 0.5f,
+            interactiveEffectsEnabled = true,
+        )
+
+        assertTrue(start.sweepFraction in 0.18f..0.82f)
+        assertTrue(middle.sweepFraction in 0.18f..0.82f)
+        assertTrue(start.highlightAlpha in 0.22f..0.4f)
+        assertTrue(middle.highlightAlpha in 0.22f..0.4f)
     }
 }

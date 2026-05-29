@@ -68,6 +68,12 @@ fun skyQualityPalette(skyQuality: String): SkyQualityPalette = when (skyQuality)
         glow = Color(0x886CA7FF),
         mist = Color(0x338AAFFF),
     )
+    "holographic" -> SkyQualityPalette(
+        top = Color(0xFF05070D),
+        bottom = Color(0xFF000000),
+        glow = Color(0xCC6CF4FF),
+        mist = Color(0x66FF5FD2),
+    )
     else -> SkyQualityPalette(
         top = Color(0xFF24364F),
         bottom = Color(0xFF0A1018),

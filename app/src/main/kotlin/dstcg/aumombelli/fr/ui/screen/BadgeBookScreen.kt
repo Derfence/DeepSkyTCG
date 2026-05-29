@@ -9,10 +9,12 @@ fun BadgeBookScreen(
     state: BadgeBookUiState,
     onRefresh: () -> Unit,
     contentVisible: Boolean = true,
+    onBack: (() -> Unit)? = null,
 ) {
     BadgeBookFeatureScreen(
         state = state,
         onRefresh = onRefresh,
+        onBack = onBack,
         contentVisible = contentVisible,
     )
 }

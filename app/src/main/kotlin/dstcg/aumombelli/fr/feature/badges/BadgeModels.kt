@@ -23,10 +23,22 @@ data class BadgeSection(
 
 enum class BadgeRequirementType {
     FirstPackOpened,
+    EpicBoostedPackOpened,
+    EquipmentAllCardsActivatedOnce,
+    EquipmentThreeTypesActiveSimultaneously,
+    EquipmentThreeLevelThreeTypesActiveSimultaneously,
+    EquipmentAffectedPacks100,
+    EquipmentActivations100,
     SkyQuality,
-    Holographic,
-    MountainHolographic,
+    Stamped,
+    HolographicStamped,
     PerfectCollection,
+}
+
+enum class BadgeCenterMarkKind {
+    ExtensionLogo,
+    GeneralLogo,
+    EquipmentMountGlyph,
 }
 
 data class BadgeProgress(
@@ -50,6 +62,7 @@ data class BadgeItem(
     val requirementType: BadgeRequirementType,
     val progress: BadgeProgress,
     val skyQualityCode: String? = null,
+    val centerMarkKind: BadgeCenterMarkKind = BadgeCenterMarkKind.ExtensionLogo,
 ) {
     val isUnlocked: Boolean
         get() = progress.isComplete

@@ -26,8 +26,10 @@ internal data class WeightedCardDefinition(
 
 internal data class ExtensionDrawPlan(
     val rarityWeights: List<WeightedCode>,
+    val epicBoostedRarityWeights: List<WeightedCode>,
     val cardsByRarity: Map<String, List<WeightedCardDefinition>>,
     val rarityProbabilities: Map<String, Double>,
+    val epicBoostedRarityProbabilities: Map<String, Double>,
     val cardProbabilities: Map<String, Double>,
 )
 
@@ -92,6 +94,16 @@ internal class CatalogBalanceRuntimeCalculator {
                 probabilities = extensionRarityProbabilities,
                 orderedCodes = presentRarities,
             )
+            val epicBoostedRarityProbabilities = extensionRarityProbabilities.withEpicBoost(
+                bonusProbability = EpicBoostConfig.EPIC_BOOST_PROBABILITY_BONUS,
+            )
+            val epicBoostedRarities = presentRarities.filter { rarity ->
+                epicBoostedRarityProbabilities.getValue(rarity) > 0.0
+            }
+            val epicBoostedRarityWeights = weightedCodesFromProbabilities(
+                probabilities = epicBoostedRarityProbabilities,
+                orderedCodes = epicBoostedRarities,
+            )
             val weightedCardsByRarity = presentRarities.associateWith { rarity ->
                 val rarityCards = cardsByRarity.getValue(rarity)
                 val totalMultiplier = rarityCards.sumOf { it.cardRarityMultiplier }
@@ -117,8 +129,10 @@ internal class CatalogBalanceRuntimeCalculator {
 
             ExtensionDrawPlan(
                 rarityWeights = rarityWeights,
+                epicBoostedRarityWeights = epicBoostedRarityWeights,
                 cardsByRarity = weightedCardsByRarity,
                 rarityProbabilities = extensionRarityProbabilities,
+                epicBoostedRarityProbabilities = epicBoostedRarityProbabilities,
                 cardProbabilities = cardProbabilities,
             )
         }
@@ -178,7 +192,9 @@ internal fun GameBalanceDefinition.validated(): GameBalanceDefinition {
     require(suburbanMeanPerDay > 0.0) { "suburbanMeanPerDay must be strictly positive." }
     require(ruralMeanPerDay > 0.0) { "ruralMeanPerDay must be strictly positive." }
     require(mountainMeanPerDay > 0.0) { "mountainMeanPerDay must be strictly positive." }
-    require(percentHoloMeanPerDay > 0.0) { "percentHoloMeanPerDay must be strictly positive." }
+    require(holographicSkyMeanPerDay > 0.0) { "holographicSkyMeanPerDay must be strictly positive." }
+    require(percentStampedPerDay > 0.0) { "percentStampedPerDay must be strictly positive." }
+    require(skyUpgradeCosts.values.all { it > 0 }) { "skyUpgradeCosts values must stay strictly positive." }
     require(commonRarityProbability() > 0.0) { "Derived common probability must stay strictly positive." }
     require(cityProbability() > 0.0) { "Derived city probability must stay strictly positive." }
     require(standardProbability() > 0.0) { "Derived standard probability must stay strictly positive." }
@@ -191,9 +207,9 @@ internal fun GameBalanceDefinition.commonRarityProbability(): Double =
     1.0 - percentUncommonPerDay / 100.0 - percentRarePerDay / 100.0 - percentEpicPerDay / 100.0
 
 internal fun GameBalanceDefinition.cityProbability(): Double =
-    1.0 - (suburbanMeanPerDay + ruralMeanPerDay + mountainMeanPerDay) / cardsPerDay()
+    1.0 - (suburbanMeanPerDay + ruralMeanPerDay + mountainMeanPerDay + holographicSkyMeanPerDay) / cardsPerDay()
 
-internal fun GameBalanceDefinition.standardProbability(): Double = 1.0 - percentHoloMeanPerDay / 100.0
+internal fun GameBalanceDefinition.standardProbability(): Double = 1.0 - percentStampedPerDay / 100.0
 
 internal fun GameBalanceDefinition.rarityProbabilities(): Map<String, Double> = mapOf(
     "Common" to commonRarityProbability(),
@@ -202,14 +218,33 @@ internal fun GameBalanceDefinition.rarityProbabilities(): Map<String, Double> = 
     "Epic" to percentEpicPerDay / 100.0,
 )
 
+internal fun Map<String, Double>.withEpicBoost(bonusProbability: Double): Map<String, Double> {
+    val baseEpicProbability = this[EpicBoostConfig.EPIC_RARITY_LABEL] ?: return this
+    val boundedBonus = bonusProbability.coerceAtLeast(0.0)
+    if (boundedBonus <= 0.0) return this
+    val baseNonEpicProbability = (1.0 - baseEpicProbability).coerceAtLeast(0.0)
+    if (baseNonEpicProbability <= 0.0) return this
+
+    val boostedEpicProbability = (baseEpicProbability + boundedBonus).coerceAtMost(1.0)
+    val nonEpicScale = (1.0 - boostedEpicProbability) / baseNonEpicProbability
+    return mapValues { (rarity, probability) ->
+        if (rarity == EpicBoostConfig.EPIC_RARITY_LABEL) {
+            boostedEpicProbability
+        } else {
+            probability * nonEpicScale
+        }
+    }
+}
+
 internal fun GameBalanceDefinition.skyQualityProbabilities(): Map<String, Double> = mapOf(
     "city" to cityProbability(),
     "suburban" to suburbanMeanPerDay / cardsPerDay(),
     "rural" to ruralMeanPerDay / cardsPerDay(),
     "mountain" to mountainMeanPerDay / cardsPerDay(),
+    "holographic" to holographicSkyMeanPerDay / cardsPerDay(),
 )
 
 internal fun GameBalanceDefinition.finishProbabilities(): Map<String, Double> = mapOf(
     "standard" to standardProbability(),
-    "holographic" to percentHoloMeanPerDay / 100.0,
+    "stamped" to percentStampedPerDay / 100.0,
 )

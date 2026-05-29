@@ -8,7 +8,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -31,6 +33,7 @@ import fr.aumombelli.dstcg.model.ConstellationDetails
 import fr.aumombelli.dstcg.model.DeepSkyDetails
 import fr.aumombelli.dstcg.model.DisplayCard
 import fr.aumombelli.dstcg.model.DisplayCardVariant
+import fr.aumombelli.dstcg.model.SolarSystemDetails
 import fr.aumombelli.dstcg.model.LibraryCardItem
 import fr.aumombelli.dstcg.model.SkyEventDetails
 import fr.aumombelli.dstcg.model.StarDetails
@@ -182,19 +185,59 @@ internal fun CardFooter(
                 modifier = Modifier.testTag(CardExtensionLogoTag),
             )
         }
-        Column(
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.Bottom,
+        Box(
+            contentAlignment = Alignment.BottomEnd,
             modifier = Modifier
                 .weight(1f)
                 .wrapContentHeight(align = Alignment.Bottom),
         ) {
-            RarityStarBadge(
-                rarityLabel = displayCard.definition.rarityLabel,
+            val rarityBadgeSize = if (compact) 36.dp else 48.dp
+            val stampedSealBaseWidth = if (compact) 60.dp else 84.dp
+            val stampedSealBaseHeight = if (compact) 10.dp else 14.dp
+            val stampedSealWidth = stampedSealBaseWidth * 2f
+            val stampedSealHeight = stampedSealBaseHeight * 2f
+            val stampedSealVerticalGap = if (compact) 2.dp else 4.dp
+            val stampedSealHorizontalOverlap = if (compact) 4.dp else 6.dp
+            val stampedSealLeftShift =
+                (stampedSealBaseWidth + stampedSealBaseHeight) * RotatedStampHalfHorizontalFootprintFactor
+            val stampedSealHorizontalOffset =
+                stampedSealHorizontalOverlap - stampedSealLeftShift
+            val stampedSealVerticalOffset = -(stampedSealBaseHeight * 0.5f)
+            val clusterHeight = if (displayCard.activeVariant.isStamped) {
+                rarityBadgeSize + stampedSealVerticalGap + stampedSealBaseHeight
+            } else {
+                rarityBadgeSize
+            }
+
+            Box(
                 modifier = Modifier
-                    .size(if (compact) 36.dp else 48.dp)
-                    .testTag(rarityBadgeTag(displayCard.definition.rarityLabel)),
-            )
+                    .requiredSize(
+                        width = rarityBadgeSize,
+                        height = clusterHeight,
+                    ),
+            ) {
+                if (displayCard.activeVariant.isStamped) {
+                    StampedSealOverlay(
+                        modifier = Modifier
+                            .requiredSize(
+                                width = stampedSealWidth,
+                                height = stampedSealHeight,
+                            )
+                            .align(Alignment.TopEnd)
+                            .offset(
+                                x = stampedSealHorizontalOffset,
+                                y = stampedSealVerticalOffset,
+                            ),
+                    )
+                }
+                RarityStarBadge(
+                    rarityLabel = displayCard.definition.rarityLabel,
+                    modifier = Modifier
+                        .size(rarityBadgeSize)
+                        .align(Alignment.BottomEnd)
+                        .testTag(rarityBadgeTag(displayCard.definition.rarityLabel)),
+                )
+            }
         }
     }
 }
@@ -237,10 +280,17 @@ private fun FooterTextBlock(
 }
 
 @Composable
-internal fun DescriptionBlock(definition: CardDefinition) {
-    SectionCard(title = "Description") {
+internal fun DescriptionBlock(displayCard: DisplayCard) {
+    SectionCard(
+        title = "Description",
+        containerColor = if (displayCard.activeVariant.isHolographic) {
+            Color.Black.copy(alpha = 0.72f)
+        } else {
+            Color.Black.copy(alpha = 0.18f)
+        },
+    ) {
         Text(
-            text = definition.astronomy.shortDescription,
+            text = displayCard.definition.astronomy.shortDescription,
             color = Color(0xFFF3F7FB),
             style = MaterialTheme.typography.bodyLarge,
         )
@@ -293,10 +343,11 @@ internal fun MeasurementsSection(displayCard: DisplayCard) {
 @Composable
 internal fun SectionCard(
     title: String,
+    containerColor: Color = Color.Black.copy(alpha = 0.18f),
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Surface(
-        color = Color.Black.copy(alpha = 0.18f),
+        color = containerColor,
         shape = RoundedCornerShape(22.dp),
     ) {
         Column(
@@ -361,6 +412,10 @@ internal fun measurementItems(details: AstronomyDetails): List<Pair<String, Stri
     is SkyEventDetails -> details.visualSize?.let {
         listOf("Taille visuelle" to it.label)
     } ?: emptyList()
+    is SolarSystemDetails -> buildList {
+        details.distance?.let { add("Distance" to it.label) }
+        details.realSize?.let { add("Taille reelle" to it.label) }
+    }
 }
 
 internal fun buildVariantLine(variant: DisplayCardVariant): String = buildString {
@@ -372,6 +427,8 @@ internal fun buildVariantLine(variant: DisplayCardVariant): String = buildString
 internal fun rarityBadgeTag(rarityLabel: String): String =
     "astro-card-rarity-${rarityLabel.lowercase()}"
 
+private const val RotatedStampHalfHorizontalFootprintFactor = 0.35355338f
+
 internal fun fallbackDisplayCard(item: LibraryCardItem) =
     item.definition.toDisplayCard(
         extensionName = item.extensionName,
@@ -381,5 +438,6 @@ internal fun fallbackDisplayCard(item: LibraryCardItem) =
             finish = "standard",
             finishLabel = "Standard",
             isHolographic = false,
+            isStamped = false,
         ),
     )

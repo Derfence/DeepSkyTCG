@@ -21,9 +21,9 @@ class CatalogBalanceRuntimeTest {
 
         assertEquals(20.0, balance.cardsPerDay(), 0.000001)
         assertEquals(0.5, balance.commonRarityProbability(), 0.000001)
-        assertEquals(0.5, balance.cityProbability(), 0.000001)
+        assertEquals(0.4928571428571429, balance.cityProbability(), 0.000001)
         assertEquals(0.9, balance.finishProbabilities().getValue("standard"), 0.000001)
-        assertEquals(0.1, balance.finishProbabilities().getValue("holographic"), 0.000001)
+        assertEquals(0.1, balance.finishProbabilities().getValue("stamped"), 0.000001)
         assertEquals(0.3, balance.rarityProbabilities().getValue("Uncommon"), 0.000001)
         assertEquals(0.15, balance.skyQualityProbabilities().getValue("rural"), 0.000001)
         assertEquals(6L, balance.drawCooldownDuration().toHours())
@@ -44,6 +44,29 @@ class CatalogBalanceRuntimeTest {
 
         assertEquals(0.75, plan.rarityProbabilities.getValue("Rare"), 0.000001)
         assertEquals(0.25, plan.rarityProbabilities.getValue("Epic"), 0.000001)
+    }
+
+    @Test
+    fun `epic boosted rarity probabilities add three points and keep sum at one`() {
+        val runtime = calculator.resolve(
+            cards = listOf(
+                testCardDefinition(id = "C-1", extensionId = "balanced", rarityLabel = "Common"),
+                testCardDefinition(id = "U-1", extensionId = "balanced", rarityLabel = "Uncommon"),
+                testCardDefinition(id = "R-1", extensionId = "balanced", rarityLabel = "Rare"),
+                testCardDefinition(id = "E-1", extensionId = "balanced", rarityLabel = "Epic"),
+            ),
+            variantProfiles = testVariantProfiles(),
+            gameBalance = testGameBalanceDefinition(),
+        )
+
+        val boostedProbabilities = checkNotNull(runtime.extensionPlansById["balanced"])
+            .epicBoostedRarityProbabilities
+
+        assertEquals(0.08, boostedProbabilities.getValue("Epic"), 0.000001)
+        assertEquals(1.0, boostedProbabilities.values.sum(), 0.000001)
+        assertEquals(0.4842105263, boostedProbabilities.getValue("Common"), 0.000001)
+        assertEquals(0.2905263158, boostedProbabilities.getValue("Uncommon"), 0.000001)
+        assertEquals(0.1452631579, boostedProbabilities.getValue("Rare"), 0.000001)
     }
 
     @Test

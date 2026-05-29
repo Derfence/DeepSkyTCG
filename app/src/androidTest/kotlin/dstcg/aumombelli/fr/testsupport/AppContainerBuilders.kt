@@ -8,10 +8,13 @@ import fr.aumombelli.dstcg.data.AndroidTrustedTimeSource
 import fr.aumombelli.dstcg.data.CatalogGateway
 import fr.aumombelli.dstcg.data.CollectionGateway
 import fr.aumombelli.dstcg.data.CollectionRepository
+import fr.aumombelli.dstcg.data.CraftingRepository
 import fr.aumombelli.dstcg.data.EncryptedProgressEnvelopeSerializer
 import fr.aumombelli.dstcg.data.EquipmentRepository
 import fr.aumombelli.dstcg.data.GameCatalogRepository
+import fr.aumombelli.dstcg.data.HomeMenuNoveltyEvaluator
 import fr.aumombelli.dstcg.data.LocalPackEngine
+import fr.aumombelli.dstcg.data.MiniGamesRepository
 import fr.aumombelli.dstcg.data.PackGateway
 import fr.aumombelli.dstcg.data.PackRepository
 import fr.aumombelli.dstcg.data.ProgressLoadResult
@@ -19,14 +22,21 @@ import fr.aumombelli.dstcg.data.ProgressGateway
 import fr.aumombelli.dstcg.data.ProgressRepository
 import fr.aumombelli.dstcg.data.RandomEntropySource
 import fr.aumombelli.dstcg.data.StandaloneGameSettings
+import fr.aumombelli.dstcg.data.TradeRepository
+import fr.aumombelli.dstcg.model.AbsoluteMagnitudeMeasurement
 import fr.aumombelli.dstcg.model.CardDefinition
 import fr.aumombelli.dstcg.model.CardFinishDefinition
+import fr.aumombelli.dstcg.model.DeepSkyDetails
 import fr.aumombelli.dstcg.model.DrawPackResponse
 import fr.aumombelli.dstcg.model.EquipmentCardDefinition
 import fr.aumombelli.dstcg.model.EquipmentSettingsDefinition
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.GameBalanceDefinition
+import fr.aumombelli.dstcg.model.HomeMenuNoveltyState
+import fr.aumombelli.dstcg.model.LibraryCardNoveltyState
+import fr.aumombelli.dstcg.model.LightYearMeasurement
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
+import fr.aumombelli.dstcg.model.OwnedCardEntry
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.OwnedEquipmentCardEntry
 import fr.aumombelli.dstcg.model.OwnedEquipmentInventory
@@ -76,9 +86,17 @@ internal fun offlineMainActivityTestAppContainer(
         progressCipher = AesGcmProgressCipher(keyProvider = ::newTestSecretKey),
     )
     val collectionRepository = CollectionRepository(progressRepository)
+    val craftingRepository = CraftingRepository(
+        catalogRepository = catalogRepository,
+        progressRepository = progressRepository,
+    )
+    val homeMenuNoveltyEvaluator = HomeMenuNoveltyEvaluator(
+        catalogRepository = catalogRepository,
+    )
     val equipmentRepository = EquipmentRepository(
         progressRepository = progressRepository,
         catalogRepository = catalogRepository,
+        homeMenuNoveltyEvaluator = homeMenuNoveltyEvaluator,
     )
     val packRepository = PackRepository(
         progressRepository = progressRepository,
@@ -87,14 +105,27 @@ internal fun offlineMainActivityTestAppContainer(
             catalogRepository = catalogRepository,
             settings = gameSettings,
         ),
+        homeMenuNoveltyEvaluator = homeMenuNoveltyEvaluator,
+    )
+    val miniGamesRepository = MiniGamesRepository(
+        progressRepository = progressRepository,
+        catalogRepository = catalogRepository,
+        settings = gameSettings,
+    )
+    val tradeRepository = TradeRepository(
+        catalogRepository = catalogRepository,
+        progressRepository = progressRepository,
     )
 
     return AppContainer(
         progressRepository = progressRepository,
         catalogRepository = catalogRepository,
         collectionRepository = collectionRepository,
+        craftingRepository = craftingRepository,
         equipmentRepository = equipmentRepository,
         packRepository = packRepository,
+        miniGamesRepository = miniGamesRepository,
+        tradeRepository = tradeRepository,
         gameSettings = gameSettings,
     )
 }
@@ -122,24 +153,115 @@ internal fun backNavigationTestAppContainer(): AppContainer {
 internal fun badgeCelebrationBackNavigationTestAppContainer(): AppContainer {
     return navigationTestAppContainer(
         initialCollection = OwnedCollection(),
+        initialOnboardingStep = NewPlayerOnboardingStep.OpenFirstPackMenu,
+    )
+}
+
+internal fun libraryVariantBackNavigationTestAppContainer(): AppContainer {
+    return navigationTestAppContainer(
+        initialCollection = OwnedCollection(
+            cards = mapOf(
+                "ALP-001" to fr.aumombelli.dstcg.model.OwnedCardEntry(
+                    totalOwned = 1,
+                    variants = listOf(
+                        OwnedVariantCount(
+                            skyQuality = "city",
+                            finish = "standard",
+                            count = 1,
+                        ),
+                    ),
+                ),
+            ),
+        ),
+        initialOnboardingStep = NewPlayerOnboardingStep.LearnLibraryVariants,
+    )
+}
+
+internal fun welcomeBackNavigationTestAppContainer(): AppContainer {
+    return navigationTestAppContainer(
+        initialCollection = OwnedCollection(),
+        initialOnboardingStep = NewPlayerOnboardingStep.ShowWelcomeIntro,
+    )
+}
+
+internal fun homeMenuNoveltyTestAppContainer(): AppContainer {
+    return navigationTestAppContainer(
+        initialCollection = OwnedCollection(
+            cards = mapOf(
+                "ALP-001" to fr.aumombelli.dstcg.model.OwnedCardEntry(
+                    totalOwned = 1,
+                    variants = listOf(
+                        OwnedVariantCount(
+                            skyQuality = "city",
+                            finish = "standard",
+                            count = 1,
+                        ),
+                    ),
+                ),
+            ),
+        ),
+        unlockEquipmentMenu = true,
+        homeMenuNoveltyState = HomeMenuNoveltyState(
+            library = true,
+            equipment = true,
+            badgeBook = true,
+        ),
+        libraryCardNoveltyState = LibraryCardNoveltyState(
+            newCardIds = setOf("ALP-001"),
+        ),
+    )
+}
+
+internal fun miniGamesMenuTestAppContainer(
+    initialOnboardingStep: NewPlayerOnboardingStep? = null,
+): AppContainer {
+    val cardIds = (1..10).map { index -> "ALP-${index.toString().padStart(3, '0')}" }
+    return navigationTestAppContainer(
+        initialCollection = OwnedCollection(
+            cards = cardIds.associateWith {
+                OwnedCardEntry(
+                    totalOwned = 1,
+                    variants = listOf(
+                        OwnedVariantCount(
+                            skyQuality = "city",
+                            finish = "standard",
+                            count = 1,
+                        ),
+                    ),
+                )
+            },
+        ),
+        miniGamesMenuUnlocked = true,
+        homeMenuNoveltyState = HomeMenuNoveltyState(
+            miniGames = true,
+        ),
+        initialOnboardingStep = initialOnboardingStep,
     )
 }
 
 private fun navigationTestAppContainer(
     initialCollection: OwnedCollection,
     unlockEquipmentMenu: Boolean = false,
+    miniGamesMenuUnlocked: Boolean = false,
+    initialOnboardingStep: NewPlayerOnboardingStep? = null,
+    homeMenuNoveltyState: HomeMenuNoveltyState = HomeMenuNoveltyState(),
+    libraryCardNoveltyState: LibraryCardNoveltyState = LibraryCardNoveltyState(),
 ): AppContainer {
     val extension = ExtensionDefinition(
         id = "astronomes-en-herbe",
         name = "Astronomes en herbe",
         coverImageRef = "cover",
     )
-    val cardDefinition = testCardDefinition("ALP-001")
+    val cardDefinitions = initialCollection.cards.keys
+        .ifEmpty { setOf("ALP-001") }
+        .sorted()
+        .map(::navigationCardDefinition)
     val progressRepository = MutableProgressGateway(
         initialProgress = StandaloneProgress(
             collection = initialCollection,
             rechargeState = PackRechargeState(),
-            newPlayerOnboardingStep = if (initialCollection.cards.isEmpty()) {
+            openedPackCount = if (initialCollection.cards.isEmpty()) 0 else 1,
+            newPlayerOnboardingStep = initialOnboardingStep ?: if (initialCollection.cards.isEmpty()) {
                 NewPlayerOnboardingStep.OpenFirstPackMenu
             } else {
                 NewPlayerOnboardingStep.Completed
@@ -153,13 +275,19 @@ private fun navigationTestAppContainer(
             } else {
                 OwnedEquipmentInventory()
             },
+            homeMenuNoveltyState = homeMenuNoveltyState,
+            libraryCardNoveltyState = libraryCardNoveltyState,
+            miniGamesMenuUnlocked = miniGamesMenuUnlocked,
         ),
     )
     val collectionRepository = NavigationCollectionGateway(progressRepository)
     val catalogRepository = NavigationCatalogGateway(
         extensions = listOf(extension),
-        cards = listOf(cardDefinition),
+        cards = cardDefinitions,
         variantProfiles = listOf(navigationVariantProfile()),
+    )
+    val gameSettings = StandaloneGameSettings(
+        entropySource = RandomEntropySource(Random(12345)),
     )
     val packResponse = DrawPackResponse.fromCards(
         extensionId = extension.id,
@@ -182,13 +310,56 @@ private fun navigationTestAppContainer(
         progressRepository = progressRepository,
         catalogRepository = catalogRepository,
         collectionRepository = collectionRepository,
+        craftingRepository = CraftingRepository(
+            catalogRepository = catalogRepository,
+            progressRepository = progressRepository,
+        ),
         equipmentRepository = EquipmentRepository(
             progressRepository = progressRepository,
             catalogRepository = catalogRepository,
+            homeMenuNoveltyEvaluator = HomeMenuNoveltyEvaluator(catalogRepository),
         ),
         packRepository = NavigationPackGateway(progressRepository, packResponse),
-        gameSettings = StandaloneGameSettings(
-            entropySource = RandomEntropySource(Random(12345)),
+        miniGamesRepository = MiniGamesRepository(
+            progressRepository = progressRepository,
+            catalogRepository = catalogRepository,
+            settings = gameSettings,
+        ),
+        tradeRepository = TradeRepository(
+            catalogRepository = catalogRepository,
+            progressRepository = progressRepository,
+        ),
+        gameSettings = gameSettings,
+    )
+}
+
+private fun navigationCardDefinition(cardId: String): CardDefinition {
+    val index = cardId.substringAfterLast("-").toIntOrNull() ?: 1
+    val base = testCardDefinition(
+        id = cardId,
+        name = if (index == 1) "Nebuleuse d'Orion" else "Carte $index",
+        catalogNumber = cardId,
+    )
+    val deepSkyDetails = base.astronomy.details as? DeepSkyDetails ?: return base
+    val distance = 1_000.0 + index * 125.0
+    val realSize = 15.0 + index * 2.0
+    val absoluteMagnitude = -5.0 + index * 0.25
+    return base.copy(
+        astronomy = base.astronomy.copy(
+            details = deepSkyDetails.copy(
+                distance = LightYearMeasurement(
+                    lightYears = distance,
+                    label = "${distance.toInt()} annees-lumiere",
+                ),
+                realSize = LightYearMeasurement(
+                    lightYears = realSize,
+                    label = "${realSize.toInt()} annees-lumiere",
+                ),
+                absoluteMagnitude = AbsoluteMagnitudeMeasurement(
+                    value = absoluteMagnitude,
+                    label = absoluteMagnitude.toString(),
+                ),
+            ),
         ),
     )
 }
@@ -208,10 +379,15 @@ private class MutableProgressGateway(
         this.progress = progress
     }
 
+    override suspend fun updateProgress(transform: (StandaloneProgress) -> StandaloneProgress) {
+        progress = transform(progress)
+    }
+
     override suspend fun resetProgress() {
         progress = StandaloneProgress(
             collection = OwnedCollection(),
             rechargeState = PackRechargeState(),
+            newPlayerOnboardingStep = NewPlayerOnboardingStep.ShowWelcomeIntro,
         )
     }
 }
@@ -220,9 +396,14 @@ private fun navigationVariantProfile(): VariantProfile = VariantProfile(
     id = "observation-default",
     skyQualities = listOf(
         SkyQualityDefinition(code = "city", label = "Ville"),
+        SkyQualityDefinition(code = "suburban", label = "Periurbain"),
+        SkyQualityDefinition(code = "rural", label = "Campagne"),
+        SkyQualityDefinition(code = "mountain", label = "Montagne"),
+        SkyQualityDefinition(code = "holographic", label = "Holographique", isHolographic = true),
     ),
     finishes = listOf(
         CardFinishDefinition(code = "standard", label = "Standard"),
+        CardFinishDefinition(code = "stamped", label = "Tamponnee", isStamped = true),
     ),
 )
 
@@ -269,7 +450,10 @@ private class NavigationPackGateway(
         packFlow.value = null
     }
 
-    override suspend fun openPack(extensionId: String): DrawPackResponse {
+    override suspend fun openPack(
+        extensionId: String,
+        isEpicBoosted: Boolean,
+    ): DrawPackResponse {
         val progress = (progressRepository.loadProgress() as ProgressLoadResult.Ok).progress
         val mergedCollection = progress.collection.mergePackCards(openPackResponse.cards)
         progressRepository.saveProgress(

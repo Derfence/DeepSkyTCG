@@ -1,7 +1,11 @@
 package fr.aumombelli.dstcg
 
+import fr.aumombelli.dstcg.feature.badges.BadgeCenterMarkKind
+import fr.aumombelli.dstcg.feature.badges.BadgeRequirementType
 import fr.aumombelli.dstcg.feature.badges.buildBadgeBookSections
 import fr.aumombelli.dstcg.feature.badges.buildNewlyUnlockedBadges
+import fr.aumombelli.dstcg.model.EquipmentBadgeProgress
+import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.OwnedVariantCount
@@ -19,6 +23,7 @@ class BadgeAssemblerTest {
         val section = buildBadgeBookSections(
             extensions = listOf(ExtensionDefinition("astro", "Astro", "cover")),
             cards = listOf(testCardDefinition("AST-001", extensionId = "astro")),
+            equipmentCards = emptyList(),
             variantProfiles = testVariantProfiles(),
             progress = badgeProgress(
                 collection = ownedCollectionWithVariants(
@@ -37,23 +42,24 @@ class BadgeAssemblerTest {
     }
 
     @Test
-    fun `holographic city card unlocks holographic badge but not mountain holographic`() {
+    fun `stamped city card unlocks stamped badge but not holo stamped badge`() {
         val section = buildBadgeBookSections(
             extensions = listOf(ExtensionDefinition("astro", "Astro", "cover")),
             cards = listOf(testCardDefinition("AST-001", extensionId = "astro")),
+            equipmentCards = emptyList(),
             variantProfiles = testVariantProfiles(),
             progress = badgeProgress(
                 collection = ownedCollectionWithVariants(
                     "AST-001",
-                    OwnedVariantCount("city", "holographic", 1),
+                    OwnedVariantCount("city", "stamped", 1),
                 ),
             ),
         ).first { it.extensionId == "astro" }
 
         val badgesById = section.badges.associateBy { it.id }
 
-        assertTrue(checkNotNull(badgesById["astro::finish::holographic"]).isUnlocked)
-        assertFalse(checkNotNull(badgesById["astro::finish::mountain-holographic"]).isUnlocked)
+        assertTrue(checkNotNull(badgesById["astro::finish::stamped"]).isUnlocked)
+        assertFalse(checkNotNull(badgesById["astro::finish::holographic-stamped"]).isUnlocked)
     }
 
     @Test
@@ -64,51 +70,55 @@ class BadgeAssemblerTest {
                 testCardDefinition("AST-001", extensionId = "astro"),
                 testCardDefinition("AST-002", extensionId = "astro"),
             ),
+            equipmentCards = emptyList(),
             variantProfiles = testVariantProfiles(),
             progress = badgeProgress(
                 collection = OwnedCollection(
                     cards = sortedMapOf(
                         "AST-001" to fr.aumombelli.dstcg.model.OwnedCardEntry(
                             totalOwned = 1,
-                            variants = listOf(OwnedVariantCount("mountain", "holographic", 1)),
+                            variants = listOf(OwnedVariantCount("holographic", "stamped", 1)),
                         ),
                         "AST-002" to fr.aumombelli.dstcg.model.OwnedCardEntry(
                             totalOwned = 1,
-                            variants = listOf(OwnedVariantCount("mountain", "standard", 1)),
+                            variants = listOf(OwnedVariantCount("holographic", "standard", 1)),
                         ),
                     ),
                 ),
             ),
         ).first { it.extensionId == "astro" }
 
-        val holographicBadge = section.badges.first { it.id == "astro::finish::holographic" }
-        val mountainHolographicBadge = section.badges.first {
-            it.id == "astro::finish::mountain-holographic"
+        val stampedBadge = section.badges.first { it.id == "astro::finish::stamped" }
+        val holographicStampedBadge = section.badges.first {
+            it.id == "astro::finish::holographic-stamped"
         }
 
-        assertEquals("1 / 2 cartes valides", holographicBadge.progress.label)
-        assertFalse(holographicBadge.isUnlocked)
-        assertFalse(mountainHolographicBadge.isUnlocked)
+        assertEquals("1 / 2 cartes valides", stampedBadge.progress.label)
+        assertFalse(stampedBadge.isUnlocked)
+        assertFalse(holographicStampedBadge.isUnlocked)
         assertEquals(section.badges.count { it.isUnlocked }, section.unlockedCount)
     }
 
     @Test
-    fun `perfect collection badge unlocks only when all eight variants are owned`() {
+    fun `perfect collection badge unlocks only when all ten variants are owned`() {
         val section = buildBadgeBookSections(
             extensions = listOf(ExtensionDefinition("astro", "Astro", "cover")),
             cards = listOf(testCardDefinition("AST-001", extensionId = "astro")),
+            equipmentCards = emptyList(),
             variantProfiles = testVariantProfiles(),
             progress = badgeProgress(
                 collection = ownedCollectionWithVariants(
                     "AST-001",
                     OwnedVariantCount("city", "standard", 1),
-                    OwnedVariantCount("city", "holographic", 1),
+                    OwnedVariantCount("city", "stamped", 1),
                     OwnedVariantCount("suburban", "standard", 1),
-                    OwnedVariantCount("suburban", "holographic", 1),
+                    OwnedVariantCount("suburban", "stamped", 1),
                     OwnedVariantCount("rural", "standard", 1),
-                    OwnedVariantCount("rural", "holographic", 1),
+                    OwnedVariantCount("rural", "stamped", 1),
                     OwnedVariantCount("mountain", "standard", 1),
-                    OwnedVariantCount("mountain", "holographic", 1),
+                    OwnedVariantCount("mountain", "stamped", 1),
+                    OwnedVariantCount("holographic", "standard", 1),
+                    OwnedVariantCount("holographic", "stamped", 1),
                 ),
             ),
         ).first { it.extensionId == "astro" }
@@ -124,20 +134,22 @@ class BadgeAssemblerTest {
         val newlyUnlockedBadges = buildNewlyUnlockedBadges(
             extensions = listOf(ExtensionDefinition("astro", "Astro", "cover")),
             cards = listOf(testCardDefinition("AST-001", extensionId = "astro")),
+            equipmentCards = emptyList(),
             variantProfiles = testVariantProfiles(),
             beforeProgress = badgeProgress(OwnedCollection()),
             afterProgress = badgeProgress(
                 collection = ownedCollectionWithVariants(
                     "AST-001",
-                    OwnedVariantCount("mountain", "holographic", 1),
+                    OwnedVariantCount("holographic", "stamped", 1),
                 ),
             ),
         )
 
         assertEquals(
             listOf(
-                "astro::finish::mountain-holographic",
-                "astro::finish::holographic",
+                "astro::finish::holographic-stamped",
+                "astro::finish::stamped",
+                "astro::sky::holographic",
                 "astro::sky::mountain",
                 "astro::sky::rural",
                 "astro::sky::suburban",
@@ -152,6 +164,7 @@ class BadgeAssemblerTest {
         val sections = buildBadgeBookSections(
             extensions = listOf(ExtensionDefinition("astro", "Astro", "cover")),
             cards = listOf(testCardDefinition("AST-001", extensionId = "astro")),
+            equipmentCards = emptyList(),
             variantProfiles = testVariantProfiles(),
             progress = badgeProgress(
                 collection = OwnedCollection(),
@@ -160,7 +173,7 @@ class BadgeAssemblerTest {
         )
 
         val generalSection = sections.first()
-        val firstPackBadge = generalSection.badges.single()
+        val firstPackBadge = generalSection.badges.first()
 
         assertEquals("general", generalSection.extensionId)
         assertEquals("Général", generalSection.extensionName)
@@ -168,11 +181,156 @@ class BadgeAssemblerTest {
         assertEquals("1 / 1 pack ouvert", firstPackBadge.progress.label)
     }
 
+    @Test
+    fun `general section lists equipment badges after first pack badge`() {
+        val sections = buildBadgeBookSections(
+            extensions = emptyList(),
+            cards = emptyList(),
+            equipmentCards = equipmentCatalog(),
+            variantProfiles = testVariantProfiles(),
+            progress = badgeProgress(collection = OwnedCollection()),
+        )
+
+        assertEquals(
+            listOf(
+                "general::pack::first-opened",
+                "general::pack::epic-boost-opened",
+                "general::equipment::all-used-once",
+                "general::equipment::three-types-active",
+                "general::equipment::three-level-three-active",
+                "general::equipment::packs-affected-100",
+                "general::equipment::activations-100",
+            ),
+            sections.first().badges.map { it.id },
+        )
+    }
+
+    @Test
+    fun `general section contains boosted pack badge in second position`() {
+        val sections = buildBadgeBookSections(
+            extensions = emptyList(),
+            cards = emptyList(),
+            equipmentCards = emptyList(),
+            variantProfiles = testVariantProfiles(),
+            progress = badgeProgress(
+                collection = OwnedCollection(),
+                hasOpenedEpicBoostedPack = true,
+            ),
+        )
+
+        val boostedPackBadge = sections.first().badges[1]
+
+        assertEquals("general::pack::epic-boost-opened", boostedPackBadge.id)
+        assertEquals(BadgeRequirementType.EpicBoostedPackOpened, boostedPackBadge.requirementType)
+        assertEquals(BadgeCenterMarkKind.GeneralLogo, boostedPackBadge.centerMarkKind)
+        assertTrue(boostedPackBadge.isUnlocked)
+        assertEquals("1 / 1 signe aperçu", boostedPackBadge.progress.label)
+    }
+
+    @Test
+    fun `boosted pack badge unlocks when progress records a boosted pack opening`() {
+        val newlyUnlockedBadges = buildNewlyUnlockedBadges(
+            extensions = emptyList(),
+            cards = emptyList(),
+            equipmentCards = emptyList(),
+            variantProfiles = testVariantProfiles(),
+            beforeProgress = badgeProgress(collection = OwnedCollection()),
+            afterProgress = badgeProgress(
+                collection = OwnedCollection(),
+                hasOpenedEpicBoostedPack = true,
+            ),
+        )
+
+        assertEquals(
+            listOf("general::pack::epic-boost-opened"),
+            newlyUnlockedBadges.map { it.id },
+        )
+    }
+
+    @Test
+    fun `all equipment used once badge unlocks only after every equipment card was activated`() {
+        val equipmentCards = equipmentCatalog()
+        val progress = badgeProgress(
+            collection = OwnedCollection(),
+            equipmentInventory = fr.aumombelli.dstcg.model.OwnedEquipmentInventory(
+                cards = equipmentCards.associate { definition ->
+                    definition.id to fr.aumombelli.dstcg.model.OwnedEquipmentCardEntry(
+                        countOwned = 0,
+                        activationCount = 1,
+                    )
+                },
+            ),
+        )
+
+        val generalSection = buildBadgeBookSections(
+            extensions = emptyList(),
+            cards = emptyList(),
+            equipmentCards = equipmentCards,
+            variantProfiles = testVariantProfiles(),
+            progress = progress,
+        ).first()
+        val badge = generalSection.badges.first { it.id == "general::equipment::all-used-once" }
+
+        assertTrue(badge.isUnlocked)
+        assertEquals("9 / 9 équipements utilisés", badge.progress.label)
+    }
+
+    @Test
+    fun `equipment activations badge sums every activation count`() {
+        val equipmentCards = equipmentCatalog()
+        val progress = badgeProgress(
+            collection = OwnedCollection(),
+            equipmentInventory = fr.aumombelli.dstcg.model.OwnedEquipmentInventory(
+                cards = mapOf(
+                    equipmentCards[0].id to fr.aumombelli.dstcg.model.OwnedEquipmentCardEntry(
+                        countOwned = 0,
+                        activationCount = 42,
+                    ),
+                    equipmentCards[1].id to fr.aumombelli.dstcg.model.OwnedEquipmentCardEntry(
+                        countOwned = 0,
+                        activationCount = 58,
+                    ),
+                ),
+            ),
+        )
+
+        val generalSection = buildBadgeBookSections(
+            extensions = emptyList(),
+            cards = emptyList(),
+            equipmentCards = equipmentCards,
+            variantProfiles = testVariantProfiles(),
+            progress = progress,
+        ).first()
+        val badge = generalSection.badges.first { it.id == "general::equipment::activations-100" }
+
+        assertTrue(badge.isUnlocked)
+        assertEquals("100 / 100 équipements utilisés", badge.progress.label)
+    }
+
     private fun badgeProgress(
         collection: OwnedCollection,
         openedPackCount: Int = 0,
+        hasOpenedEpicBoostedPack: Boolean = false,
+        equipmentInventory: fr.aumombelli.dstcg.model.OwnedEquipmentInventory =
+            fr.aumombelli.dstcg.model.OwnedEquipmentInventory(),
+        equipmentBadgeProgress: EquipmentBadgeProgress = EquipmentBadgeProgress(),
     ): StandaloneProgress = StandaloneProgress(
         collection = collection,
         openedPackCount = openedPackCount,
+        hasOpenedEpicBoostedPack = hasOpenedEpicBoostedPack,
+        equipmentInventory = equipmentInventory,
+        equipmentBadgeProgress = equipmentBadgeProgress,
+    )
+
+    private fun equipmentCatalog() = listOf(
+        testEquipmentCardDefinition(id = "observatory-beginner", type = EquipmentType.Observatory, level = 1),
+        testEquipmentCardDefinition(id = "observatory-advanced", type = EquipmentType.Observatory, level = 2),
+        testEquipmentCardDefinition(id = "observatory-master", type = EquipmentType.Observatory, level = 3),
+        testEquipmentCardDefinition(id = "telescope-beginner", type = EquipmentType.Telescope, level = 1),
+        testEquipmentCardDefinition(id = "telescope-advanced", type = EquipmentType.Telescope, level = 2),
+        testEquipmentCardDefinition(id = "telescope-master", type = EquipmentType.Telescope, level = 3),
+        testEquipmentCardDefinition(id = "mount-beginner", type = EquipmentType.Mount, level = 1),
+        testEquipmentCardDefinition(id = "mount-advanced", type = EquipmentType.Mount, level = 2),
+        testEquipmentCardDefinition(id = "mount-master", type = EquipmentType.Mount, level = 3),
     )
 }

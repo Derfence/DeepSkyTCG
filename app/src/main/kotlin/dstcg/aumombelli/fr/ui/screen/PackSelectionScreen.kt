@@ -24,6 +24,9 @@ fun PackSelectionScreen(
     sceneVisible: Boolean = true,
     extensionListVisible: Boolean = true,
     interactionsEnabled: Boolean = true,
+    backgroundOnly: Boolean = false,
+    backEnabled: Boolean = true,
+    onBack: (() -> Unit)? = null,
 ) {
     PackSelectionFeatureScreen(
         state = state,
@@ -32,6 +35,7 @@ fun PackSelectionScreen(
         onSelectBooster = onSelectBooster,
         onOpenPack = onOpenPack,
         onPackRevealReady = onPackRevealReady,
+        onBack = onBack,
         onSelectedBoosterBoundsChanged = onSelectedBoosterBoundsChanged,
         onCoachmarkTargetBoundsChanged = onCoachmarkTargetBoundsChanged,
         packReadySignal = packReadySignal,
@@ -40,5 +44,7 @@ fun PackSelectionScreen(
         sceneVisible = sceneVisible,
         extensionListVisible = extensionListVisible,
         interactionsEnabled = interactionsEnabled,
+        backgroundOnly = backgroundOnly,
+        backEnabled = backEnabled,
     )
 }

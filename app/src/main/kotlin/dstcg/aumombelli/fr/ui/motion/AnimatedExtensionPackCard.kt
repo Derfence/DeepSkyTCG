@@ -4,7 +4,6 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -15,15 +14,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import fr.aumombelli.dstcg.ui.theme.rarityBadgeStyle
 import kotlinx.coroutines.delay
 
 @Composable
@@ -34,8 +34,17 @@ fun AnimatedExtensionPackCard(
     animationKey: Any? = Unit,
     animationsEnabled: Boolean = true,
     revealProgressOverride: Float? = null,
+    decorSeed: Any? = Unit,
+    showContainerChrome: Boolean = true,
+    isEpicBoosted: Boolean = false,
 ) {
     val spec = remember(extensionId) { extensionAnimationSpec(extensionId) }
+    val decorSpec = remember(extensionId, decorSeed, isEpicBoosted) {
+        packCardDecorSpec(
+            seed = extensionId.hashCode() * 31 + (decorSeed?.hashCode() ?: 0),
+            isEpicBoosted = isEpicBoosted,
+        )
+    }
     val lineProgress = remember(extensionId, animationKey) { Animatable(0f) }
     val neutralProgress = remember(extensionId, animationKey) { Animatable(0f) }
     var animationStarted by remember(extensionId, animationKey) { mutableStateOf(false) }
@@ -57,6 +66,13 @@ fun AnimatedExtensionPackCard(
                 )
             }
 
+            ExtensionAnimationStyle.Planet -> {
+                lineProgress.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(durationMillis = 760, easing = FastOutSlowInEasing),
+                )
+            }
+
             ExtensionAnimationStyle.NeutralSky -> {
                 neutralProgress.animateTo(
                     targetValue = 1f,
@@ -66,64 +82,226 @@ fun AnimatedExtensionPackCard(
         }
     }
 
-    MotionCard(modifier = modifier) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color(0xFF152841),
-                            Color(0xFF0D1827),
-                            Color(0xFF050912),
-                        ),
+    val revealProgress = revealProgressOverride ?: when (spec.style) {
+        ExtensionAnimationStyle.BigDipper -> lineProgress.value
+        ExtensionAnimationStyle.Planet -> lineProgress.value
+        ExtensionAnimationStyle.NeutralSky -> neutralProgress.value
+    }
+
+    if (showContainerChrome) {
+        MotionCard(modifier = modifier) {
+            AnimatedExtensionPackCardContent(
+                spec = spec,
+                decorSpec = decorSpec,
+                revealProgress = revealProgress,
+                lineProgress = revealProgressOverride ?: lineProgress.value,
+                neutralProgress = revealProgressOverride ?: neutralProgress.value,
+            )
+        }
+    } else {
+        Box(modifier = modifier) {
+            AnimatedExtensionPackCardContent(
+                spec = spec,
+                decorSpec = decorSpec,
+                revealProgress = revealProgress,
+                lineProgress = revealProgressOverride ?: lineProgress.value,
+                neutralProgress = revealProgressOverride ?: neutralProgress.value,
+            )
+        }
+    }
+}
+
+@Composable
+internal fun GenericPackCardShell(
+    decorSeed: Any? = Unit,
+    revealProgress: Float = 1f,
+    modifier: Modifier = Modifier,
+    contentPadding: Dp = 14.dp,
+    isEpicBoosted: Boolean = false,
+) {
+    val decorSpec = remember(decorSeed, isEpicBoosted) {
+        packCardDecorSpec(
+            seed = decorSeed?.hashCode() ?: 0,
+            isEpicBoosted = isEpicBoosted,
+        )
+    }
+
+    PackCardShellCanvas(
+        decorSpec = decorSpec,
+        revealProgress = revealProgress,
+        modifier = modifier
+            .fillMaxSize()
+            .padding(contentPadding),
+    )
+}
+
+@Composable
+private fun AnimatedExtensionPackCardContent(
+    spec: ExtensionAnimationSpec,
+    decorSpec: PackCardDecorSpec,
+    revealProgress: Float,
+    lineProgress: Float,
+    neutralProgress: Float,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(14.dp),
+    ) {
+        PackCardShellCanvas(
+            decorSpec = decorSpec,
+            revealProgress = revealProgress,
+            modifier = Modifier.fillMaxSize(),
+        )
+
+        if (spec.style == ExtensionAnimationStyle.BigDipper || spec.style == ExtensionAnimationStyle.Planet) {
+            ExtensionConstellationOverlay(
+                spec = spec,
+                lineProgress = lineProgress,
+                isReversing = false,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 18.dp, vertical = 24.dp),
+                tag = null,
+            )
+        } else {
+            NeutralPackGlyph(
+                progress = neutralProgress,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 18.dp, vertical = 22.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun PackCardShellCanvas(
+    decorSpec: PackCardDecorSpec,
+    revealProgress: Float,
+    modifier: Modifier = Modifier,
+) {
+    Canvas(modifier = modifier) {
+        val toothDepth = size.height * decorSpec.tearBand.toothDepthFraction
+        val topEdge = buildPackSawtoothEdgePoints(
+            width = size.width,
+            baselineY = toothDepth,
+            tipY = 0f,
+            toothCount = decorSpec.tearBand.toothCount,
+        )
+        val bottomEdge = buildPackSawtoothEdgePoints(
+            width = size.width,
+            baselineY = size.height - toothDepth,
+            tipY = size.height,
+            toothCount = decorSpec.tearBand.toothCount,
+        )
+        val packOutline = buildPackSawtoothOutlinePath(
+            topEdge = topEdge,
+            bottomEdge = bottomEdge,
+        )
+
+        clipPath(packOutline) {
+            drawRect(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFF182B45),
+                        Color(0xFF08111D),
                     ),
-                )
-                .padding(14.dp),
-        ) {
-            Canvas(modifier = Modifier.fillMaxSize()) {
-                drawRoundRect(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.12f),
-                            Color.Transparent,
-                            Color.Black.copy(alpha = 0.18f),
-                        ),
+                ),
+            )
+            drawRect(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color(0x553B72B7),
+                        Color.Transparent,
                     ),
-                    cornerRadius = CornerRadius(size.minDimension * 0.12f, size.minDimension * 0.12f),
+                    center = Offset(size.width * 0.5f, size.height * 0.5f),
+                    radius = size.minDimension * 0.72f,
+                ),
+            )
+            drawRect(
+                brush = Brush.verticalGradient(
+                    colors = listOf(
+                        Color.Black.copy(alpha = 0.18f),
+                        Color.Transparent,
+                        Color.White.copy(alpha = 0.08f),
+                    ),
+                ),
+            )
+
+            for (i in 0 until topEdge.size - 2 step 2) {
+                val p1 = topEdge[i]
+                val p2 = topEdge[i + 1]
+                val p3 = topEdge[i + 2]
+                drawPath(
+                    path = Path().apply {
+                        moveTo(p1.x, p1.y)
+                        lineTo(p2.x, p2.y)
+                        lineTo(p3.x, p3.y)
+                        close()
+                    },
+                    color = Color.Black.copy(alpha = 0.2f),
                 )
-                drawRoundRect(
-                    color = Color(0x55F3D59F),
-                    cornerRadius = CornerRadius(size.minDimension * 0.12f, size.minDimension * 0.12f),
-                    style = Stroke(width = size.minDimension * 0.018f),
-                )
-                drawRoundRect(
+            }
+            for (i in 0 until bottomEdge.size - 2 step 2) {
+                val p1 = bottomEdge[i]
+                val p2 = bottomEdge[i + 1]
+                val p3 = bottomEdge[i + 2]
+                drawPath(
+                    path = Path().apply {
+                        moveTo(p1.x, p1.y)
+                        lineTo(p2.x, p2.y)
+                        lineTo(p3.x, p3.y)
+                        close()
+                    },
                     color = Color.White.copy(alpha = 0.08f),
-                    topLeft = Offset(size.width * 0.08f, size.height * 0.08f),
-                    size = Size(size.width * 0.84f, size.height * 0.16f),
-                    cornerRadius = CornerRadius(size.minDimension, size.minDimension),
                 )
             }
 
-            if (spec.style == ExtensionAnimationStyle.BigDipper) {
-                ExtensionConstellationOverlay(
-                    spec = spec,
-                    lineProgress = revealProgressOverride ?: lineProgress.value,
-                    isReversing = false,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 18.dp, vertical = 24.dp),
-                    tag = null,
+            decorSpec.rarityStars.forEachIndexed { index, star ->
+                val style = rarityBadgeStyle(star.rarityLabel)
+                val staggeredReveal = ((revealProgress - index * 0.025f) / 0.55f).coerceIn(0f, 1f)
+                if (staggeredReveal <= 0f) return@forEachIndexed
+
+                val center = Offset(
+                    x = size.width * star.xFraction,
+                    y = size.height * star.yFraction,
                 )
-            } else {
-                NeutralPackGlyph(
-                    progress = revealProgressOverride ?: neutralProgress.value,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 18.dp, vertical = 22.dp),
+                val outerRadius = size.minDimension * star.radiusFraction
+                val alpha = staggeredReveal * 0.96f
+                drawPath(
+                    path = starPath(
+                        center = center,
+                        points = style.branchCount,
+                        outerRadius = outerRadius,
+                        innerRadius = outerRadius * 0.42f,
+                    ),
+                    color = style.color.copy(alpha = alpha),
+                    style = Fill,
                 )
             }
+
+            drawLine(
+                color = rarityBadgeStyle("Rare").color.copy(alpha = 0.24f),
+                start = Offset(topEdge.first().x, topEdge.first().y + toothDepth * 0.44f),
+                end = Offset(topEdge.last().x, topEdge.last().y + toothDepth * 0.44f),
+                strokeWidth = size.minDimension * 0.01f,
+            )
+            drawLine(
+                color = rarityBadgeStyle("Rare").color.copy(alpha = 0.24f),
+                start = Offset(bottomEdge.first().x, bottomEdge.first().y - toothDepth * 0.44f),
+                end = Offset(bottomEdge.last().x, bottomEdge.last().y - toothDepth * 0.44f),
+                strokeWidth = size.minDimension * 0.01f,
+            )
         }
+
+        drawPath(
+            path = packOutline,
+            color = rarityBadgeStyle("Rare").color.copy(alpha = 0.24f),
+            style = Stroke(
+                width = size.minDimension * 0.01f,
+            ),
+        )
     }
 }
 

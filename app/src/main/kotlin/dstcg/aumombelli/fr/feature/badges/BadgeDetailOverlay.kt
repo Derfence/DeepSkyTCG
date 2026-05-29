@@ -80,7 +80,11 @@ internal fun BadgeDetailOverlay(
     val currentSizePx = lerpFloat(sourceSizePx, targetSizePx, progress)
     val currentTopLeftX = currentCenterX - currentSizePx / 2f
     val currentTopLeftY = currentCenterY - currentSizePx / 2f
-    val currentLogoSize = with(density) { (currentSizePx * 0.6f).toDp() }.coerceIn(56.dp, 96.dp)
+    val currentCoinSize = with(density) { currentSizePx.toDp() }
+    val currentLogoSize = badgeCoinLogoSize(
+        badge = detail.badge,
+        coinSize = currentCoinSize,
+    )
     val textAlpha = ((progress - 0.56f) / 0.34f).coerceIn(0f, 1f)
     val scrimAlpha = progress * 0.72f
     val targetTopPadding = with(density) {
@@ -113,8 +117,10 @@ internal fun BadgeDetailOverlay(
                     start = with(density) { currentTopLeftX.toDp() },
                     top = with(density) { currentTopLeftY.toDp() },
                 )
-                .size(with(density) { currentSizePx.toDp() }),
+                .size(currentCoinSize)
+                .testTag("badge-detail-coin"),
             logoSize = currentLogoSize,
+            centerMarkTestTag = "badge-detail-center-mark",
         )
 
         Surface(

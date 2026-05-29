@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.util.LruCache
 import androidx.compose.runtime.staticCompositionLocalOf
 import fr.aumombelli.dstcg.model.CardDefinition
+import fr.aumombelli.dstcg.model.EquipmentCardDefinition
 import fr.aumombelli.dstcg.performance.AppPerformanceProfile
 
 internal class CardArtBitmapLoader(
@@ -41,6 +42,14 @@ internal class CardArtBitmapLoader(
             ),
         )
     }
+
+    fun loadEquipmentArt(
+        definition: EquipmentCardDefinition,
+        request: CardArtBitmapRequest,
+    ): Bitmap? = loadBitmapFromAsset(
+        path = equipmentArtAssetPath(definition),
+        request = request,
+    )
 
     private fun loadBitmapFromAsset(
         path: String,
@@ -151,6 +160,9 @@ internal fun cardArtBitmapRequest(
         bitmapConfig = Bitmap.Config.ARGB_8888,
     )
 }
+
+internal fun equipmentArtAssetPath(definition: EquipmentCardDefinition): String =
+    "card_art/equipements/${definition.imageRef}.webp"
 
 private fun computeInSampleSize(
     sourceWidth: Int,

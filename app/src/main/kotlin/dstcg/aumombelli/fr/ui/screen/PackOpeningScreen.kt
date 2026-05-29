@@ -12,13 +12,19 @@ fun PackOpeningScreen(
     onDone: () -> Unit,
     showPersistentDismissHint: Boolean = false,
     initialBoosterBounds: PackRevealBounds? = null,
+    initialBoosterDecorSeed: Any? = Unit,
     modifier: Modifier = Modifier,
+    dismissSignal: Int = 0,
+    onDismissRequest: (() -> Unit)? = null,
 ) {
     PackOpeningFeatureScreen(
         state = state,
         onDone = onDone,
+        onDismissRequest = onDismissRequest,
+        dismissSignal = dismissSignal,
         showPersistentDismissHint = showPersistentDismissHint,
         initialBoosterBounds = initialBoosterBounds,
+        initialBoosterDecorSeed = initialBoosterDecorSeed,
         modifier = modifier,
     )
 }

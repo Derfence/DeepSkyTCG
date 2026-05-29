@@ -5,6 +5,7 @@ data class DrawPackResponse(
     val drawnAt: String,
     val rechargeState: PackRechargeState,
     val revealSlots: List<PackRevealSlot>,
+    val isEpicBoosted: Boolean = false,
 ) {
     companion object {
         fun fromCards(
@@ -43,6 +44,7 @@ sealed interface PackRevealSlot {
 data class AstronomyPackRevealSlot(
     override val slotIndex: Int,
     val card: PackCard,
+    val isFirstEncounter: Boolean = false,
 ) : PackRevealSlot
 
 data class EquipmentPackRevealSlot(
@@ -64,6 +66,7 @@ data class CardVariant(
     val finish: String,
     val finishLabel: String,
     val isHolographic: Boolean,
+    val isStamped: Boolean,
 )
 
 fun List<PackCard>.sortedForPackReveal(): List<PackCard> =

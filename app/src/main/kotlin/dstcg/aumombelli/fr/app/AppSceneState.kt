@@ -2,8 +2,14 @@ package fr.aumombelli.dstcg.app
 
 import androidx.compose.ui.geometry.Rect
 import fr.aumombelli.dstcg.feature.badges.BadgeItem
+import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.ui.motion.AppScene
 import fr.aumombelli.dstcg.ui.motion.PackRevealBounds
+
+internal enum class PackOpeningExitDestination {
+    Home,
+    PackSelection,
+}
 
 internal data class AppSceneUiState(
     val currentScene: AppScene = AppScene.Home,
@@ -11,14 +17,19 @@ internal data class AppSceneUiState(
     val launchLogoRaised: Boolean = false,
     val homeContentVisible: Boolean = false,
     val libraryContentVisible: Boolean = false,
+    val craftingContentVisible: Boolean = false,
     val equipmentContentVisible: Boolean = false,
     val badgeBookContentVisible: Boolean = false,
+    val miniGamesMenuContentVisible: Boolean = false,
     val packSceneVisible: Boolean = false,
     val packExtensionListVisible: Boolean = false,
     val transitionLocked: Boolean = false,
+    val rootWidthPx: Float = 0f,
     val rootHeightPx: Float = 0f,
-    val homeHeroCardTopPx: Float = 0f,
+    val homeLogoBadgeCenterYPx: Float = 0f,
+    val homeLogoBadgeLandingSizePx: Float = 0f,
     val libraryRefreshSignal: Int = 0,
+    val craftingRefreshSignal: Int = 0,
     val equipmentRefreshSignal: Int = 0,
     val badgeBookRefreshSignal: Int = 0,
     val packRefreshSignal: Int = 0,
@@ -28,17 +39,40 @@ internal data class AppSceneUiState(
     val pendingBadgeCelebration: List<BadgeItem> = emptyList(),
     val badgeCelebrationDeferred: Boolean = false,
     val onboardingHintsVisible: Boolean = true,
+    val equipmentActivationScrollHintVisible: Boolean = false,
     val coachmarkTargetBounds: Map<NewPlayerOnboardingTarget, Rect> = emptyMap(),
 )
 
 internal fun AppSceneUiState.withRootHeight(heightPx: Float): AppSceneUiState = copy(rootHeightPx = heightPx)
 
-internal fun AppSceneUiState.withHomeHeroCardTop(topPx: Float): AppSceneUiState = copy(homeHeroCardTopPx = topPx)
+internal fun AppSceneUiState.withRootSize(
+    widthPx: Float,
+    heightPx: Float,
+): AppSceneUiState = copy(
+    rootWidthPx = widthPx,
+    rootHeightPx = heightPx,
+)
+
+internal fun AppSceneUiState.withHomeLogoBadgeLayout(
+    centerYPx: Float,
+    landingSizePx: Float,
+): AppSceneUiState = if (
+    kotlin.math.abs(homeLogoBadgeCenterYPx - centerYPx) < 0.5f &&
+    kotlin.math.abs(homeLogoBadgeLandingSizePx - landingSizePx) < 0.5f
+) {
+    this
+} else {
+    copy(
+        homeLogoBadgeCenterYPx = centerYPx,
+        homeLogoBadgeLandingSizePx = landingSizePx,
+    )
+}
 
 internal fun AppSceneUiState.resetLaunchSequence(): AppSceneUiState = copy(
     launchLogoVisible = false,
     launchLogoRaised = false,
     homeContentVisible = false,
+    onboardingHintsVisible = false,
 )
 
 internal fun AppSceneUiState.showLaunchLogo(): AppSceneUiState = copy(launchLogoVisible = true)
@@ -59,6 +93,10 @@ internal fun AppSceneUiState.hideLibraryContent(): AppSceneUiState = copy(librar
 
 internal fun AppSceneUiState.showLibraryContent(): AppSceneUiState = copy(libraryContentVisible = true)
 
+internal fun AppSceneUiState.hideCraftingContent(): AppSceneUiState = copy(craftingContentVisible = false)
+
+internal fun AppSceneUiState.showCraftingContent(): AppSceneUiState = copy(craftingContentVisible = true)
+
 internal fun AppSceneUiState.hideEquipmentContent(): AppSceneUiState = copy(equipmentContentVisible = false)
 
 internal fun AppSceneUiState.showEquipmentContent(): AppSceneUiState = copy(equipmentContentVisible = true)
@@ -66,6 +104,10 @@ internal fun AppSceneUiState.showEquipmentContent(): AppSceneUiState = copy(equi
 internal fun AppSceneUiState.hideBadgeBookContent(): AppSceneUiState = copy(badgeBookContentVisible = false)
 
 internal fun AppSceneUiState.showBadgeBookContent(): AppSceneUiState = copy(badgeBookContentVisible = true)
+
+internal fun AppSceneUiState.hideMiniGamesMenuContent(): AppSceneUiState = copy(miniGamesMenuContentVisible = false)
+
+internal fun AppSceneUiState.showMiniGamesMenuContent(): AppSceneUiState = copy(miniGamesMenuContentVisible = true)
 
 internal fun AppSceneUiState.hidePackSelectionScene(): AppSceneUiState = copy(
     packSceneVisible = false,
@@ -89,7 +131,10 @@ internal fun AppSceneUiState.showOnboardingHints(): AppSceneUiState = copy(onboa
 
 internal fun AppSceneUiState.hideOnboardingHints(): AppSceneUiState = copy(onboardingHintsVisible = false)
 
-internal fun AppSceneUiState.enterHome(): AppSceneUiState = copy(currentScene = AppScene.Home)
+internal fun AppSceneUiState.enterHome(): AppSceneUiState = copy(
+    currentScene = AppScene.Home,
+    equipmentActivationScrollHintVisible = false,
+)
 
 internal fun AppSceneUiState.prepareLibraryEntry(nextLibraryRefreshSignal: Int): AppSceneUiState = copy(
     homeContentVisible = false,
@@ -99,10 +144,19 @@ internal fun AppSceneUiState.prepareLibraryEntry(nextLibraryRefreshSignal: Int):
 
 internal fun AppSceneUiState.enterLibrary(): AppSceneUiState = copy(currentScene = AppScene.Library)
 
+internal fun AppSceneUiState.prepareCraftingEntry(nextCraftingRefreshSignal: Int): AppSceneUiState = copy(
+    homeContentVisible = false,
+    craftingContentVisible = false,
+    craftingRefreshSignal = nextCraftingRefreshSignal,
+)
+
+internal fun AppSceneUiState.enterCrafting(): AppSceneUiState = copy(currentScene = AppScene.Crafting)
+
 internal fun AppSceneUiState.prepareEquipmentEntry(nextEquipmentRefreshSignal: Int): AppSceneUiState = copy(
     homeContentVisible = false,
     equipmentContentVisible = false,
     equipmentRefreshSignal = nextEquipmentRefreshSignal,
+    equipmentActivationScrollHintVisible = false,
 )
 
 internal fun AppSceneUiState.enterEquipment(): AppSceneUiState = copy(currentScene = AppScene.Equipment)
@@ -114,6 +168,13 @@ internal fun AppSceneUiState.prepareBadgeBookEntry(nextBadgeBookRefreshSignal: I
 )
 
 internal fun AppSceneUiState.enterBadgeBook(): AppSceneUiState = copy(currentScene = AppScene.BadgeBook)
+
+internal fun AppSceneUiState.prepareMiniGamesMenuEntry(): AppSceneUiState = copy(
+    homeContentVisible = false,
+    miniGamesMenuContentVisible = false,
+)
+
+internal fun AppSceneUiState.enterMiniGamesMenu(): AppSceneUiState = copy(currentScene = AppScene.MiniGamesMenu)
 
 internal fun AppSceneUiState.preparePackSelection(nextPackRefreshSignal: Int): AppSceneUiState = copy(
     currentScene = AppScene.PackSelection,
@@ -134,7 +195,7 @@ internal fun AppSceneUiState.switchPackSelectionToHome(): AppSceneUiState = copy
 
 internal fun AppSceneUiState.enterPackOpening(): AppSceneUiState = copy(
     currentScene = AppScene.PackOpening,
-    packSceneVisible = false,
+    packSceneVisible = true,
     packExtensionListVisible = false,
     packOpeningExitSignal = 0,
 )
@@ -152,6 +213,31 @@ internal fun AppSceneUiState.finishPackOpeningToHome(): AppSceneUiState = prepar
     homeContentVisible = true,
 )
 
+internal fun AppSceneUiState.preparePackOpeningReturnToPackSelection(): AppSceneUiState = copy(
+    currentScene = AppScene.PackSelection,
+    homeContentVisible = false,
+    packSceneVisible = false,
+    packExtensionListVisible = false,
+    selectedPackRevealBounds = null,
+    packOpeningExitSignal = 0,
+)
+
+internal fun AppSceneUiState.finishPackOpeningToPackSelection(): AppSceneUiState =
+    preparePackOpeningReturnToPackSelection().copy(
+        packSceneVisible = true,
+        packExtensionListVisible = true,
+    )
+
+internal fun AppSceneUiState.packOpeningExitDestination(
+    onboardingStep: NewPlayerOnboardingStep?,
+): PackOpeningExitDestination = when {
+    onboardingStep != null &&
+        onboardingStep != NewPlayerOnboardingStep.Completed -> PackOpeningExitDestination.Home
+
+    pendingBadgeCelebration.isNotEmpty() -> PackOpeningExitDestination.Home
+    else -> PackOpeningExitDestination.PackSelection
+}
+
 internal fun AppSceneUiState.withPackRevealBounds(bounds: PackRevealBounds?): AppSceneUiState =
     copy(selectedPackRevealBounds = bounds)
 
@@ -167,6 +253,10 @@ internal fun AppSceneUiState.registerPackReady(
 internal fun AppSceneUiState.requestPackOpeningExit(): AppSceneUiState = copy(
     packOpeningExitSignal = packOpeningExitSignal + 1,
 )
+
+internal fun AppSceneUiState.withEquipmentActivationScrollHintVisible(
+    visible: Boolean,
+): AppSceneUiState = copy(equipmentActivationScrollHintVisible = visible)
 
 internal fun AppSceneUiState.clearPendingBadgeCelebration(): AppSceneUiState = copy(
     pendingBadgeCelebration = emptyList(),

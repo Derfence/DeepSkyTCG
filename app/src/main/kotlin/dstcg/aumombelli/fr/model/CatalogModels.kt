@@ -20,13 +20,14 @@ data class VariantProfile(
 data class SkyQualityDefinition(
     val code: String,
     val label: String,
+    val isHolographic: Boolean = false,
 )
 
 @Serializable
 data class CardFinishDefinition(
     val code: String,
     val label: String,
-    val isHolographic: Boolean = false,
+    val isStamped: Boolean = false,
 )
 
 @Serializable
@@ -47,6 +48,13 @@ data class CardDefinition(
     val astronomy: AstronomyInfo,
 )
 
+val DefaultSkyUpgradeCosts: Map<String, Int> = mapOf(
+    "city" to 2,
+    "suburban" to 2,
+    "rural" to 3,
+    "mountain" to 6,
+)
+
 @Serializable
 data class GameBalanceDefinition(
     val cardsPerDraw: Int,
@@ -57,5 +65,10 @@ data class GameBalanceDefinition(
     val suburbanMeanPerDay: Double,
     val ruralMeanPerDay: Double,
     val mountainMeanPerDay: Double,
-    val percentHoloMeanPerDay: Double,
+    val holographicSkyMeanPerDay: Double,
+    val percentStampedPerDay: Double,
+    val skyUpgradeCosts: Map<String, Int> = emptyMap(),
 )
+
+fun GameBalanceDefinition.resolvedSkyUpgradeCosts(): Map<String, Int> =
+    DefaultSkyUpgradeCosts + skyUpgradeCosts

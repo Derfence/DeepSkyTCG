@@ -27,7 +27,9 @@ fun testGameBalanceDefinition(
     suburbanMeanPerDay: Double = 6.0,
     ruralMeanPerDay: Double = 3.0,
     mountainMeanPerDay: Double = 1.0,
-    percentHoloMeanPerDay: Double = 10.0,
+    holographicSkyMeanPerDay: Double = 0.14285714285714285,
+    percentStampedPerDay: Double = 10.0,
+    skyUpgradeCosts: Map<String, Int> = emptyMap(),
 ): GameBalanceDefinition = GameBalanceDefinition(
     cardsPerDraw = cardsPerDraw,
     drawCooldownHours = drawCooldownHours,
@@ -37,7 +39,9 @@ fun testGameBalanceDefinition(
     suburbanMeanPerDay = suburbanMeanPerDay,
     ruralMeanPerDay = ruralMeanPerDay,
     mountainMeanPerDay = mountainMeanPerDay,
-    percentHoloMeanPerDay = percentHoloMeanPerDay,
+    holographicSkyMeanPerDay = holographicSkyMeanPerDay,
+    percentStampedPerDay = percentStampedPerDay,
+    skyUpgradeCosts = skyUpgradeCosts,
 )
 
 fun testCardDefinition(
@@ -97,6 +101,7 @@ fun testPackCard(
     finish: String = "standard",
     finishLabel: String = "Standard",
     isHolographic: Boolean = false,
+    isStamped: Boolean = false,
 ): PackCard = PackCard(
     cardId = cardId,
     name = name,
@@ -108,6 +113,7 @@ fun testPackCard(
         finish = finish,
         finishLabel = finishLabel,
         isHolographic = isHolographic,
+        isStamped = isStamped,
     ),
 )
 
@@ -125,7 +131,7 @@ fun testEquipmentCardDefinition(
     },
     bonusUnit: EquipmentBonusUnit = when (type) {
         EquipmentType.Observatory -> EquipmentBonusUnit.RechargeMultiplier
-        EquipmentType.Telescope -> EquipmentBonusUnit.HolographicPercent
+        EquipmentType.Telescope -> EquipmentBonusUnit.HolographicQualityPercent
         EquipmentType.Mount -> EquipmentBonusUnit.RarityBoost
     },
     dropWeight: Int = 10,

@@ -4,8 +4,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -31,12 +31,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.width
+import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.performance.LocalAppPerformanceProfile
+import fr.aumombelli.dstcg.ui.component.EquipmentMountBadgeMark
 import fr.aumombelli.dstcg.ui.component.ExtensionLogoMark
-import fr.aumombelli.dstcg.ui.motion.BrandLogoVariant
-import fr.aumombelli.dstcg.ui.motion.LaunchLogoMark
+import fr.aumombelli.dstcg.ui.component.GeneralBadgeLogoMark
 import fr.aumombelli.dstcg.ui.component.TwinklingStarsOverlay
+import fr.aumombelli.dstcg.ui.component.equipmentCategoryColorTokens
 import fr.aumombelli.dstcg.ui.theme.SkyQualityPalette
 import fr.aumombelli.dstcg.ui.theme.skyQualityPalette
 
@@ -63,7 +64,8 @@ internal fun BadgeCoinCard(
                     onCoinPositioned(coordinates.boundsInRoot())
                 }
                 .testTag("badge-coin-${badge.id}"),
-            logoSize = (coinSize * 0.60f).coerceAtLeast(40.dp),
+            logoSize = badgeCoinLogoSize(badge = badge, coinSize = coinSize),
+            centerMarkTestTag = "badge-center-mark-${badge.id}",
             onClick = onClick,
         )
         Text(
@@ -83,6 +85,7 @@ internal fun BadgeCoinFace(
     badge: BadgeItem,
     modifier: Modifier = Modifier,
     logoSize: Dp = 56.dp,
+    centerMarkTestTag: String? = null,
     onClick: (() -> Unit)? = null,
 ) {
     val palette = badgePalette(badge)
@@ -185,6 +188,7 @@ internal fun BadgeCoinFace(
             badge = badge,
             logoSize = logoSize,
             modifier = Modifier.size(logoSize),
+            testTag = centerMarkTestTag,
         )
 
         if (!badge.isUnlocked) {
@@ -199,20 +203,36 @@ internal fun BadgeCoinFace(
 }
 
 private fun badgePalette(badge: BadgeItem): SkyQualityPalette = when (badge.requirementType) {
-    BadgeRequirementType.FirstPackOpened -> SkyQualityPalette(
+    BadgeRequirementType.FirstPackOpened,
+    BadgeRequirementType.EpicBoostedPackOpened,
+    -> SkyQualityPalette(
         top = Color(0xFFF8C95E),
         bottom = Color(0xFFB66C10),
         glow = Color(0xAAFFE29B),
         mist = Color(0x55F8BE57),
     )
+    BadgeRequirementType.EquipmentAllCardsActivatedOnce,
+    BadgeRequirementType.EquipmentThreeTypesActiveSimultaneously,
+    BadgeRequirementType.EquipmentThreeLevelThreeTypesActiveSimultaneously,
+    BadgeRequirementType.EquipmentAffectedPacks100,
+    BadgeRequirementType.EquipmentActivations100,
+    -> {
+        val tokens = equipmentCategoryColorTokens(EquipmentType.Mount)
+        SkyQualityPalette(
+            top = tokens.cardStart,
+            bottom = tokens.cardEnd,
+            glow = tokens.accent.copy(alpha = 0.76f),
+            mist = tokens.chipColor,
+        )
+    }
     BadgeRequirementType.SkyQuality -> skyQualityPalette(badge.skyQualityCode.orEmpty())
-    BadgeRequirementType.Holographic -> SkyQualityPalette(
+    BadgeRequirementType.Stamped -> SkyQualityPalette(
         top = Color(0xFF9EA4B1),
         bottom = Color(0xFF555A67),
         glow = Color(0x88D9E1F2),
         mist = Color(0x44C6D2E6),
     )
-    BadgeRequirementType.MountainHolographic -> skyQualityPalette("mountain")
+    BadgeRequirementType.HolographicStamped -> skyQualityPalette("holographic")
     BadgeRequirementType.PerfectCollection -> SkyQualityPalette(
         top = Color(0xFFB5BCCE),
         bottom = Color(0xFF596274),
@@ -237,7 +257,9 @@ private fun badgeBackgroundBrush(
             1.00f to skyQualityPalette("city").bottom,
         ),
     )
-    BadgeRequirementType.FirstPackOpened -> Brush.verticalGradient(
+    BadgeRequirementType.FirstPackOpened,
+    BadgeRequirementType.EpicBoostedPackOpened,
+    -> Brush.verticalGradient(
         colors = listOf(
             Color(0xFFFFD77D),
             Color(0xFFE09B24),
@@ -257,29 +279,54 @@ private fun BadgeCenterMark(
     badge: BadgeItem,
     logoSize: Dp,
     modifier: Modifier = Modifier,
+    testTag: String? = null,
 ) {
-    if (badge.requirementType == BadgeRequirementType.FirstPackOpened) {
-        LaunchLogoMark(
-            variant = BrandLogoVariant.Badge17,
-            emblemSize = logoSize,
-            modifier = modifier,
-        )
-    } else {
-        ExtensionLogoMark(
-            extensionId = badge.extensionId,
-            compact = false,
-            emblemSize = logoSize,
-            modifier = modifier,
-        )
+    val taggedModifier = testTag?.let { Modifier.testTag(it) } ?: Modifier
+    Box(modifier = taggedModifier) {
+        when (badge.centerMarkKind) {
+            BadgeCenterMarkKind.ExtensionLogo -> ExtensionLogoMark(
+                extensionId = badge.extensionId,
+                compact = false,
+                emblemSize = logoSize,
+                modifier = modifier,
+            )
+
+            BadgeCenterMarkKind.GeneralLogo -> GeneralBadgeLogoMark(
+                emblemSize = logoSize,
+                modifier = modifier,
+            )
+
+            BadgeCenterMarkKind.EquipmentMountGlyph -> EquipmentMountBadgeMark(
+                emblemSize = logoSize,
+                modifier = modifier,
+            )
+        }
     }
 }
 
+internal fun badgeCoinLogoScale(badge: BadgeItem): Float = when (badge.centerMarkKind) {
+    BadgeCenterMarkKind.GeneralLogo -> 0.72f
+    BadgeCenterMarkKind.EquipmentMountGlyph -> 0.64f
+    BadgeCenterMarkKind.ExtensionLogo -> 0.60f
+}
+
+internal fun badgeCoinLogoSize(
+    badge: BadgeItem,
+    coinSize: Dp,
+): Dp = (coinSize * badgeCoinLogoScale(badge)).coerceAtLeast(40.dp)
+
 private fun badgeUsesTwinklingStars(badge: BadgeItem): Boolean = when (badge.requirementType) {
     BadgeRequirementType.FirstPackOpened,
+    BadgeRequirementType.EpicBoostedPackOpened,
+    BadgeRequirementType.EquipmentAllCardsActivatedOnce,
+    BadgeRequirementType.EquipmentThreeTypesActiveSimultaneously,
+    BadgeRequirementType.EquipmentThreeLevelThreeTypesActiveSimultaneously,
+    BadgeRequirementType.EquipmentAffectedPacks100,
+    BadgeRequirementType.EquipmentActivations100,
     BadgeRequirementType.SkyQuality,
     -> false
-    BadgeRequirementType.Holographic,
-    BadgeRequirementType.MountainHolographic,
+    BadgeRequirementType.Stamped,
+    BadgeRequirementType.HolographicStamped,
     BadgeRequirementType.PerfectCollection,
     -> true
 }

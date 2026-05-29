@@ -9,14 +9,22 @@ fun LibraryScreen(
     state: LibraryUiState,
     onRefresh: () -> Unit,
     contentVisible: Boolean = true,
+    interactionsEnabled: Boolean = true,
     showOnboardingHint: Boolean = false,
     onOnboardingHintConsumed: () -> Unit = {},
+    showOnboardingVariantWalkthrough: Boolean = false,
+    onOnboardingVariantWalkthroughCompleted: () -> Unit = {},
+    onBack: (() -> Unit)? = null,
 ) {
     LibraryFeatureScreen(
         state = state,
         onRefresh = onRefresh,
+        onBack = onBack,
         contentVisible = contentVisible,
+        interactionsEnabled = interactionsEnabled,
         showOnboardingHint = showOnboardingHint,
         onOnboardingHintConsumed = onOnboardingHintConsumed,
+        showOnboardingVariantWalkthrough = showOnboardingVariantWalkthrough,
+        onOnboardingVariantWalkthroughCompleted = onOnboardingVariantWalkthroughCompleted,
     )
 }

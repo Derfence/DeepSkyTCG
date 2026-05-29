@@ -3,10 +3,15 @@ package fr.aumombelli.dstcg.data
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.model.ActiveEquipmentEffect
+import fr.aumombelli.dstcg.model.EquipmentBadgeProgress
 import fr.aumombelli.dstcg.model.OwnedEquipmentInventory
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.StandaloneProgress
+import fr.aumombelli.dstcg.model.HomeMenuNoveltyState
+import fr.aumombelli.dstcg.model.LibraryCardNoveltyState
+import fr.aumombelli.dstcg.model.MiniGamesProgress
+import fr.aumombelli.dstcg.model.TradeLedgerState
 import java.time.Instant
 import kotlinx.serialization.Serializable
 
@@ -17,10 +22,17 @@ data class ProgressSnapshot(
     val collection: OwnedCollection,
     val rechargeState: PackRechargeState = PackRechargeState(),
     val openedPackCount: Int = 0,
-    val newPlayerOnboardingStep: NewPlayerOnboardingStep = NewPlayerOnboardingStep.OpenFirstPackMenu,
+    val hasOpenedEpicBoostedPack: Boolean = false,
+    val newPlayerOnboardingStep: NewPlayerOnboardingStep = NewPlayerOnboardingStep.ShowWelcomeIntro,
     val equipmentInventory: OwnedEquipmentInventory = OwnedEquipmentInventory(),
     val activeEquipmentByType: Map<EquipmentType, ActiveEquipmentEffect> = emptyMap(),
     val lastActivatedCardIdByType: Map<EquipmentType, String> = emptyMap(),
+    val equipmentBadgeProgress: EquipmentBadgeProgress = EquipmentBadgeProgress(),
+    val homeMenuNoveltyState: HomeMenuNoveltyState = HomeMenuNoveltyState(),
+    val libraryCardNoveltyState: LibraryCardNoveltyState = LibraryCardNoveltyState(),
+    val tradeLedgerState: TradeLedgerState = TradeLedgerState(),
+    val miniGamesMenuUnlocked: Boolean = false,
+    val miniGamesProgress: MiniGamesProgress = MiniGamesProgress(),
     val lastTrustedWallClockUtc: String,
     val lastTrustedElapsedRealtimeMs: Long = 0L,
     val lastObservedBootMarker: String,
@@ -30,14 +42,22 @@ data class ProgressSnapshot(
         collection = collection,
         rechargeState = rechargeState,
         openedPackCount = openedPackCount,
+        hasOpenedEpicBoostedPack = hasOpenedEpicBoostedPack,
         newPlayerOnboardingStep = newPlayerOnboardingStep,
         equipmentInventory = equipmentInventory,
         activeEquipmentByType = activeEquipmentByType,
         lastActivatedCardIdByType = lastActivatedCardIdByType,
+        equipmentBadgeProgress = equipmentBadgeProgress,
+        homeMenuNoveltyState = homeMenuNoveltyState,
+        libraryCardNoveltyState = libraryCardNoveltyState,
+        tradeLedgerState = tradeLedgerState,
+        miniGamesMenuUnlocked = miniGamesMenuUnlocked,
+        miniGamesProgress = miniGamesProgress,
     )
 
     companion object {
-        const val CURRENT_SCHEMA_VERSION: Int = 4
+        const val CURRENT_SCHEMA_VERSION: Int = 12
+        const val ONBOARDING_STATE_SCHEMA_VERSION: Int = 4
     }
 }
 

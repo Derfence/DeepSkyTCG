@@ -42,6 +42,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import fr.aumombelli.dstcg.ui.component.SceneNavigationButton
+import fr.aumombelli.dstcg.ui.component.SceneNavigationIcon
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
 import kotlinx.coroutines.delay
 
@@ -50,6 +52,7 @@ fun BadgeBookScreen(
     state: BadgeBookUiState,
     onRefresh: () -> Unit,
     contentVisible: Boolean = true,
+    onBack: (() -> Unit)? = null,
 ) {
     val contentAlpha by animateFloatAsState(
         targetValue = if (contentVisible) 1f else 0f,
@@ -113,12 +116,26 @@ fun BadgeBookScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text(
-                        text = "Carnet de badges",
-                        color = Color.White,
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        onBack?.let { back ->
+                            SceneNavigationButton(
+                                icon = SceneNavigationIcon.Back,
+                                onClick = back,
+                                contentDescription = "Retour",
+                                testTag = "badge-book-back",
+                            )
+                        }
+                        Text(
+                            text = "Carnet de badges",
+                            color = Color.White,
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
                     if (state.errorMessage != null) {
                         Button(
                             onClick = onRefresh,
@@ -233,22 +250,13 @@ private fun BadgeSectionCard(
                 val spacing = 12.dp
                 val cellWidth = ((maxWidth - spacing * 2) / 3f).coerceAtLeast(84.dp)
                 val coinSize = (cellWidth * 0.74f).coerceIn(64.dp, 92.dp)
-                val perfectBadge = section.badges.firstOrNull {
-                    section.sectionType == BadgeSectionType.Extension &&
-                    it.requirementType == BadgeRequirementType.PerfectCollection
-                }
-                val regularRows = section.badges
-                    .filterNot {
-                        section.sectionType == BadgeSectionType.Extension &&
-                            it.requirementType == BadgeRequirementType.PerfectCollection
-                    }
-                    .chunked(3)
+                val badgeRows = section.badges.chunked(3)
 
                 Column(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    regularRows.forEach { rowBadges ->
+                    badgeRows.forEach { rowBadges ->
                         BadgeGridRow(
                             badges = rowBadges,
                             cellWidth = cellWidth,
@@ -257,22 +265,6 @@ private fun BadgeSectionCard(
                             onBadgePositioned = onBadgePositioned,
                             onBadgeClick = onBadgeClick,
                         )
-                    }
-
-                    perfectBadge?.let { badge ->
-                        Row(
-                            horizontalArrangement = Arrangement.Center,
-                            modifier = Modifier.fillMaxWidth(),
-                        ) {
-                            BadgeCoinCard(
-                                badge = badge,
-                                coinSize = coinSize,
-                                isCoinHidden = hiddenBadgeId == badge.id,
-                                onCoinPositioned = { bounds -> onBadgePositioned(badge.id, bounds) },
-                                onClick = { onBadgeClick(badge) },
-                                modifier = Modifier.width(cellWidth),
-                            )
-                        }
                     }
                 }
             }

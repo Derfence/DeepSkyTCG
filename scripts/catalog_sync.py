@@ -39,11 +39,12 @@ RESULTS_CARDS_SECTION = "Cards"
 RESULTS_EQUIPMENT_SECTION = "EquipmentCards"
 
 RARITY_ORDER = ["Common", "Uncommon", "Rare", "Epic"]
-SUPPORTED_SKY_CODES = ["city", "suburban", "rural", "mountain"]
-SUPPORTED_FINISH_CODES = ["standard", "holographic"]
+SUPPORTED_SKY_CODES = ["city", "suburban", "rural", "mountain", "holographic"]
+SUPPORTED_FINISH_CODES = ["standard", "stamped"]
 WEIGHT_SCALE = Decimal("1000000")
 SUPPORTED_EQUIPMENT_TYPES = ["observatory", "telescope", "mount"]
-SUPPORTED_EQUIPMENT_BONUS_UNITS = ["rarityBoost", "holographicPercent", "rechargeMultiplier"]
+SUPPORTED_EQUIPMENT_BONUS_UNITS = ["rarityBoost", "holographicSkyPercent", "rechargeMultiplier"]
+SUPPORTED_DETAIL_TYPES = ["deep_sky", "star", "constellation", "sky_event", "solar_system"]
 
 CATALOGUE_FIELDS = [
     "rowType",
@@ -118,7 +119,7 @@ VARIANT_PROFILE_FIELDS = [
     "suburbanMeanDays",
     "ruralMeanDays",
     "mountainMeanDays",
-    "holographicMeanDays",
+    "holographicSkyMeanDays",
 ]
 
 EXTENSION_BALANCE_FIELDS = [
@@ -153,7 +154,8 @@ class GameBalanceData:
     suburban_mean_per_day: Decimal
     rural_mean_per_day: Decimal
     mountain_mean_per_day: Decimal
-    percent_holo_mean_per_day: Decimal
+    holographic_sky_mean_per_day: Decimal
+    percent_stamped_per_day: Decimal
 
     @property
     def settings(self) -> GlobalSettings:
@@ -186,7 +188,8 @@ class GameBalanceData:
         suburban = Fraction(self.suburban_mean_per_day) / self.cards_per_day
         rural = Fraction(self.rural_mean_per_day) / self.cards_per_day
         mountain = Fraction(self.mountain_mean_per_day) / self.cards_per_day
-        city = Fraction(1, 1) - suburban - rural - mountain
+        holographic = Fraction(self.holographic_sky_mean_per_day) / self.cards_per_day
+        city = Fraction(1, 1) - suburban - rural - mountain - holographic
         if city <= 0:
             raise CatalogSheetError("Donnees: derived city probability must stay strictly positive.")
         return {
@@ -194,17 +197,18 @@ class GameBalanceData:
             "suburban": suburban,
             "rural": rural,
             "mountain": mountain,
+            "holographic": holographic,
         }
 
     @property
     def finish_probabilities(self) -> dict[str, Fraction]:
-        holographic = percent_to_probability(self.percent_holo_mean_per_day)
-        standard = Fraction(1, 1) - holographic
+        stamped = percent_to_probability(self.percent_stamped_per_day)
+        standard = Fraction(1, 1) - stamped
         if standard <= 0:
             raise CatalogSheetError("Donnees: derived standard probability must stay strictly positive.")
         return {
             "standard": standard,
-            "holographic": holographic,
+            "stamped": stamped,
         }
 
 
@@ -226,19 +230,19 @@ def main() -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Export or apply the astronomy catalog workbook.",
+        description="Synchronize the standalone catalog from the astronomy workbook.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     export_parser = subparsers.add_parser(
         "export",
-        help="Create or refresh the root XLSX workbook from the current standalone catalog.",
+        help="Legacy command kept for compatibility. The workbook is now treated as read-only.",
     )
     export_parser.add_argument(
         "--sheet",
         type=Path,
         default=DEFAULT_SHEET,
-        help=f"Workbook path to write (default: {DEFAULT_SHEET.name}).",
+        help=f"Workbook path to read (default: {DEFAULT_SHEET.name}).",
     )
     export_parser.set_defaults(handler=handle_export)
 
@@ -258,23 +262,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def handle_export(args: argparse.Namespace) -> None:
-    sheet_path = args.sheet.resolve()
-    extensions = load_json(CATALOG_DIR / "extensions.json")
-    cards = load_json(CATALOG_DIR / "cards.json")
-    variant_profiles = load_json(CATALOG_DIR / "variant_profiles.json")
-    balance_data = load_balance_data(BALANCE_PATH)
-    equipment_cards = load_equipment_cards_data(EQUIPMENT_CARDS_PATH)
-    equipment_settings = load_equipment_settings_data(EQUIPMENT_SETTINGS_PATH)
-    export_workbook(
-        sheet_path=sheet_path,
-        extensions=extensions,
-        cards=cards,
-        variant_profiles=variant_profiles,
-        balance_data=balance_data,
-        equipment_cards=equipment_cards,
-        equipment_settings=equipment_settings,
+    raise CatalogSheetError(
+        "The export command is no longer supported: catalog_sync now treats the workbook as read-only. "
+        "Use 'apply' to read the XLSX and refresh the application assets.",
     )
-    print(f"Workbook exported to {sheet_path}")
 
 
 def handle_apply(args: argparse.Namespace) -> None:
@@ -356,26 +347,6 @@ def apply_workbook(
     write_json(catalog_dir / "equipment_cards.json", equipment_cards)
     write_json(catalog_dir / "equipment_settings.json", equipment_settings_to_json(equipment_settings))
 
-    refreshed_catalogue_rows = build_catalogue_sheet_rows_from_input(extensions, cards)
-    refreshed_data_rows = build_data_sheet_rows(balance_data, equipment_settings)
-    refreshed_equipment_rows = build_equipment_sheet_rows(equipment_cards)
-    refreshed_result_rows = build_results_sheet_rows(
-        extensions=extensions,
-        cards=cards,
-        variant_profiles=variant_profile_templates,
-        balance_data=balance_data,
-        equipment_cards=equipment_cards,
-    )
-    write_workbook(
-        sheet_path,
-        [
-            Sheet(CATALOGUE_SHEET_NAME, refreshed_catalogue_rows),
-            Sheet(DATA_SHEET_NAME, refreshed_data_rows),
-            Sheet(EQUIPMENT_SHEET_NAME, refreshed_equipment_rows),
-            Sheet(RESULTS_SHEET_NAME, refreshed_result_rows),
-        ],
-    )
-
     return extensions, cards, variant_profile_templates, balance_data, equipment_cards, equipment_settings
 
 
@@ -415,7 +386,8 @@ def game_balance_data_from_json(payload: dict[str, Any]) -> GameBalanceData:
         suburban_mean_per_day=Decimal(str(payload["suburbanMeanPerDay"])),
         rural_mean_per_day=Decimal(str(payload["ruralMeanPerDay"])),
         mountain_mean_per_day=Decimal(str(payload["mountainMeanPerDay"])),
-        percent_holo_mean_per_day=Decimal(str(payload["percentHoloMeanPerDay"])),
+        holographic_sky_mean_per_day=Decimal(str(payload["holographicSkyMeanPerDay"])),
+        percent_stamped_per_day=Decimal(str(payload["percentStampedPerDay"])),
     )
     validate_balance_data(balance_data, context="game_balance.json")
     return balance_data
@@ -431,7 +403,8 @@ def balance_data_to_json(balance_data: GameBalanceData) -> dict[str, Any]:
         "suburbanMeanPerDay": float(balance_data.suburban_mean_per_day),
         "ruralMeanPerDay": float(balance_data.rural_mean_per_day),
         "mountainMeanPerDay": float(balance_data.mountain_mean_per_day),
-        "percentHoloMeanPerDay": float(balance_data.percent_holo_mean_per_day),
+        "holographicSkyMeanPerDay": float(balance_data.holographic_sky_mean_per_day),
+        "percentStampedPerDay": float(balance_data.percent_stamped_per_day),
     }
 
 
@@ -558,6 +531,8 @@ def validate_equipment_card_payload(
         raise CatalogSheetError(f"{context}: 'bonusValue' must be strictly positive.")
 
     bonus_unit = str(payload.get("bonusUnit", "")).strip()
+    if bonus_unit == "holographicPercent":
+        bonus_unit = "holographicSkyPercent"
     if bonus_unit not in SUPPORTED_EQUIPMENT_BONUS_UNITS:
         raise CatalogSheetError(
             f"{context}: 'bonusUnit' must be one of {', '.join(SUPPORTED_EQUIPMENT_BONUS_UNITS)}.",
@@ -565,7 +540,7 @@ def validate_equipment_card_payload(
 
     expected_bonus_unit = {
         "observatory": "rechargeMultiplier",
-        "telescope": "holographicPercent",
+        "telescope": "holographicSkyPercent",
         "mount": "rarityBoost",
     }[equipment_type]
     if bonus_unit != expected_bonus_unit:
@@ -575,7 +550,7 @@ def validate_equipment_card_payload(
 
     if bonus_unit == "rechargeMultiplier" and bonus_value < 1:
         raise CatalogSheetError(f"{context}: 'bonusValue' must be at least 1 for rechargeMultiplier.")
-    if bonus_unit in {"holographicPercent", "rarityBoost"} and bonus_value > 100:
+    if bonus_unit in {"holographicSkyPercent", "rarityBoost"} and bonus_value > 100:
         raise CatalogSheetError(f"{context}: 'bonusValue' must stay between 0 and 100 for percentage bonuses.")
 
     return {
@@ -672,7 +647,8 @@ def parse_data_sheet(rows: list[list[str]]) -> tuple[GameBalanceData, EquipmentS
         suburban_mean_per_day=parse_decimal_value(sheet_cell(rows, 7, 2), "B7", DATA_SHEET_NAME),
         rural_mean_per_day=parse_decimal_value(sheet_cell(rows, 8, 2), "B8", DATA_SHEET_NAME),
         mountain_mean_per_day=parse_decimal_value(sheet_cell(rows, 9, 2), "B9", DATA_SHEET_NAME),
-        percent_holo_mean_per_day=parse_decimal_value(sheet_cell(rows, 11, 4), "D11", DATA_SHEET_NAME),
+        holographic_sky_mean_per_day=parse_decimal_value(sheet_cell(rows, 10, 2), "B10", DATA_SHEET_NAME),
+        percent_stamped_per_day=parse_decimal_value(sheet_cell(rows, 11, 4), "D11", DATA_SHEET_NAME),
     )
     validate_balance_data(balance_data, context=DATA_SHEET_NAME)
     equipment_settings = parse_equipment_settings_from_data_sheet(rows)
@@ -692,7 +668,8 @@ def validate_balance_data(balance_data: GameBalanceData, context: str) -> None:
         ("suburbanMeanPerDay", balance_data.suburban_mean_per_day),
         ("ruralMeanPerDay", balance_data.rural_mean_per_day),
         ("mountainMeanPerDay", balance_data.mountain_mean_per_day),
-        ("percentHoloMeanPerDay", balance_data.percent_holo_mean_per_day),
+        ("holographicSkyMeanPerDay", balance_data.holographic_sky_mean_per_day),
+        ("percentStampedPerDay", balance_data.percent_stamped_per_day),
     ]:
         if value <= 0:
             raise CatalogSheetError(f"{context}: '{field_name}' must be strictly positive.")
@@ -726,14 +703,14 @@ def build_data_sheet_rows(
         ["suburbanMeanPerDay", balance_data.suburban_mean_per_day],
         ["ruralMeanPerDay", balance_data.rural_mean_per_day],
         ["mountainMeanPerDay", balance_data.mountain_mean_per_day],
-        ["", "", "", "percentHoloMeanPerDay"],
+        ["holoMeanPerDay", balance_data.holographic_sky_mean_per_day, "", "percentStampMeanPerDay"],
         [
-            "unholoMeanPerDay",
+            "unstampMeanPerDay",
             decimal_cell(balance_data.finish_probabilities["standard"] * balance_data.cards_per_day, 15),
             "",
-            balance_data.percent_holo_mean_per_day,
+            balance_data.percent_stamped_per_day,
         ],
-        ["holographicMeanPerDay", decimal_cell(balance_data.finish_probabilities["holographic"] * balance_data.cards_per_day, 15)],
+        ["stampMeanPerDay", decimal_cell(balance_data.finish_probabilities["stamped"] * balance_data.cards_per_day, 15)],
         [],
         [
             "commonPerDay",
@@ -1114,36 +1091,28 @@ def parse_catalogue_card_row(
             f"Catalogue row {row_number}: 'cardRarityMultiplier' must be strictly positive.",
         )
 
-    right_ascension = {
-        "hours": parse_int(row, "rightAscensionHours", row_number, "Catalogue", required=True),
-        "minutes": parse_int(row, "rightAscensionMinutes", row_number, "Catalogue", required=True),
-        "seconds": parse_float(row, "rightAscensionSeconds", row_number, "Catalogue", required=True),
-    }
-    right_ascension["label"] = optional_text(row, "rightAscensionLabel") or format_right_ascension_label(
-        right_ascension["hours"],
-        right_ascension["minutes"],
-        right_ascension["seconds"],
-    )
-
-    declination = {
-        "sign": require_sign(row, "declinationSign", row_number, "Catalogue"),
-        "degrees": parse_int(row, "declinationDegrees", row_number, "Catalogue", required=True),
-        "arcMinutes": parse_int(row, "declinationArcMinutes", row_number, "Catalogue", required=True),
-        "arcSeconds": parse_int(row, "declinationArcSeconds", row_number, "Catalogue", required=True),
-    }
-    declination["label"] = optional_text(row, "declinationLabel") or format_declination_label(
-        declination["sign"],
-        declination["degrees"],
-        declination["arcMinutes"],
-        declination["arcSeconds"],
-    )
-
-    coordinates_label = optional_text(row, "coordinatesLabel") or (
-        f"{right_ascension['label']} ; Dec {declination['label']}"
-    )
-
     detail_type = require_text(row, "detailType", row_number, "Catalogue")
+    coordinates = build_coordinates(
+        row,
+        row_number,
+        "Catalogue",
+        allow_variable=detail_type == "solar_system",
+    )
     details = build_details(row, row_number, "Catalogue", detail_type)
+
+    constellation = optional_text(row, "constellation")
+    if constellation is None:
+        if detail_type == "solar_system":
+            constellation = "Variable"
+        else:
+            constellation = require_text(row, "constellation", row_number, "Catalogue")
+
+    main_season = optional_text(row, "mainSeason")
+    if main_season is None:
+        if detail_type == "solar_system":
+            main_season = "Variable"
+        else:
+            main_season = require_text(row, "mainSeason", row_number, "Catalogue")
 
     return {
         "id": card_id,
@@ -1159,13 +1128,9 @@ def parse_catalogue_card_row(
             "catalogNumber": catalog_number,
             "objectFamily": require_text(row, "objectFamily", row_number, "Catalogue"),
             "objectTypeLabel": require_text(row, "objectTypeLabel", row_number, "Catalogue"),
-            "constellation": require_text(row, "constellation", row_number, "Catalogue"),
-            "mainSeason": require_text(row, "mainSeason", row_number, "Catalogue"),
-            "coordinates": {
-                "rightAscension": right_ascension,
-                "declination": declination,
-                "label": coordinates_label,
-            },
+            "constellation": constellation,
+            "mainSeason": main_season,
+            "coordinates": coordinates,
             "shortDescription": require_text(row, "shortDescription", row_number, "Catalogue"),
             "details": details,
         },
@@ -1247,9 +1212,9 @@ def parse_probabilities_sheet(
                     row_number,
                     PROBABILITIES_SHEET_NAME,
                 ),
-                "holographicMeanDays": require_positive_decimal(
+                "holographicSkyMeanDays": require_positive_decimal(
                     row,
-                    "holographicMeanDays",
+                    "holographicSkyMeanDays",
                     row_number,
                     PROBABILITIES_SHEET_NAME,
                 ),
@@ -1510,6 +1475,7 @@ def compute_variant_profiles(
             "suburban": probability_from_mean_days(settings, input_row["suburbanMeanDays"]),
             "rural": probability_from_mean_days(settings, input_row["ruralMeanDays"]),
             "mountain": probability_from_mean_days(settings, input_row["mountainMeanDays"]),
+            "holographic": probability_from_mean_days(settings, input_row["holographicSkyMeanDays"]),
         }
         target_sky_probabilities["city"] = Fraction(1, 1) - sum(
             target_sky_probabilities.values(),
@@ -1521,9 +1487,9 @@ def compute_variant_profiles(
             )
 
         target_finish_probabilities: dict[str, Fraction] = {
-            "holographic": probability_from_mean_days(settings, input_row["holographicMeanDays"]),
+            "stamped": default_game_balance_data().finish_probabilities["stamped"],
         }
-        target_finish_probabilities["standard"] = Fraction(1, 1) - target_finish_probabilities["holographic"]
+        target_finish_probabilities["standard"] = Fraction(1, 1) - target_finish_probabilities["stamped"]
         if target_finish_probabilities["standard"] <= 0:
             raise CatalogSheetError(
                 f"Variant profile '{profile_id}': derived standard probability must stay strictly positive.",
@@ -1648,10 +1614,10 @@ def compute_cards(
                 extension_input["rarestComboMeanDays"],
             )
             rarest_sky_probability = metrics["actualSkyProbabilities"][metrics["rarestSkyCode"]]
-            holographic_probability = metrics["actualFinishProbabilities"]["holographic"]
-            if rarest_sky_probability <= 0 or holographic_probability <= 0:
+            stamped_probability = metrics["actualFinishProbabilities"]["stamped"]
+            if rarest_sky_probability <= 0 or stamped_probability <= 0:
                 raise CatalogSheetError(
-                    f"Extension '{extension_id}': the rarest sky quality and holographic finish "
+                    f"Extension '{extension_id}': the rarest sky quality and stamped finish "
                     "must both keep a strictly positive probability.",
                 )
             target_rarity_probabilities[highest_rarity] = (
@@ -1659,7 +1625,7 @@ def compute_cards(
                 * rarity_inverse_sums[highest_rarity]
                 * rarest_card_multiplier
                 / rarest_sky_probability
-                / holographic_probability
+                / stamped_probability
             )
 
         remaining_common_probability = Fraction(1, 1) - sum(
@@ -1803,7 +1769,7 @@ def build_probability_sheet_rows(
                 row["suburbanMeanDays"],
                 row["ruralMeanDays"],
                 row["mountainMeanDays"],
-                row["holographicMeanDays"],
+                row["holographicSkyMeanDays"],
                 "Ville et Standard sont derives automatiquement.",
             ],
         )
@@ -2072,11 +2038,11 @@ def build_results_sheet_rows(
         )
         profile = profile_rows_by_id[rarest_card["variantProfileId"]]
         rarest_sky = rarest_weighted_code(profile["skyQualityWeights"])
-        holographic = weighted_code_lookup(profile["finishWeights"], "holographic")
+        stamped = weighted_code_lookup(profile["finishWeights"], "stamped")
         combo_probability = (
             rarest_card["finalProbability"]
             * Fraction(rarest_sky["weight"], total_weight_of_codes(profile["skyQualityWeights"]))
-            * Fraction(holographic["weight"], total_weight_of_codes(profile["finishWeights"]))
+            * Fraction(stamped["weight"], total_weight_of_codes(profile["finishWeights"]))
         )
         rows.append(
             [
@@ -2188,7 +2154,7 @@ def build_export_variant_inputs(
                 "suburbanMeanDays": decimal_cell(mean_days(sky_probabilities["suburban"], settings), 15),
                 "ruralMeanDays": decimal_cell(mean_days(sky_probabilities["rural"], settings), 15),
                 "mountainMeanDays": decimal_cell(mean_days(sky_probabilities["mountain"], settings), 15),
-                "holographicMeanDays": decimal_cell(mean_days(finish_probabilities["holographic"], settings), 15),
+                "holographicSkyMeanDays": decimal_cell(mean_days(sky_probabilities["holographic"], settings), 15),
             },
         )
     return inputs
@@ -2216,7 +2182,7 @@ def build_export_extension_inputs(
 
         variant_profile = variant_profiles_by_id[extension_variant_profiles[extension_id]]
         rarest_sky = rarest_weighted_code(variant_profile["skyQualityWeights"])
-        holographic = weighted_code_lookup(variant_profile["finishWeights"], "holographic")
+        stamped = weighted_code_lookup(variant_profile["finishWeights"], "stamped")
 
         uncommon_row: Decimal | None = None
         if "Uncommon" in cards_by_rarity:
@@ -2241,7 +2207,7 @@ def build_export_extension_inputs(
         combo_probability = (
             Fraction(rarest_card["drawWeight"], total_weight)
             * Fraction(rarest_sky["weight"], total_weight_of_codes(variant_profile["skyQualityWeights"]))
-            * Fraction(holographic["weight"], total_weight_of_codes(variant_profile["finishWeights"]))
+            * Fraction(stamped["weight"], total_weight_of_codes(variant_profile["finishWeights"]))
         )
         inputs.append(
             {
@@ -2284,7 +2250,7 @@ def build_visible_fingerprint(
                 "suburbanMeanDays": stable_number(row["suburbanMeanDays"]),
                 "ruralMeanDays": stable_number(row["ruralMeanDays"]),
                 "mountainMeanDays": stable_number(row["mountainMeanDays"]),
-                "holographicMeanDays": stable_number(row["holographicMeanDays"]),
+                "holographicSkyMeanDays": stable_number(row["holographicSkyMeanDays"]),
             }
             for row in variant_inputs
         ],
@@ -2538,7 +2504,8 @@ def default_game_balance_data() -> GameBalanceData:
         suburban_mean_per_day=Decimal("6"),
         rural_mean_per_day=Decimal("3"),
         mountain_mean_per_day=Decimal("1"),
-        percent_holo_mean_per_day=Decimal("10"),
+        holographic_sky_mean_per_day=Decimal("0.14285714285714285"),
+        percent_stamped_per_day=Decimal("10"),
     )
 
 
@@ -2588,9 +2555,9 @@ def default_equipment_cards_data() -> list[dict[str, Any]]:
             "imageRef": "equipment_telescope_1",
             "packsAffected": 3,
             "bonusValue": Decimal("8"),
-            "bonusUnit": "holographicPercent",
+            "bonusUnit": "holographicSkyPercent",
             "dropWeight": 45,
-            "description": "Augmente legerement la chance holographique.",
+            "description": "Augmente legerement la chance holo.",
         },
         {
             "id": "telescope-advanced",
@@ -2600,9 +2567,9 @@ def default_equipment_cards_data() -> list[dict[str, Any]]:
             "imageRef": "equipment_telescope_2",
             "packsAffected": 4,
             "bonusValue": Decimal("14"),
-            "bonusUnit": "holographicPercent",
+            "bonusUnit": "holographicSkyPercent",
             "dropWeight": 30,
-            "description": "Augmente nettement la chance holographique.",
+            "description": "Augmente nettement la chance holo.",
         },
         {
             "id": "telescope-master",
@@ -2612,9 +2579,9 @@ def default_equipment_cards_data() -> list[dict[str, Any]]:
             "imageRef": "equipment_telescope_3",
             "packsAffected": 5,
             "bonusValue": Decimal("22"),
-            "bonusUnit": "holographicPercent",
+            "bonusUnit": "holographicSkyPercent",
             "dropWeight": 15,
-            "description": "Augmente fortement la chance holographique.",
+            "description": "Augmente fortement la chance holo.",
         },
         {
             "id": "mount-beginner",
@@ -2892,6 +2859,109 @@ def find_duplicates(values: list[str]) -> set[str]:
     return duplicates
 
 
+def build_coordinates(
+    row: dict[str, str],
+    row_number: int,
+    sheet_name: str,
+    allow_variable: bool,
+) -> dict[str, Any]:
+    right_ascension, has_fixed_right_ascension = build_right_ascension(
+        row,
+        row_number,
+        sheet_name,
+        allow_variable=allow_variable,
+    )
+    declination, has_fixed_declination = build_declination(
+        row,
+        row_number,
+        sheet_name,
+        allow_variable=allow_variable,
+    )
+    has_fixed_coordinates = has_fixed_right_ascension and has_fixed_declination
+    coordinates_label = optional_text(row, "coordinatesLabel")
+    if coordinates_label is None:
+        if allow_variable and not has_fixed_coordinates:
+            coordinates_label = "Position apparente variable"
+        else:
+            coordinates_label = f"{right_ascension['label']} ; Dec {declination['label']}"
+
+    return {
+        "rightAscension": right_ascension,
+        "declination": declination,
+        "label": coordinates_label,
+    }
+
+
+def build_right_ascension(
+    row: dict[str, str],
+    row_number: int,
+    sheet_name: str,
+    allow_variable: bool,
+) -> tuple[dict[str, Any], bool]:
+    coordinate_fields = [
+        "rightAscensionHours",
+        "rightAscensionMinutes",
+        "rightAscensionSeconds",
+    ]
+    has_numeric_coordinate = any(optional_text(row, field) is not None for field in coordinate_fields)
+    if allow_variable and not has_numeric_coordinate:
+        return {
+            "hours": 0,
+            "minutes": 0,
+            "seconds": 0.0,
+            "label": optional_text(row, "rightAscensionLabel") or "AD variable",
+        }, False
+
+    right_ascension = {
+        "hours": parse_int(row, "rightAscensionHours", row_number, sheet_name, required=True),
+        "minutes": parse_int(row, "rightAscensionMinutes", row_number, sheet_name, required=True),
+        "seconds": parse_float(row, "rightAscensionSeconds", row_number, sheet_name, required=True),
+    }
+    right_ascension["label"] = optional_text(row, "rightAscensionLabel") or format_right_ascension_label(
+        right_ascension["hours"],
+        right_ascension["minutes"],
+        right_ascension["seconds"],
+    )
+    return right_ascension, True
+
+
+def build_declination(
+    row: dict[str, str],
+    row_number: int,
+    sheet_name: str,
+    allow_variable: bool,
+) -> tuple[dict[str, Any], bool]:
+    coordinate_fields = [
+        "declinationSign",
+        "declinationDegrees",
+        "declinationArcMinutes",
+        "declinationArcSeconds",
+    ]
+    has_numeric_coordinate = any(optional_text(row, field) is not None for field in coordinate_fields)
+    if allow_variable and not has_numeric_coordinate:
+        return {
+            "sign": "+",
+            "degrees": 0,
+            "arcMinutes": 0,
+            "arcSeconds": 0,
+            "label": optional_text(row, "declinationLabel") or "Dec variable",
+        }, False
+
+    declination = {
+        "sign": require_sign(row, "declinationSign", row_number, sheet_name),
+        "degrees": parse_int(row, "declinationDegrees", row_number, sheet_name, required=True),
+        "arcMinutes": parse_int(row, "declinationArcMinutes", row_number, sheet_name, required=True),
+        "arcSeconds": parse_int(row, "declinationArcSeconds", row_number, sheet_name, required=True),
+    }
+    declination["label"] = optional_text(row, "declinationLabel") or format_declination_label(
+        declination["sign"],
+        declination["degrees"],
+        declination["arcMinutes"],
+        declination["arcSeconds"],
+    )
+    return declination, True
+
+
 def build_details(
     row: dict[str, str],
     row_number: int,
@@ -2958,6 +3028,42 @@ def build_details(
             "visualSize": build_visual_size(row, row_number, sheet_name, required=True),
         }
 
+    if detail_type == "solar_system":
+        details: dict[str, Any] = {
+            "detailType": detail_type,
+        }
+        distance = build_catalogue_measurement(
+            row,
+            row_number,
+            sheet_name=sheet_name,
+            value_field="distanceLightYears",
+            label_field="distanceLabel",
+            value_key="lightYears",
+            required=False,
+            default_label_formatter=lambda value: f"{format_french_number(value)} UA",
+        )
+        real_size = build_catalogue_measurement(
+            row,
+            row_number,
+            sheet_name=sheet_name,
+            value_field="realSizeLightYears",
+            label_field="realSizeLabel",
+            value_key="lightYears",
+            required=False,
+            default_label_formatter=lambda value: f"{format_french_number(value)} km",
+        )
+        visual_size = build_visual_size(row, row_number, sheet_name, required=False)
+        absolute_magnitude = build_absolute_magnitude(row, row_number, sheet_name, required=False)
+        if distance is not None:
+            details["distance"] = distance
+        if real_size is not None:
+            details["realSize"] = real_size
+        if visual_size is not None:
+            details["visualSize"] = visual_size
+        if absolute_magnitude is not None:
+            details["absoluteMagnitude"] = absolute_magnitude
+        return details
+
     if detail_type == "sky_event":
         details = {
             "detailType": detail_type,
@@ -2969,7 +3075,7 @@ def build_details(
 
     raise CatalogSheetError(
         f"{sheet_name} row {row_number}: unsupported detailType '{detail_type}'. "
-        "Use deep_sky, star, constellation or sky_event.",
+        f"Use {', '.join(SUPPORTED_DETAIL_TYPES)}.",
     )
 
 
@@ -2981,12 +3087,34 @@ def build_light_year_measurement(
     label_field: str,
     required: bool,
 ) -> dict[str, Any] | None:
+    return build_catalogue_measurement(
+        row,
+        row_number,
+        sheet_name=sheet_name,
+        value_field=value_field,
+        label_field=label_field,
+        value_key="lightYears",
+        required=required,
+        default_label_formatter=format_light_year_label,
+    )
+
+
+def build_catalogue_measurement(
+    row: dict[str, str],
+    row_number: int,
+    sheet_name: str,
+    value_field: str,
+    label_field: str,
+    value_key: str,
+    required: bool,
+    default_label_formatter,
+) -> dict[str, Any] | None:
     value = parse_float(row, value_field, row_number, sheet_name, required=required)
     if value is None:
         return None
-    label = optional_text(row, label_field) or format_light_year_label(value)
+    label = optional_text(row, label_field) or default_label_formatter(value)
     return {
-        "lightYears": value,
+        value_key: value,
         "label": label,
     }
 

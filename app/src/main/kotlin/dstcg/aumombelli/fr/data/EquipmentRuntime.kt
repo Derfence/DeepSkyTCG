@@ -8,7 +8,7 @@ import fr.aumombelli.dstcg.model.raritySortPriority
 
 internal data class ActiveEquipmentBonus(
     val rarityBoostPercent: Double = 0.0,
-    val holographicPercent: Double = 0.0,
+    val holographicQualityPercent: Double = 0.0,
     val rechargeMultiplier: Double = 1.0,
 )
 
@@ -18,7 +18,7 @@ internal fun resolveActiveEquipmentBonus(
 ): ActiveEquipmentBonus {
     val cardsById = equipmentCards.associateBy { it.id }
     var rarityBoostPercent = 0.0
-    var holographicPercent = 0.0
+    var holographicQualityPercent = 0.0
     var rechargeMultiplier = 1.0
 
     activeEquipmentByType.forEach { (type, effect) ->
@@ -33,9 +33,9 @@ internal fun resolveActiveEquipmentBonus(
                 }
             }
 
-            EquipmentBonusUnit.HolographicPercent -> {
+            EquipmentBonusUnit.HolographicQualityPercent -> {
                 if (type == EquipmentType.Telescope) {
-                    holographicPercent += definition.bonusValue
+                    holographicQualityPercent += definition.bonusValue
                 }
             }
 
@@ -49,7 +49,7 @@ internal fun resolveActiveEquipmentBonus(
 
     return ActiveEquipmentBonus(
         rarityBoostPercent = rarityBoostPercent.coerceAtLeast(0.0),
-        holographicPercent = holographicPercent.coerceAtLeast(0.0),
+        holographicQualityPercent = holographicQualityPercent.coerceAtLeast(0.0),
         rechargeMultiplier = rechargeMultiplier.coerceAtLeast(1.0),
     )
 }
