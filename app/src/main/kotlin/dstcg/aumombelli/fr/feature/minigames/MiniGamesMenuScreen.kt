@@ -85,7 +85,7 @@ internal fun MiniGamesMenuScreen(
             )
         }
 
-        BoxWithConstraints(
+        Box(
             modifier = Modifier.fillMaxSize(),
         ) {
             MiniGameMapNode(
