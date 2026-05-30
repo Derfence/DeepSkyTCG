@@ -48,6 +48,7 @@ import fr.aumombelli.dstcg.ui.component.SceneNavigationButton
 import fr.aumombelli.dstcg.ui.component.SceneNavigationIcon
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
 import kotlinx.coroutines.delay
+import kotlin.math.abs
 import kotlin.math.roundToLong
 
 @Composable
@@ -236,6 +237,9 @@ fun PackSelectionScreen(
     } else {
         1f
     }
+    val extensionListInteractionVisible = extensionListAlpha >= 0.99f &&
+        listFadeProgress >= 0.99f &&
+        abs(extensionListTranslationY) <= 1f
 
     Box(
         modifier = modifier
@@ -378,7 +382,9 @@ fun PackSelectionScreen(
                                 onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.PackSelectionExtension, null)
                                 onSelectExtension(extensionId)
                             },
-                            interactionsEnabled = interactionsEnabled && displayedExtension == null,
+                            interactionsEnabled = interactionsEnabled &&
+                                displayedExtension == null &&
+                                extensionListInteractionVisible,
                             highlightedExtensionId = displayedExtensionId,
                             highlightProgress = heroProgress.value,
                             badgeAnimationsEnabled = !performanceProfile.isLowRamDevice &&

@@ -7,6 +7,7 @@ import fr.aumombelli.dstcg.feature.badges.badgeCelebrationEndCenter
 import fr.aumombelli.dstcg.feature.badges.badgeCelebrationInitialCoinCenters
 import fr.aumombelli.dstcg.feature.badges.badgeCelebrationStartCenter
 import fr.aumombelli.dstcg.feature.badges.badgeCelebrationStaticTitleTopLeft
+import fr.aumombelli.dstcg.feature.badges.badgeCelebrationTargetBoundsInViewport
 import fr.aumombelli.dstcg.feature.badges.badgeCelebrationTitleTopLeft
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -32,6 +33,33 @@ class BadgeCelebrationLayoutTest {
 
         assertEquals(972f, endCenter.x, 0.01f)
         assertEquals(2113f, endCenter.y, 0.01f)
+    }
+
+    @Test
+    fun celebration_target_inside_viewport_is_unchanged() {
+        val target = Rect(left = 900f, top = 1500f, right = 1044f, bottom = 1644f)
+
+        val resolvedTarget = badgeCelebrationTargetBoundsInViewport(
+            targetBounds = target,
+            rootSize = IntSize(width = 1080, height = 1920),
+        )
+
+        assertEquals(target, resolvedTarget)
+    }
+
+    @Test
+    fun celebration_target_outside_viewport_keeps_size_and_moves_inside_screen() {
+        val target = Rect(left = 900f, top = 2100f, right = 1044f, bottom = 2244f)
+
+        val resolvedTarget = badgeCelebrationTargetBoundsInViewport(
+            targetBounds = target,
+            rootSize = IntSize(width = 1080, height = 1920),
+        )
+
+        assertEquals(900f, resolvedTarget.left, 0.01f)
+        assertEquals(1776f, resolvedTarget.top, 0.01f)
+        assertEquals(1044f, resolvedTarget.right, 0.01f)
+        assertEquals(1920f, resolvedTarget.bottom, 0.01f)
     }
 
     @Test

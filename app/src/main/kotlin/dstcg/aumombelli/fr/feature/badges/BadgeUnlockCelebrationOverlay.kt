@@ -71,7 +71,10 @@ internal fun BadgeUnlockCelebrationOverlay(
                 .first()
         }
 
-        resolvedTargetBounds = latestTargetBounds ?: fallbackBadgeCelebrationBounds(rootSize)
+        resolvedTargetBounds = badgeCelebrationTargetBoundsInViewport(
+            targetBounds = latestTargetBounds ?: fallbackBadgeCelebrationBounds(rootSize),
+            rootSize = rootSize,
+        )
         animationStarted = true
         overlayAlpha.snapTo(0f)
         flightProgress.snapTo(0f)
@@ -93,7 +96,10 @@ internal fun BadgeUnlockCelebrationOverlay(
         onFinished()
     }
 
-    val target = resolvedTargetBounds ?: targetBounds ?: fallbackBadgeCelebrationBounds(rootSize)
+    val target = badgeCelebrationTargetBoundsInViewport(
+        targetBounds = resolvedTargetBounds ?: targetBounds ?: fallbackBadgeCelebrationBounds(rootSize),
+        rootSize = rootSize,
+    )
     val overlayVisibility = overlayAlpha.value * (1f - fadeOutProgress.value)
     val travel = FastOutSlowInEasing.transform(flightProgress.value.coerceIn(0f, 1f))
     val bounce = celebrationBounce(flightProgress.value)

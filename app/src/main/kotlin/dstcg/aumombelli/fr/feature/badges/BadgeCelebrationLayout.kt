@@ -20,6 +20,27 @@ internal fun badgeCelebrationEndCenter(
     y = targetBounds.top - gapPx + (displayedCoinSizePx / 2f),
 )
 
+internal fun badgeCelebrationTargetBoundsInViewport(
+    targetBounds: Rect,
+    rootSize: IntSize,
+): Rect {
+    if (rootSize.width <= 0 || rootSize.height <= 0) return targetBounds
+
+    val rootWidth = rootSize.width.toFloat()
+    val rootHeight = rootSize.height.toFloat()
+    val targetWidth = targetBounds.width.coerceAtLeast(0f).coerceAtMost(rootWidth)
+    val targetHeight = targetBounds.height.coerceAtLeast(0f).coerceAtMost(rootHeight)
+    val left = targetBounds.left.coerceIn(0f, rootWidth - targetWidth)
+    val top = targetBounds.top.coerceIn(0f, rootHeight - targetHeight)
+
+    return Rect(
+        left = left,
+        top = top,
+        right = left + targetWidth,
+        bottom = top + targetHeight,
+    )
+}
+
 internal fun badgeCelebrationInitialCoinCenters(
     badgeCount: Int,
     startCenter: Offset,

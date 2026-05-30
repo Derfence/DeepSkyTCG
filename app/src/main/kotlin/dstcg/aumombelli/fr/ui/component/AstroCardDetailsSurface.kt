@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -23,12 +24,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.model.DisplayCard
 import fr.aumombelli.dstcg.performance.LocalAppPerformanceProfile
@@ -41,6 +44,7 @@ fun AstroCardDetailsSurface(
     displayCard: DisplayCard,
     modifier: Modifier = Modifier,
     paletteOverride: SkyQualityPalette? = null,
+    previewMaxHeight: Dp? = null,
     accessoryContent: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
     val palette = paletteOverride ?: skyQualityPalette(displayCard.activeVariant.skyQuality)
@@ -97,13 +101,23 @@ fun AstroCardDetailsSurface(
                     .verticalScroll(rememberScrollState())
                     .padding(start = 22.dp, top = 22.dp, end = 22.dp, bottom = 44.dp),
             ) {
-                AstroCardPreviewSurface(
-                    displayCard = displayCard,
-                    mode = AstroCardSurfaceMode.Preview,
-                    holographicMotion = holographicMotion,
-                    paletteOverride = palette,
+                Box(
+                    contentAlignment = Alignment.Center,
                     modifier = Modifier.fillMaxWidth(),
-                )
+                ) {
+                    val previewModifier = if (previewMaxHeight == null) {
+                        Modifier.fillMaxWidth()
+                    } else {
+                        Modifier.heightIn(max = previewMaxHeight)
+                    }
+                    AstroCardPreviewSurface(
+                        displayCard = displayCard,
+                        mode = AstroCardSurfaceMode.Preview,
+                        holographicMotion = holographicMotion,
+                        paletteOverride = palette,
+                        modifier = previewModifier,
+                    )
+                }
                 accessoryContent?.invoke(this)
                 DescriptionBlock(displayCard)
                 IdentitySection(displayCard)

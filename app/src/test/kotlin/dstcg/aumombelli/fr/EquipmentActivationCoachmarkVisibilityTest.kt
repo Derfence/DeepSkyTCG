@@ -50,4 +50,20 @@ class EquipmentActivationCoachmarkVisibilityTest {
         assertEquals(buttonBounds, visibility.visibleBounds)
         assertEquals(false, visibility.showScrollDownHint)
     }
+
+    @Test
+    fun root_bounds_keep_visible_target_available_when_viewport_coordinates_are_not_ready() {
+        val buttonBounds = Rect(left = 32f, top = 560f, right = 328f, bottom = 616f)
+
+        val visibility = resolveEquipmentActivationCoachmarkVisibility(
+            targetEnabled = true,
+            buttonBoundsInRoot = buttonBounds,
+            buttonBoundsInViewport = null,
+            viewportHeightPx = 0f,
+            targetSectionOffscreenBelow = false,
+        )
+
+        assertEquals(buttonBounds, visibility.visibleBounds)
+        assertEquals(false, visibility.showScrollDownHint)
+    }
 }

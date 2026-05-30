@@ -37,6 +37,7 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
@@ -61,6 +62,7 @@ private const val PACK_OPENING_BURST_DURATION_MS = 4_800
 private const val PACK_OPENING_REVEAL_DELAY_MS = 3_200
 private const val PACK_OPENING_CARDS_ENTRANCE_DURATION_MS = 760
 private const val PACK_OPENING_HOLOGRAPHIC_CUE_PREWARM_PROGRESS = 0.08f
+private val PackOpeningSwipeHintNudgeDistance = 10.dp
 
 @Composable
 fun PackOpeningScreen(
@@ -76,6 +78,8 @@ fun PackOpeningScreen(
     val packResult = state.packResult
     val displayCards = state.displayCards
     val performanceProfile = LocalAppPerformanceProfile.current
+    val density = LocalDensity.current
+    val swipeHintNudgeDistancePx = with(density) { PackOpeningSwipeHintNudgeDistance.toPx() }
     val revealItems = if (state.revealItems.isNotEmpty()) {
         state.revealItems
     } else {
@@ -381,6 +385,7 @@ fun PackOpeningScreen(
                             packResult.drawnAt,
                             shouldAnimateSwipeHint,
                             settledPage,
+                            swipeHintNudgeDistancePx,
                         ) {
                             swipeHintOffset.snapTo(0f)
                             if (!shouldAnimateSwipeHint) return@LaunchedEffect
@@ -388,7 +393,7 @@ fun PackOpeningScreen(
 
                             while (true) {
                                 swipeHintOffset.animateTo(
-                                    targetValue = -26f,
+                                    targetValue = -swipeHintNudgeDistancePx,
                                     animationSpec = tween(durationMillis = 260, easing = FastOutSlowInEasing),
                                 )
                                 swipeHintOffset.animateTo(

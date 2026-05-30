@@ -87,6 +87,7 @@ internal fun ExtensionList(
                 extension.id == highlightedExtensionId -> (1f - highlightProgress * 4f).coerceIn(0f, 1f)
                 else -> (1f - highlightProgress).coerceIn(0f, 1f)
             }
+            val cardVisibleForInteraction = alpha * extensionEntranceAlpha(entranceProgress.value) >= 0.99f
             MotionCard(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -128,7 +129,7 @@ internal fun ExtensionList(
                     }
                     Button(
                         onClick = { onSelectExtension(extension.id) },
-                        enabled = !drawLocked && interactionsEnabled,
+                        enabled = !drawLocked && interactionsEnabled && cardVisibleForInteraction,
                         modifier = Modifier
                             .fillMaxWidth()
                             .then(
