@@ -232,7 +232,8 @@ internal fun AppSceneUiState.packOpeningExitDestination(
     onboardingStep: NewPlayerOnboardingStep?,
 ): PackOpeningExitDestination = when {
     onboardingStep != null &&
-        onboardingStep != NewPlayerOnboardingStep.Completed -> PackOpeningExitDestination.Home
+        onboardingStep != NewPlayerOnboardingStep.Completed &&
+        onboardingStep != NewPlayerOnboardingStep.AwaitCraftingEligibility -> PackOpeningExitDestination.Home
 
     pendingBadgeCelebration.isNotEmpty() -> PackOpeningExitDestination.Home
     else -> PackOpeningExitDestination.PackSelection

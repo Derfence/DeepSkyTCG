@@ -97,7 +97,9 @@ Au retour accueil, le bouton `Equipements` devient visible et recoit un coachmar
 
 - La premiere activation reussie avance vers `AwaitCraftingEligibility`.
 - `AwaitCraftingEligibility` est silencieuse et sans Aster jusqu'a ce que la fabrication soit eligible.
+- Pendant cette attente, la sortie d'une ouverture de pack revient à la sélection des extensions pour permettre d'enchaîner les tirages. Un nouveau badge conserve sa priorité et ramène temporairement à l'accueil pour afficher sa célébration.
 - Quand `openedPackCount >= 3` et qu'une carte est eligible a `DarkenSky`, le coordinateur avance vers `ViewCraftingMenu`.
+- Dès que cette condition est remplie, la sortie de l'ouverture revient à l'accueil pour reprendre le guidage vers l'Atelier.
 - Accueil : coachmark sur `Atelier de fabrication`, avec Aster en bas a gauche.
 - L'ouverture de l'Atelier avance vers `LearnCraftingTools`.
 - La modale `new-player-modal-crafting-tools` explique les deux outils avant tout coachmark dans l'Atelier.
