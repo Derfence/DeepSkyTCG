@@ -35,6 +35,7 @@ import fr.aumombelli.dstcg.feature.home.HOME_LOGO_LANDING_SCALE
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingContent
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.TradeCardCandidate
+import fr.aumombelli.dstcg.ui.component.AsterMascotAspectRatio
 import fr.aumombelli.dstcg.ui.component.AsterMascotOverlay
 import fr.aumombelli.dstcg.ui.component.AsterMascotSpec
 import fr.aumombelli.dstcg.ui.component.asterMascotHeightForContainer
@@ -337,14 +338,18 @@ internal fun AppSceneHost(
                 onFinished = {
                     scope.launch { onboardingCoordinator.onWelcomeIntroAcknowledged() }
                 },
-                decorativeBottomAvoidanceHeight = {
-                    welcomeMascotSpec?.modalBottomAvoidanceHeight(maxWidth.value) ?: 0.dp
+                decorativeHeight = {
+                    welcomeMascotSpec?.centeredModalHeight(
+                        containerWidth = maxWidth,
+                        containerHeight = maxHeight,
+                    ) ?: 0.dp
                 },
-                decorativeOverlay = {
+                decorativeOverlay = { topPadding, mascotHeight ->
                     welcomeMascotSpec?.let { spec ->
                         AsterMascotOverlay(
                             spec = spec,
-                            bottomPadding = CenteredModalAsterBottomPadding,
+                            topPadding = topPadding,
+                            widthOverride = mascotHeight * AsterMascotAspectRatio,
                             modifier = Modifier.fillMaxSize(),
                         )
                     }
@@ -368,14 +373,18 @@ internal fun AppSceneHost(
                 onFinished = {
                     scope.launch { onboardingCoordinator.onConclusionAcknowledged() }
                 },
-                decorativeBottomAvoidanceHeight = {
-                    conclusionMascotSpec?.modalBottomAvoidanceHeight(maxWidth.value) ?: 0.dp
+                decorativeHeight = {
+                    conclusionMascotSpec?.centeredModalHeight(
+                        containerWidth = maxWidth,
+                        containerHeight = maxHeight,
+                    ) ?: 0.dp
                 },
-                decorativeOverlay = {
+                decorativeOverlay = { topPadding, mascotHeight ->
                     conclusionMascotSpec?.let { spec ->
                         AsterMascotOverlay(
                             spec = spec,
-                            bottomPadding = CenteredModalAsterBottomPadding,
+                            topPadding = topPadding,
+                            widthOverride = mascotHeight * AsterMascotAspectRatio,
                             modifier = Modifier.fillMaxSize(),
                         )
                     }
@@ -429,11 +438,16 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
     else -> null
 }
 
-private fun AsterMascotSpec.modalBottomAvoidanceHeight(containerWidth: Float): Dp =
+internal fun AsterMascotSpec.centeredModalHeight(
+    containerWidth: Dp,
+    containerHeight: Dp,
+): Dp = minOf(
     asterMascotHeightForContainer(
-        containerWidth = containerWidth,
+        containerWidth = containerWidth.value,
         scale = scale,
         sizeMultiplier = sizeMultiplier,
-    ).dp + CenteredModalAsterBottomPadding
+    ).dp,
+    containerHeight * CenteredModalAsterMaxHeightFraction,
+)
 
-private val CenteredModalAsterBottomPadding = 92.dp
+private const val CenteredModalAsterMaxHeightFraction = 0.38f

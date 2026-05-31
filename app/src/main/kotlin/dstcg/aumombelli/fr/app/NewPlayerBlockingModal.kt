@@ -68,9 +68,8 @@ internal fun NewPlayerBlockingModal(
     finishButtonLabel: String,
     onFinished: () -> Unit,
     modifier: Modifier = Modifier,
-    decorativeBottomAvoidanceHeight: BoxWithConstraintsScope.() -> Dp = { 0.dp },
-    decorativeBottomAvoidanceGap: Dp = 12.dp,
-    decorativeOverlay: @Composable BoxScope.() -> Unit = {},
+    decorativeHeight: BoxWithConstraintsScope.() -> Dp = { 0.dp },
+    decorativeOverlay: @Composable BoxScope.(topPadding: Dp, height: Dp) -> Unit = { _, _ -> },
     heightAwarePageContent: (@Composable (Int, Dp) -> Unit)? = null,
     pageContent: @Composable (Int) -> Unit = {},
 ) {
@@ -137,17 +136,16 @@ internal fun NewPlayerBlockingModal(
                 .testTag(testTag),
         ) {
             val modalMaxHeight = this@BoxWithConstraints.maxHeight
-            val bottomAvoidanceHeight = decorativeBottomAvoidanceHeight()
+            val decorativeHeight = decorativeHeight()
             val modalMaxHeightPx = with(density) { modalMaxHeight.toPx() }
-            val bottomAvoidanceHeightPx = with(density) { bottomAvoidanceHeight.toPx() }
-            val bottomAvoidanceGapPx = with(density) { decorativeBottomAvoidanceGap.toPx() }
+            val decorativeHeightPx = with(density) { decorativeHeight.toPx() }
             var cardHeightPx by remember { mutableStateOf(0) }
-            val avoidanceTranslationY = newPlayerModalCardVerticalShiftPx(
+            val decorativeLayout = newPlayerModalDecorativeLayoutPx(
                 modalHeightPx = modalMaxHeightPx,
                 cardHeightPx = cardHeightPx.toFloat(),
-                bottomAvoidanceHeightPx = bottomAvoidanceHeightPx,
-                gapPx = bottomAvoidanceGapPx,
+                decorativeHeightPx = decorativeHeightPx,
             )
+            val decorativeTopPadding = with(density) { decorativeLayout.decorativeTopPx.toDp() }
 
             Card(
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF10233B)),
@@ -159,7 +157,7 @@ internal fun NewPlayerBlockingModal(
                         alpha = cardAlpha
                         scaleX = cardScale
                         scaleY = cardScale
-                        translationY = cardTranslationY + avoidanceTranslationY
+                        translationY = cardTranslationY + decorativeLayout.cardTranslationYPx
                     }
                     .testTag("new-player-modal-card")
                     .fillMaxWidth()
@@ -293,7 +291,7 @@ internal fun NewPlayerBlockingModal(
                     }
                 }
             }
-            decorativeOverlay()
+            decorativeOverlay(decorativeTopPadding, decorativeHeight)
         }
     }
 }
@@ -360,22 +358,38 @@ private fun ModalPageText(
     )
 }
 
-internal fun newPlayerModalCardVerticalShiftPx(
+internal data class NewPlayerModalDecorativeLayoutPx(
+    val cardTranslationYPx: Float,
+    val decorativeTopPx: Float,
+)
+
+internal fun newPlayerModalDecorativeLayoutPx(
     modalHeightPx: Float,
     cardHeightPx: Float,
-    bottomAvoidanceHeightPx: Float,
-    gapPx: Float,
-): Float {
-    if (
-        modalHeightPx <= 0f ||
-        cardHeightPx <= 0f ||
-        bottomAvoidanceHeightPx <= 0f
-    ) {
-        return 0f
+    decorativeHeightPx: Float,
+): NewPlayerModalDecorativeLayoutPx {
+    if (modalHeightPx <= 0f || decorativeHeightPx <= 0f) {
+        return NewPlayerModalDecorativeLayoutPx(
+            cardTranslationYPx = 0f,
+            decorativeTopPx = 0f,
+        )
     }
-    val maxCardBottomPx = modalHeightPx - bottomAvoidanceHeightPx - gapPx
-    if (maxCardBottomPx < cardHeightPx) return 0f
+    if (cardHeightPx <= 0f) {
+        return NewPlayerModalDecorativeLayoutPx(
+            cardTranslationYPx = 0f,
+            decorativeTopPx = (modalHeightPx - decorativeHeightPx).coerceAtLeast(0f),
+        )
+    }
+    val distributedGapPx = (
+        (modalHeightPx - cardHeightPx - decorativeHeightPx) / 3f
+        ).coerceAtLeast(0f)
+    val cardTopPx = distributedGapPx
+    val centeredCardTopPx = (modalHeightPx - cardHeightPx) / 2f
+    val decorativeTopPx = (cardTopPx + cardHeightPx + distributedGapPx)
+        .coerceAtMost((modalHeightPx - decorativeHeightPx).coerceAtLeast(0f))
 
-    val centeredCardBottomPx = (modalHeightPx + cardHeightPx) / 2f
-    return (maxCardBottomPx - centeredCardBottomPx).coerceAtMost(0f)
+    return NewPlayerModalDecorativeLayoutPx(
+        cardTranslationYPx = cardTopPx - centeredCardTopPx,
+        decorativeTopPx = decorativeTopPx,
+    )
 }

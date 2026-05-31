@@ -3,6 +3,7 @@ package fr.aumombelli.dstcg.ui.component
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
@@ -143,9 +144,11 @@ internal fun AsterMascotOverlay(
     spec: AsterMascotSpec,
     modifier: Modifier = Modifier,
     bottomPadding: Dp = 10.dp,
+    topPadding: Dp? = null,
+    widthOverride: Dp? = null,
 ) {
     BoxWithConstraints(modifier = modifier.zIndex(AsterMascotOverlayZIndex)) {
-        val mascotWidth = asterMascotWidthForContainer(
+        val mascotWidth = widthOverride ?: asterMascotWidthForContainer(
             containerWidth = maxWidth.value,
             scale = spec.scale,
             sizeMultiplier = spec.sizeMultiplier,
@@ -154,17 +157,22 @@ internal fun AsterMascotOverlay(
             AsterMascotScale.Standard -> 10.dp
             AsterMascotScale.Compact -> 8.dp
         }
-        val alignment = when (spec.anchor) {
-            AsterAnchor.BottomStart -> Alignment.BottomStart
-            AsterAnchor.BottomCenter -> Alignment.BottomCenter
-            AsterAnchor.BottomEnd -> Alignment.BottomEnd
+        val alignment = if (topPadding != null) {
+            Alignment.TopCenter
+        } else {
+            when (spec.anchor) {
+                AsterAnchor.BottomStart -> Alignment.BottomStart
+                AsterAnchor.BottomCenter -> Alignment.BottomCenter
+                AsterAnchor.BottomEnd -> Alignment.BottomEnd
+            }
         }
         val mascotModifier = Modifier
             .align(alignment)
+            .offset(y = topPadding ?: 0.dp)
             .padding(
                 start = if (spec.anchor == AsterAnchor.BottomStart) horizontalPadding else 0.dp,
                 end = if (spec.anchor == AsterAnchor.BottomEnd) horizontalPadding else 0.dp,
-                bottom = bottomPadding,
+                bottom = if (topPadding == null) bottomPadding else 0.dp,
             )
             .width(mascotWidth)
             .aspectRatio(AsterMascotAspectRatio)
