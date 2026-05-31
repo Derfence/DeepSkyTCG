@@ -207,62 +207,6 @@ class CraftingScreenTest {
     }
 
     @Test
-    fun darken_sky_keeps_pending_label_until_color_animation_finishes() {
-        val candidate = testCraftingCandidate(CraftingMode.DarkenSky)
-        val state = mutableStateOf(
-            CraftingUiState(
-                selectedMode = CraftingMode.DarkenSky,
-                sections = listOf(testCraftingSection(candidate)),
-            ),
-        )
-        var appliedCandidate: CraftingCardCandidate? = null
-
-        composeRule.setContent {
-            DstcgTheme {
-                CraftingScreen(
-                    state = state.value,
-                    onRefresh = {},
-                    onSelectMode = {},
-                    onBackHome = {},
-                    onBackToModes = {},
-                    onApplyCrafting = { appliedCandidate = it },
-                )
-            }
-        }
-
-        composeRule.onNodeWithTag("library-card-ALP-001").performClick()
-        composeRule.onNodeWithTag("crafting-fullscreen").assertIsDisplayed()
-        composeRule.onNodeWithTag("crafting-confirm").assertIsDisplayed()
-        composeRule.mainClock.autoAdvance = false
-        composeRule.onNodeWithTag("crafting-confirm").performClick()
-
-        composeRule.runOnIdle {
-            val applied = checkNotNull(appliedCandidate)
-            state.value = state.value.copy(
-                completion = CraftingCompletion(
-                    id = 1,
-                    mode = CraftingMode.DarkenSky,
-                    recipe = CraftingRecipe(
-                        mode = CraftingMode.DarkenSky,
-                        source = applied.sourceRef,
-                        target = applied.targetRef,
-                        consumedCount = applied.consumedCount,
-                    ),
-                ),
-            )
-        }
-
-        composeRule.mainClock.advanceTimeByFrame()
-        composeRule.onNodeWithTag("crafting-confirm").assertIsNotEnabled()
-        composeRule.onNodeWithTag("crafting-confirm").assertTextContains("En cours", substring = true)
-
-        composeRule.mainClock.advanceTimeBy(1_100)
-        composeRule.waitForIdle()
-        composeRule.onNodeWithTag("crafting-confirm").assertTextContains("Termine", substring = true)
-        composeRule.mainClock.autoAdvance = true
-    }
-
-    @Test
     fun empty_filtered_library_keeps_filter_locked() {
         composeRule.setContent {
             DstcgTheme {

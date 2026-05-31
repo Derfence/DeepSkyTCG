@@ -36,6 +36,7 @@ import fr.aumombelli.dstcg.model.PackCard
 import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.model.toDisplayVariant
 import fr.aumombelli.dstcg.testsupport.androidTestRechargeStateWithNextChargeAt
+import fr.aumombelli.dstcg.ui.component.AstroCardDetailsPreviewTag
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.screen.PackOpeningScreen
 import fr.aumombelli.dstcg.ui.viewmodel.PackOpeningUiState
@@ -180,6 +181,7 @@ class PackOpeningScreenTest {
                 .isNotEmpty()
         }
         composeRule.onNodeWithTag("astro-card-fullscreen-close").assertIsDisplayed()
+        composeRule.onNodeWithTag(AstroCardDetailsPreviewTag).assertIsDisplayed()
         composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
         composeRule.runOnIdle { }
         assertEquals("ALP-001", composeRule.readCurrentPackOpeningCardId())

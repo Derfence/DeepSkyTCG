@@ -42,13 +42,19 @@ internal fun calculatePackSelectionBoosterStageChrome(
     )
     val expandedTitleTopPadding = safeTopInset + lerp(14.dp, 10.dp, compactness)
     val expandedFieldSidePadding = lerp(6.dp, 2.dp, compactness)
+    val expandedFieldDownshift = 2.dp
     val expandedFieldTopPadding = expandedTitleTopPadding + lerp(28.dp, 24.dp, compactness)
-    val expandedFieldBottomPadding = safeBottomInset + lerp(4.dp, 2.dp, compactness)
+    val expandedFieldBottomPadding =
+        (safeBottomInset + lerp(4.dp, 2.dp, compactness) - expandedFieldDownshift).coerceAtLeast(0.dp)
 
     return PackSelectionBoosterStageChrome(
         titleTopPadding = lerp(18.dp, expandedTitleTopPadding, heroProgress),
         fieldStartPadding = lerp(stageStartInset, safeStartInset + expandedFieldSidePadding, heroProgress),
-        fieldTopPadding = lerp(88.dp + stageTopInset, expandedFieldTopPadding, heroProgress),
+        fieldTopPadding = lerp(
+            88.dp + stageTopInset,
+            expandedFieldTopPadding + expandedFieldDownshift,
+            heroProgress,
+        ),
         fieldEndPadding = lerp(stageEndInset, safeEndInset + expandedFieldSidePadding, heroProgress),
         fieldBottomPadding = lerp(18.dp + stageBottomInset, expandedFieldBottomPadding, heroProgress),
     )
@@ -65,7 +71,7 @@ internal fun calculatePackSelectionBoosterGridMetrics(
     val horizontalGap = lerp(10.dp, 6.dp, compactness)
     val verticalGap = lerp(10.dp, 6.dp, compactness)
     val horizontalGuard = lerp(4.dp, 2.dp, compactness)
-    val verticalGuard = lerp(6.dp, 2.dp, compactness)
+    val verticalGuard = lerp(4.dp, 2.dp, compactness)
     val usableWidth = (availableWidth - horizontalGuard * 2f - horizontalGap).coerceAtLeast(0.dp)
     val usableHeight = (availableHeight - verticalGuard * 2f - verticalGap).coerceAtLeast(0.dp)
     val gridPackWidth = minOf(

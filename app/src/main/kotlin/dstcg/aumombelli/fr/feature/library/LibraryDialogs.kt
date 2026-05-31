@@ -3,11 +3,14 @@ package fr.aumombelli.dstcg.feature.library
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
@@ -25,6 +28,7 @@ import fr.aumombelli.dstcg.ui.component.AstroCardFullscreenCloseButton
 import fr.aumombelli.dstcg.ui.component.AstroCardPreviewSurface
 import fr.aumombelli.dstcg.ui.component.AstroCardSurfaceMode
 import fr.aumombelli.dstcg.ui.component.DisplayCardVariantSelector
+import fr.aumombelli.dstcg.ui.component.calculateTradingCardFitWidth
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
 
 @Composable
@@ -53,34 +57,50 @@ internal fun CardPreviewDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(dismissOnClickOutside = true),
     ) {
-        Column(
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+        BoxWithConstraints(
             modifier = Modifier
+                .fillMaxSize()
                 .padding(16.dp)
                 .testTag("library-card-preview"),
         ) {
-            AstroCardPreviewSurface(
-                displayCard = displayCard,
-                mode = AstroCardSurfaceMode.Preview,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("library-card-preview-surface"),
-                onClick = onExpand,
-            )
-            DisplayCardVariantSelector(
-                variants = displayCard.availableVariants,
-                selectedVariantKey = displayCard.activeVariant.key,
-                onVariantSelected = { variant -> onVariantSelected(variant.key) },
-                modifier = Modifier.fillMaxWidth(),
-            )
-            if (tradeCandidate != null && onTrade != null) {
-                Button(
-                    onClick = { onTrade(tradeCandidate) },
+            Column(
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                BoxWithConstraints(
+                    contentAlignment = Alignment.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .testTag("library-card-trade"),
+                        .weight(1f, fill = true),
                 ) {
-                    Text("Échanger")
+                    val cardWidth = calculateTradingCardFitWidth(
+                        maxWidth = maxWidth,
+                        maxHeight = maxHeight,
+                    )
+                    AstroCardPreviewSurface(
+                        displayCard = displayCard,
+                        mode = AstroCardSurfaceMode.Preview,
+                        modifier = Modifier
+                            .width(cardWidth)
+                            .testTag("library-card-preview-surface"),
+                        onClick = onExpand,
+                    )
+                }
+                DisplayCardVariantSelector(
+                    variants = displayCard.availableVariants,
+                    selectedVariantKey = displayCard.activeVariant.key,
+                    onVariantSelected = { variant -> onVariantSelected(variant.key) },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (tradeCandidate != null && onTrade != null) {
+                    Button(
+                        onClick = { onTrade(tradeCandidate) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("library-card-trade"),
+                    ) {
+                        Text("Échanger")
+                    }
                 }
             }
         }

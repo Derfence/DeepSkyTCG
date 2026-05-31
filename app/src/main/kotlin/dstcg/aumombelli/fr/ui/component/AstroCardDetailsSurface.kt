@@ -8,6 +8,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
@@ -15,8 +16,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Card
@@ -38,6 +39,9 @@ import fr.aumombelli.dstcg.performance.LocalAppPerformanceProfile
 import fr.aumombelli.dstcg.ui.motion.autoplayHolographicMotion
 import fr.aumombelli.dstcg.ui.theme.SkyQualityPalette
 import fr.aumombelli.dstcg.ui.theme.skyQualityPalette
+
+internal const val AstroCardDetailsPreviewTag = "astro-card-details-preview"
+private val AstroCardDetailsPreviewVerticalPadding = 44.dp
 
 @Composable
 fun AstroCardDetailsSurface(
@@ -78,7 +82,7 @@ fun AstroCardDetailsSurface(
         shape = androidx.compose.foundation.shape.RoundedCornerShape(34.dp),
         modifier = modifier.navigationBarsPadding(),
     ) {
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
@@ -90,6 +94,12 @@ fun AstroCardDetailsSurface(
                     ),
                 ),
         ) {
+            val viewportPreviewMaxHeight =
+                (maxHeight - AstroCardDetailsPreviewVerticalPadding).coerceAtLeast(0.dp)
+            val effectivePreviewMaxHeight = minOf(
+                previewMaxHeight ?: viewportPreviewMaxHeight,
+                viewportPreviewMaxHeight,
+            )
             HeroAtmosphere(palette = palette)
             if (displayCard.activeVariant.isHolographic) {
                 TwinklingStarsOverlay(modifier = Modifier.fillMaxSize())
@@ -105,18 +115,21 @@ fun AstroCardDetailsSurface(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    val previewModifier = if (previewMaxHeight == null) {
-                        Modifier.fillMaxWidth()
-                    } else {
-                        Modifier.heightIn(max = previewMaxHeight)
+                    BoxWithConstraints {
+                        val previewWidth = calculateTradingCardFitWidth(
+                            maxWidth = maxWidth,
+                            maxHeight = effectivePreviewMaxHeight,
+                        )
+                        AstroCardPreviewSurface(
+                            displayCard = displayCard,
+                            mode = AstroCardSurfaceMode.Preview,
+                            holographicMotion = holographicMotion,
+                            paletteOverride = palette,
+                            modifier = Modifier
+                                .width(previewWidth)
+                                .testTag(AstroCardDetailsPreviewTag),
+                        )
                     }
-                    AstroCardPreviewSurface(
-                        displayCard = displayCard,
-                        mode = AstroCardSurfaceMode.Preview,
-                        holographicMotion = holographicMotion,
-                        paletteOverride = palette,
-                        modifier = previewModifier,
-                    )
                 }
                 accessoryContent?.invoke(this)
                 DescriptionBlock(displayCard)

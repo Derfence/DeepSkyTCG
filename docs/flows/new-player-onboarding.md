@@ -65,6 +65,7 @@ Chaque etape est stockee dans la progression locale securisee et rejouee jusqu'a
 - L'ouverture avance vers `LearnLibraryVariants`.
 - La modale `new-player-modal-library-variants` bloque les interactions bibliotheque, l'echange et le retour.
 - Aster ne s'affiche pas dans la modale de variantes, pour laisser toute la place aux exemples de cartes.
+- Les exemples utilisent la largeur maximale permise par la hauteur disponible, afin que chaque page reste entièrement visible.
 - Apres `Terminer`, micro-hint local : `Touche une carte obtenue pour l'ouvrir.`
 - Le micro-hint disparait apres environ `2.8 s`.
 - Les cartes pedagogiques sont tirees aleatoirement dans le vrai catalogue par rarete.

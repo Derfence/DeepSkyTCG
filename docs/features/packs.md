@@ -57,7 +57,9 @@ Il n'y a pas de garde anti-farming : revenir en arriere puis selectionner a nouv
 ## Presentation
 
 - Selection d'extension avec boosters animes.
+- La liste des extensions défile verticalement lorsque toutes les extensions ne tiennent pas dans la hauteur disponible.
 - Ouverture plein ecran.
+- La fiche détaillée ouverte depuis une carte tirée dimensionne la carte selon la largeur ou la hauteur disponible avant d'afficher sa description.
 - Tri de reveal stable : equipements et cartes non holo avant cartes holo, puis rarete, ciel et ordre initial.
 - Alertes de premiere rencontre pendant l'ouverture.
 - Sortie d'ouverture : retour accueil pendant l'onboarding ou si au moins un badge vient d'etre obtenu,

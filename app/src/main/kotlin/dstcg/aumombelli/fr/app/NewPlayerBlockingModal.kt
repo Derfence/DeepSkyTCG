@@ -71,6 +71,7 @@ internal fun NewPlayerBlockingModal(
     decorativeBottomAvoidanceHeight: BoxWithConstraintsScope.() -> Dp = { 0.dp },
     decorativeBottomAvoidanceGap: Dp = 12.dp,
     decorativeOverlay: @Composable BoxScope.() -> Unit = {},
+    heightAwarePageContent: (@Composable (Int, Dp) -> Unit)? = null,
     pageContent: @Composable (Int) -> Unit = {},
 ) {
     if (pages.isEmpty()) return
@@ -176,7 +177,7 @@ internal fun NewPlayerBlockingModal(
                         .padding(horizontal = 22.dp, vertical = 24.dp),
                 ) {
                     val pagerModifier = if (pages.size > 1) {
-                        Modifier.weight(1f, fill = false)
+                        Modifier.weight(1f, fill = heightAwarePageContent != null)
                     } else {
                         Modifier
                     }
@@ -213,29 +214,18 @@ internal fun NewPlayerBlockingModal(
                             },
                     ) { pageIndex ->
                         val page = pages[pageIndex]
-                        val pageScrollState = rememberScrollState()
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .verticalScroll(pageScrollState)
-                                .testTag("new-player-modal-page-$pageIndex"),
-                        ) {
-                            Text(
-                                text = page.title,
-                                style = MaterialTheme.typography.headlineSmall,
-                                color = Color.White,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth(),
+                        if (heightAwarePageContent != null) {
+                            HeightAwareModalPage(
+                                page = page,
+                                pageIndex = pageIndex,
+                                pageContent = heightAwarePageContent,
                             )
-                            Text(
-                                text = page.message,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = Color(0xFFE1ECF8),
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth(),
+                        } else {
+                            ScrollableModalPage(
+                                page = page,
+                                pageIndex = pageIndex,
+                                pageContent = pageContent,
                             )
-                            pageContent(pageIndex)
                         }
                     }
 
@@ -306,6 +296,68 @@ internal fun NewPlayerBlockingModal(
             decorativeOverlay()
         }
     }
+}
+
+@Composable
+private fun ScrollableModalPage(
+    page: NewPlayerBlockingModalPage,
+    pageIndex: Int,
+    pageContent: @Composable (Int) -> Unit,
+) {
+    val pageScrollState = rememberScrollState()
+    Column(
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(pageScrollState)
+            .testTag("new-player-modal-page-$pageIndex"),
+    ) {
+        ModalPageText(page)
+        pageContent(pageIndex)
+    }
+}
+
+@Composable
+private fun HeightAwareModalPage(
+    page: NewPlayerBlockingModalPage,
+    pageIndex: Int,
+    pageContent: @Composable (Int, Dp) -> Unit,
+) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .testTag("new-player-modal-page-$pageIndex"),
+    ) {
+        ModalPageText(page)
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f, fill = true),
+        ) {
+            pageContent(pageIndex, maxHeight)
+        }
+    }
+}
+
+@Composable
+private fun ModalPageText(
+    page: NewPlayerBlockingModalPage,
+) {
+    Text(
+        text = page.title,
+        style = MaterialTheme.typography.headlineSmall,
+        color = Color.White,
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth(),
+    )
+    Text(
+        text = page.message,
+        style = MaterialTheme.typography.bodyLarge,
+        color = Color(0xFFE1ECF8),
+        textAlign = TextAlign.Center,
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 internal fun newPlayerModalCardVerticalShiftPx(
