@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -58,11 +60,15 @@ internal fun ExtensionList(
         null
     }
 
-    Column(
+    LazyColumn(
         verticalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = modifier,
+        modifier = modifier
+            .testTag("pack-extension-list"),
     ) {
-        extensions.forEachIndexed { index, extension ->
+        itemsIndexed(
+            items = extensions,
+            key = { _, extension -> extension.id },
+        ) { index, extension ->
             val entranceProgress = remember(extension.id, entranceSignal) {
                 Animatable(if (entranceSignal > 0) 0f else 1f)
             }
@@ -87,6 +93,7 @@ internal fun ExtensionList(
                 extension.id == highlightedExtensionId -> (1f - highlightProgress * 4f).coerceIn(0f, 1f)
                 else -> (1f - highlightProgress).coerceIn(0f, 1f)
             }
+            val cardVisibleForInteraction = alpha * extensionEntranceAlpha(entranceProgress.value) >= 0.99f
             MotionCard(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -128,7 +135,7 @@ internal fun ExtensionList(
                     }
                     Button(
                         onClick = { onSelectExtension(extension.id) },
-                        enabled = !drawLocked && interactionsEnabled,
+                        enabled = !drawLocked && interactionsEnabled && cardVisibleForInteraction,
                         modifier = Modifier
                             .fillMaxWidth()
                             .then(

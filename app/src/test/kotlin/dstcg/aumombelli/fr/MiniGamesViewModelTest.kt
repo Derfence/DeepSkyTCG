@@ -48,6 +48,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -445,8 +446,7 @@ class MiniGamesViewModelTest {
         alignObservatory(viewModel, firstTarget)
         focusObservatory(viewModel, firstTarget)
         mashObservatoryCapture(viewModel)
-        advanceTimeBy(720L)
-        advanceUntilIdle()
+        advanceObservatoryCaptureValidation()
 
         val nextTarget = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
         assertEquals(1, nextTarget.targetIndex)
@@ -519,7 +519,7 @@ class MiniGamesViewModelTest {
         }
         focusObservatory(viewModel, firstTarget)
         mashObservatoryCapture(viewModel)
-        advanceUntilIdle()
+        advanceObservatoryCaptureValidation()
 
         val nextTarget = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
         assertEquals(1, nextTarget.targetIndex)
@@ -641,8 +641,7 @@ class MiniGamesViewModelTest {
         assertTrue(!validating.canCapture)
         assertNull(dailyStateBeforeClose.reward)
 
-        advanceTimeBy(720L)
-        advanceUntilIdle()
+        advanceObservatoryCaptureValidation()
 
         val closing = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
         assertEquals(ObservatoryStep.CloseDome, closing.step)
@@ -1047,8 +1046,7 @@ class MiniGamesViewModelTest {
             }
             focusObservatory(viewModel, target)
             mashObservatoryCapture(viewModel)
-            advanceTimeBy(720L)
-            advanceUntilIdle()
+            advanceObservatoryCaptureValidation()
         }
         val afterTargets = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
         if (afterTargets.step == ObservatoryStep.CloseDome) {
@@ -1114,12 +1112,18 @@ class MiniGamesViewModelTest {
         }
     }
 
+    private fun TestScope.advanceObservatoryCaptureValidation() {
+        advanceTimeBy(720L)
+        runCurrent()
+    }
+
     private fun TestScope.advanceObservatoryCloudCycle() {
         advanceTimeBy(
             ObservatoryCloudInterCycleWaitMaxMillis +
                 ObservatoryCloudAccumulationDurationMillis +
                 ObservatoryCloudAccumulationTickMillis,
         )
+        runCurrent()
     }
 
     private fun selectQuizAnswer(

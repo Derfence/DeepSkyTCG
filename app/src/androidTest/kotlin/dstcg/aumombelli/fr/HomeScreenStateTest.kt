@@ -1,6 +1,8 @@
 package fr.aumombelli.dstcg
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -28,7 +30,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import androidx.compose.ui.unit.dp
 
 class HomeScreenStateTest {
     @get:Rule
@@ -304,7 +305,7 @@ class HomeScreenStateTest {
         composeRule.onNodeWithTag("home-settings-about").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("home-about-sheet").assertIsDisplayed()
-        composeRule.onNodeWithTag("home-about-sheet-version").assertTextContains("v2.0.0")
+        composeRule.onNodeWithTag("home-about-sheet-version").assertTextContains("v2.1.0")
     }
 
     @Test
@@ -407,24 +408,27 @@ class HomeScreenStateTest {
 
     @Test
     fun pack_card_size_adapts_to_viewport_height_while_preserving_ratio() {
-        val viewportWidthDp = mutableStateOf(411)
-        val viewportHeightDp = mutableStateOf(731)
+        val viewportWidthFraction = mutableStateOf(1f)
+        val viewportHeightFraction = mutableStateOf(0.86f)
         setHomeScreenContentInViewport(
-            widthDp = viewportWidthDp,
-            heightDp = viewportHeightDp,
+            widthFraction = viewportWidthFraction,
+            heightFraction = viewportHeightFraction,
             state = HomeUiState(isLoading = false),
         )
         composeRule.waitForIdle()
         val shortViewportBounds = composeRule.onNodeWithTag("home-open-pack").fetchSemanticsNode().boundsInRoot
 
         composeRule.runOnIdle {
-            viewportWidthDp.value = 393
-            viewportHeightDp.value = 808
+            viewportWidthFraction.value = 0.96f
+            viewportHeightFraction.value = 1f
         }
         composeRule.waitForIdle()
         val tallViewportBounds = composeRule.onNodeWithTag("home-open-pack").fetchSemanticsNode().boundsInRoot
 
-        assertTrue(tallViewportBounds.width > shortViewportBounds.width)
+        assertTrue(
+            "Expected the pack card to grow when the viewport gets taller.",
+            tallViewportBounds.width > shortViewportBounds.width,
+        )
         assertEquals(
             TRADING_CARD_WIDTH_OVER_HEIGHT,
             shortViewportBounds.width / shortViewportBounds.height,
@@ -469,30 +473,32 @@ class HomeScreenStateTest {
     }
 
     private fun setHomeScreenContentInViewport(
-        widthDp: MutableState<Int>,
-        heightDp: MutableState<Int>,
+        widthFraction: MutableState<Float>,
+        heightFraction: MutableState<Float>,
         state: HomeUiState,
     ) {
         composeRule.setContent {
             DstcgTheme {
-                Box(
-                    modifier = Modifier.size(
-                        width = widthDp.value.dp,
-                        height = heightDp.value.dp,
-                    ),
-                ) {
-                    HomeScreen(
-                        state = state,
-                        onOpenPack = {},
-                        onOpenLibrary = {},
-                        onOpenCrafting = {},
-                        onOpenEquipment = {},
-                        onOpenBadgeBook = {},
-                        onOpenMiniGamesMenu = {},
-                        onResetProgress = {},
-                        showBackground = false,
-                        contentVisible = true,
-                    )
+                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                    Box(
+                        modifier = Modifier.size(
+                            width = maxWidth * widthFraction.value.coerceIn(0f, 1f),
+                            height = maxHeight * heightFraction.value.coerceIn(0f, 1f),
+                        ),
+                    ) {
+                        HomeScreen(
+                            state = state,
+                            onOpenPack = {},
+                            onOpenLibrary = {},
+                            onOpenCrafting = {},
+                            onOpenEquipment = {},
+                            onOpenBadgeBook = {},
+                            onOpenMiniGamesMenu = {},
+                            onResetProgress = {},
+                            showBackground = false,
+                            contentVisible = true,
+                        )
+                    }
                 }
             }
         }

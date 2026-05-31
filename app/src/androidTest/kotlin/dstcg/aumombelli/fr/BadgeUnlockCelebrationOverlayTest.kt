@@ -1,6 +1,6 @@
 package fr.aumombelli.dstcg
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,10 +35,15 @@ class BadgeUnlockCelebrationOverlayTest {
         var celebrationVisible by mutableStateOf(true)
         composeRule.setContent {
             DstcgTheme {
-                Box(modifier = Modifier.fillMaxSize()) {
+                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                    val targetBounds = badgeCelebrationTestTargetBounds(
+                        rootWidthPx = constraints.maxWidth.toFloat(),
+                        rootHeightPx = constraints.maxHeight.toFloat(),
+                    )
+
                     BadgeUnlockCelebrationOverlay(
                         badges = listOf(sampleBadge()),
-                        targetBounds = Rect(left = 900f, top = 2100f, right = 1044f, bottom = 2244f),
+                        targetBounds = targetBounds,
                         visible = celebrationVisible,
                         onFinished = { celebrationVisible = false },
                         modifier = Modifier.fillMaxSize(),
@@ -62,12 +67,17 @@ class BadgeUnlockCelebrationOverlayTest {
         composeRule.mainClock.autoAdvance = false
         var celebrationVisible by mutableStateOf(true)
         lateinit var density: Density
-        val targetBounds = Rect(left = 900f, top = 2100f, right = 1044f, bottom = 2244f)
+        lateinit var targetBounds: Rect
 
         composeRule.setContent {
             density = LocalDensity.current
             DstcgTheme {
-                Box(modifier = Modifier.fillMaxSize()) {
+                BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+                    targetBounds = badgeCelebrationTestTargetBounds(
+                        rootWidthPx = constraints.maxWidth.toFloat(),
+                        rootHeightPx = constraints.maxHeight.toFloat(),
+                    )
+
                     BadgeUnlockCelebrationOverlay(
                         badges = listOf(sampleBadge()),
                         targetBounds = targetBounds,
@@ -115,3 +125,29 @@ class BadgeUnlockCelebrationOverlayTest {
         skyQualityCode = "city",
     )
 }
+
+private fun badgeCelebrationTestTargetBounds(
+    rootWidthPx: Float,
+    rootHeightPx: Float,
+): Rect {
+    val targetSize = minOf(
+        rootWidthPx * BadgeCelebrationTargetSizeWidthFraction,
+        rootHeightPx * BadgeCelebrationTargetMaxHeightFraction,
+    )
+    val maxLeft = (rootWidthPx - targetSize).coerceAtLeast(0f)
+    val maxTop = (rootHeightPx - targetSize).coerceAtLeast(0f)
+    val left = (rootWidthPx * BadgeCelebrationTargetLeftFraction).coerceIn(0f, maxLeft)
+    val top = (rootHeightPx * BadgeCelebrationTargetTopFraction).coerceIn(0f, maxTop)
+
+    return Rect(
+        left = left,
+        top = top,
+        right = left + targetSize,
+        bottom = top + targetSize,
+    )
+}
+
+private const val BadgeCelebrationTargetLeftFraction = 900f / 1080f
+private const val BadgeCelebrationTargetTopFraction = 2100f / 2400f
+private const val BadgeCelebrationTargetSizeWidthFraction = 144f / 1080f
+private const val BadgeCelebrationTargetMaxHeightFraction = 0.24f

@@ -1,5 +1,7 @@
 package fr.aumombelli.dstcg
 
+import androidx.compose.ui.unit.dp
+import fr.aumombelli.dstcg.app.centeredModalHeight
 import fr.aumombelli.dstcg.ui.component.AsterAnchor
 import fr.aumombelli.dstcg.ui.component.AsterFace
 import fr.aumombelli.dstcg.ui.component.AsterHand
@@ -152,5 +154,20 @@ class AsterMascotTest {
             ),
             0.001f,
         )
+    }
+
+    @Test
+    fun `centered modal mascot height is capped by available screen height`() {
+        val spec = AsterMascotSpec(
+            face = AsterFace.Smile,
+            hand = AsterHand.Open,
+            handSide = AsterHandSide.Left,
+            anchor = AsterAnchor.BottomCenter,
+            scale = AsterMascotScale.Compact,
+            sizeMultiplier = 2f,
+        )
+
+        assertEquals(198.327f, spec.centeredModalHeight(360.dp, 800.dp).value, 0.001f)
+        assertEquals(152f, spec.centeredModalHeight(360.dp, 400.dp).value, 0.001f)
     }
 }

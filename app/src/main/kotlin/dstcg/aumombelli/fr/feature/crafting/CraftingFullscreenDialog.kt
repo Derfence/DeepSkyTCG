@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -41,6 +42,7 @@ import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -138,7 +140,7 @@ internal fun CraftingFullscreenDialog(
             usePlatformDefaultWidth = false,
         ),
     ) {
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color(0xE608101A))
@@ -146,6 +148,8 @@ internal fun CraftingFullscreenDialog(
                 .padding(14.dp)
                 .testTag("crafting-fullscreen"),
         ) {
+            val previewMaxHeight = craftingPreviewMaxHeight(maxHeight)
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -161,6 +165,7 @@ internal fun CraftingFullscreenDialog(
                     displayCard = displayCard,
                     modifier = Modifier.fillMaxSize(),
                     paletteOverride = cardPalette,
+                    previewMaxHeight = previewMaxHeight,
                     accessoryContent = {
                         if (!hasCompletedAnimation && !isInteractionLocked) {
                             DisplayCardVariantSelector(
@@ -190,6 +195,14 @@ internal fun CraftingFullscreenDialog(
             AstroCardFullscreenCloseButton(onClick = onDismiss)
         }
     }
+}
+
+private fun craftingPreviewMaxHeight(viewportHeight: Dp): Dp {
+    val maxAfterActionArea = (viewportHeight - CraftingActionAreaReservedHeight).coerceAtLeast(
+        CraftingPreviewMinimumHeight,
+    )
+    val maxByViewport = viewportHeight * CraftingPreviewViewportFraction
+    return minOf(maxAfterActionArea, maxByViewport)
 }
 
 @Composable
@@ -267,6 +280,10 @@ private fun CraftingConfirmationPanel(
         }
     }
 }
+
+private val CraftingActionAreaReservedHeight = 280.dp
+private val CraftingPreviewMinimumHeight = 180.dp
+private const val CraftingPreviewViewportFraction = 0.68f
 
 @Composable
 private fun StampingOverlay(

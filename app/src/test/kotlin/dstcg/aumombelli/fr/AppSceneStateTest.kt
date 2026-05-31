@@ -114,6 +114,36 @@ class AppSceneStateTest {
     }
 
     @Test
+    fun `pack opening exits to pack selection while crafting eligibility is pending`() {
+        val state = AppSceneUiState(currentScene = AppScene.PackOpening)
+
+        val destination = state.packOpeningExitDestination(NewPlayerOnboardingStep.AwaitCraftingEligibility)
+
+        assertEquals(PackOpeningExitDestination.PackSelection, destination)
+    }
+
+    @Test
+    fun `pack opening exits to home when crafting onboarding becomes available`() {
+        val state = AppSceneUiState(currentScene = AppScene.PackOpening)
+
+        val destination = state.packOpeningExitDestination(NewPlayerOnboardingStep.ViewCraftingMenu)
+
+        assertEquals(PackOpeningExitDestination.Home, destination)
+    }
+
+    @Test
+    fun `pack opening exits to home for pending badges while crafting eligibility is pending`() {
+        val state = AppSceneUiState(
+            currentScene = AppScene.PackOpening,
+            pendingBadgeCelebration = listOf(sampleBadge()),
+        )
+
+        val destination = state.packOpeningExitDestination(NewPlayerOnboardingStep.AwaitCraftingEligibility)
+
+        assertEquals(PackOpeningExitDestination.Home, destination)
+    }
+
+    @Test
     fun `pack opening exits to home when badges were unlocked`() {
         val state = AppSceneUiState(
             currentScene = AppScene.PackOpening,

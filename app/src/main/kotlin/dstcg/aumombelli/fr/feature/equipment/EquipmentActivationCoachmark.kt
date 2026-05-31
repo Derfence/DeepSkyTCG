@@ -33,6 +33,13 @@ internal fun resolveEquipmentActivationCoachmarkVisibility(
         )
     }
 
+    if (buttonBoundsInRoot != null && !targetSectionOffscreenBelow) {
+        return EquipmentActivationCoachmarkVisibility(
+            visibleBounds = buttonBoundsInRoot,
+            showScrollDownHint = false,
+        )
+    }
+
     return EquipmentActivationCoachmarkVisibility(
         visibleBounds = null,
         showScrollDownHint = targetSectionOffscreenBelow,

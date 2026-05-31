@@ -18,9 +18,12 @@ import fr.aumombelli.dstcg.ui.component.AsterAnchor
 import fr.aumombelli.dstcg.ui.component.AsterFace
 import fr.aumombelli.dstcg.ui.component.AsterHand
 import fr.aumombelli.dstcg.ui.component.AsterHandSide
+import fr.aumombelli.dstcg.ui.component.AsterMascotAspectRatio
 import fr.aumombelli.dstcg.ui.component.AsterMascotOverlay
 import fr.aumombelli.dstcg.ui.component.AsterMascotScale
 import fr.aumombelli.dstcg.ui.component.AsterMascotSpec
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -66,7 +69,8 @@ class NewPlayerBlockingModalTest {
                     pages = listOf(NewPlayerBlockingModalPage("Bienvenue", "Message")),
                     finishButtonLabel = "Commencer",
                     onFinished = {},
-                    decorativeOverlay = {
+                    decorativeHeight = { 188.dp },
+                    decorativeOverlay = { topPadding, mascotHeight ->
                         AsterMascotOverlay(
                             spec = AsterMascotSpec(
                                 face = AsterFace.Smile,
@@ -77,7 +81,8 @@ class NewPlayerBlockingModalTest {
                                 showBothHands = true,
                                 sizeMultiplier = 2f,
                             ),
-                            bottomPadding = 92.dp,
+                            topPadding = topPadding,
+                            widthOverride = mascotHeight * AsterMascotAspectRatio,
                             modifier = Modifier.fillMaxSize(),
                         )
                     },
@@ -87,6 +92,19 @@ class NewPlayerBlockingModalTest {
 
         composeRule.onNodeWithTag("aster-mascot").assertIsDisplayed()
         composeRule.onNodeWithTag("new-player-modal-finish").assertIsDisplayed()
+        val modalBounds = composeRule.onNodeWithTag("new-player-modal-welcome")
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val cardBounds = composeRule.onNodeWithTag("new-player-modal-card")
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val mascotBounds = composeRule.onNodeWithTag("aster-mascot")
+            .fetchSemanticsNode()
+            .boundsInRoot
+
+        assertEquals(modalBounds.center.x, cardBounds.center.x, 1f)
+        assertEquals(modalBounds.center.x, mascotBounds.center.x, 1f)
+        assertTrue(cardBounds.bottom <= mascotBounds.top)
     }
 
     private fun pressAndroidBack() {

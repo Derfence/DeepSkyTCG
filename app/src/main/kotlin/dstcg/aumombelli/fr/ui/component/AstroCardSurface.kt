@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.model.DisplayCard
 import fr.aumombelli.dstcg.performance.LocalAppPerformanceProfile
@@ -23,6 +24,14 @@ import fr.aumombelli.dstcg.ui.theme.SkyQualityPalette
 import fr.aumombelli.dstcg.ui.theme.skyQualityPalette
 
 const val TRADING_CARD_WIDTH_OVER_HEIGHT = 1f / 1.754f
+
+internal fun calculateTradingCardFitWidth(
+    maxWidth: Dp,
+    maxHeight: Dp,
+): Dp = minOf(
+    maxWidth.coerceAtLeast(0.dp),
+    maxHeight.coerceAtLeast(0.dp) * TRADING_CARD_WIDTH_OVER_HEIGHT,
+)
 
 enum class AstroCardSurfaceMode {
     Thumbnail,

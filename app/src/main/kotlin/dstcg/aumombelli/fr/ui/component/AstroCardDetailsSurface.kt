@@ -8,6 +8,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.Card
@@ -23,12 +25,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.model.DisplayCard
 import fr.aumombelli.dstcg.performance.LocalAppPerformanceProfile
@@ -36,11 +40,15 @@ import fr.aumombelli.dstcg.ui.motion.autoplayHolographicMotion
 import fr.aumombelli.dstcg.ui.theme.SkyQualityPalette
 import fr.aumombelli.dstcg.ui.theme.skyQualityPalette
 
+internal const val AstroCardDetailsPreviewTag = "astro-card-details-preview"
+private val AstroCardDetailsPreviewVerticalPadding = 44.dp
+
 @Composable
 fun AstroCardDetailsSurface(
     displayCard: DisplayCard,
     modifier: Modifier = Modifier,
     paletteOverride: SkyQualityPalette? = null,
+    previewMaxHeight: Dp? = null,
     accessoryContent: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
     val palette = paletteOverride ?: skyQualityPalette(displayCard.activeVariant.skyQuality)
@@ -74,7 +82,7 @@ fun AstroCardDetailsSurface(
         shape = androidx.compose.foundation.shape.RoundedCornerShape(34.dp),
         modifier = modifier.navigationBarsPadding(),
     ) {
-        Box(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
@@ -86,6 +94,12 @@ fun AstroCardDetailsSurface(
                     ),
                 ),
         ) {
+            val viewportPreviewMaxHeight =
+                (maxHeight - AstroCardDetailsPreviewVerticalPadding).coerceAtLeast(0.dp)
+            val effectivePreviewMaxHeight = minOf(
+                previewMaxHeight ?: viewportPreviewMaxHeight,
+                viewportPreviewMaxHeight,
+            )
             HeroAtmosphere(palette = palette)
             if (displayCard.activeVariant.isHolographic) {
                 TwinklingStarsOverlay(modifier = Modifier.fillMaxSize())
@@ -97,13 +111,26 @@ fun AstroCardDetailsSurface(
                     .verticalScroll(rememberScrollState())
                     .padding(start = 22.dp, top = 22.dp, end = 22.dp, bottom = 44.dp),
             ) {
-                AstroCardPreviewSurface(
-                    displayCard = displayCard,
-                    mode = AstroCardSurfaceMode.Preview,
-                    holographicMotion = holographicMotion,
-                    paletteOverride = palette,
+                Box(
+                    contentAlignment = Alignment.Center,
                     modifier = Modifier.fillMaxWidth(),
-                )
+                ) {
+                    BoxWithConstraints {
+                        val previewWidth = calculateTradingCardFitWidth(
+                            maxWidth = maxWidth,
+                            maxHeight = effectivePreviewMaxHeight,
+                        )
+                        AstroCardPreviewSurface(
+                            displayCard = displayCard,
+                            mode = AstroCardSurfaceMode.Preview,
+                            holographicMotion = holographicMotion,
+                            paletteOverride = palette,
+                            modifier = Modifier
+                                .width(previewWidth)
+                                .testTag(AstroCardDetailsPreviewTag),
+                        )
+                    }
+                }
                 accessoryContent?.invoke(this)
                 DescriptionBlock(displayCard)
                 IdentitySection(displayCard)

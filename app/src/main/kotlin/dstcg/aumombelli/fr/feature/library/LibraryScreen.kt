@@ -300,14 +300,16 @@ fun LibraryScreen(
                 },
                 finishButtonLabel = "Terminer",
                 onFinished = onOnboardingVariantWalkthroughCompleted,
-            ) { pageIndex ->
-                LibraryOnboardingVariantWalkthroughVisual(
-                    page = state.onboardingVariantWalkthroughPages[pageIndex],
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 4.dp),
-                )
-            }
+                heightAwarePageContent = { pageIndex, availableHeight ->
+                    LibraryOnboardingVariantWalkthroughVisual(
+                        page = state.onboardingVariantWalkthroughPages[pageIndex],
+                        availableHeight = (availableHeight - 4.dp).coerceAtLeast(0.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp),
+                    )
+                },
+            )
         }
     }
 }

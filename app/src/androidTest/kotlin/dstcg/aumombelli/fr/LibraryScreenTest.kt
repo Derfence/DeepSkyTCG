@@ -1,5 +1,8 @@
 package fr.aumombelli.dstcg
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.assertIsDisplayed
@@ -10,6 +13,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
+import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.feature.library.buildLibraryOnboardingVariantWalkthroughPages
 import fr.aumombelli.dstcg.model.CardFinishDefinition
 import fr.aumombelli.dstcg.model.DisplayCardVariant
@@ -19,6 +23,7 @@ import fr.aumombelli.dstcg.model.LibrarySection
 import fr.aumombelli.dstcg.model.SkyQualityDefinition
 import fr.aumombelli.dstcg.model.VariantProfile
 import fr.aumombelli.dstcg.ui.screen.LibraryScreen
+import fr.aumombelli.dstcg.ui.component.AstroCardDetailsPreviewTag
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.viewmodel.LibraryUiState
 import kotlin.math.abs
@@ -88,9 +93,53 @@ class LibraryScreenTest {
         composeRule.onNodeWithTag("astro-card-variant-city-standard").performClick()
         composeRule.onNodeWithTag("library-card-preview-surface").performClick()
         composeRule.onNodeWithTag("astro-card-fullscreen").assertIsDisplayed()
+        composeRule.onNodeWithTag(AstroCardDetailsPreviewTag).assertIsDisplayed()
         composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
         composeRule.onAllNodesWithTag("library-card-preview").assertCountEquals(0)
         composeRule.onAllNodesWithTag("library-back").assertCountEquals(0)
+    }
+
+    @Test
+    fun preview_card_shrinks_to_keep_variants_and_trade_visible_on_compact_height() {
+        val ownedItem = LibraryCardItem(
+            definition = testCardDefinition("M42", name = "Nebuleuse d'Orion"),
+            extensionName = "Astronomes en herbe",
+            ownedCount = 3,
+            availableVariants = listOf(
+                DisplayCardVariant("city", "Ville", "standard", "Standard", false, 2),
+                DisplayCardVariant("mountain", "Montagne", "standard", "Standard", false, 1),
+            ),
+        )
+
+        composeRule.setContent {
+            Box(modifier = Modifier.size(width = 360.dp, height = 520.dp)) {
+                LibraryScreen(
+                    state = LibraryUiState(
+                        isLoading = false,
+                        sections = listOf(
+                            LibrarySection(
+                                extension = ExtensionDefinition(
+                                    "astronomes-en-herbe",
+                                    "Astronomes en herbe",
+                                    "cover",
+                                ),
+                                cards = listOf(ownedItem),
+                            ),
+                        ),
+                    ),
+                    onRefresh = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("library-card-M42").performClick()
+        val previewBounds = composeRule.onNodeWithTag("library-card-preview-surface").fetchSemanticsNode().boundsInRoot
+        val variantBounds = composeRule.onNodeWithTag("astro-card-variant-city-standard").fetchSemanticsNode().boundsInRoot
+        val tradeBounds = composeRule.onNodeWithTag("library-card-trade").fetchSemanticsNode().boundsInRoot
+
+        composeRule.assertApproxCardRatio("library-card-preview-surface")
+        assertTrue(previewBounds.bottom <= variantBounds.top)
+        assertTrue(variantBounds.bottom <= tradeBounds.top)
     }
 
     @Test

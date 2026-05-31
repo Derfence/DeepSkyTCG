@@ -32,6 +32,8 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 class EquipmentScreenTest {
     @get:Rule
@@ -437,7 +439,7 @@ class EquipmentScreenTest {
                 ),
             ),
         )
-        var lastReportedBounds: Rect? = null
+        val lastReportedBounds = AtomicReference<Rect?>(null)
 
         composeRule.setContent {
             EquipmentScreen(
@@ -445,18 +447,19 @@ class EquipmentScreenTest {
                 onRefresh = {},
                 onActivateEquipment = {},
                 onOnboardingActivationBoundsChanged = { bounds ->
-                    lastReportedBounds = bounds
+                    lastReportedBounds.set(bounds)
                 },
             )
         }
 
-        composeRule.waitUntil(timeoutMillis = 5_000) { lastReportedBounds != null }
+        composeRule.onNodeWithTag("equipment-list").performScrollToIndex(2)
+        composeRule.waitUntil(timeoutMillis = 5_000) { lastReportedBounds.get() != null }
 
         composeRule.runOnIdle {
             state = state.copy(activatingCardId = "observatory-1")
         }
 
-        composeRule.waitUntil(timeoutMillis = 5_000) { lastReportedBounds == null }
+        composeRule.waitUntil(timeoutMillis = 5_000) { lastReportedBounds.get() == null }
 
         composeRule.runOnIdle {
             state = state.copy(
@@ -512,13 +515,13 @@ class EquipmentScreenTest {
         }
 
         composeRule.waitForIdle()
-        assertNull(lastReportedBounds)
+        assertNull(lastReportedBounds.get())
     }
 
     @Test
     fun equipment_activation_reports_scroll_hint_when_target_section_is_below_viewport() {
-        var activationBounds: Rect? = null
-        var scrollHintVisible by mutableStateOf(false)
+        val activationBounds = AtomicReference<Rect?>(null)
+        val scrollHintVisible = AtomicBoolean(false)
 
         composeRule.setContent {
             Box(modifier = Modifier.size(width = 360.dp, height = 420.dp)) {
@@ -576,23 +579,23 @@ class EquipmentScreenTest {
                     onRefresh = {},
                     onActivateEquipment = {},
                     onOnboardingActivationBoundsChanged = { bounds ->
-                        activationBounds = bounds
+                        activationBounds.set(bounds)
                     },
                     onOnboardingActivationScrollHintChanged = { visible ->
-                        scrollHintVisible = visible
+                        scrollHintVisible.set(visible)
                     },
                 )
             }
         }
 
-        composeRule.waitUntil(timeoutMillis = 5_000) { scrollHintVisible }
-        assertNull(activationBounds)
+        composeRule.waitUntil(timeoutMillis = 5_000) { scrollHintVisible.get() }
+        assertNull(activationBounds.get())
     }
 
     @Test
     fun equipment_activation_reports_bounds_when_target_button_is_visible() {
-        var activationBounds: Rect? = null
-        var scrollHintVisible by mutableStateOf(true)
+        val activationBounds = AtomicReference<Rect?>(null)
+        val scrollHintVisible = AtomicBoolean(true)
 
         composeRule.setContent {
             Box(modifier = Modifier.size(width = 360.dp, height = 900.dp)) {
@@ -622,16 +625,19 @@ class EquipmentScreenTest {
                     onRefresh = {},
                     onActivateEquipment = {},
                     onOnboardingActivationBoundsChanged = { bounds ->
-                        activationBounds = bounds
+                        activationBounds.set(bounds)
                     },
                     onOnboardingActivationScrollHintChanged = { visible ->
-                        scrollHintVisible = visible
+                        scrollHintVisible.set(visible)
                     },
                 )
             }
         }
 
-        composeRule.waitUntil(timeoutMillis = 5_000) { !scrollHintVisible && activationBounds != null }
+        composeRule.onNodeWithTag("equipment-list").performScrollToIndex(2)
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            !scrollHintVisible.get() && activationBounds.get() != null
+        }
         composeRule.onAllNodesWithTag("equipment-activate-observatory-activate").assertCountEquals(1)
     }
 

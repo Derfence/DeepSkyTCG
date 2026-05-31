@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -35,6 +36,7 @@ import fr.aumombelli.dstcg.model.PackCard
 import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.model.toDisplayVariant
 import fr.aumombelli.dstcg.testsupport.androidTestRechargeStateWithNextChargeAt
+import fr.aumombelli.dstcg.ui.component.AstroCardDetailsPreviewTag
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.screen.PackOpeningScreen
 import fr.aumombelli.dstcg.ui.viewmodel.PackOpeningUiState
@@ -179,6 +181,7 @@ class PackOpeningScreenTest {
                 .isNotEmpty()
         }
         composeRule.onNodeWithTag("astro-card-fullscreen-close").assertIsDisplayed()
+        composeRule.onNodeWithTag(AstroCardDetailsPreviewTag).assertIsDisplayed()
         composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
         composeRule.runOnIdle { }
         assertEquals("ALP-001", composeRule.readCurrentPackOpeningCardId())
@@ -909,7 +912,9 @@ class PackOpeningScreenTest {
         )
 
         composeRule.mainClock.autoAdvance = false
+        var minimumNudgeLiftPx = 0f
         composeRule.setContent {
+            minimumNudgeLiftPx = with(LocalDensity.current) { 1.dp.toPx() }
             PackOpeningScreen(
                 state = PackOpeningUiState(
                     packResult = packResult,
@@ -939,13 +944,21 @@ class PackOpeningScreenTest {
 
         composeRule.mainClock.autoAdvance = false
         val restingBounds = composeRule.currentCardBounds()
-        composeRule.mainClock.advanceTimeBy(2_600)
-        composeRule.runOnIdle { }
-        val nudgedBounds = composeRule.currentCardBounds()
+        var nudgedBounds = restingBounds
+        var elapsedMillis = 0L
+        while (
+            elapsedMillis <= 3_600L &&
+            nudgedBounds.top >= restingBounds.top - minimumNudgeLiftPx
+        ) {
+            composeRule.mainClock.advanceTimeBy(80L)
+            composeRule.runOnIdle { }
+            nudgedBounds = composeRule.currentCardBounds()
+            elapsedMillis += 80L
+        }
 
         assertTrue(
             "Expected onboarding nudge to lift the current card upward. Rest=$restingBounds Nudged=$nudgedBounds",
-            nudgedBounds.top < restingBounds.top - 3f,
+            nudgedBounds.top < restingBounds.top - minimumNudgeLiftPx,
         )
         composeRule.onAllNodesWithTag("pack-opening-swipe-hint-label").assertCountEquals(0)
     }

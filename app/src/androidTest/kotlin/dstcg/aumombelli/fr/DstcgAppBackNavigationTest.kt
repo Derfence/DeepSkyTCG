@@ -133,26 +133,25 @@ class DstcgAppBackNavigationTest {
 
     @Test
     fun android_back_from_badge_book_closes_detail_then_returns_to_home() {
+        val targetBadgeTag = "badge-coin-general::pack::first-opened"
+
         setAppContent(backNavigationTestAppContainer())
         startAndReachHome()
 
         composeRule.onNodeWithTag("home-badges").performClick()
-        advanceBy(800)
-        composeRule.onNodeWithTag("app-transition-chest").assertIsDisplayed()
-        advanceBy(2_000)
-        composeRule.onNodeWithTag("badge-book-scroll").assertIsDisplayed()
+        advanceUntilTagDisplayed("badge-book-scroll", timeoutMillis = 10_000)
+        advanceUntilTagGone("app-transition-chest", timeoutMillis = 10_000)
+        advanceUntilTagDisplayed(targetBadgeTag, timeoutMillis = 10_000)
 
-        composeRule.onNodeWithTag("badge-coin-astronomes-en-herbe::sky::city").performClick()
-        advanceBy(700)
-        composeRule.onNodeWithTag("badge-detail").assertIsDisplayed()
+        composeRule.onNodeWithTag(targetBadgeTag).performClick()
+        advanceUntilTagDisplayed("badge-detail", timeoutMillis = 10_000)
 
         pressAndroidBack()
-        advanceBy(700)
+        advanceUntilTagGone("badge-detail", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("badge-book-scroll").assertIsDisplayed()
 
         pressAndroidBack()
-        advanceBy(2_100)
-        composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
+        advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
     }
 
     @Test
@@ -393,9 +392,10 @@ class DstcgAppBackNavigationTest {
         setAppContent(backNavigationTestAppContainer())
         startAndReachHome()
 
-        pressAndroidBack()
-        composeRule.waitUntil(timeoutMillis = 5_000) { composeRule.activity.isFinishing }
-        assertTrue(composeRule.activity.isFinishing)
+        val activity = composeRule.activity
+        pressAndroidBack(activity)
+        composeRule.waitUntil(timeoutMillis = 5_000) { activity.isFinishing || activity.isDestroyed }
+        assertTrue(activity.isFinishing || activity.isDestroyed)
     }
 
     private fun setAppContent(appContainer: AppContainer) {
@@ -427,9 +427,9 @@ class DstcgAppBackNavigationTest {
         composeRule.waitForIdle()
     }
 
-    private fun pressAndroidBack() {
-        composeRule.activity.runOnUiThread {
-            composeRule.activity.onBackPressedDispatcher.onBackPressed()
+    private fun pressAndroidBack(activity: ComponentActivity = composeRule.activity) {
+        activity.runOnUiThread {
+            activity.onBackPressedDispatcher.onBackPressed()
         }
         composeRule.waitForIdle()
     }

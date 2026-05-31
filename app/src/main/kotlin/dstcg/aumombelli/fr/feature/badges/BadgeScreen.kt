@@ -62,10 +62,14 @@ fun BadgeBookScreen(
     val badgeBounds = remember(state.sections) { mutableStateMapOf<String, Rect>() }
     var activeDetail by remember(state.sections) { mutableStateOf<ActiveBadgeDetail?>(null) }
     var rootSize by remember { mutableStateOf(IntSize.Zero) }
+    val detailCanHandleBack = activeDetail?.let { !it.hasEntered || it.isExpanded } == true
 
-    BackHandler(enabled = activeDetail != null) {
-        if (activeDetail?.isExpanded == true) {
-            activeDetail = activeDetail?.copy(isExpanded = false)
+    BackHandler(enabled = detailCanHandleBack) {
+        val detail = activeDetail ?: return@BackHandler
+        activeDetail = if (!detail.hasEntered) {
+            null
+        } else {
+            detail.copy(isExpanded = false)
         }
     }
 
@@ -174,10 +178,13 @@ fun BadgeBookScreen(
                 BadgeSectionCard(
                     section = section,
                     onBadgeClick = { badge ->
-                        val bounds = badgeBounds[badge.id] ?: return@BadgeSectionCard
                         activeDetail = ActiveBadgeDetail(
                             badge = badge,
-                            sourceBounds = bounds,
+                            sourceBounds = badgeDetailSourceBounds(
+                                badgeId = badge.id,
+                                badgeBounds = badgeBounds,
+                                rootSize = rootSize,
+                            ),
                         )
                     },
                     hiddenBadgeId = activeDetail?.badge?.id,
@@ -200,6 +207,26 @@ fun BadgeBookScreen(
             )
         }
     }
+}
+
+private fun badgeDetailSourceBounds(
+    badgeId: String,
+    badgeBounds: Map<String, Rect>,
+    rootSize: IntSize,
+): Rect = badgeBounds[badgeId] ?: badgeDetailFallbackSourceBounds(rootSize)
+
+private fun badgeDetailFallbackSourceBounds(rootSize: IntSize): Rect {
+    val width = rootSize.width.toFloat().coerceAtLeast(1f)
+    val height = rootSize.height.toFloat().coerceAtLeast(1f)
+    val side = (minOf(width, height) * 0.16f).coerceAtLeast(1f)
+    val centerX = width / 2f
+    val centerY = height * 0.5f
+    return Rect(
+        left = centerX - side / 2f,
+        top = centerY - side / 2f,
+        right = centerX + side / 2f,
+        bottom = centerY + side / 2f,
+    )
 }
 
 @Composable

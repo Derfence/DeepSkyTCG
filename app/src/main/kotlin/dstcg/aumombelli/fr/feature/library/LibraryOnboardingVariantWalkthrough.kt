@@ -9,12 +9,14 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -27,6 +29,8 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.model.CardDefinition
 import fr.aumombelli.dstcg.model.DisplayCard
@@ -39,6 +43,7 @@ import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.model.toDisplayVariant
 import fr.aumombelli.dstcg.ui.component.AstroCardPreviewSurface
 import fr.aumombelli.dstcg.ui.component.AstroCardSurfaceMode
+import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.motion.HolographicCardMotion
 import kotlin.random.Random
 
@@ -294,15 +299,126 @@ private fun buildLibraryOnboardingVariantVisual(
     }
 }
 
+internal data class LibraryOnboardingEqualCardMetrics(
+    val horizontalGap: Dp,
+    val verticalGap: Dp,
+    val cardWidth: Dp,
+    val cardHeight: Dp,
+    val totalWidth: Dp,
+    val totalHeight: Dp,
+)
+
+internal data class LibraryOnboardingWeightedComparisonMetrics(
+    val horizontalGap: Dp,
+    val leftCardWidth: Dp,
+    val leftCardHeight: Dp,
+    val rightCardWidth: Dp,
+    val rightCardHeight: Dp,
+    val totalWidth: Dp,
+    val contentHeight: Dp,
+)
+
+internal fun calculateLibraryOnboardingEqualCardMetrics(
+    availableWidth: Dp,
+    availableHeight: Dp,
+    columns: Int,
+    rows: Int,
+    horizontalGap: Dp = LibraryOnboardingCardGap,
+    verticalGap: Dp = LibraryOnboardingCardGap,
+    verticalReservedHeight: Dp = 0.dp,
+): LibraryOnboardingEqualCardMetrics {
+    val safeColumns = columns.coerceAtLeast(1)
+    val safeRows = rows.coerceAtLeast(1)
+    val totalHorizontalGap = horizontalGap * (safeColumns - 1).toFloat()
+    val totalVerticalGap = verticalGap * (safeRows - 1).toFloat()
+    val usableWidth = (availableWidth - totalHorizontalGap).coerceAtLeast(0.dp)
+    val usableHeight = (availableHeight - verticalReservedHeight - totalVerticalGap).coerceAtLeast(0.dp)
+    val widthLimitedCardWidth = usableWidth / safeColumns.toFloat()
+    val heightLimitedCardWidth = (usableHeight / safeRows.toFloat()) * TRADING_CARD_WIDTH_OVER_HEIGHT
+    val cardWidth = minOf(widthLimitedCardWidth, heightLimitedCardWidth).coerceAtLeast(0.dp)
+    val cardHeight = if (cardWidth > 0.dp) {
+        cardWidth / TRADING_CARD_WIDTH_OVER_HEIGHT
+    } else {
+        0.dp
+    }
+
+    return LibraryOnboardingEqualCardMetrics(
+        horizontalGap = horizontalGap,
+        verticalGap = verticalGap,
+        cardWidth = cardWidth,
+        cardHeight = cardHeight,
+        totalWidth = cardWidth * safeColumns.toFloat() + totalHorizontalGap,
+        totalHeight = cardHeight * safeRows.toFloat() + totalVerticalGap + verticalReservedHeight,
+    )
+}
+
+internal fun calculateLibraryOnboardingWeightedComparisonMetrics(
+    availableWidth: Dp,
+    availableHeight: Dp,
+    leftWeight: Float,
+    rightWeight: Float,
+    horizontalGap: Dp = LibraryOnboardingCardGap,
+    rightReservedHeight: Dp = LibraryOnboardingLabelHeight + LibraryOnboardingLabelGap,
+): LibraryOnboardingWeightedComparisonMetrics {
+    val safeLeftWeight = leftWeight.coerceAtLeast(0f)
+    val safeRightWeight = rightWeight.coerceAtLeast(0f)
+    val totalWeight = (safeLeftWeight + safeRightWeight).takeIf { it > 0f } ?: 1f
+    val usableWidth = (availableWidth - horizontalGap).coerceAtLeast(0.dp)
+    val leftWidthByWidth = usableWidth * (safeLeftWeight / totalWeight)
+    val rightWidthByWidth = usableWidth * (safeRightWeight / totalWeight)
+    val heightLimitedRightWidth =
+        (availableHeight - rightReservedHeight).coerceAtLeast(0.dp) * TRADING_CARD_WIDTH_OVER_HEIGHT
+    val heightScale = if (rightWidthByWidth.value > 0f) {
+        minOf(1f, heightLimitedRightWidth.value / rightWidthByWidth.value)
+    } else {
+        0f
+    }
+    val leftCardWidth = leftWidthByWidth * heightScale
+    val rightCardWidth = rightWidthByWidth * heightScale
+    val leftCardHeight = if (leftCardWidth > 0.dp) {
+        leftCardWidth / TRADING_CARD_WIDTH_OVER_HEIGHT
+    } else {
+        0.dp
+    }
+    val rightCardHeight = if (rightCardWidth > 0.dp) {
+        rightCardWidth / TRADING_CARD_WIDTH_OVER_HEIGHT
+    } else {
+        0.dp
+    }
+    val effectiveGap = if (leftCardWidth > 0.dp && rightCardWidth > 0.dp) {
+        horizontalGap
+    } else {
+        0.dp
+    }
+
+    return LibraryOnboardingWeightedComparisonMetrics(
+        horizontalGap = effectiveGap,
+        leftCardWidth = leftCardWidth,
+        leftCardHeight = leftCardHeight,
+        rightCardWidth = rightCardWidth,
+        rightCardHeight = rightCardHeight,
+        totalWidth = leftCardWidth + effectiveGap + rightCardWidth,
+        contentHeight = maxOf(leftCardHeight, rightReservedHeight + rightCardHeight),
+    )
+}
+
+private val LibraryOnboardingCardGap = 12.dp
+private val LibraryOnboardingLabelGap = 8.dp
+private val LibraryOnboardingLabelHeight = 24.dp
+private const val HolographicStandardCardWeight = 0.85f
+private const val HolographicFeaturedCardWeight = 1.15f
+
 @Composable
 internal fun LibraryOnboardingVariantWalkthroughVisual(
     page: LibraryOnboardingVariantWalkthroughPage,
+    availableHeight: Dp,
     modifier: Modifier = Modifier,
 ) {
     when (val visual = page.visual) {
         is LibraryOnboardingVariantWalkthroughVisual.RarityGrid ->
             TwoByTwoCardGrid(
                 cards = visual.cards,
+                availableHeight = availableHeight,
                 modifier = modifier,
                 tagPrefix = "library-onboarding-rarity",
             )
@@ -310,6 +426,7 @@ internal fun LibraryOnboardingVariantWalkthroughVisual(
         is LibraryOnboardingVariantWalkthroughVisual.SkyQualityGrid ->
             TwoByTwoCardGrid(
                 cards = visual.cards,
+                availableHeight = availableHeight,
                 modifier = modifier,
                 tagPrefix = "library-onboarding-sky-quality",
             )
@@ -317,6 +434,7 @@ internal fun LibraryOnboardingVariantWalkthroughVisual(
         is LibraryOnboardingVariantWalkthroughVisual.StampComparison ->
             CardComparisonRow(
                 modifier = modifier,
+                availableHeight = availableHeight,
                 leftLabel = visual.standardCard.activeVariant.finishLabel,
                 rightLabel = visual.stampedCard.activeVariant.finishLabel,
                 leftCard = visual.standardCard,
@@ -328,12 +446,16 @@ internal fun LibraryOnboardingVariantWalkthroughVisual(
         is LibraryOnboardingVariantWalkthroughVisual.HolographicComparison ->
             HolographicShowcase(
                 modifier = modifier,
+                availableHeight = availableHeight,
                 standardCard = visual.standardCard,
                 holographicCard = visual.holographicCard,
             )
 
         LibraryOnboardingVariantWalkthroughVisual.Placeholder ->
-            PlaceholderVisual(modifier = modifier)
+            PlaceholderVisual(
+                availableHeight = availableHeight,
+                modifier = modifier,
+            )
     }
 }
 
@@ -341,25 +463,38 @@ internal fun LibraryOnboardingVariantWalkthroughVisual(
 private fun TwoByTwoCardGrid(
     cards: List<DisplayCard>,
     tagPrefix: String,
+    availableHeight: Dp,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+    BoxWithConstraints(
         modifier = modifier.fillMaxWidth(),
     ) {
-        cards.chunked(2).forEachIndexed { rowIndex, rowCards ->
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                rowCards.forEachIndexed { columnIndex, card ->
-                    AstroCardPreviewSurface(
-                        displayCard = card,
-                        mode = AstroCardSurfaceMode.Thumbnail,
-                        modifier = Modifier
-                            .weight(1f)
-                            .testTag("$tagPrefix-${rowIndex * 2 + columnIndex}"),
-                    )
+        val metrics = calculateLibraryOnboardingEqualCardMetrics(
+            availableWidth = maxWidth,
+            availableHeight = availableHeight,
+            columns = 2,
+            rows = 2,
+        )
+        Column(
+            verticalArrangement = Arrangement.spacedBy(metrics.verticalGap),
+            modifier = Modifier
+                .width(metrics.totalWidth)
+                .align(Alignment.Center),
+        ) {
+            cards.chunked(2).forEachIndexed { rowIndex, rowCards ->
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(metrics.horizontalGap),
+                    modifier = Modifier.width(metrics.totalWidth),
+                ) {
+                    rowCards.forEachIndexed { columnIndex, card ->
+                        AstroCardPreviewSurface(
+                            displayCard = card,
+                            mode = AstroCardSurfaceMode.Thumbnail,
+                            modifier = Modifier
+                                .width(metrics.cardWidth)
+                                .testTag("$tagPrefix-${rowIndex * 2 + columnIndex}"),
+                        )
+                    }
                 }
             }
         }
@@ -374,27 +509,36 @@ private fun CardComparisonRow(
     rightCard: DisplayCard,
     leftTag: String,
     rightTag: String,
+    availableHeight: Dp,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+    BoxWithConstraints(
         modifier = modifier.fillMaxWidth(),
     ) {
+        val metrics = calculateLibraryOnboardingEqualCardMetrics(
+            availableWidth = maxWidth,
+            availableHeight = availableHeight,
+            columns = 2,
+            rows = 1,
+            verticalReservedHeight = LibraryOnboardingLabelHeight + LibraryOnboardingLabelGap,
+        )
         Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(metrics.horizontalGap),
+            modifier = Modifier
+                .width(metrics.totalWidth)
+                .align(Alignment.Center),
         ) {
             CardWithLabel(
                 label = leftLabel,
                 displayCard = leftCard,
                 testTag = leftTag,
-                modifier = Modifier.weight(1f),
+                cardWidth = metrics.cardWidth,
             )
             CardWithLabel(
                 label = rightLabel,
                 displayCard = rightCard,
                 testTag = rightTag,
-                modifier = Modifier.weight(1f),
+                cardWidth = metrics.cardWidth,
             )
         }
     }
@@ -405,24 +549,32 @@ private fun CardWithLabel(
     label: String,
     displayCard: DisplayCard,
     testTag: String,
-    modifier: Modifier = Modifier,
+    cardWidth: Dp,
+    mode: AstroCardSurfaceMode = AstroCardSurfaceMode.Preview,
+    holographicMotion: HolographicCardMotion? = null,
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(LibraryOnboardingLabelGap),
+        modifier = Modifier.width(cardWidth),
     ) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelLarge,
             color = Color(0xFFF5D58F),
             textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .width(cardWidth)
+                .height(LibraryOnboardingLabelHeight),
         )
         AstroCardPreviewSurface(
             displayCard = displayCard,
-            mode = AstroCardSurfaceMode.Preview,
+            mode = mode,
+            holographicMotion = holographicMotion,
             modifier = Modifier
-                .fillMaxWidth()
+                .width(cardWidth)
                 .testTag(testTag),
         )
     }
@@ -432,6 +584,7 @@ private fun CardWithLabel(
 private fun HolographicShowcase(
     standardCard: DisplayCard,
     holographicCard: DisplayCard,
+    availableHeight: Dp,
     modifier: Modifier = Modifier,
 ) {
     val holoTransition = rememberInfiniteTransition(label = "library-onboarding-holographic")
@@ -454,31 +607,34 @@ private fun HolographicShowcase(
         label = "library-onboarding-holographic-sparkle",
     )
 
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    BoxWithConstraints(
         modifier = modifier.fillMaxWidth(),
     ) {
-        AstroCardPreviewSurface(
-            displayCard = standardCard,
-            mode = AstroCardSurfaceMode.Thumbnail,
-            modifier = Modifier
-                .weight(0.85f)
-                .testTag("library-onboarding-holographic-standard-card"),
+        val metrics = calculateLibraryOnboardingWeightedComparisonMetrics(
+            availableWidth = maxWidth,
+            availableHeight = availableHeight,
+            leftWeight = HolographicStandardCardWeight,
+            rightWeight = HolographicFeaturedCardWeight,
         )
-        Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.weight(1.15f),
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(metrics.horizontalGap),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .width(metrics.totalWidth)
+                .align(Alignment.Center),
         ) {
-            Text(
-                text = holographicCard.activeVariant.skyQualityLabel,
-                style = MaterialTheme.typography.labelLarge,
-                color = Color(0xFFF5D58F),
-                textAlign = TextAlign.Center,
-            )
             AstroCardPreviewSurface(
+                displayCard = standardCard,
+                mode = AstroCardSurfaceMode.Thumbnail,
+                modifier = Modifier
+                    .width(metrics.leftCardWidth)
+                    .testTag("library-onboarding-holographic-standard-card"),
+            )
+            CardWithLabel(
+                label = holographicCard.activeVariant.skyQualityLabel,
                 displayCard = holographicCard,
+                testTag = "library-onboarding-holographic-card",
+                cardWidth = metrics.rightCardWidth,
                 mode = AstroCardSurfaceMode.Preview,
                 holographicMotion = HolographicCardMotion(
                     sweepFraction = holoSweep,
@@ -486,9 +642,6 @@ private fun HolographicShowcase(
                     edgeGlowAlpha = 0.36f,
                     sparkleBoost = sparkleBoost,
                 ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("library-onboarding-holographic-card"),
             )
         }
     }
@@ -496,27 +649,34 @@ private fun HolographicShowcase(
 
 @Composable
 private fun PlaceholderVisual(
+    availableHeight: Dp,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier
-            .fillMaxWidth()
-            .aspectRatio(1.55f)
-            .clip(RoundedCornerShape(26.dp))
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(Color(0xFF142945), Color(0xFF0A172A)),
-                ),
-            )
-            .padding(20.dp)
-            .testTag("library-onboarding-placeholder"),
+    BoxWithConstraints(
+        modifier = modifier.fillMaxWidth(),
     ) {
-        Text(
-            text = "Les exemples de variantes apparaîtront ici.",
-            style = MaterialTheme.typography.bodyLarge,
-            color = Color(0xFFD5E4F7),
-            textAlign = TextAlign.Center,
-        )
+        val placeholderWidth = minOf(maxWidth, availableHeight * 1.55f)
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .width(placeholderWidth)
+                .align(Alignment.Center)
+                .aspectRatio(1.55f)
+                .clip(RoundedCornerShape(26.dp))
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color(0xFF142945), Color(0xFF0A172A)),
+                    ),
+                )
+                .padding(20.dp)
+                .testTag("library-onboarding-placeholder"),
+        ) {
+            Text(
+                text = "Les exemples de variantes apparaîtront ici.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color(0xFFD5E4F7),
+                textAlign = TextAlign.Center,
+            )
+        }
     }
 }
