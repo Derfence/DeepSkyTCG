@@ -49,17 +49,17 @@ internal data class NfcTradePacketExpectation(
 
 internal fun NfcTradePacket.commonValidationErrorFor(expectation: NfcTradePacketExpectation): String? {
     if (protocolVersion != NfcTradeProtocolVersion) {
-        return "Version d'echange incompatible."
+        return "Version d'échange incompatible."
     }
     if (catalogFingerprint != expectation.expectedCatalogFingerprint) {
         return "Catalogues incompatibles."
     }
     if (tradeId.isBlank()) {
-        return "Identifiant d'echange NFC invalide."
+        return "Identifiant d'échange NFC invalide."
     }
     val expectedTradeId = expectation.expectedTradeId
     if (expectedTradeId != null && tradeId != expectedTradeId) {
-        return "Echange NFC inconnu."
+        return "Échange NFC inconnu."
     }
     if (nonce.isBlank()) {
         return "Jeton NFC invalide."

@@ -3,6 +3,7 @@ package fr.aumombelli.dstcg.feature.trade
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import fr.aumombelli.dstcg.data.TradeGateway
+import fr.aumombelli.dstcg.model.DisplayCard
 import fr.aumombelli.dstcg.model.TradeCardCandidate
 import fr.aumombelli.dstcg.model.TradeCardRef
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +16,9 @@ data class TradeUiState(
     val isLoading: Boolean = true,
     val catalogFingerprint: String? = null,
     val selectedCandidate: TradeCardCandidate? = null,
+    val receivedCardRef: TradeCardRef? = null,
+    val receivedDisplayCard: DisplayCard? = null,
+    val isResolvingReceivedCard: Boolean = false,
     val phase: TradePhase = TradePhase.Ready,
     val message: String? = null,
 )
@@ -33,7 +37,7 @@ class TradeViewModel(
     private val _uiState = MutableStateFlow(
         TradeUiState(
             selectedCandidate = selectedCandidate,
-            message = "Preparation de l'echange NFC...",
+            message = "Préparation de l'échange NFC...",
         ),
     )
     val uiState: StateFlow<TradeUiState> = _uiState.asStateFlow()
@@ -48,7 +52,10 @@ class TradeViewModel(
                 it.copy(
                     isLoading = true,
                     phase = TradePhase.Ready,
-                    message = "Preparation de l'echange NFC...",
+                    receivedCardRef = null,
+                    receivedDisplayCard = null,
+                    isResolvingReceivedCard = false,
+                    message = "Préparation de l'échange NFC...",
                 )
             }
             runCatching {
@@ -59,7 +66,10 @@ class TradeViewModel(
                         isLoading = false,
                         catalogFingerprint = content,
                         phase = TradePhase.Ready,
-                        message = "Rapproche les deux telephones et garde-les immobiles.",
+                        receivedCardRef = null,
+                        receivedDisplayCard = null,
+                        isResolvingReceivedCard = false,
+                        message = "Rapproche les deux téléphones et garde-les immobiles.",
                     )
                 }
             }.onFailure { exception ->
@@ -67,7 +77,10 @@ class TradeViewModel(
                     it.copy(
                         isLoading = false,
                         phase = TradePhase.Failed,
-                        message = exception.message ?: "Impossible de preparer l'echange NFC.",
+                        receivedCardRef = null,
+                        receivedDisplayCard = null,
+                        isResolvingReceivedCard = false,
+                        message = exception.message ?: "Impossible de préparer l'échange NFC.",
                     )
                 }
             }
@@ -78,33 +91,78 @@ class TradeViewModel(
         _uiState.update {
             it.copy(
                 phase = TradePhase.Ready,
-                message = "Rapproche les deux telephones et garde-les immobiles.",
+                receivedCardRef = null,
+                receivedDisplayCard = null,
+                isResolvingReceivedCard = false,
+                message = "Rapproche les deux téléphones et garde-les immobiles.",
             )
         }
     }
 
     internal fun onNfcEvent(event: NfcTradeControllerEvent) {
+        if (event is NfcTradeControllerEvent.Succeeded) {
+            onExchangeSucceeded(event.receivedCard)
+            return
+        }
         _uiState.update { state ->
             when (event) {
                 NfcTradeControllerEvent.Waiting -> state.copy(
                     phase = TradePhase.Ready,
-                    message = "Rapproche les deux telephones et garde-les immobiles.",
+                    receivedCardRef = null,
+                    receivedDisplayCard = null,
+                    isResolvingReceivedCard = false,
+                    message = "Rapproche les deux téléphones et garde-les immobiles.",
                 )
 
                 NfcTradeControllerEvent.Exchanging -> state.copy(
                     phase = TradePhase.Exchanging,
-                    message = "Echange en cours...",
-                )
-
-                NfcTradeControllerEvent.Succeeded -> state.copy(
-                    phase = TradePhase.Succeeded,
-                    message = "Echange reussi.",
+                    receivedCardRef = null,
+                    receivedDisplayCard = null,
+                    isResolvingReceivedCard = false,
+                    message = "Échange en cours...",
                 )
 
                 is NfcTradeControllerEvent.Failed -> state.copy(
                     phase = TradePhase.Failed,
+                    receivedCardRef = null,
+                    receivedDisplayCard = null,
+                    isResolvingReceivedCard = false,
                     message = event.message,
                 )
+
+                is NfcTradeControllerEvent.Succeeded -> state
+            }
+        }
+    }
+
+    private fun onExchangeSucceeded(receivedCard: TradeCardRef) {
+        _uiState.update {
+            it.copy(
+                phase = TradePhase.Succeeded,
+                receivedCardRef = receivedCard,
+                receivedDisplayCard = null,
+                isResolvingReceivedCard = true,
+                message = "Échange réussi !",
+            )
+        }
+        viewModelScope.launch {
+            val displayCard = runCatching {
+                tradeRepository.loadTradeCard(receivedCard)
+            }.getOrNull()
+            _uiState.update { state ->
+                if (state.phase == TradePhase.Succeeded && state.receivedCardRef == receivedCard) {
+                    state.copy(
+                        receivedDisplayCard = displayCard,
+                        isResolvingReceivedCard = false,
+                        message = if (displayCard == null) {
+                            "Échange réussi. La carte reçue est dans ta bibliothèque."
+                        } else {
+                            "Échange réussi !"
+                        },
+                    )
+                } else {
+                    state
+                }
             }
         }
     }

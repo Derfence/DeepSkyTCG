@@ -97,13 +97,13 @@ fun validateTradePair(
         return TradeValidationResult.Invalid("La variante distante n'existe pas dans le catalogue.")
     }
     if (localCard.rarityLabel != remoteCard.rarityLabel) {
-        return TradeValidationResult.Invalid("Les deux cartes n'ont pas la meme rarete.")
+        return TradeValidationResult.Invalid("Les deux cartes n'ont pas la même rareté.")
     }
     if (localOutgoing.variantKey != remoteOutgoing.variantKey) {
-        return TradeValidationResult.Invalid("Les deux cartes n'ont pas la meme variante.")
+        return TradeValidationResult.Invalid("Les deux cartes n'ont pas la même variante.")
     }
     if (localOutgoing == remoteOutgoing) {
-        return TradeValidationResult.Invalid("L'echange de deux variantes identiques est inutile.")
+        return TradeValidationResult.Invalid("L'échange de deux variantes identiques est inutile.")
     }
     return TradeValidationResult.Valid
 }
