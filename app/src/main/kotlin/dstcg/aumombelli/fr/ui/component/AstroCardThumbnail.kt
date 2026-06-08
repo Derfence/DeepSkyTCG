@@ -11,7 +11,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.model.LibraryCardItem
@@ -62,10 +61,5 @@ fun AstroCardThumbnail(
                     .padding(10.dp),
             )
         }
-        androidx.compose.material3.Text(
-            text = if (owned) "En collection : ${item.ownedCount}" else "Pas encore obtenue",
-            color = Color(0xFFD3E3F4),
-            modifier = Modifier.testTag("library-owned-${item.definition.id}"),
-        )
     }
 }

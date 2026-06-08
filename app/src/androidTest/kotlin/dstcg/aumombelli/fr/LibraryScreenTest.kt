@@ -2,11 +2,14 @@ package fr.aumombelli.dstcg
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.click
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
@@ -91,9 +94,16 @@ class LibraryScreenTest {
         }
 
         composeRule.onNodeWithTag("library-card-M31").assertHasNoClickAction()
+        composeRule.onNodeWithTag("library-section-count-astronomes-en-herbe").assertTextEquals("1/2")
+        composeRule.onAllNodesWithTag("library-owned-M42").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("library-owned-M31").assertCountEquals(0)
         composeRule.onAllNodesWithTag(CARD_BACKGROUND_HIDDEN_PLACEHOLDER_TAG, useUnmergedTree = true).assertCountEquals(1)
         composeRule.onNodeWithTag("library-card-M42").performClick()
         composeRule.onNodeWithTag("library-card-preview").assertIsDisplayed()
+        composeRule.onNodeWithTag("library-card-preview-close").assertIsDisplayed()
+        val closeBounds = composeRule.onNodeWithTag("library-card-preview-close").fetchSemanticsNode().boundsInRoot
+        val cardBounds = composeRule.onNodeWithTag("library-card-preview-surface").fetchSemanticsNode().boundsInRoot
+        assertTrue(closeBounds.left <= cardBounds.left + 4f)
         composeRule.onNodeWithTag("astro-card-variant-city-standard").performClick()
         composeRule.onNodeWithTag("library-card-preview-surface").performClick()
         composeRule.onNodeWithTag("astro-card-fullscreen").assertIsDisplayed()
@@ -101,6 +111,110 @@ class LibraryScreenTest {
         composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
         composeRule.onAllNodesWithTag("library-card-preview").assertCountEquals(0)
         composeRule.onAllNodesWithTag("library-back").assertCountEquals(0)
+    }
+
+    @Test
+    fun preview_card_can_close_with_close_button() {
+        val ownedItem = LibraryCardItem(
+            definition = testCardDefinition("M42", name = "Nebuleuse d'Orion"),
+            extensionName = "Astronomes en herbe",
+            ownedCount = 1,
+            availableVariants = listOf(
+                DisplayCardVariant("city", "Ville", "standard", "Standard", false, 1),
+            ),
+        )
+
+        composeRule.setContent {
+            LibraryScreen(
+                state = LibraryUiState(
+                    isLoading = false,
+                    sections = listOf(
+                        LibrarySection(
+                            extension = ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                            cards = listOf(ownedItem),
+                        ),
+                    ),
+                ),
+                onRefresh = {},
+            )
+        }
+
+        composeRule.onNodeWithTag("library-card-M42").performClick()
+        composeRule.onNodeWithTag("library-card-preview-close").performClick()
+
+        composeRule.onAllNodesWithTag("library-card-preview").assertCountEquals(0)
+    }
+
+    @Test
+    fun preview_close_button_matches_library_back_button_position() {
+        val ownedItem = LibraryCardItem(
+            definition = testCardDefinition("M42", name = "Nebuleuse d'Orion"),
+            extensionName = "Astronomes en herbe",
+            ownedCount = 1,
+            availableVariants = listOf(
+                DisplayCardVariant("city", "Ville", "standard", "Standard", false, 1),
+            ),
+        )
+
+        composeRule.setContent {
+            LibraryScreen(
+                state = LibraryUiState(
+                    isLoading = false,
+                    sections = listOf(
+                        LibrarySection(
+                            extension = ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                            cards = listOf(ownedItem),
+                        ),
+                    ),
+                ),
+                onRefresh = {},
+                onBack = {},
+            )
+        }
+
+        val libraryBackBounds = composeRule.onNodeWithTag("library-back").fetchSemanticsNode().boundsInRoot
+
+        composeRule.onNodeWithTag("library-card-M42").performClick()
+
+        val previewCloseBounds = composeRule.onNodeWithTag("library-card-preview-close")
+            .fetchSemanticsNode()
+            .boundsInRoot
+        assertTrue(abs(previewCloseBounds.left - libraryBackBounds.left) <= 1f)
+        assertTrue(abs(previewCloseBounds.top - libraryBackBounds.top) <= 1f)
+    }
+
+    @Test
+    fun preview_card_can_close_with_tap_outside_card() {
+        val ownedItem = LibraryCardItem(
+            definition = testCardDefinition("M42", name = "Nebuleuse d'Orion"),
+            extensionName = "Astronomes en herbe",
+            ownedCount = 1,
+            availableVariants = listOf(
+                DisplayCardVariant("city", "Ville", "standard", "Standard", false, 1),
+            ),
+        )
+
+        composeRule.setContent {
+            LibraryScreen(
+                state = LibraryUiState(
+                    isLoading = false,
+                    sections = listOf(
+                        LibrarySection(
+                            extension = ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                            cards = listOf(ownedItem),
+                        ),
+                    ),
+                ),
+                onRefresh = {},
+            )
+        }
+
+        composeRule.onNodeWithTag("library-card-M42").performClick()
+        composeRule.onNodeWithTag("library-card-preview").performTouchInput {
+            click(Offset(1f, 1f))
+        }
+
+        composeRule.onAllNodesWithTag("library-card-preview").assertCountEquals(0)
     }
 
     @Test
@@ -204,12 +318,15 @@ class LibraryScreenTest {
         }
 
         composeRule.onNodeWithTag("library-filter-panel").assertIsDisplayed()
+        composeRule.onNodeWithTag("library-section-count-astronomes-en-herbe").assertTextEquals("1/1")
+        composeRule.onNodeWithTag("library-section-count-systeme-solaire").assertTextEquals("2/3")
         composeRule.onNodeWithTag("library-filter-extension-logo-systeme-solaire").assertIsDisplayed()
         composeRule.onNodeWithTag("library-filter-rarity-star-Rare").assertIsDisplayed()
         composeRule.onNodeWithTag("library-filter-extension-systeme-solaire").performClick()
         composeRule.onNodeWithTag("library-filter-rarity-Rare").performClick()
 
         composeRule.onAllNodesWithTag("library-card-ALP-001").assertCountEquals(0)
+        composeRule.onNodeWithTag("library-section-count-systeme-solaire").assertTextEquals("2/3")
         composeRule.onNodeWithTag("library-card-BET-001").assertIsDisplayed()
         composeRule.onNodeWithTag("library-card-BET-002").assertIsDisplayed()
         composeRule.onNodeWithTag("library-card-BET-003").assertIsDisplayed()
@@ -217,6 +334,7 @@ class LibraryScreenTest {
         composeRule.onNodeWithTag("library-filter-sky-city").performClick()
 
         composeRule.onAllNodesWithTag("library-card-BET-001").assertCountEquals(0)
+        composeRule.onNodeWithTag("library-section-count-systeme-solaire").assertTextEquals("1/3")
         composeRule.onNodeWithTag("library-card-BET-002").assertIsDisplayed()
         composeRule.onAllNodesWithTag("library-card-BET-003").assertCountEquals(0)
         composeRule.onAllNodesWithText("Ville · Standard").assertCountEquals(1)
@@ -226,6 +344,7 @@ class LibraryScreenTest {
         composeRule.onNodeWithTag("library-filter-sky-holographic").performClick()
 
         composeRule.onNodeWithTag("library-card-BET-001").assertIsDisplayed()
+        composeRule.onNodeWithTag("library-section-count-systeme-solaire").assertTextEquals("2/3")
         composeRule.onNodeWithTag("library-card-BET-002").assertIsDisplayed()
         composeRule.onAllNodesWithTag("library-card-BET-003").assertCountEquals(0)
 
@@ -235,6 +354,7 @@ class LibraryScreenTest {
         composeRule.onNodeWithTag("library-filter-rarity-Rare").assertIsSelected()
         composeRule.onNodeWithTag("library-filter-sky-holographic").assertIsSelected()
         composeRule.onNodeWithTag("library-filter-tradeable").assertIsSelected()
+        composeRule.onNodeWithTag("library-section-count-systeme-solaire").assertTextEquals("1/3")
         composeRule.onNodeWithTag("library-card-BET-001").assertIsDisplayed()
         composeRule.onAllNodesWithTag("library-card-BET-002").assertCountEquals(0)
         composeRule.onAllNodesWithTag("library-card-BET-003").assertCountEquals(0)

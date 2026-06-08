@@ -33,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.app.NewPlayerBlockingModal
 import fr.aumombelli.dstcg.app.NewPlayerBlockingModalPage
@@ -76,6 +77,11 @@ fun LibraryScreen(
             sections = state.sections,
             filters = filters,
         )
+    }
+    val totalCardsByExtension = remember(state.sections) {
+        state.sections.associate { section ->
+            section.extension.id to section.cards.size
+        }
     }
 
     val previewItem = previewCardId?.let(cardsById::get)
@@ -209,14 +215,14 @@ fun LibraryScreen(
 
             displaySections.forEach { section ->
                 item(span = { GridItemSpan(maxLineSpan) }) {
-                    Text(
-                        text = section.extension.name,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF9EE7FF),
+                    LibrarySectionHeader(
+                        extensionId = section.extension.id,
+                        extensionName = section.extension.name,
+                        ownedCount = section.cards.count { it.ownedCount > 0 },
+                        totalCount = totalCardsByExtension[section.extension.id] ?: section.cards.size,
                         modifier = Modifier
-                            .padding(top = 8.dp, bottom = 4.dp)
-                            .testTag("library-section-${section.extension.id}"),
+                            .fillMaxWidth()
+                            .padding(top = 8.dp, bottom = 4.dp),
                     )
                 }
                 items(section.cards, key = { it.definition.id }) { card ->
@@ -295,5 +301,38 @@ fun LibraryScreen(
                 },
             )
         }
+    }
+}
+
+@Composable
+private fun LibrarySectionHeader(
+    extensionId: String,
+    extensionName: String,
+    ownedCount: Int,
+    totalCount: Int,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.testTag("library-section-$extensionId"),
+    ) {
+        Text(
+            text = extensionName,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFF9EE7FF),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            text = "$ownedCount/$totalCount",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFFD0E0F2),
+            maxLines = 1,
+            modifier = Modifier.testTag("library-section-count-$extensionId"),
+        )
     }
 }
