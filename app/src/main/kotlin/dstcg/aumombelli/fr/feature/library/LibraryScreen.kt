@@ -18,10 +18,6 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,8 +37,6 @@ import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.app.NewPlayerBlockingModal
 import fr.aumombelli.dstcg.app.NewPlayerBlockingModalPage
 import fr.aumombelli.dstcg.model.TradeCardCandidate
-import fr.aumombelli.dstcg.model.firstTradeableVariant
-import fr.aumombelli.dstcg.model.hasTradeableVariant
 import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.ui.component.AstroCardThumbnail
 import fr.aumombelli.dstcg.ui.component.SceneNavigationButton
@@ -76,18 +70,12 @@ fun LibraryScreen(
     var previewCardId by remember(state.sections) { mutableStateOf<String?>(null) }
     var fullscreenCardId by remember(state.sections) { mutableStateOf<String?>(null) }
     var selectedVariantKey by remember(state.sections) { mutableStateOf<String?>(null) }
-    var showExchangeableOnly by remember(state.sections) { mutableStateOf(false) }
-    val displaySections = remember(state.sections, showExchangeableOnly) {
-        if (!showExchangeableOnly) {
-            state.sections
-        } else {
-            state.sections.mapNotNull { section ->
-                val cards = section.cards.filter { card ->
-                    card.hasTradeableVariant()
-                }
-                section.copy(cards = cards).takeIf { cards.isNotEmpty() }
-            }
-        }
+    var filters by remember(state.sections) { mutableStateOf(LibraryFilters()) }
+    val displaySections = remember(state.sections, filters) {
+        filterLibrarySections(
+            sections = state.sections,
+            filters = filters,
+        )
     }
 
     val previewItem = previewCardId?.let(cardsById::get)
@@ -159,23 +147,16 @@ fun LibraryScreen(
                                 color = Color.White,
                             )
                         }
-                        FilterChip(
-                            selected = showExchangeableOnly,
-                            onClick = { showExchangeableOnly = !showExchangeableOnly },
-                            enabled = interactionsEnabled && !walkthroughVisible,
-                            label = { Text("Échangeable") },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = Icons.Filled.SwapHoriz,
-                                    contentDescription = null,
-                                )
-                            },
-                            modifier = Modifier.testTag("library-filter-tradeable"),
-                        )
                     }
                     Text(
-                        text = "Les cartes obtenues peuvent etre ouvertes en apercu puis en plein ecran. Les autres gardent un visuel masque jusqu'a leur premiere obtention.",
+                        text = "Les cartes obtenues peuvent être ouvertes en aperçu puis en plein écran. Les autres gardent un visuel masqué jusqu'à leur première obtention.",
                         color = Color(0xFFD0E0F2),
+                    )
+                    LibraryFilterPanel(
+                        options = state.filterOptions,
+                        filters = filters,
+                        onFiltersChanged = { filters = it },
+                        enabled = interactionsEnabled && !walkthroughVisible && !state.isLoading,
                     )
                     if (showOnboardingHint) {
                         Text(
@@ -214,14 +195,14 @@ fun LibraryScreen(
                 }
             }
 
-            if (!state.isLoading && state.errorMessage == null && displaySections.isEmpty() && showExchangeableOnly) {
+            if (!state.isLoading && state.errorMessage == null && displaySections.isEmpty() && filters != LibraryFilters()) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     Text(
-                        text = "Aucune carte echangeable pour le moment.",
+                        text = "Aucune carte ne correspond aux filtres.",
                         color = Color(0xFFD0E0F2),
                         modifier = Modifier
                             .padding(vertical = 20.dp)
-                            .testTag("library-no-tradeable-cards"),
+                            .testTag("library-no-filtered-cards"),
                     )
                 }
             }
@@ -239,17 +220,20 @@ fun LibraryScreen(
                     )
                 }
                 items(section.cards, key = { it.definition.id }) { card ->
+                    val filteredVariantKey = if (filters.skyQuality != null) {
+                        card.firstVariantMatching(filters)?.key
+                    } else {
+                        null
+                    }
                     AstroCardThumbnail(
                         item = card,
                         modifier = Modifier.fillMaxWidth(),
+                        selectedVariantKey = filteredVariantKey,
                         onClick = if (interactionsEnabled && !walkthroughVisible) {
                             {
                                 previewCardId = card.definition.id
-                                selectedVariantKey = if (showExchangeableOnly) {
-                                    card.firstTradeableVariant()?.key
-                                } else {
-                                    card.availableVariants.firstOrNull()?.key
-                                }
+                                selectedVariantKey = card.firstVariantMatching(filters)?.key
+                                    ?: card.availableVariants.firstOrNull()?.key
                                 fullscreenCardId = null
                             }
                         } else {

@@ -1,37 +1,43 @@
-# Bibliotheque et badges
+# Bibliothèque et badges
 
-[← Index documentation](../README.md) | [Echange NFC](trade-nfc.md) | [Onboarding](../flows/new-player-onboarding.md)
+[← Index documentation](../README.md) | [Échange NFC](trade-nfc.md) | [Onboarding](../flows/new-player-onboarding.md)
 
-## Bibliotheque
+## Bibliothèque
 
-La bibliotheque affiche la collection locale persistante.
+La bibliothèque affiche la collection locale persistante.
 
-- Les cartes non obtenues restent visibles avec leur cadre et leurs informations, mais leur illustration est masquee.
-- Les cartes obtenues peuvent etre ouvertes en apercu puis en plein ecran.
+- Les cartes non obtenues restent visibles avec leur cadre et leurs informations, mais leur illustration est masquée.
+- Les cartes obtenues peuvent être ouvertes en aperçu puis en plein écran.
+- Les filtres sont affichés entre la description de la bibliothèque et la liste des cartes.
+- Les filtres `Extension`, `Rareté`, `Qualité du ciel` et `Échangeable` sont combinables.
+- Dans chaque groupe catalogue, une option active remplace l'option déjà active du même groupe ; toucher l'option active la désactive.
+- `Holographique` est une qualité du ciel, pas un groupe de filtre séparé.
+- Un filtre de qualité du ciel masque les cartes non obtenues, car aucune variante possédée ne peut confirmer cette qualité.
+- Quand `Échangeable` est combiné avec une qualité du ciel, seule une variante de cette qualité disponible en double rend la carte visible.
 - L'aperçu réserve la place du sélecteur de variantes et de l'action d'échange, puis dimensionne la carte selon la largeur ou la hauteur encore disponible.
 - La fiche détaillée dimensionne également la carte selon la largeur ou la hauteur disponible avant d'afficher sa description.
-- Le selecteur de variantes permet de consulter les qualites de ciel et finitions possedees.
-- Les nouvelles cartes peuvent afficher l'indicateur a trois etoiles pendant la premiere visite.
+- Le sélecteur de variantes permet de consulter les qualités de ciel et finitions possédées.
+- Les nouvelles cartes peuvent afficher l'indicateur à trois étoiles pendant la première visite.
 - Une variante avec au moins `2` copies peut proposer l'action `Échanger`.
 
-## Variantes pedagogiques
+## Variantes pédagogiques
 
 Pendant l'onboarding, une modale de variantes explique les différences de ciel et de finition. Les cartes d'exemple sont tirées dans le vrai catalogue par rareté ; elles peuvent varier d'un joueur à l'autre. Les visuels utilisent la largeur maximale permise par la hauteur disponible afin que chaque page reste entièrement visible.
 
 ## Badges
 
-Le carnet de badges est accessible apres le premier pack. Les badges couvrent notamment :
+Le carnet de badges est accessible après le premier pack. Les badges couvrent notamment :
 
 - premier pack ouvert ;
 - pack amélioré volontairement opaque ;
-- progression par qualite de ciel ;
-- cartes tamponnees et holographiques tamponnees ;
+- progression par qualité de ciel ;
+- cartes tamponnées et holographiques tamponnées ;
 - collection parfaite ;
-- equipements actives et effets simultanes.
+- équipements activés et effets simultanés.
 
-Les celebrations de badges peuvent etre differees pendant l'onboarding, puis rejouees au retour sur l'accueil.
+Les célébrations de badges peuvent être différées pendant l'onboarding, puis rejouées au retour sur l'accueil.
 
-## Tests associes
+## Tests associés
 
 - `LibraryViewModelTest`
 - `LibraryScreenTest`

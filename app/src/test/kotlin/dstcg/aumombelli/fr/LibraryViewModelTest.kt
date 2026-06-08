@@ -63,6 +63,18 @@ class LibraryViewModelTest {
             listOf("Rareté", "Qualité du ciel", "Tampon", "Holographique"),
             state.onboardingVariantWalkthroughPages.map { it.title },
         )
+        assertEquals(
+            listOf("core-alpha", "moon-dawn"),
+            state.filterOptions.extensions.map { it.id },
+        )
+        assertEquals(
+            listOf("Common", "Rare", "Epic"),
+            state.filterOptions.rarities.map { it.id },
+        )
+        assertEquals(
+            listOf("city", "suburban", "rural", "mountain", "holographic"),
+            state.filterOptions.skyQualities.map { it.id },
+        )
     }
 
     @Test

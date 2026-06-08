@@ -21,10 +21,13 @@ import fr.aumombelli.dstcg.model.toDisplayCard
 fun AstroCardThumbnail(
     item: LibraryCardItem,
     modifier: Modifier = Modifier,
+    selectedVariantKey: String? = null,
     onClick: () -> Unit,
 ) {
     val owned = item.ownedCount > 0
-    val displayCard = remember(item) { item.toDisplayCard() ?: fallbackDisplayCard(item) }
+    val displayCard = remember(item, selectedVariantKey) {
+        item.toDisplayCard(selectedVariantKey) ?: fallbackDisplayCard(item)
+    }
     val artVisibility = if (owned) CardArtVisibility.Visible else CardArtVisibility.Hidden
 
     Column(

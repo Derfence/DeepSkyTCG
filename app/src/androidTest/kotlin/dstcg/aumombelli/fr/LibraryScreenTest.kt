@@ -6,8 +6,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
@@ -15,6 +17,8 @@ import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.feature.library.buildLibraryOnboardingVariantWalkthroughPages
+import fr.aumombelli.dstcg.feature.library.LibraryFilterOption
+import fr.aumombelli.dstcg.feature.library.LibraryFilterOptions
 import fr.aumombelli.dstcg.model.CardFinishDefinition
 import fr.aumombelli.dstcg.model.DisplayCardVariant
 import fr.aumombelli.dstcg.model.ExtensionDefinition
@@ -140,6 +144,100 @@ class LibraryScreenTest {
         composeRule.assertApproxCardRatio("library-card-preview-surface")
         assertTrue(previewBounds.bottom <= variantBounds.top)
         assertTrue(variantBounds.bottom <= tradeBounds.top)
+    }
+
+    @Test
+    fun filters_combine_with_tradeable_filter() {
+        val alphaCommon = LibraryCardItem(
+            definition = testCardDefinition("ALP-001", extensionId = "astronomes-en-herbe", rarityLabel = "Common"),
+            extensionName = "Astronomes en herbe",
+            ownedCount = 2,
+            availableVariants = listOf(
+                DisplayCardVariant("city", "Ville", "standard", "Standard", false, 2),
+            ),
+        )
+        val betaHolographicTradeable = LibraryCardItem(
+            definition = testCardDefinition("BET-001", extensionId = "systeme-solaire", rarityLabel = "Rare"),
+            extensionName = "Système solaire",
+            ownedCount = 2,
+            availableVariants = listOf(
+                DisplayCardVariant("holographic", "Holographique", "standard", "Standard", true, 2),
+            ),
+        )
+        val betaHolographicSingle = LibraryCardItem(
+            definition = testCardDefinition("BET-002", extensionId = "systeme-solaire", rarityLabel = "Rare"),
+            extensionName = "Système solaire",
+            ownedCount = 3,
+            availableVariants = listOf(
+                DisplayCardVariant("holographic", "Holographique", "standard", "Standard", true, 1),
+                DisplayCardVariant("city", "Ville", "standard", "Standard", false, 2),
+            ),
+        )
+        val betaUnowned = LibraryCardItem(
+            definition = testCardDefinition("BET-003", extensionId = "systeme-solaire", rarityLabel = "Rare"),
+            extensionName = "Système solaire",
+            ownedCount = 0,
+        )
+
+        composeRule.setContent {
+            LibraryScreen(
+                state = LibraryUiState(
+                    isLoading = false,
+                    filterOptions = libraryFilterOptions(),
+                    sections = listOf(
+                        LibrarySection(
+                            extension = ExtensionDefinition(
+                                "astronomes-en-herbe",
+                                "Astronomes en herbe",
+                                "cover",
+                            ),
+                            cards = listOf(alphaCommon),
+                        ),
+                        LibrarySection(
+                            extension = ExtensionDefinition("systeme-solaire", "Système solaire", "cover"),
+                            cards = listOf(betaHolographicTradeable, betaHolographicSingle, betaUnowned),
+                        ),
+                    ),
+                ),
+                onRefresh = {},
+            )
+        }
+
+        composeRule.onNodeWithTag("library-filter-panel").assertIsDisplayed()
+        composeRule.onNodeWithTag("library-filter-extension-logo-systeme-solaire").assertIsDisplayed()
+        composeRule.onNodeWithTag("library-filter-rarity-star-Rare").assertIsDisplayed()
+        composeRule.onNodeWithTag("library-filter-extension-systeme-solaire").performClick()
+        composeRule.onNodeWithTag("library-filter-rarity-Rare").performClick()
+
+        composeRule.onAllNodesWithTag("library-card-ALP-001").assertCountEquals(0)
+        composeRule.onNodeWithTag("library-card-BET-001").assertIsDisplayed()
+        composeRule.onNodeWithTag("library-card-BET-002").assertIsDisplayed()
+        composeRule.onNodeWithTag("library-card-BET-003").assertIsDisplayed()
+
+        composeRule.onNodeWithTag("library-filter-sky-city").performClick()
+
+        composeRule.onAllNodesWithTag("library-card-BET-001").assertCountEquals(0)
+        composeRule.onNodeWithTag("library-card-BET-002").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("library-card-BET-003").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Ville · Standard").assertCountEquals(1)
+        composeRule.onAllNodesWithText("Holographique · Standard").assertCountEquals(0)
+
+        composeRule.onNodeWithTag("library-filter-sky-city").performClick()
+        composeRule.onNodeWithTag("library-filter-sky-holographic").performClick()
+
+        composeRule.onNodeWithTag("library-card-BET-001").assertIsDisplayed()
+        composeRule.onNodeWithTag("library-card-BET-002").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("library-card-BET-003").assertCountEquals(0)
+
+        composeRule.onNodeWithTag("library-filter-tradeable").performClick()
+
+        composeRule.onNodeWithTag("library-filter-extension-systeme-solaire").assertIsSelected()
+        composeRule.onNodeWithTag("library-filter-rarity-Rare").assertIsSelected()
+        composeRule.onNodeWithTag("library-filter-sky-holographic").assertIsSelected()
+        composeRule.onNodeWithTag("library-filter-tradeable").assertIsSelected()
+        composeRule.onNodeWithTag("library-card-BET-001").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("library-card-BET-002").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("library-card-BET-003").assertCountEquals(0)
     }
 
     @Test
@@ -299,6 +397,22 @@ class LibraryScreenTest {
         const val CARD_BACKGROUND_HIDDEN_PLACEHOLDER_TAG = "astro-card-background-hidden-placeholder"
     }
 }
+
+private fun libraryFilterOptions(): LibraryFilterOptions =
+    LibraryFilterOptions(
+        extensions = listOf(
+            LibraryFilterOption("astronomes-en-herbe", "Astronomes en herbe"),
+            LibraryFilterOption("systeme-solaire", "Système solaire"),
+        ),
+        rarities = listOf(
+            LibraryFilterOption("Common", "Common"),
+            LibraryFilterOption("Rare", "Rare"),
+        ),
+        skyQualities = listOf(
+            LibraryFilterOption("city", "Ville"),
+            LibraryFilterOption("holographic", "Holographique"),
+        ),
+    )
 
 private fun testLibraryVariantProfiles(): List<VariantProfile> = listOf(
     VariantProfile(
