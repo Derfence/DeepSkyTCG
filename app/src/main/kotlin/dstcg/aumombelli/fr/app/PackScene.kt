@@ -112,7 +112,9 @@ internal fun PackScene(
             },
             onSelectBooster = { boosterIndex ->
                 if (NewPlayerOnboardingInteractionPolicy.allowsPackSelectionBoosterSelection(onboardingStep)) {
+                    val decorSeed = packViewModel.uiState.value.decorSeedForBooster(boosterIndex)
                     packViewModel.selectBooster(boosterIndex)
+                    updateSceneState { it.withSelectedPackDecorSeed(decorSeed) }
                 }
             },
             onOpenPack = { extensionId ->
@@ -167,7 +169,7 @@ internal fun PackScene(
             state = openingUiState,
             showPersistentDismissHint = showPersistentDismissHint,
             initialBoosterBounds = sceneState.selectedPackRevealBounds,
-            initialBoosterDecorSeed = uiState.selectedBoosterIndex,
+            initialBoosterDecorSeed = sceneState.selectedPackDecorSeed ?: uiState.selectedBoosterDecorSeed,
             onDismissRequest = if (packOpeningDismissAllowed) requestPackOpeningExit else null,
             dismissSignal = sceneState.packOpeningExitSignal,
             onDone = {

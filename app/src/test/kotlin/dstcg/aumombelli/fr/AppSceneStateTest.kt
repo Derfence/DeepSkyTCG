@@ -21,6 +21,7 @@ import fr.aumombelli.dstcg.app.requestPackOpeningExit
 import fr.aumombelli.dstcg.app.showHomeContent
 import fr.aumombelli.dstcg.app.showOnboardingHints
 import fr.aumombelli.dstcg.app.unlockTransitions
+import fr.aumombelli.dstcg.app.withSelectedPackDecorSeed
 import fr.aumombelli.dstcg.feature.badges.BadgeItem
 import fr.aumombelli.dstcg.feature.badges.BadgeProgress
 import fr.aumombelli.dstcg.feature.badges.BadgeRequirementType
@@ -45,6 +46,7 @@ class AppSceneStateTest {
                 widthPx = 30f,
                 heightPx = 40f,
             ),
+            selectedPackDecorSeed = 42,
             packOpeningExitSignal = 2,
             pendingBadgeCelebration = listOf(sampleBadge()),
         )
@@ -60,6 +62,7 @@ class AppSceneStateTest {
         assertEquals(0, nextState.packOpeningExitSignal)
         assertEquals(listOf(sampleBadge()), nextState.pendingBadgeCelebration)
         assertNull(nextState.selectedPackRevealBounds)
+        assertNull(nextState.selectedPackDecorSeed)
     }
 
     @Test
@@ -69,7 +72,7 @@ class AppSceneStateTest {
             packSceneVisible = true,
             packExtensionListVisible = true,
             selectedPackRevealBounds = PackRevealBounds(1f, 2f, 3f, 4f),
-        ).enterPackOpening().registerPackReady(
+        ).withSelectedPackDecorSeed(42).enterPackOpening().registerPackReady(
             newlyUnlockedBadges = listOf(sampleBadge()),
             deferBadgeCelebration = false,
         )
@@ -82,6 +85,7 @@ class AppSceneStateTest {
         assertEquals(false, nextState.packExtensionListVisible)
         assertEquals(listOf(sampleBadge()), nextState.pendingBadgeCelebration)
         assertNull(nextState.selectedPackRevealBounds)
+        assertNull(nextState.selectedPackDecorSeed)
     }
 
     @Test
@@ -92,7 +96,7 @@ class AppSceneStateTest {
             packExtensionListVisible = true,
             selectedPackRevealBounds = PackRevealBounds(1f, 2f, 3f, 4f),
             packOpeningExitSignal = 1,
-        ).enterPackOpening()
+        ).withSelectedPackDecorSeed(42).enterPackOpening()
 
         val nextState = openedState.finishPackOpeningToPackSelection()
 
@@ -102,6 +106,7 @@ class AppSceneStateTest {
         assertEquals(true, nextState.packExtensionListVisible)
         assertEquals(0, nextState.packOpeningExitSignal)
         assertNull(nextState.selectedPackRevealBounds)
+        assertNull(nextState.selectedPackDecorSeed)
     }
 
     @Test

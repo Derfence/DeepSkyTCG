@@ -6,10 +6,13 @@ import fr.aumombelli.dstcg.data.CatalogGateway
 import fr.aumombelli.dstcg.data.DEFAULT_MAX_STORED_DRAWS
 import fr.aumombelli.dstcg.data.DEFAULT_DRAW_COOLDOWN
 import fr.aumombelli.dstcg.data.DeterministicWeatherCalendar
+import fr.aumombelli.dstcg.data.EntropySource
+import fr.aumombelli.dstcg.data.EpicBoostConfig
 import fr.aumombelli.dstcg.data.EpicBoostManager
 import fr.aumombelli.dstcg.data.LoadedProgress
 import fr.aumombelli.dstcg.data.PackGateway
 import fr.aumombelli.dstcg.data.ProgressGateway
+import fr.aumombelli.dstcg.data.RandomEntropySource
 import fr.aumombelli.dstcg.data.resolveActiveEquipmentBonus
 import fr.aumombelli.dstcg.data.StandaloneGameSettings
 import fr.aumombelli.dstcg.data.WeatherPolicy
@@ -55,10 +58,16 @@ data class PackSelectionUiState(
     val trustedElapsedRealtimeMs: Long = 0L,
     val selectedExtensionId: String? = null,
     val selectedBoosterIndex: Int? = null,
+    val boosterDecorSeeds: List<Int> = emptyList(),
     val epicBoostBoosterIndex: Int? = null,
     val isAwaitingPackResult: Boolean = false,
     val errorMessage: String? = null,
-)
+) {
+    val selectedBoosterDecorSeed: Int?
+        get() = selectedBoosterIndex?.let(::decorSeedForBooster)
+
+    fun decorSeedForBooster(index: Int): Int = boosterDecorSeeds.getOrElse(index) { index }
+}
 
 sealed interface PackEvent {
     data class PackReadyForReveal(
@@ -71,6 +80,7 @@ class PackViewModel(
     private val progressRepository: ProgressGateway,
     private val packRepository: PackGateway,
     private val gameSettings: StandaloneGameSettings = StandaloneGameSettings(),
+    private val decorEntropySource: EntropySource = RandomEntropySource(kotlin.random.Random(System.nanoTime())),
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(PackSelectionUiState())
     val uiState: StateFlow<PackSelectionUiState> = _uiState.asStateFlow()
@@ -90,6 +100,7 @@ class PackViewModel(
                 isLoading = true,
                 selectedExtensionId = null,
                 selectedBoosterIndex = null,
+                boosterDecorSeeds = emptyList(),
                 epicBoostBoosterIndex = null,
                 isAwaitingPackResult = false,
                 errorMessage = null,
@@ -123,10 +134,12 @@ class PackViewModel(
 
     fun selectExtension(extensionId: String) {
         val epicBoostBoosterIndex = epicBoostManager.rollEpicBoostBoosterIndex()
+        val boosterDecorSeeds = decorEntropySource.rollBoosterDecorSeeds()
         _uiState.update {
             it.copy(
                 selectedExtensionId = extensionId,
                 selectedBoosterIndex = null,
+                boosterDecorSeeds = boosterDecorSeeds,
                 epicBoostBoosterIndex = epicBoostBoosterIndex,
                 errorMessage = null,
             )
@@ -138,6 +151,7 @@ class PackViewModel(
             it.copy(
                 selectedExtensionId = null,
                 selectedBoosterIndex = null,
+                boosterDecorSeeds = emptyList(),
                 epicBoostBoosterIndex = null,
                 isAwaitingPackResult = false,
                 errorMessage = null,
@@ -263,6 +277,9 @@ class PackViewModel(
         )
     }
 }
+
+private fun EntropySource.rollBoosterDecorSeeds(): List<Int> =
+    List(EpicBoostConfig.BOOSTERS_PER_EXTENSION) { nextInt(Int.MAX_VALUE) }
 
 private data class Quadruple<A, B, C, D>(
     val first: A,
