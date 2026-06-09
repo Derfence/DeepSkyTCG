@@ -1,6 +1,7 @@
 package fr.aumombelli.dstcg
 
 import fr.aumombelli.dstcg.feature.minigames.MemoryBoardBuildResult
+import fr.aumombelli.dstcg.feature.minigames.MemoryBoardCell
 import fr.aumombelli.dstcg.feature.minigames.MemoryCardRole
 import fr.aumombelli.dstcg.feature.minigames.buildMemoryBoard
 import fr.aumombelli.dstcg.model.CardDefinition
@@ -14,7 +15,6 @@ import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.OwnedVariantCount
 import fr.aumombelli.dstcg.model.VariantProfile
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -57,8 +57,8 @@ class MemoryGameLogicTest {
     }
 
     @Test
-    fun `odd board prefers an owned holographic singleton`() {
-        val cards = testCards(5)
+    fun `odd board adds a hole instead of a unique card`() {
+        val cards = testCards(4)
         val result = buildReadyBoard(
             difficulty = MiniGameDifficulty.Observer,
             cards = cards,
@@ -67,7 +67,6 @@ class MemoryGameLogicTest {
                 "ALP-002" to listOf(OwnedVariantCount("city", "standard", 1)),
                 "ALP-003" to listOf(OwnedVariantCount("city", "standard", 1)),
                 "ALP-004" to listOf(OwnedVariantCount("city", "standard", 1)),
-                "ALP-005" to listOf(OwnedVariantCount("holographic", "standard", 1)),
             ),
             resolvedPairCards = listOf(
                 resolved("ALP-001"),
@@ -77,15 +76,16 @@ class MemoryGameLogicTest {
             ),
         )
 
-        val singleton = result.cards.single { it.role == MemoryCardRole.HolographicSingleton }
-        assertEquals("ALP-005", singleton.identity.cardId)
-        assertTrue(singleton.displayCard.activeVariant.isHolographic)
-        assertFalse(singleton.isVisualHolographicFallback)
+        assertEquals(9, result.cells.size)
+        assertEquals(8, result.playableCellCount)
+        assertEquals(1, result.cells.count { it is MemoryBoardCell.Hole })
+        assertEquals(8, result.cards.size)
+        assertTrue(result.cards.all { it.role == MemoryCardRole.Pair })
     }
 
     @Test
-    fun `odd board uses visual holographic fallback when no owned holo exists`() {
-        val cards = testCards(5)
+    fun `odd board remains playable without an extra owned card`() {
+        val cards = testCards(4)
         val result = buildReadyBoard(
             difficulty = MiniGameDifficulty.Observer,
             cards = cards,
@@ -94,7 +94,6 @@ class MemoryGameLogicTest {
                 "ALP-002" to listOf(OwnedVariantCount("city", "standard", 1)),
                 "ALP-003" to listOf(OwnedVariantCount("city", "standard", 1)),
                 "ALP-004" to listOf(OwnedVariantCount("city", "standard", 1)),
-                "ALP-005" to listOf(OwnedVariantCount("suburban", "standard", 1)),
             ),
             resolvedPairCards = listOf(
                 resolved("ALP-001"),
@@ -104,9 +103,9 @@ class MemoryGameLogicTest {
             ),
         )
 
-        val singleton = result.cards.single { it.role == MemoryCardRole.HolographicSingleton }
-        assertTrue(singleton.displayCard.activeVariant.isHolographic)
-        assertTrue(singleton.isVisualHolographicFallback)
+        assertEquals(9, result.cellCount)
+        assertEquals(8, result.playableCellCount)
+        assertEquals(1, result.cells.count { it is MemoryBoardCell.Hole })
     }
 
     @Test
@@ -171,34 +170,6 @@ class MemoryGameLogicTest {
         assertEquals(2, result.cards.map { it.identity.cardKey }.toSet().size)
         assertEquals(2, result.cards.count { it.identity.cardId == "ALP-001" })
         assertEquals(2, result.cards.count { it.identity.cardId == "ALP-002" })
-    }
-
-    @Test
-    fun `holographic singleton avoids cards already selected as pairs`() {
-        val cards = testCards(5)
-        val result = buildReadyBoard(
-            difficulty = MiniGameDifficulty.Observer,
-            cards = cards,
-            collection = ownedCollection(
-                "ALP-001" to listOf(
-                    OwnedVariantCount("city", "standard", 1),
-                    OwnedVariantCount("holographic", "standard", 1),
-                ),
-                "ALP-002" to listOf(OwnedVariantCount("city", "standard", 1)),
-                "ALP-003" to listOf(OwnedVariantCount("city", "standard", 1)),
-                "ALP-004" to listOf(OwnedVariantCount("city", "standard", 1)),
-                "ALP-005" to listOf(OwnedVariantCount("holographic", "standard", 1)),
-            ),
-            resolvedPairCards = listOf(
-                resolved("ALP-001", "city"),
-                resolved("ALP-002"),
-                resolved("ALP-003"),
-                resolved("ALP-004"),
-            ),
-        )
-
-        val singleton = result.cards.single { it.role == MemoryCardRole.HolographicSingleton }
-        assertEquals("ALP-005", singleton.identity.cardId)
     }
 
     private fun buildReadyBoard(

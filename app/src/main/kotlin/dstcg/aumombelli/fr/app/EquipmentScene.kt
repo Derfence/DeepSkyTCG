@@ -68,7 +68,7 @@ internal fun EquipmentScene(
         }
     }
 
-    BackHandler(enabled = equipmentBackAllowed) {
+    BackHandler(enabled = equipmentBackVisible) {
         navigateBackToHome()
     }
 

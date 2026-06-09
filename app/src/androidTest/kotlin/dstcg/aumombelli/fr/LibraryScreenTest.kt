@@ -10,11 +10,14 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.click
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
@@ -261,6 +264,33 @@ class LibraryScreenTest {
     }
 
     @Test
+    fun filter_chips_show_extension_logo_and_rarity_star() {
+        composeRule.setContent {
+            LibraryScreen(
+                state = LibraryUiState(
+                    isLoading = false,
+                    filterOptions = LibraryFilterOptions(
+                        extensions = listOf(
+                            LibraryFilterOption("systeme-solaire", "Système solaire"),
+                        ),
+                        rarities = listOf(
+                            LibraryFilterOption("Rare", "Rare"),
+                        ),
+                    ),
+                ),
+                onRefresh = {},
+            )
+        }
+
+        composeRule.onNodeWithTag("library-filter-extension-systeme-solaire").assertIsDisplayed()
+        composeRule.onNodeWithTag("library-filter-rarity-Rare").assertIsDisplayed()
+        composeRule.onAllNodesWithTag("library-filter-extension-logo-systeme-solaire", useUnmergedTree = true)
+            .assertCountEquals(1)
+        composeRule.onAllNodesWithTag("library-filter-rarity-star-Rare", useUnmergedTree = true)
+            .assertCountEquals(1)
+    }
+
+    @Test
     fun filters_combine_with_tradeable_filter() {
         val alphaCommon = LibraryCardItem(
             definition = testCardDefinition("ALP-001", extensionId = "astronomes-en-herbe", rarityLabel = "Common"),
@@ -318,44 +348,42 @@ class LibraryScreenTest {
         }
 
         composeRule.onNodeWithTag("library-filter-panel").assertIsDisplayed()
-        composeRule.onNodeWithTag("library-section-count-astronomes-en-herbe").assertTextEquals("1/1")
-        composeRule.onNodeWithTag("library-section-count-systeme-solaire").assertTextEquals("2/3")
-        composeRule.onNodeWithTag("library-filter-extension-logo-systeme-solaire").assertIsDisplayed()
-        composeRule.onNodeWithTag("library-filter-rarity-star-Rare").assertIsDisplayed()
-        composeRule.onNodeWithTag("library-filter-extension-systeme-solaire").performClick()
-        composeRule.onNodeWithTag("library-filter-rarity-Rare").performClick()
+        composeRule.assertLibrarySectionCount("astronomes-en-herbe", "1/1")
+        composeRule.assertLibrarySectionCount("systeme-solaire", "2/3")
+        composeRule.clickLibraryFilter("library-filter-extension-systeme-solaire")
+        composeRule.clickLibraryFilter("library-filter-rarity-Rare")
 
         composeRule.onAllNodesWithTag("library-card-ALP-001").assertCountEquals(0)
-        composeRule.onNodeWithTag("library-section-count-systeme-solaire").assertTextEquals("2/3")
-        composeRule.onNodeWithTag("library-card-BET-001").assertIsDisplayed()
-        composeRule.onNodeWithTag("library-card-BET-002").assertIsDisplayed()
-        composeRule.onNodeWithTag("library-card-BET-003").assertIsDisplayed()
+        composeRule.assertLibrarySectionCount("systeme-solaire", "2/3")
+        composeRule.assertLibraryNodeDisplayed("library-card-BET-001")
+        composeRule.assertLibraryNodeDisplayed("library-card-BET-002")
+        composeRule.assertLibraryNodeDisplayed("library-card-BET-003")
 
-        composeRule.onNodeWithTag("library-filter-sky-city").performClick()
+        composeRule.clickLibraryFilter("library-filter-sky-city")
 
         composeRule.onAllNodesWithTag("library-card-BET-001").assertCountEquals(0)
-        composeRule.onNodeWithTag("library-section-count-systeme-solaire").assertTextEquals("1/3")
-        composeRule.onNodeWithTag("library-card-BET-002").assertIsDisplayed()
+        composeRule.assertLibrarySectionCount("systeme-solaire", "1/3")
+        composeRule.assertLibraryNodeDisplayed("library-card-BET-002")
         composeRule.onAllNodesWithTag("library-card-BET-003").assertCountEquals(0)
         composeRule.onAllNodesWithText("Ville · Standard").assertCountEquals(1)
         composeRule.onAllNodesWithText("Holographique · Standard").assertCountEquals(0)
 
-        composeRule.onNodeWithTag("library-filter-sky-city").performClick()
-        composeRule.onNodeWithTag("library-filter-sky-holographic").performClick()
+        composeRule.clickLibraryFilter("library-filter-sky-city")
+        composeRule.clickLibraryFilter("library-filter-sky-holographic")
 
-        composeRule.onNodeWithTag("library-card-BET-001").assertIsDisplayed()
-        composeRule.onNodeWithTag("library-section-count-systeme-solaire").assertTextEquals("2/3")
-        composeRule.onNodeWithTag("library-card-BET-002").assertIsDisplayed()
+        composeRule.assertLibrarySectionCount("systeme-solaire", "2/3")
+        composeRule.assertLibraryNodeDisplayed("library-card-BET-001")
+        composeRule.assertLibraryNodeDisplayed("library-card-BET-002")
         composeRule.onAllNodesWithTag("library-card-BET-003").assertCountEquals(0)
 
-        composeRule.onNodeWithTag("library-filter-tradeable").performClick()
+        composeRule.clickLibraryFilter("library-filter-tradeable")
 
-        composeRule.onNodeWithTag("library-filter-extension-systeme-solaire").assertIsSelected()
-        composeRule.onNodeWithTag("library-filter-rarity-Rare").assertIsSelected()
-        composeRule.onNodeWithTag("library-filter-sky-holographic").assertIsSelected()
-        composeRule.onNodeWithTag("library-filter-tradeable").assertIsSelected()
-        composeRule.onNodeWithTag("library-section-count-systeme-solaire").assertTextEquals("1/3")
-        composeRule.onNodeWithTag("library-card-BET-001").assertIsDisplayed()
+        composeRule.assertLibraryFilterSelected("library-filter-extension-systeme-solaire")
+        composeRule.assertLibraryFilterSelected("library-filter-rarity-Rare")
+        composeRule.assertLibraryFilterSelected("library-filter-sky-holographic")
+        composeRule.assertLibraryFilterSelected("library-filter-tradeable")
+        composeRule.assertLibrarySectionCount("systeme-solaire", "1/3")
+        composeRule.assertLibraryNodeDisplayed("library-card-BET-001")
         composeRule.onAllNodesWithTag("library-card-BET-002").assertCountEquals(0)
         composeRule.onAllNodesWithTag("library-card-BET-003").assertCountEquals(0)
     }
@@ -501,6 +529,37 @@ class LibraryScreenTest {
         )
     }
 
+    private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.clickLibraryFilter(tag: String) {
+        onNodeWithTag(LIBRARY_GRID_TAG).performScrollToIndex(0)
+        onNodeWithTag(tag).performClick()
+    }
+
+    private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertLibraryFilterSelected(tag: String) {
+        onNodeWithTag(LIBRARY_GRID_TAG).performScrollToIndex(0)
+        onNodeWithTag(tag).assertIsSelected()
+    }
+
+    private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertLibrarySectionCount(
+        extensionId: String,
+        expectedText: String,
+    ) {
+        val tag = "library-section-count-$extensionId"
+        assertLibraryNodeHasText(tag, expectedText)
+    }
+
+    private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertLibraryNodeHasText(
+        tag: String,
+        expectedText: String,
+    ) {
+        onNodeWithTag(LIBRARY_GRID_TAG).performScrollToNode(hasTestTag(tag))
+        onNodeWithTag(tag).assertTextEquals(expectedText)
+    }
+
+    private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertLibraryNodeDisplayed(tag: String) {
+        onNodeWithTag(LIBRARY_GRID_TAG).performScrollToNode(hasTestTag(tag))
+        onNodeWithTag(tag).assertIsDisplayed()
+    }
+
     private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertNodeInsideModalVerticalBounds(
         nodeTag: String,
         modalTag: String,
@@ -515,14 +574,15 @@ class LibraryScreenTest {
 
     private companion object {
         const val CARD_BACKGROUND_HIDDEN_PLACEHOLDER_TAG = "astro-card-background-hidden-placeholder"
+        const val LIBRARY_GRID_TAG = "library-grid"
     }
 }
 
 private fun libraryFilterOptions(): LibraryFilterOptions =
     LibraryFilterOptions(
         extensions = listOf(
-            LibraryFilterOption("astronomes-en-herbe", "Astronomes en herbe"),
             LibraryFilterOption("systeme-solaire", "Système solaire"),
+            LibraryFilterOption("astronomes-en-herbe", "Astronomes en herbe"),
         ),
         rarities = listOf(
             LibraryFilterOption("Common", "Common"),

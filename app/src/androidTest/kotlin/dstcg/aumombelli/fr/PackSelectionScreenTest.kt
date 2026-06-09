@@ -257,6 +257,40 @@ class PackSelectionScreenTest {
     }
 
     @Test
+    fun loading_refresh_disables_stale_pack_selection_interactions() {
+        val state = mutableStateOf(
+            PackSelectionUiState(
+                isLoading = true,
+                extensions = listOf(
+                    ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                ),
+            ),
+        )
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackSelectionScreen(
+                state = state.value,
+                onRefresh = {},
+                onSelectExtension = {},
+                onSelectBooster = {},
+                onOpenPack = {},
+                onPackRevealReady = {},
+                packReadySignal = 0,
+                showBackground = false,
+            )
+        }
+
+        composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").assertIsNotEnabled()
+
+        state.value = state.value.copy(selectedExtensionId = "astronomes-en-herbe")
+        composeRule.mainClock.advanceTimeBy(2_000)
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("pack-booster-0").assertIsNotEnabled()
+    }
+
+    @Test
     fun selected_extension_shows_packs_one_by_one_without_autonomous_logo() {
         val state = mutableStateOf(
             PackSelectionUiState(

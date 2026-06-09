@@ -61,6 +61,7 @@ internal fun ExtensionBoosterStage(
     selectedBoosterIndex: Int?,
     epicBoostBoosterIndex: Int?,
     isAwaitingPackResult: Boolean,
+    interactionsEnabled: Boolean = true,
     screenBounds: Rect? = null,
     selectedBoosterTargetBounds: PackRevealBounds? = null,
     onSelectBooster: (Int) -> Unit,
@@ -186,6 +187,7 @@ internal fun ExtensionBoosterStage(
                             epicBoostBoosterIndex = epicBoostBoosterIndex,
                             drawLocked = drawLocked,
                             isAwaitingPackResult = isAwaitingPackResult,
+                            interactionsEnabled = interactionsEnabled,
                             onSelectBooster = onSelectBooster,
                             onBoosterBoundsChanged = { index, bounds ->
                                 boosterBoundsByIndex = boosterBoundsByIndex.toMutableMap().also { current ->
@@ -274,6 +276,7 @@ private fun BoosterField(
     epicBoostBoosterIndex: Int?,
     drawLocked: Boolean,
     isAwaitingPackResult: Boolean,
+    interactionsEnabled: Boolean,
     onSelectBooster: (Int) -> Unit,
     onBoosterBoundsChanged: (Int, PackRevealBounds?) -> Unit,
     onBoosterCoachmarkBoundsChanged: (Rect?) -> Unit,
@@ -358,7 +361,8 @@ private fun BoosterField(
             val visible = alpha > 0.01f &&
                 (selectedBoosterIndex == null || !isSelected || selectionProgress < 0.02f)
             if (!visible) return@repeat
-            val packEnabled = !drawLocked &&
+            val packEnabled = interactionsEnabled &&
+                !drawLocked &&
                 !isAwaitingPackResult &&
                 selectedBoosterIndex == null &&
                 introReveal >= 0.98f
@@ -366,6 +370,7 @@ private fun BoosterField(
                 index = index,
                 loopProgress = idleLoopProgress,
                 enabled = idleMotionEnabledByProfile &&
+                    interactionsEnabled &&
                     introReveal >= 0.99f &&
                     selectedBoosterIndex == null &&
                     !drawLocked &&

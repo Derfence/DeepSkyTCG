@@ -877,16 +877,15 @@ class MiniGamesViewModelTest {
     }
 
     @Test
-    fun `holographic singleton selected first is immediately matched`() = runTest {
+    fun `hole cell is ignored when selected first`() = runTest {
         val fixture = newFixture(
-            cardCount = 5,
+            cardCount = 4,
             unlockedDifficulty = MiniGameDifficulty.Observer,
             variants = mapOf(
                 "ALP-001" to listOf(OwnedVariantCount("city", "standard", 1)),
                 "ALP-002" to listOf(OwnedVariantCount("city", "standard", 1)),
                 "ALP-003" to listOf(OwnedVariantCount("city", "standard", 1)),
                 "ALP-004" to listOf(OwnedVariantCount("city", "standard", 1)),
-                "ALP-005" to listOf(OwnedVariantCount("holographic", "standard", 1)),
             ),
         )
         val viewModel = fixture.newViewModel()
@@ -896,31 +895,29 @@ class MiniGamesViewModelTest {
         viewModel.selectMemoryDifficulty(MiniGameDifficulty.Observer)
         advanceUntilIdle()
         val playing = viewModel.uiState.value.screen as MiniGamesScreenUiState.MemoryPlaying
-        val singletonIndex = playing.cells.single { it.face.role == MemoryCardRole.HolographicSingleton }.index
+        val holeIndex = playing.cells.single { it.isHole }.index
 
-        viewModel.selectMemoryCell(singletonIndex)
+        viewModel.selectMemoryCell(holeIndex)
         advanceUntilIdle()
 
         val updated = viewModel.uiState.value.screen as MiniGamesScreenUiState.MemoryPlaying
-        assertEquals(MemoryCellState.Matched, updated.cells.single { it.index == singletonIndex }.state)
-        assertEquals(1, updated.moves)
-        assertEquals(1, updated.currentStreak)
-        assertEquals(1, updated.bestStreak)
-        assertEquals(MiniGameFeedbackTone.Special, updated.feedbackEvent?.tone)
-        assertEquals(setOf(singletonIndex), updated.feedbackEvent?.sourceIndexes)
+        assertEquals(MemoryCellState.Hole, updated.cells.single { it.index == holeIndex }.state)
+        assertEquals(0, updated.moves)
+        assertEquals(0, updated.currentStreak)
+        assertEquals(0, updated.bestStreak)
+        assertNull(updated.feedbackEvent)
     }
 
     @Test
-    fun `holographic singleton selected second is a mismatch`() = runTest {
+    fun `hole cell is ignored after a revealed card`() = runTest {
         val fixture = newFixture(
-            cardCount = 5,
+            cardCount = 4,
             unlockedDifficulty = MiniGameDifficulty.Observer,
             variants = mapOf(
                 "ALP-001" to listOf(OwnedVariantCount("city", "standard", 1)),
                 "ALP-002" to listOf(OwnedVariantCount("city", "standard", 1)),
                 "ALP-003" to listOf(OwnedVariantCount("city", "standard", 1)),
                 "ALP-004" to listOf(OwnedVariantCount("city", "standard", 1)),
-                "ALP-005" to listOf(OwnedVariantCount("holographic", "standard", 1)),
             ),
         )
         val viewModel = fixture.newViewModel()
@@ -930,27 +927,20 @@ class MiniGamesViewModelTest {
         viewModel.selectMemoryDifficulty(MiniGameDifficulty.Observer)
         advanceUntilIdle()
         val playing = viewModel.uiState.value.screen as MiniGamesScreenUiState.MemoryPlaying
-        val singletonIndex = playing.cells.single { it.face.role == MemoryCardRole.HolographicSingleton }.index
-        val firstPairCell = playing.cells.first { it.face.role == MemoryCardRole.Pair }
+        val holeIndex = playing.cells.single { it.isHole }.index
+        val firstPairCell = playing.cells.first { it.face?.role == MemoryCardRole.Pair }
 
         viewModel.selectMemoryCell(firstPairCell.index)
-        viewModel.selectMemoryCell(singletonIndex)
-
-        val mismatch = viewModel.uiState.value.screen as MiniGamesScreenUiState.MemoryPlaying
-        assertEquals(MemoryCellState.Mismatch, mismatch.cells.single { it.index == firstPairCell.index }.state)
-        assertEquals(MemoryCellState.Mismatch, mismatch.cells.single { it.index == singletonIndex }.state)
-        assertEquals(1, mismatch.moves)
-        assertEquals(0, mismatch.currentStreak)
-        assertEquals(0, mismatch.bestStreak)
-        assertEquals(MiniGameFeedbackTone.Error, mismatch.feedbackEvent?.tone)
-        assertEquals(setOf(firstPairCell.index, singletonIndex), mismatch.feedbackEvent?.sourceIndexes)
-
-        advanceTimeBy(650L)
+        viewModel.selectMemoryCell(holeIndex)
         advanceUntilIdle()
 
-        val reset = viewModel.uiState.value.screen as MiniGamesScreenUiState.MemoryPlaying
-        assertEquals(MemoryCellState.Hidden, reset.cells.single { it.index == firstPairCell.index }.state)
-        assertEquals(MemoryCellState.Hidden, reset.cells.single { it.index == singletonIndex }.state)
+        val updated = viewModel.uiState.value.screen as MiniGamesScreenUiState.MemoryPlaying
+        assertEquals(MemoryCellState.Revealed, updated.cells.single { it.index == firstPairCell.index }.state)
+        assertEquals(MemoryCellState.Hole, updated.cells.single { it.index == holeIndex }.state)
+        assertEquals(0, updated.moves)
+        assertEquals(0, updated.currentStreak)
+        assertEquals(0, updated.bestStreak)
+        assertNull(updated.feedbackEvent)
     }
 
     @Test
@@ -967,8 +957,8 @@ class MiniGamesViewModelTest {
         advanceUntilIdle()
         val playing = viewModel.uiState.value.screen as MiniGamesScreenUiState.MemoryPlaying
         val pair = playing.cells
-            .filter { it.face.role == MemoryCardRole.Pair }
-            .groupBy { it.face.identity.key }
+            .filter { it.face?.role == MemoryCardRole.Pair }
+            .groupBy { requireNotNull(it.face).identity.key }
             .values
             .first { it.size == 2 }
 
@@ -994,8 +984,8 @@ class MiniGamesViewModelTest {
         advanceUntilIdle()
         val playing = viewModel.uiState.value.screen as MiniGamesScreenUiState.MemoryPlaying
         val pairGroups = playing.cells
-            .filter { it.face.role == MemoryCardRole.Pair }
-            .groupBy { it.face.identity.key }
+            .filter { it.face?.role == MemoryCardRole.Pair }
+            .groupBy { requireNotNull(it.face).identity.key }
             .values
             .toList()
         pairGroups.dropLast(1).forEach { pair ->
@@ -1020,8 +1010,8 @@ class MiniGamesViewModelTest {
     private fun completeVisiblePairs(viewModel: MiniGamesViewModel) {
         val playing = viewModel.uiState.value.screen as MiniGamesScreenUiState.MemoryPlaying
         val pairGroups = playing.cells
-            .filter { it.face.role == MemoryCardRole.Pair }
-            .groupBy { it.face.identity.key }
+            .filter { it.face?.role == MemoryCardRole.Pair }
+            .groupBy { requireNotNull(it.face).identity.key }
             .values
         pairGroups.forEach { pair ->
             require(pair.size == 2)

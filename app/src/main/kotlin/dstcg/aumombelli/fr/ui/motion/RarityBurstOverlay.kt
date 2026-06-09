@@ -28,7 +28,7 @@ fun RarityBurstOverlay(
         )
     }
     val visibleProgress = progress.coerceIn(0f, 1f)
-    if (visibleProgress <= 0f || burstStars.isEmpty()) return
+    if (visibleProgress <= 0f || visibleProgress >= 1f || burstStars.isEmpty()) return
 
     val radialStars = remember(burstStars) { burstStars.filter { it.motion == BurstParticleMotion.Radial } }
     val fallingStars = remember(burstStars) { burstStars.filter { it.motion == BurstParticleMotion.Falling } }
