@@ -1,31 +1,31 @@
-# Echange NFC
+# Échange NFC
 
-[← Index documentation](../README.md) | [Bibliotheque](library-badges.md) | [Architecture](../architecture.md)
+[← Index documentation](../README.md) | [Bibliothèque](library-badges.md) | [Architecture](../architecture.md)
 
-L'echange NFC permet a deux appareils proches d'echanger une variante de carte sans reseau.
+L'échange NFC permet à deux appareils proches d'échanger une variante de carte sans réseau.
 
-## Acces
+## Accès
 
-Depuis la bibliotheque :
+Depuis la bibliothèque :
 
 1. ouvrir une carte obtenue ;
-2. selectionner une variante avec au moins `2` copies ;
+2. sélectionner une variante avec au moins `2` copies ;
 3. appuyer sur `Échanger` ;
 4. rapprocher deux appareils compatibles NFC.
 
-Le NFC est declare comme fonctionnalite non obligatoire dans le manifest. L'application reste installable sans NFC.
+Le NFC est déclaré comme fonctionnalité non obligatoire dans le manifest. L'application reste installable sans NFC.
 
-## Conditions de validite
+## Conditions de validité
 
-Un echange est accepte seulement si :
+Un échange est accepté seulement si :
 
-- les deux appareils utilisent la meme empreinte de catalogue ;
+- les deux appareils utilisent la même empreinte de catalogue ;
 - les deux cartes existent dans le catalogue ;
 - la carte locale est disponible en doublon ;
-- les raretes sont identiques ;
+- les raretés sont identiques ;
 - les variantes `skyQuality::finish` sont identiques ;
-- les deux cartes ne sont pas la meme variante exacte ;
-- l'identifiant d'echange n'a pas deja ete applique.
+- les deux cartes ne sont pas la même variante exacte ;
+- l'identifiant d'échange n'a pas déjà été appliqué.
 
 ## Protocole
 
@@ -40,22 +40,28 @@ Messages :
 - `ack`
 - `fail`
 
-`TradeLedgerState` conserve les echanges termines pour eviter de reappliquer un meme `tradeId`. La memoire est bornee aux `32` derniers echanges.
+`TradeLedgerState` conserve les échanges terminés pour éviter de réappliquer un même `tradeId`. La mémoire est bornée aux `32` derniers échanges.
 
-## Donnees echangees
+## Données échangées
 
 Les paquets NFC contiennent :
 
 - type de message ;
 - version protocole ;
 - `tradeId` ;
-- empreinte catalogue ;
+- empreinte de catalogue ;
 - nonce ;
-- reference de carte quand le message l'exige.
+- référence de carte quand le message l'exige.
 
-Aucune connexion distante n'est utilisee.
+Aucune connexion distante n'est utilisée.
 
-## Tests associes
+## Réussite
+
+Lorsqu'un échange est appliqué, la collection locale décrémente la variante envoyée et incrémente la variante reçue. L'écran de succès réutilise la `TradeCardRef` déjà transmise par NFC pour afficher la carte reçue, puis propose de la révéler avec un bouton ou un geste vers le haut.
+
+Le protocole reste en version `1` : aucun champ NFC n'est ajouté pour cette présentation.
+
+## Tests associés
 
 - `NfcTradeProtocolTest`
 - `TradeOperationsTest`

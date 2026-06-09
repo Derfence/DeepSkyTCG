@@ -5,6 +5,7 @@ import fr.aumombelli.dstcg.model.CraftingApplyResult
 import fr.aumombelli.dstcg.model.CraftingCardCandidate
 import fr.aumombelli.dstcg.model.CraftingCardRef
 import fr.aumombelli.dstcg.model.CraftingMode
+import fr.aumombelli.dstcg.model.DisplayCard
 import fr.aumombelli.dstcg.model.DrawPackResponse
 import fr.aumombelli.dstcg.model.EquipmentCardDefinition
 import fr.aumombelli.dstcg.model.EquipmentSettingsDefinition
@@ -99,6 +100,7 @@ data class MiniGamesState(
 
 interface TradeGateway {
     suspend fun loadTradeCandidates(): List<TradeCardCandidate>
+    suspend fun loadTradeCard(ref: TradeCardRef): DisplayCard?
     suspend fun catalogFingerprint(): String
     suspend fun validateTrade(
         localOutgoing: TradeCardRef,

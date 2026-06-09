@@ -106,6 +106,45 @@ internal data class ObservatoryGeometry(
     }
 }
 
+internal data class ObservatoryDomePanelGeometry(
+    val centerX: Float,
+    val topWidth: Float,
+    val bottomWidth: Float,
+    val topY: Float,
+    val bottomY: Float,
+)
+
+internal data class ObservatoryTelescopeTubeGeometry(
+    val rearEdge: Offset,
+    val frontEdge: Offset,
+)
+
+internal fun observatoryDomePanelGeometry(
+    geometry: ObservatoryGeometry,
+    azimuth: Float,
+): ObservatoryDomePanelGeometry {
+    val progress = azimuth.coerceIn(0f, 1f)
+    val centerX = observatoryLerp(
+        start = geometry.center.x - geometry.unit * 0.045f,
+        end = geometry.center.x + geometry.unit * 0.045f,
+        fraction = progress,
+    )
+    return ObservatoryDomePanelGeometry(
+        centerX = centerX,
+        topWidth = geometry.domeRadiusX * 0.34f,
+        bottomWidth = geometry.domeRadiusX * 0.54f,
+        topY = geometry.domeBaseY - geometry.domeRadiusY * 0.96f,
+        bottomY = geometry.domeBaseY - geometry.domeRadiusY * 0.16f,
+    )
+}
+
+internal fun observatoryTelescopeTubeGeometry(
+    geometry: ObservatoryGeometry,
+): ObservatoryTelescopeTubeGeometry = ObservatoryTelescopeTubeGeometry(
+    rearEdge = geometry.pivot,
+    frontEdge = geometry.lens,
+)
+
 internal fun targetFor(
     size: Size,
     unit: Float,

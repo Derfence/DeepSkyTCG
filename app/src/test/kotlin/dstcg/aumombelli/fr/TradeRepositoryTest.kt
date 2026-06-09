@@ -59,6 +59,31 @@ class TradeRepositoryTest {
         assertTrue(fixture.progressGateway.progress.tradeLedgerState.hasCompleted("trade-1"))
     }
 
+    @Test
+    fun `apply trade adds incoming card to user library and resolves it for success screen`() = runTest {
+        val fixture = testTradeRepository(
+            collection = ownedCollectionWithVariants(
+                "ALP-001",
+                OwnedVariantCount("city", "standard", 2),
+            ),
+        )
+        val outgoing = TradeCardRef("ALP-001", "city", "standard")
+        val incoming = TradeCardRef("ALP-002", "city", "standard")
+
+        val result = fixture.repository.applyTrade(
+            tradeId = "trade-2",
+            outgoing = outgoing,
+            incoming = incoming,
+        )
+        val receivedCard = fixture.repository.loadTradeCard(incoming)
+
+        assertEquals(TradeValidationResult.Valid, result)
+        assertEquals(1, fixture.progressGateway.progress.collection.tradeCountFor(incoming))
+        assertEquals("ALP-002", receivedCard?.definition?.id)
+        assertEquals("Astronomes en herbe", receivedCard?.extensionName)
+        assertEquals(1, receivedCard?.activeVariant?.count)
+    }
+
     private fun testTradeRepository(
         collection: fr.aumombelli.dstcg.model.OwnedCollection,
     ): TradeRepositoryFixture {

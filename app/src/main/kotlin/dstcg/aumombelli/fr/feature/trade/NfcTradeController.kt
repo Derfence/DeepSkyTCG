@@ -38,7 +38,7 @@ import kotlinx.coroutines.launch
 internal sealed interface NfcTradeControllerEvent {
     data object Waiting : NfcTradeControllerEvent
     data object Exchanging : NfcTradeControllerEvent
-    data object Succeeded : NfcTradeControllerEvent
+    data class Succeeded(val receivedCard: TradeCardRef) : NfcTradeControllerEvent
     data class Failed(val message: String) : NfcTradeControllerEvent
 }
 
@@ -69,11 +69,11 @@ internal class NfcTradeController(
         val adapter = nfcAdapter
         when {
             adapter == null -> {
-                onEvent(NfcTradeControllerEvent.Failed("Ce telephone ne prend pas en charge le NFC."))
+                onEvent(NfcTradeControllerEvent.Failed("Ce téléphone ne prend pas en charge le NFC."))
                 return
             }
             !adapter.isEnabled -> {
-                onEvent(NfcTradeControllerEvent.Failed("Le NFC est desactive."))
+                onEvent(NfcTradeControllerEvent.Failed("Le NFC est désactivé."))
                 return
             }
         }
@@ -168,7 +168,7 @@ internal class NfcTradeController(
                         expectedTradeId = tradeId,
                         expectedFailureNonce = nonce,
                         cardPresence = NfcTradeCardPresence.Required,
-                        failureMessage = "Echange refuse.",
+                        failureMessage = "Échange refusé.",
                     )
                 val remoteCard = checkNotNull(match.card) { "Carte distante absente." }
                 val remoteNonce = match.nonce
@@ -223,10 +223,10 @@ internal class NfcTradeController(
                     cardPresence = NfcTradeCardPresence.Forbidden,
                     failureMessage = "Confirmation distante impossible.",
                 )
-                emit(NfcTradeControllerEvent.Succeeded)
+                emit(NfcTradeControllerEvent.Succeeded(remoteCard))
             }
         }.onFailure { exception ->
-            emit(NfcTradeControllerEvent.Failed(exception.message ?: "Echange NFC interrompu."))
+            emit(NfcTradeControllerEvent.Failed(exception.message ?: "Échange NFC interrompu."))
         }
     }
 
@@ -267,7 +267,7 @@ internal class NfcTradeController(
     private suspend fun handleCommit(packet: NfcTradePacket): NfcTradePacket {
         val activeTrade = activeCardSideTrade
         if (activeTrade == null || activeTrade.tradeId != packet.tradeId) {
-            return packet.failureResponse("Echange NFC inconnu.")
+            return packet.failureResponse("Échange NFC inconnu.")
         }
         packet.validationErrorFor(
             NfcTradePacketExpectation(
@@ -298,7 +298,7 @@ internal class NfcTradeController(
     private fun handleAck(packet: NfcTradePacket): NfcTradePacket {
         val activeTrade = activeCardSideTrade
         if (activeTrade == null || activeTrade.tradeId != packet.tradeId) {
-            return packet.failureResponse("Echange NFC inconnu.")
+            return packet.failureResponse("Échange NFC inconnu.")
         }
         packet.validationErrorFor(
             NfcTradePacketExpectation(
@@ -310,7 +310,7 @@ internal class NfcTradeController(
             ),
         )?.let { error -> return packet.failureResponse(error) }
         activeCardSideTrade = null
-        emit(NfcTradeControllerEvent.Succeeded)
+        emit(NfcTradeControllerEvent.Succeeded(activeTrade.remoteCard))
         return NfcTradePacket(
             type = NfcTradeTypeAck,
             tradeId = packet.tradeId,
@@ -370,7 +370,7 @@ internal class NfcTradeController(
     }
 
     private fun ByteArray.requireSuccessPayload(): ByteArray =
-        NfcTradeApdu.responsePayload(this) ?: error("Service d'echange NFC introuvable.")
+        NfcTradeApdu.responsePayload(this) ?: error("Service d'échange NFC introuvable.")
 
     private fun IsoDep.transceivePacket(packet: NfcTradePacket): NfcTradePacket {
         val response = transceive(NfcTradeApdu.command(NfcTradeCodec.encode(packet))).requireSuccessPayload()

@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 internal fun AstroCardFullscreenCloseButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    testTag: String = "astro-card-fullscreen-close",
 ) {
     IconButton(
         onClick = onClick,
@@ -25,7 +26,7 @@ internal fun AstroCardFullscreenCloseButton(
             .size(42.dp)
             .clip(CircleShape)
             .background(Color.Black.copy(alpha = 0.34f))
-            .testTag("astro-card-fullscreen-close"),
+            .testTag(testTag),
     ) {
         Icon(
             imageVector = Icons.Filled.Close,

@@ -34,7 +34,7 @@ class NfcTradeProtocolTest {
         val packet = helloPacket()
 
         assertEquals(
-            "Version d'echange incompatible.",
+            "Version d'échange incompatible.",
             packet.copy(protocolVersion = NfcTradeProtocolVersion + 1).validationErrorFor(expectation),
         )
         assertEquals(
@@ -42,7 +42,7 @@ class NfcTradeProtocolTest {
             packet.copy(catalogFingerprint = "catalog-2").validationErrorFor(expectation),
         )
         assertEquals(
-            "Echange NFC inconnu.",
+            "Échange NFC inconnu.",
             packet.copy(tradeId = "trade-2").validationErrorFor(expectation),
         )
         assertEquals(

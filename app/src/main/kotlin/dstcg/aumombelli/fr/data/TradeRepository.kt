@@ -1,6 +1,7 @@
 package fr.aumombelli.dstcg.data
 
 import fr.aumombelli.dstcg.model.CardDefinition
+import fr.aumombelli.dstcg.model.DisplayCard
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.TradeCardCandidate
@@ -10,7 +11,9 @@ import fr.aumombelli.dstcg.model.VariantProfile
 import fr.aumombelli.dstcg.model.applyTrade
 import fr.aumombelli.dstcg.model.canTradeAway
 import fr.aumombelli.dstcg.model.raritySortPriority
+import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.model.toDisplayVariant
+import fr.aumombelli.dstcg.model.tradeCountFor
 import fr.aumombelli.dstcg.model.validateTradePair
 import java.security.MessageDigest
 
@@ -29,6 +32,28 @@ class TradeRepository(
             cardsById = cardsById,
             extensionsById = extensionsById,
             variantProfilesById = variantProfilesById,
+        )
+    }
+
+    override suspend fun loadTradeCard(ref: TradeCardRef): DisplayCard? {
+        val extensionsById = catalogRepository.loadExtensions().associateBy(ExtensionDefinition::id)
+        val cardsById = catalogRepository.loadCards().associateBy(CardDefinition::id)
+        val variantProfilesById = catalogRepository.loadVariantProfiles().associateBy(VariantProfile::id)
+        val progress = progressRepository.loadProgress().requireUsableProgress().progress
+        val card = cardsById[ref.cardId] ?: return null
+        val extension = extensionsById[card.extensionId] ?: return null
+        val variantProfile = variantProfilesById[card.variantProfileId] ?: return null
+        val variant = runCatching {
+            variantProfile.toDisplayVariant(
+                skyQuality = ref.skyQuality,
+                finish = ref.finish,
+                count = progress.collection.tradeCountFor(ref),
+            )
+        }.getOrNull() ?: return null
+        return card.toDisplayCard(
+            extensionName = extension.name,
+            activeVariant = variant,
+            availableVariants = listOf(variant),
         )
     }
 
