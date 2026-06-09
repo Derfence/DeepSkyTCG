@@ -35,6 +35,7 @@ internal data class AppSceneUiState(
     val packRefreshSignal: Int = 0,
     val packReadySignal: Int = 0,
     val selectedPackRevealBounds: PackRevealBounds? = null,
+    val selectedPackDecorSeed: Int? = null,
     val packOpeningExitSignal: Int = 0,
     val pendingBadgeCelebration: List<BadgeItem> = emptyList(),
     val badgeCelebrationDeferred: Boolean = false,
@@ -184,12 +185,14 @@ internal fun AppSceneUiState.preparePackSelection(nextPackRefreshSignal: Int): A
     packRefreshSignal = nextPackRefreshSignal,
     packReadySignal = 0,
     selectedPackRevealBounds = null,
+    selectedPackDecorSeed = null,
     packOpeningExitSignal = 0,
 )
 
 internal fun AppSceneUiState.switchPackSelectionToHome(): AppSceneUiState = copy(
     currentScene = AppScene.Home,
     selectedPackRevealBounds = null,
+    selectedPackDecorSeed = null,
     packOpeningExitSignal = 0,
 )
 
@@ -206,6 +209,7 @@ internal fun AppSceneUiState.preparePackOpeningReturnToHome(): AppSceneUiState =
     packSceneVisible = false,
     packExtensionListVisible = false,
     selectedPackRevealBounds = null,
+    selectedPackDecorSeed = null,
     packOpeningExitSignal = 0,
 )
 
@@ -219,6 +223,7 @@ internal fun AppSceneUiState.preparePackOpeningReturnToPackSelection(): AppScene
     packSceneVisible = false,
     packExtensionListVisible = false,
     selectedPackRevealBounds = null,
+    selectedPackDecorSeed = null,
     packOpeningExitSignal = 0,
 )
 
@@ -241,6 +246,9 @@ internal fun AppSceneUiState.packOpeningExitDestination(
 
 internal fun AppSceneUiState.withPackRevealBounds(bounds: PackRevealBounds?): AppSceneUiState =
     copy(selectedPackRevealBounds = bounds)
+
+internal fun AppSceneUiState.withSelectedPackDecorSeed(seed: Int?): AppSceneUiState =
+    copy(selectedPackDecorSeed = seed)
 
 internal fun AppSceneUiState.registerPackReady(
     newlyUnlockedBadges: List<BadgeItem>,

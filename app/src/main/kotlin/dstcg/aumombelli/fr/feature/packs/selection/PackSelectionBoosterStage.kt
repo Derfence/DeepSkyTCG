@@ -59,6 +59,7 @@ internal fun ExtensionBoosterStage(
     boosterSelectionProgress: Float,
     drawLocked: Boolean,
     selectedBoosterIndex: Int?,
+    boosterDecorSeeds: List<Int>,
     epicBoostBoosterIndex: Int?,
     isAwaitingPackResult: Boolean,
     interactionsEnabled: Boolean = true,
@@ -184,6 +185,7 @@ internal fun ExtensionBoosterStage(
                         BoosterField(
                             extension = extension,
                             selectedBoosterIndex = selectedBoosterIndex,
+                            boosterDecorSeeds = boosterDecorSeeds,
                             epicBoostBoosterIndex = epicBoostBoosterIndex,
                             drawLocked = drawLocked,
                             isAwaitingPackResult = isAwaitingPackResult,
@@ -217,9 +219,11 @@ internal fun ExtensionBoosterStage(
                             selectedStartBounds != null &&
                             selectedBoosterTargetBounds != null
                         ) {
+                            val selectedIndex = selectedBoosterIndex
                             SelectedBoosterOverlay(
                                 extensionId = extension.id,
-                                boosterIndex = selectedBoosterIndex,
+                                boosterIndex = selectedIndex,
+                                decorSeed = boosterDecorSeeds.getOrElse(selectedIndex) { selectedIndex },
                                 epicBoostBoosterIndex = epicBoostBoosterIndex,
                                 startBounds = selectedStartBounds,
                                 targetBounds = selectedBoosterTargetBounds,
@@ -273,6 +277,7 @@ private fun OverflowTopAlignedHero(
 private fun BoosterField(
     extension: ExtensionDefinition,
     selectedBoosterIndex: Int?,
+    boosterDecorSeeds: List<Int>,
     epicBoostBoosterIndex: Int?,
     drawLocked: Boolean,
     isAwaitingPackResult: Boolean,
@@ -335,6 +340,7 @@ private fun BoosterField(
         }
 
         repeat(4) { index ->
+            val boosterDecorSeed = boosterDecorSeeds.getOrElse(index) { index }
             val isSelected = selectedBoosterIndex == index
             val introReveal = if (selectedBoosterIndex == null) {
                 ((introProgress - index * 0.18f) / 0.22f).coerceIn(0f, 1f)
@@ -425,7 +431,7 @@ private fun BoosterField(
                         animationDelayMillis = 180 + index * 120,
                         animationKey = "pack-$index",
                         animationsEnabled = introReveal > 0f,
-                        decorSeed = index,
+                        decorSeed = boosterDecorSeed,
                         showContainerChrome = false,
                         isEpicBoosted = epicBoostBoosterIndex == index,
                     )
@@ -449,6 +455,7 @@ private fun Collection<Rect>.unionBounds(): Rect? {
 private fun SelectedBoosterOverlay(
     extensionId: String,
     boosterIndex: Int,
+    decorSeed: Int,
     epicBoostBoosterIndex: Int?,
     startBounds: PackRevealBounds,
     targetBounds: PackRevealBounds,
@@ -486,7 +493,7 @@ private fun SelectedBoosterOverlay(
             .testTag("pack-booster-$boosterIndex"),
         animationKey = "selected-pack-overlay-$boosterIndex",
         revealProgressOverride = 1f,
-        decorSeed = boosterIndex,
+        decorSeed = decorSeed,
         showContainerChrome = false,
         isEpicBoosted = epicBoostBoosterIndex == boosterIndex,
     )

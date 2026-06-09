@@ -44,6 +44,7 @@ class PackViewModelTest {
 
         assertEquals(null, viewModel.uiState.value.selectedExtensionId)
         assertEquals(null, viewModel.uiState.value.selectedBoosterIndex)
+        assertEquals(emptyList<Int>(), viewModel.uiState.value.boosterDecorSeeds)
         assertEquals(null, viewModel.uiState.value.epicBoostBoosterIndex)
         assertEquals(false, viewModel.uiState.value.isAwaitingPackResult)
         assertEquals(null, viewModel.uiState.value.errorMessage)
@@ -145,9 +146,30 @@ class PackViewModelTest {
         assertEquals(true, viewModel.uiState.value.isLoading)
         assertEquals(null, viewModel.uiState.value.selectedExtensionId)
         assertEquals(null, viewModel.uiState.value.selectedBoosterIndex)
+        assertEquals(emptyList<Int>(), viewModel.uiState.value.boosterDecorSeeds)
         assertEquals(null, viewModel.uiState.value.epicBoostBoosterIndex)
         assertEquals(false, viewModel.uiState.value.isAwaitingPackResult)
         assertEquals(null, viewModel.uiState.value.errorMessage)
+    }
+
+    @Test
+    fun `select extension assigns random decor seeds and selected booster exposes its seed`() = runTest {
+        val viewModel = PackViewModel(
+            catalogRepository = FakeCatalogGateway().apply {
+                extensions = listOf(ExtensionDefinition("core-alpha", "Core Alpha", "cover"))
+            },
+            progressRepository = FakeProgressGateway(),
+            packRepository = FakePackGateway(),
+            gameSettings = queuedEpicBoostGameSettings(100_000),
+            decorEntropySource = QueuedEntropySource(listOf(11, 22, 33, 44)),
+        )
+        advanceUntilIdle()
+
+        viewModel.selectExtension("core-alpha")
+        viewModel.selectBooster(2)
+
+        assertEquals(listOf(11, 22, 33, 44), viewModel.uiState.value.boosterDecorSeeds)
+        assertEquals(33, viewModel.uiState.value.selectedBoosterDecorSeed)
     }
 
     @Test
