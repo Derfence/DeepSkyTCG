@@ -89,11 +89,13 @@ internal fun CardArtBackground(
 
             when {
                 cardArt.primary != null -> {
-                    CardArtImage(
-                        bitmap = cardArt.primary,
-                        contentScale = contentScale,
-                        modifier = artModifier.testTag(CardBackgroundArtTag),
-                    )
+                    Box(modifier = artModifier.testTag(CardBackgroundArtTag)) {
+                        CardArtImage(
+                            bitmap = cardArt.primary,
+                            contentScale = contentScale,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
                 }
 
                 cardArt.fallback != null -> {

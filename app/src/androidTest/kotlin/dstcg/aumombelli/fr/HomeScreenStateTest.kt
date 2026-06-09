@@ -305,7 +305,7 @@ class HomeScreenStateTest {
         composeRule.onNodeWithTag("home-settings-about").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("home-about-sheet").assertIsDisplayed()
-        composeRule.onNodeWithTag("home-about-sheet-version").assertTextContains("v2.6.0")
+        composeRule.onNodeWithTag("home-about-sheet-version").assertTextContains("v2.6.1")
     }
 
     @Test

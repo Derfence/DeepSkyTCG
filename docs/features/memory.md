@@ -38,16 +38,15 @@ Les paires sont strictes :
 
 Une même carte ne peut pas apparaître dans deux paires différentes, même si le joueur possède plusieurs variantes de cette carte. Si le tirage commun retombe sur une carte déjà utilisée, le plateau complète les paires avec une autre carte possédée de façon déterministe.
 
-## Carte holographique seule
+## Trou de grille
 
-Les grilles impaires ajoutent une carte seule holographique.
+Les grilles impaires ajoutent un trou à la place de la carte unique.
 
-Le jeu choisit d'abord une vraie variante holographique possédée. Si le joueur n'en possède aucune, il utilise une carte possédée avec un rendu holographique visuel de secours.
+Le trou conserve la forme complète de la grille, mais il n'est pas une carte :
 
-Règles de sélection :
-
-- retournée en première carte, elle est validée immédiatement ;
-- retournée en deuxième carte, c'est une erreur et les deux cartes se retournent.
+- il ne peut pas être sélectionné ;
+- il ne compte pas dans les cartes à valider ;
+- il ne déclenche aucun coup ni feedback d'erreur.
 
 ## Présentation et feedbacks
 
@@ -65,6 +64,7 @@ Les cartes ont un dos astronomique, une animation de retournement et des retours
 - match : halo et paillettes de succès ;
 - erreur : tremblement court et feedback rouge ;
 - carte holographique : surbrillance et paillettes renforcées ;
+- trou : case creusée, inactive et non retournable ;
 - fin de grille : célébration plein écran.
 
 Le plateau calcule la hauteur des cartes depuis l'espace restant à l'écran. Les tuiles peuvent donc devenir rectangulaires pour maximiser la surface jouable, notamment sur les grandes grilles.

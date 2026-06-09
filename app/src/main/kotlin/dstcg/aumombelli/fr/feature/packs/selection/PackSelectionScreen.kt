@@ -237,6 +237,9 @@ fun PackSelectionScreen(
     } else {
         1f
     }
+    val selectionInteractionsEnabled = interactionsEnabled &&
+        !state.isLoading &&
+        state.errorMessage == null
     val extensionListInteractionVisible = extensionListAlpha >= 0.99f &&
         listFadeProgress >= 0.99f &&
         abs(extensionListTranslationY) <= 1f
@@ -382,7 +385,7 @@ fun PackSelectionScreen(
                                 onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.PackSelectionExtension, null)
                                 onSelectExtension(extensionId)
                             },
-                            interactionsEnabled = interactionsEnabled &&
+                            interactionsEnabled = selectionInteractionsEnabled &&
                                 displayedExtension == null &&
                                 extensionListInteractionVisible,
                             highlightedExtensionId = displayedExtensionId,
@@ -413,6 +416,7 @@ fun PackSelectionScreen(
                                 selectedBoosterIndex = state.selectedBoosterIndex,
                                 epicBoostBoosterIndex = state.epicBoostBoosterIndex,
                                 isAwaitingPackResult = state.isAwaitingPackResult,
+                                interactionsEnabled = selectionInteractionsEnabled,
                                 screenBounds = screenBounds,
                                 selectedBoosterTargetBounds = openingRevealTargetBounds,
                                 onSelectBooster = { boosterIndex ->

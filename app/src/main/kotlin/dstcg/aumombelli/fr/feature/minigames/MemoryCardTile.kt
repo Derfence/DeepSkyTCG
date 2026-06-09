@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -40,7 +39,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -67,12 +65,22 @@ internal fun MemoryAnimatedCardTile(
     modifier: Modifier = Modifier,
 ) {
     val shape = RoundedCornerShape(10.dp)
+    if (cell.isHole) {
+        MemoryHoleTile(
+            cell = cell,
+            shape = shape,
+            modifier = modifier,
+        )
+        return
+    }
+    val face = cell.face ?: return
     val borderColor by animateColorAsState(
         targetValue = when (cell.state) {
             MemoryCellState.Hidden -> Color(0x6688A8C6)
             MemoryCellState.Revealed -> Color(0xFFB8D9FF)
             MemoryCellState.Matched -> Color(0xFF75E0C2)
             MemoryCellState.Mismatch -> Color(0xFFE67C73)
+            MemoryCellState.Hole -> Color.Transparent
         },
         animationSpec = tween(durationMillis = 220, easing = FastOutSlowInEasing),
         label = "memory-card-border",
@@ -117,7 +125,7 @@ internal fun MemoryAnimatedCardTile(
             .border(width = 1.dp, color = borderColor, shape = shape)
             .semantics {
                 contentDescription = if (cell.isVisible) {
-                    "Carte révélée ${cell.face.displayCard.definition.name}"
+                    "Carte révélée ${face.displayCard.definition.name}"
                 } else {
                     "Carte cachée"
                 }
@@ -136,7 +144,7 @@ internal fun MemoryAnimatedCardTile(
         ) {
             if (showFront) {
                 MemoryCardFront(
-                    cell = cell,
+                    face = face,
                     modifier = Modifier.fillMaxSize(),
                 )
             } else {
@@ -147,14 +155,62 @@ internal fun MemoryAnimatedCardTile(
 }
 
 @Composable
-private fun MemoryCardFront(
+private fun MemoryHoleTile(
     cell: MemoryCellUi,
+    shape: RoundedCornerShape,
     modifier: Modifier = Modifier,
 ) {
-    val displayCard = cell.face.displayCard
+    Box(
+        modifier = modifier
+            .clip(shape)
+            .background(
+                Brush.radialGradient(
+                    colors = listOf(
+                        Color(0xEE010408),
+                        Color(0xC805111A),
+                        Color(0x66142D3A),
+                    ),
+                ),
+            )
+            .border(width = 1.dp, color = Color(0x334F6D7C), shape = shape)
+            .semantics { contentDescription = "Trou dans la grille" }
+            .testTag(cell.testTag),
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawRoundRect(
+                brush = Brush.radialGradient(
+                    colors = listOf(
+                        Color.Black.copy(alpha = 0.58f),
+                        Color.Transparent,
+                    ),
+                    center = Offset(size.width * 0.5f, size.height * 0.48f),
+                    radius = size.minDimension * 0.54f,
+                ),
+                cornerRadius = CornerRadius(size.minDimension * 0.12f),
+            )
+            drawRoundRect(
+                color = Color(0x334A6D82),
+                cornerRadius = CornerRadius(size.minDimension * 0.12f),
+                style = Stroke(width = size.minDimension * 0.015f),
+            )
+            drawCircle(
+                color = Color(0x22000000),
+                radius = size.minDimension * 0.24f,
+                center = Offset(size.width * 0.5f, size.height * 0.52f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun MemoryCardFront(
+    face: MemoryCardFace,
+    modifier: Modifier = Modifier,
+) {
+    val displayCard = face.displayCard
     val palette = skyQualityPalette(displayCard.activeVariant.skyQuality)
-    val isSpecialHolographic = cell.face.role == MemoryCardRole.HolographicSingleton ||
-        displayCard.activeVariant.isHolographic
+    val isSpecialHolographic = displayCard.activeVariant.isHolographic
 
     Box(modifier = modifier) {
         CardArtBackground(
@@ -195,21 +251,6 @@ private fun MemoryCardFront(
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        if (cell.face.role == MemoryCardRole.HolographicSingleton) {
-            Text(
-                text = "H",
-                color = Color(0xFF061016),
-                fontSize = 10.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(5.dp)
-                    .size(18.dp)
-                    .background(Color(0xFFE6F7FF), RoundedCornerShape(9.dp))
-                    .padding(top = 1.dp),
-                textAlign = TextAlign.Center,
             )
         }
     }

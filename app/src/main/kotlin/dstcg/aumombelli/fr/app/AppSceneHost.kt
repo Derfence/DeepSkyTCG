@@ -214,6 +214,10 @@ internal fun AppSceneHost(
         }
     }
 
+    val shouldHandleEquipmentBackAtRoot = sceneState.currentScene == AppScene.Equipment
+    val shouldNavigateEquipmentBackAtRoot = shouldHandleEquipmentBackAtRoot &&
+        NewPlayerOnboardingInteractionPolicy.allowsEquipmentBack(onboardingStep)
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -227,7 +231,10 @@ internal fun AppSceneHost(
                 )
             },
     ) {
-        BackHandler(enabled = sceneState.transitionLocked) {
+        BackHandler(enabled = sceneState.transitionLocked || shouldHandleEquipmentBackAtRoot) {
+            if (!sceneState.transitionLocked && shouldNavigateEquipmentBackAtRoot) {
+                scope.launch { transitions.animateEquipmentToHome() }
+            }
         }
 
         AppSkyBackdrop(

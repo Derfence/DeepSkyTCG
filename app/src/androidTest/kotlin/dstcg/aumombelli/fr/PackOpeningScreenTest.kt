@@ -1162,8 +1162,6 @@ class PackOpeningScreenTest {
                             activeVariant = packResult.cards[0].variant.toDisplayVariant(),
                         ),
                     ),
-                    highestBurstRarity = "Common",
-                    hasHolographicBurst = false,
                 ),
                 onDone = {},
             )

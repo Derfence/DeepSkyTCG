@@ -255,7 +255,9 @@ private fun MemoryPlayingBoard(
                             row.forEach { cell ->
                                 MemoryAnimatedCardTile(
                                     cell = cell,
-                                    enabled = !playing.inputLocked && cell.state == MemoryCellState.Hidden,
+                                    enabled = cell.isPlayable &&
+                                        !playing.inputLocked &&
+                                        cell.state == MemoryCellState.Hidden,
                                     onClick = { onSelectCell(cell.index) },
                                     modifier = Modifier
                                         .weight(1f)
@@ -314,7 +316,7 @@ private fun MemoryHud(
                 modifier = Modifier.weight(1f),
             )
             MiniGameHudPill(
-                label = "Serie",
+                label = "Série",
                 value = "${playing.currentStreak}/${playing.bestStreak}",
                 tint = Color(0xFF9AEAFF),
                 modifier = Modifier.weight(1f),

@@ -1,5 +1,6 @@
 package fr.aumombelli.dstcg.feature.library
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -59,75 +60,70 @@ internal fun CardPreviewDialog(
         null
     }
 
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            dismissOnClickOutside = true,
-            usePlatformDefaultWidth = false,
-        ),
+    BackHandler(onBack = onDismiss)
+
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black.copy(alpha = 0.32f))
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onDismiss,
+            )
+            .dstcgContentInsetsPadding(includeBottom = true)
+            .padding(16.dp)
+            .testTag("library-card-preview"),
     ) {
-        BoxWithConstraints(
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onDismiss,
-                )
-                .dstcgContentInsetsPadding(includeBottom = true)
-                .padding(16.dp)
-                .testTag("library-card-preview"),
+        Column(
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+            modifier = Modifier.fillMaxSize(),
         ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(14.dp),
-                modifier = Modifier.fillMaxSize(),
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    SceneNavigationButton(
-                        icon = SceneNavigationIcon.Close,
-                        onClick = onDismiss,
-                        contentDescription = "Fermer",
-                        testTag = "library-card-preview-close",
-                    )
-                }
-                BoxWithConstraints(
-                    contentAlignment = Alignment.Center,
+                SceneNavigationButton(
+                    icon = SceneNavigationIcon.Close,
+                    onClick = onDismiss,
+                    contentDescription = "Fermer",
+                    testTag = "library-card-preview-close",
+                )
+            }
+            BoxWithConstraints(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f, fill = true),
+            ) {
+                val cardWidth = calculateTradingCardFitWidth(
+                    maxWidth = maxWidth,
+                    maxHeight = maxHeight,
+                )
+                AstroCardPreviewSurface(
+                    displayCard = displayCard,
+                    mode = AstroCardSurfaceMode.Preview,
+                    modifier = Modifier
+                        .width(cardWidth)
+                        .testTag("library-card-preview-surface"),
+                    onClick = onExpand,
+                )
+            }
+            DisplayCardVariantSelector(
+                variants = displayCard.availableVariants,
+                selectedVariantKey = displayCard.activeVariant.key,
+                onVariantSelected = { variant -> onVariantSelected(variant.key) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            if (tradeCandidate != null && onTrade != null) {
+                Button(
+                    onClick = { onTrade(tradeCandidate) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f, fill = true),
+                        .testTag("library-card-trade"),
                 ) {
-                    val cardWidth = calculateTradingCardFitWidth(
-                        maxWidth = maxWidth,
-                        maxHeight = maxHeight,
-                    )
-                    AstroCardPreviewSurface(
-                        displayCard = displayCard,
-                        mode = AstroCardSurfaceMode.Preview,
-                        modifier = Modifier
-                            .width(cardWidth)
-                            .testTag("library-card-preview-surface"),
-                        onClick = onExpand,
-                    )
-                }
-                DisplayCardVariantSelector(
-                    variants = displayCard.availableVariants,
-                    selectedVariantKey = displayCard.activeVariant.key,
-                    onVariantSelected = { variant -> onVariantSelected(variant.key) },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                if (tradeCandidate != null && onTrade != null) {
-                    Button(
-                        onClick = { onTrade(tradeCandidate) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag("library-card-trade"),
-                    ) {
-                        Text("Échanger")
-                    }
+                    Text("Échanger")
                 }
             }
         }
