@@ -16,11 +16,13 @@ internal data class MemoryDifficultyChoiceUi(
 
 internal data class MemoryCellUi(
     val index: Int,
-    val face: MemoryCardFace,
+    val face: MemoryCardFace?,
     val state: MemoryCellState,
 ) {
     val testTag: String = "memory-cell-$index"
-    val isVisible: Boolean = state != MemoryCellState.Hidden
+    val isHole: Boolean = face == null
+    val isPlayable: Boolean = face != null && state != MemoryCellState.Hole
+    val isVisible: Boolean = face != null && state != MemoryCellState.Hidden
 }
 
 internal enum class MemoryCellState {
@@ -28,4 +30,5 @@ internal enum class MemoryCellState {
     Revealed,
     Matched,
     Mismatch,
+    Hole,
 }

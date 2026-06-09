@@ -83,30 +83,19 @@ internal class MemoryMiniGameController(
 
     fun selectCell(index: Int) {
         val board = activeBoard ?: return
-        if (inputLocked || completionStarted || index !in board.cards.indices) return
+        if (inputLocked || completionStarted || index !in board.cells.indices) return
         if (index in matchedIndexes || index in mismatchIndexes || selectedIndex == index) return
 
-        val selectedFace = board.cards[index]
+        val selectedFace = (board.cells[index] as? MemoryBoardCell.Card)?.face ?: return
         val firstIndex = selectedIndex
         if (firstIndex == null) {
-            if (selectedFace.role == MemoryCardRole.HolographicSingleton) {
-                recordMove(
-                    matched = true,
-                    feedbackTone = MiniGameFeedbackTone.Special,
-                    sourceIndexes = setOf(index),
-                )
-                matchedIndexes += index
-                publishPlayingState()
-                completeIfNeeded()
-            } else {
-                selectedIndex = index
-                publishPlayingState()
-            }
+            selectedIndex = index
+            publishPlayingState()
             return
         }
 
         selectedIndex = null
-        val firstFace = board.cards[firstIndex]
+        val firstFace = (board.cells[firstIndex] as? MemoryBoardCell.Card)?.face ?: return
         val isPairMatch = firstFace.role == MemoryCardRole.Pair &&
             selectedFace.role == MemoryCardRole.Pair &&
             firstFace.identity == selectedFace.identity
@@ -236,7 +225,7 @@ internal class MemoryMiniGameController(
 
     private fun completeIfNeeded() {
         val board = activeBoard ?: return
-        if (matchedIndexes.size != board.cards.size || completionStarted) return
+        if (matchedIndexes.size != board.playableCellCount || completionStarted) return
         completionStarted = true
         inputLocked = true
         feedbackEvent = feedbackEmitter.next(
@@ -306,20 +295,28 @@ internal class MemoryMiniGameController(
             gridLabel = spec.gridLabel,
             rewardLabel = formatReward(board.difficulty.reward),
             columns = board.columns,
-            cells = board.cards.mapIndexed { index, face ->
-                MemoryCellUi(
-                    index = index,
-                    face = face,
-                    state = when {
-                        index in mismatchIndexes -> MemoryCellState.Mismatch
-                        index in matchedIndexes -> MemoryCellState.Matched
-                        selectedIndex == index -> MemoryCellState.Revealed
-                        else -> MemoryCellState.Hidden
-                    },
-                )
+            cells = board.cells.mapIndexed { index, cell ->
+                when (cell) {
+                    is MemoryBoardCell.Card -> MemoryCellUi(
+                        index = index,
+                        face = cell.face,
+                        state = when {
+                            index in mismatchIndexes -> MemoryCellState.Mismatch
+                            index in matchedIndexes -> MemoryCellState.Matched
+                            selectedIndex == index -> MemoryCellState.Revealed
+                            else -> MemoryCellState.Hidden
+                        },
+                    )
+
+                    is MemoryBoardCell.Hole -> MemoryCellUi(
+                        index = index,
+                        face = null,
+                        state = MemoryCellState.Hole,
+                    )
+                }
             },
             matchedCount = matchedIndexes.size,
-            totalCount = board.cellCount,
+            totalCount = board.playableCellCount,
             moves = moveCount,
             currentStreak = currentStreak,
             bestStreak = bestStreak,

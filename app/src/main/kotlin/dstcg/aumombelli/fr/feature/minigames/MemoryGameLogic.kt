@@ -5,15 +5,12 @@ import fr.aumombelli.dstcg.data.ownedMiniGameVariants
 import fr.aumombelli.dstcg.data.stableMiniGameHash
 import fr.aumombelli.dstcg.model.CardDefinition
 import fr.aumombelli.dstcg.model.DisplayCard
-import fr.aumombelli.dstcg.model.DisplayCardVariant
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.MiniGameDifficulty
 import fr.aumombelli.dstcg.model.MiniGameOwnedVariantRef
 import fr.aumombelli.dstcg.model.MiniGameResolvedCardRef
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.VariantProfile
-import fr.aumombelli.dstcg.model.requireFinishDefinition
-import fr.aumombelli.dstcg.model.requireSkyQualityDefinition
 import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.model.toDisplayVariant
 
@@ -24,7 +21,7 @@ internal data class MemoryDifficultySpec(
 ) {
     val cellCount: Int = rows * columns
     val pairCount: Int = cellCount / 2
-    val hasSingleton: Boolean = cellCount % 2 == 1
+    val hasHole: Boolean = cellCount % 2 == 1
     val gridLabel: String = "${columns}x$rows"
 
     companion object {
@@ -39,7 +36,6 @@ internal data class MemoryDifficultySpec(
 
 internal enum class MemoryCardRole {
     Pair,
-    HolographicSingleton,
 }
 
 internal data class MemoryCardIdentity(
@@ -57,16 +53,33 @@ internal data class MemoryCardFace(
     val identity: MemoryCardIdentity,
     val displayCard: DisplayCard,
     val role: MemoryCardRole,
-    val isVisualHolographicFallback: Boolean = false,
 )
+
+internal sealed interface MemoryBoardCell {
+    val id: String
+
+    data class Card(
+        val face: MemoryCardFace,
+    ) : MemoryBoardCell {
+        override val id: String = face.id
+    }
+
+    data class Hole(
+        override val id: String = "hole",
+    ) : MemoryBoardCell
+}
 
 internal data class MemoryBoard(
     val difficulty: MiniGameDifficulty,
     val rows: Int,
     val columns: Int,
-    val cards: List<MemoryCardFace>,
+    val cells: List<MemoryBoardCell>,
 ) {
     val cellCount: Int = rows * columns
+    val cards: List<MemoryCardFace> = cells.mapNotNull { cell ->
+        (cell as? MemoryBoardCell.Card)?.face
+    }
+    val playableCellCount: Int = cards.size
 }
 
 internal sealed interface MemoryBoardBuildResult {
@@ -115,36 +128,26 @@ internal fun buildMemoryBoard(
     }
 
     val selectedPairs = pairEntries.take(spec.pairCount)
-    val usedPairCardKeys = selectedPairs.map { it.identity.cardKey }.toSet()
-    val faces = selectedPairs.flatMapIndexed { index, entry ->
+    val cells: MutableList<MemoryBoardCell> = selectedPairs.flatMapIndexed { index, entry ->
         listOf(
-            entry.toFace(id = "pair-$index-a", role = MemoryCardRole.Pair),
-            entry.toFace(id = "pair-$index-b", role = MemoryCardRole.Pair),
+            MemoryBoardCell.Card(entry.toFace(id = "pair-$index-a", role = MemoryCardRole.Pair)),
+            MemoryBoardCell.Card(entry.toFace(id = "pair-$index-b", role = MemoryCardRole.Pair)),
         )
     }.toMutableList()
 
-    if (spec.hasSingleton) {
-        val singleton = selectHolographicSingleton(
-            dateUtc = dateUtc,
-            difficulty = difficulty,
-            catalog = catalog,
-            collection = collection,
-            usedPairCardKeys = usedPairCardKeys,
-        ) ?: return MemoryBoardBuildResult.Unavailable(
-            message = "Pas assez de cartes dans ta bibliothèque pour ajouter la carte holographique seule.",
-        )
-        faces += singleton.copy(id = "holographic-singleton")
+    if (spec.hasHole) {
+        cells += MemoryBoardCell.Hole()
     }
 
-    val shuffled = faces.sortedWith(
-        compareBy<MemoryCardFace> {
+    val shuffled = cells.sortedWith(
+        compareBy<MemoryBoardCell> {
             stableMiniGameHash(
                 "memory-board",
                 "v${MiniGameDeterministicDrawPolicy.CurrentAlgorithmVersion}",
                 dateUtc,
                 difficulty.name,
                 it.id,
-                it.identity.key,
+                it.shuffleKey,
             )
         }.thenBy { it.id },
     )
@@ -154,44 +157,16 @@ internal fun buildMemoryBoard(
             difficulty = difficulty,
             rows = spec.rows,
             columns = spec.columns,
-            cards = shuffled,
+            cells = shuffled,
         ),
     )
 }
 
-private fun selectHolographicSingleton(
-    dateUtc: String,
-    difficulty: MiniGameDifficulty,
-    catalog: MemoryCatalogLookup,
-    collection: OwnedCollection,
-    usedPairCardKeys: Set<String>,
-): MemoryCardFace? {
-    val ownedEntries = collection.ownedMiniGameVariants(catalog.cards)
-        .mapNotNull { catalog.entryFor(it) }
-    val actualHolographic = ownedEntries
-        .filter { it.displayCard.activeVariant.isHolographic }
-        .filter { it.identity.cardKey !in usedPairCardKeys }
-        .stableMemoryOrder(dateUtc, difficulty, "actual-holographic")
-        .firstOrNull()
-
-    if (actualHolographic != null) {
-        return actualHolographic.toFace(
-            id = "holographic-singleton",
-            role = MemoryCardRole.HolographicSingleton,
-        )
+private val MemoryBoardCell.shuffleKey: String
+    get() = when (this) {
+        is MemoryBoardCell.Card -> face.identity.key
+        is MemoryBoardCell.Hole -> id
     }
-
-    return ownedEntries
-        .mapNotNull { it.asVisualHolographicFallback(catalog) }
-        .filter { it.identity.cardKey !in usedPairCardKeys }
-        .stableMemoryOrder(dateUtc, difficulty, "visual-holographic")
-        .firstOrNull()
-        ?.toFace(
-            id = "holographic-singleton",
-            role = MemoryCardRole.HolographicSingleton,
-            isVisualHolographicFallback = true,
-        )
-}
 
 private fun List<MemoryCardEntry>.stableMemoryOrder(
     dateUtc: String,
@@ -200,7 +175,7 @@ private fun List<MemoryCardEntry>.stableMemoryOrder(
 ): List<MemoryCardEntry> = sortedWith(
     compareBy<MemoryCardEntry> {
         stableMiniGameHash(
-            "memory-singleton",
+            "memory-card-order",
             "v${MiniGameDeterministicDrawPolicy.CurrentAlgorithmVersion}",
             purpose,
             dateUtc,
@@ -241,16 +216,6 @@ private data class MemoryCatalogLookup(
         )
     }
 
-    fun visualHolographicVariantFor(entry: MemoryCardEntry): DisplayCardVariant? {
-        val profile = variantProfilesById[entry.definition.variantProfileId] ?: return null
-        val holographicSky = profile.skyQualities.firstOrNull { it.isHolographic } ?: return null
-        profile.requireFinishDefinition(entry.identity.finish)
-        profile.requireSkyQualityDefinition(holographicSky.code)
-        return profile.toDisplayVariant(
-            skyQuality = holographicSky.code,
-            finish = entry.identity.finish,
-        )
-    }
 }
 
 private data class MemoryCardEntry(
@@ -262,23 +227,10 @@ private data class MemoryCardEntry(
     fun toFace(
         id: String,
         role: MemoryCardRole,
-        isVisualHolographicFallback: Boolean = false,
     ): MemoryCardFace = MemoryCardFace(
         id = id,
         identity = identity,
         displayCard = displayCard,
         role = role,
-        isVisualHolographicFallback = isVisualHolographicFallback,
     )
-
-    fun asVisualHolographicFallback(catalog: MemoryCatalogLookup): MemoryCardEntry? {
-        val holographicVariant = catalog.visualHolographicVariantFor(this) ?: return null
-        return copy(
-            identity = identity.copy(skyQuality = holographicVariant.skyQuality),
-            displayCard = definition.toDisplayCard(
-                extensionName = extensionName,
-                activeVariant = holographicVariant,
-            ),
-        )
-    }
 }
