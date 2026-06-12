@@ -13,6 +13,7 @@ Lectures utiles :
 - [Installation et tests](docs/setup-and-tests.md) : prerequis Android, commandes Gradle, CI et benchmarks.
 - [Design visuel](docs/visual-design.md) : couleurs, raretes, qualites de ciel, equipements et assets de marque.
 - [Catalogue et assets](docs/catalog-assets.md) : XLSX, JSON embarques, scripts et illustrations.
+- [Politique de confidentialité](POLITIQUE_DE_CONFIDENTIALITE.md) : document officiel sur les données locales, le NFC et l'absence de collecte.
 
 Fonctionnalites :
 

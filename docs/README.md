@@ -36,6 +36,7 @@ docs/README.md
 | Installer, compiler, lancer les tests | [Installation et tests](setup-and-tests.md) |
 | Comprendre le produit offline | [Vue d'ensemble](overview.md) |
 | Comprendre les frontières techniques | [Architecture](architecture.md) |
+| Vérifier la politique de confidentialité officielle | [Politique de confidentialité](../POLITIQUE_DE_CONFIDENTIALITE.md) |
 | Retrouver les couleurs et conventions visuelles | [Design visuel](visual-design.md) |
 | Modifier le catalogue ou les images | [Catalogue et assets](catalog-assets.md) |
 | Documenter un écran précis | Pages [fonctionnalités](features/home.md) |
