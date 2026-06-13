@@ -28,7 +28,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,7 +40,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import fr.aumombelli.dstcg.model.DisplayCard
 import fr.aumombelli.dstcg.model.MiniGameDifficulty
 import fr.aumombelli.dstcg.ui.component.AstroCardPreviewSurface
@@ -255,9 +260,14 @@ private fun QuizPlayingPanel(
             .coerceAtLeast(maxWidth * 0.54f)
             .coerceAtMost(maxWidth)
         val questionBandHeight = when {
-            maxHeight < 620.dp -> 108.dp
-            maxWidth < 420.dp -> 132.dp
-            else -> 148.dp
+            maxWidth < 360.dp -> 188.dp
+            maxWidth < 420.dp -> 176.dp
+            else -> 156.dp
+        }
+        val questionMaxFontSize = if (maxWidth < 420.dp) {
+            23.sp
+        } else {
+            25.sp
         }
         val questionTopY = (questionCenterY - (questionBandHeight / 2f))
             .coerceIn(0.dp, maxOf(0.dp, maxHeight - questionBandHeight))
@@ -292,12 +302,9 @@ private fun QuizPlayingPanel(
                 .padding(start = 6.dp, end = 12.dp)
                 .testTag("quiz-question-prompt"),
         ) {
-            Text(
+            ResizableQuestionPrompt(
                 text = playing.prompt,
-                color = Color.White,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
+                maxFontSize = questionMaxFontSize,
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -346,6 +353,33 @@ private fun QuizPlayingPanel(
             }
         }
     }
+}
+
+@Composable
+private fun ResizableQuestionPrompt(
+    text: String,
+    maxFontSize: TextUnit,
+    modifier: Modifier = Modifier,
+) {
+    val minFontSize = 16.sp
+    var fontSize by remember(text, maxFontSize) { mutableStateOf(maxFontSize) }
+
+    Text(
+        text = text,
+        color = Color.White,
+        style = MaterialTheme.typography.headlineSmall.copy(
+            fontSize = fontSize,
+            lineHeight = (fontSize.value * 1.18f).sp,
+        ),
+        fontWeight = FontWeight.Bold,
+        textAlign = TextAlign.Center,
+        onTextLayout = { result ->
+            if (result.hasVisualOverflow && fontSize.value > minFontSize.value) {
+                fontSize = (fontSize.value - 1f).coerceAtLeast(minFontSize.value).sp
+            }
+        },
+        modifier = modifier,
+    )
 }
 
 @Composable
