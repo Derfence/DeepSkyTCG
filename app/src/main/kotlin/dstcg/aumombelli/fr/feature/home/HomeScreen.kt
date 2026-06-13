@@ -74,6 +74,7 @@ fun HomeScreen(
     contentVisible: Boolean = true,
     interactionsEnabled: Boolean = true,
     allowAuxiliaryActions: Boolean = true,
+    showMiniGamesDiscoveryHint: Boolean = false,
     homeLogoVariant: BrandLogoVariant = BrandLogoVariant.Lockup19,
     onHomeLogoLayoutChanged: (Float, Float) -> Unit = { _, _ -> },
     onContentEntranceSettledChanged: (Boolean) -> Unit = {},
@@ -279,6 +280,7 @@ fun HomeScreen(
                         onClick = onOpenPack,
                         miniGamesEnabled = state.isMiniGamesMenuVisible,
                         showMiniGamesNewIndicator = state.showMiniGamesNewIndicator,
+                        showMiniGamesDiscoveryHint = showMiniGamesDiscoveryHint,
                         onOpenMiniGamesMenu = onOpenMiniGamesMenu,
                         interactionTestTag = "home-open-pack",
                         modifier = Modifier

@@ -142,6 +142,9 @@ internal fun HomeScene(
         interactionsEnabled = !sceneState.transitionLocked,
         allowAuxiliaryActions = NewPlayerOnboardingInteractionPolicy
             .allowsHomeAuxiliaryActions(onboardingStep),
+        showMiniGamesDiscoveryHint = onboardingStep == NewPlayerOnboardingStep.DiscoverMiniGames &&
+            sceneState.onboardingHintsVisible &&
+            uiState.isMiniGamesMenuVisible,
         homeLogoVariant = homeLogoVariant,
         onHomeLogoLayoutChanged = { badgeCenterYInRootPx, landingSizePx ->
             updateSceneState {
