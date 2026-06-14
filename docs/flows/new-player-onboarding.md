@@ -117,6 +117,7 @@ Au retour accueil, le bouton `Equipements` devient visible et recoit un coachmar
 
 - `DiscoverMiniGames` affiche un coachmark sur la grande carte Home, cible `HomeMiniGames`.
 - Le message explique que la carte a un verso mini-jeux, accessible par bouton ou swipe, puis par clic sur la carte.
+- Tant que la carte Home affiche encore son recto pack, le bouton de retournement pulse et une main décorative indique le geste horizontal.
 - Le message indique le plafond de recompense : quatre jeux pouvant reduire la recharge d'un pack jusqu'a `4 h` par jour.
 - Pendant cette etape, seul l'acces au menu mini-jeux est autorise depuis l'accueil.
 - L'ouverture du menu mini-jeux avance vers `ShowConclusion`, mais la conclusion ne s'affiche pas dans le menu.

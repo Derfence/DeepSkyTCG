@@ -1,7 +1,11 @@
 package fr.aumombelli.dstcg.feature.home
 
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
@@ -15,6 +19,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -61,6 +66,7 @@ internal fun HomePackCard(
     onClick: () -> Unit,
     miniGamesEnabled: Boolean = false,
     showMiniGamesNewIndicator: Boolean = false,
+    showMiniGamesDiscoveryHint: Boolean = false,
     onOpenMiniGamesMenu: () -> Unit = {},
     interactionTestTag: String? = null,
     modifier: Modifier = Modifier,
@@ -75,6 +81,21 @@ internal fun HomePackCard(
         label = "home-pack-card-flip",
     )
     val isBackSideRendered = isHomeCardMiniGamesFaceVisible(rotationY)
+    val discoveryHintVisible = shouldShowHomeMiniGamesDiscoveryHint(
+        miniGamesEnabled = miniGamesEnabled,
+        discoveryStepActive = showMiniGamesDiscoveryHint,
+        showingMiniGamesBack = isBackSideRendered,
+    )
+    val hintTransition = rememberInfiniteTransition(label = "home-mini-games-discovery-hint")
+    val hintProgress by hintTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1500, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "home-mini-games-discovery-hint-progress",
+    )
 
     LaunchedEffect(miniGamesEnabled) {
         if (!miniGamesEnabled) {
@@ -143,42 +164,144 @@ internal fun HomePackCard(
             }
 
             if (miniGamesEnabled) {
-                IconButton(
-                    onClick = { flipStep += 1 },
+                if (discoveryHintVisible) {
+                    HomeMiniGamesSwipeHint(
+                        progress = hintProgress,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .testTag("home-mini-games-discovery-swipe-hint"),
+                    )
+                }
+
+                Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(12.dp)
-                        .size(44.dp)
-                        .testTag("home-card-flip"),
+                        .padding(4.dp)
+                        .size(60.dp),
                 ) {
-                    Surface(
-                        color = Color(0xB30A1524),
-                        contentColor = Color.White,
-                        shape = CircleShape,
-                        shadowElevation = 6.dp,
-                        modifier = Modifier.fillMaxSize(),
+                    if (discoveryHintVisible) {
+                        HomeMiniGamesFlipButtonHalo(
+                            progress = hintProgress,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .testTag("home-mini-games-discovery-flip-halo"),
+                        )
+                    }
+                    IconButton(
+                        onClick = { flipStep += 1 },
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .size(44.dp)
+                            .testTag("home-card-flip"),
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = Icons.Filled.SwapHoriz,
-                                contentDescription = "Retourner la carte",
-                                modifier = Modifier.size(22.dp),
-                            )
-                            if (showMiniGamesNewIndicator && !showingMiniGamesBack) {
-                                NewContentIndicator(
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .padding(3.dp)
-                                        .size(15.dp)
-                                        .testTag("home-mini-games-new-indicator"),
-                                    iconSize = 12.dp,
+                        Surface(
+                            color = Color(0xB30A1524),
+                            contentColor = Color.White,
+                            shape = CircleShape,
+                            shadowElevation = 6.dp,
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Filled.SwapHoriz,
+                                    contentDescription = "Retourner la carte",
+                                    modifier = Modifier.size(22.dp),
                                 )
+                                if (showMiniGamesNewIndicator && !showingMiniGamesBack) {
+                                    NewContentIndicator(
+                                        modifier = Modifier
+                                            .align(Alignment.TopEnd)
+                                            .padding(3.dp)
+                                            .size(15.dp)
+                                            .testTag("home-mini-games-new-indicator"),
+                                        iconSize = 12.dp,
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun HomeMiniGamesSwipeHint(
+    progress: Float,
+    modifier: Modifier = Modifier,
+) {
+    val density = LocalDensity.current
+    val travelPx = with(density) { 56.dp.toPx() }
+    val easedProgress = when {
+        progress < 0.18f -> 0f
+        progress < 0.70f -> (progress - 0.18f) / 0.52f
+        else -> 1f
+    }
+    val alpha = when {
+        progress < 0.12f -> progress / 0.12f
+        progress < 0.76f -> 1f
+        else -> 1f - ((progress - 0.76f) / 0.24f)
+    }.coerceIn(0f, 1f)
+    val startX = -travelPx / 2f
+    val translationX = startX + travelPx * easedProgress
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier.size(148.dp, 64.dp),
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val centerY = size.height * 0.52f
+            val start = Offset(size.width * 0.24f, centerY)
+            val end = Offset(size.width * 0.76f, centerY)
+            drawLine(
+                color = Color(0xFFFFE79A).copy(alpha = 0.34f * alpha),
+                start = start,
+                end = end,
+                strokeWidth = 3.dp.toPx(),
+                cap = StrokeCap.Round,
+            )
+            drawCircle(
+                color = Color(0xFFFFE79A).copy(alpha = 0.18f * alpha),
+                radius = 22.dp.toPx(),
+                center = Offset(size.width / 2f, centerY),
+                style = Stroke(width = 2.dp.toPx()),
+            )
+        }
+        Icon(
+            imageVector = Icons.Filled.TouchApp,
+            contentDescription = null,
+            tint = Color(0xFFFFE79A),
+            modifier = Modifier
+                .size(42.dp)
+                .graphicsLayer {
+                    this.alpha = alpha
+                    this.translationX = translationX
+                    this.translationY = -6.dp.toPx()
+                },
+        )
+    }
+}
+
+@Composable
+private fun HomeMiniGamesFlipButtonHalo(
+    progress: Float,
+    modifier: Modifier = Modifier,
+) {
+    Canvas(modifier = modifier) {
+        val radius = size.minDimension * (0.40f + progress * 0.08f)
+        drawCircle(
+            color = Color(0xFFFFE79A).copy(alpha = 0.30f * (1f - progress)),
+            radius = radius,
+            center = Offset(size.width / 2f, size.height / 2f),
+            style = Stroke(width = 3.dp.toPx()),
+        )
+        drawCircle(
+            color = Color(0xFFFFE79A).copy(alpha = 0.60f - progress * 0.18f),
+            radius = size.minDimension * 0.38f,
+            center = Offset(size.width / 2f, size.height / 2f),
+            style = Stroke(width = 2.dp.toPx()),
+        )
     }
 }
 
@@ -197,6 +320,12 @@ internal fun isHomeCardMiniGamesFaceVisible(rotationY: Float): Boolean {
     val normalizedRotation = ((rotationY % 360f) + 360f) % 360f
     return normalizedRotation > 90f && normalizedRotation < 270f
 }
+
+internal fun shouldShowHomeMiniGamesDiscoveryHint(
+    miniGamesEnabled: Boolean,
+    discoveryStepActive: Boolean,
+    showingMiniGamesBack: Boolean,
+): Boolean = miniGamesEnabled && discoveryStepActive && !showingMiniGamesBack
 
 @Composable
 private fun HomePackCardFace(
