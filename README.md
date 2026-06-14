@@ -50,7 +50,7 @@ Les commandes detaillees sont dans [Installation et tests](docs/setup-and-tests.
 
 ## Etat fonctionnel actuel
 
-- Version affichée dans l'application : `v2.6.2`.
+- Version affichée dans l'application : `v2.6.3`.
 - Application mono-profil, sans login, sans backend et sans publicite.
 - Progression securisee dans DataStore avec chiffrement AES-GCM via Android Keystore.
 - Stock local de `10` ouvertures, `5` cartes par pack et cooldown de `6 h` module par la meteo UTC.
