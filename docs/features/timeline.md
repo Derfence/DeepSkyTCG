@@ -55,7 +55,7 @@ Pour chaque comparaison :
 - déposer une carte sur un emplacement occupé échange les deux cartes ;
 - le bouton de validation apparaît uniquement lorsque les deux emplacements sont remplis.
 
-Les cartes et emplacements sont dimensionnés dynamiquement pour que les deux cartes tiennent côte à côte dans la largeur disponible. Il n'y a plus de timeline horizontale scrollable.
+Les cartes et emplacements sont dimensionnés dynamiquement à partir de la largeur et de la hauteur disponibles. Le plateau choisit la plus grande taille qui conserve des marges de sécurité sur tous les bords, ainsi qu'un espacement stable entre les deux emplacements et entre les emplacements et la main. Il n'y a plus de timeline horizontale scrollable.
 
 Les paires dont les deux cartes ont exactement la même valeur sur le critère sont exclues.
 
