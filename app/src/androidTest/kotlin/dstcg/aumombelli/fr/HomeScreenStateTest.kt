@@ -8,6 +8,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -417,6 +418,7 @@ class HomeScreenStateTest {
         )
         composeRule.waitForIdle()
         val shortViewportBounds = composeRule.onNodeWithTag("home-open-pack").fetchSemanticsNode().boundsInRoot
+        val shortContainerBounds = composeRule.onNodeWithTag("home-test-viewport").fetchSemanticsNode().boundsInRoot
 
         composeRule.runOnIdle {
             viewportWidthFraction.value = 0.96f
@@ -424,11 +426,14 @@ class HomeScreenStateTest {
         }
         composeRule.waitForIdle()
         val tallViewportBounds = composeRule.onNodeWithTag("home-open-pack").fetchSemanticsNode().boundsInRoot
+        val tallContainerBounds = composeRule.onNodeWithTag("home-test-viewport").fetchSemanticsNode().boundsInRoot
 
         assertTrue(
             "Expected the pack card to grow when the viewport gets taller.",
             tallViewportBounds.width > shortViewportBounds.width,
         )
+        assertInsideWithMargin(shortContainerBounds, shortViewportBounds, marginPx = 10f)
+        assertInsideWithMargin(tallContainerBounds, tallViewportBounds, marginPx = 10f)
         assertEquals(
             TRADING_CARD_WIDTH_OVER_HEIGHT,
             shortViewportBounds.width / shortViewportBounds.height,
@@ -481,10 +486,12 @@ class HomeScreenStateTest {
             DstcgTheme {
                 BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                     Box(
-                        modifier = Modifier.size(
-                            width = maxWidth * widthFraction.value.coerceIn(0f, 1f),
-                            height = maxHeight * heightFraction.value.coerceIn(0f, 1f),
-                        ),
+                        modifier = Modifier
+                            .size(
+                                width = maxWidth * widthFraction.value.coerceIn(0f, 1f),
+                                height = maxHeight * heightFraction.value.coerceIn(0f, 1f),
+                            )
+                            .testTag("home-test-viewport"),
                     ) {
                         HomeScreen(
                             state = state,
@@ -502,5 +509,16 @@ class HomeScreenStateTest {
                 }
             }
         }
+    }
+
+    private fun assertInsideWithMargin(
+        containerBounds: Rect,
+        childBounds: Rect,
+        marginPx: Float,
+    ) {
+        assertTrue(childBounds.left >= containerBounds.left + marginPx)
+        assertTrue(childBounds.right <= containerBounds.right - marginPx)
+        assertTrue(childBounds.top >= containerBounds.top + marginPx)
+        assertTrue(childBounds.bottom <= containerBounds.bottom - marginPx)
     }
 }

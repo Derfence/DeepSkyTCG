@@ -8,6 +8,9 @@ import fr.aumombelli.dstcg.ui.motion.brandLogoLayoutSpec
 
 internal const val HOME_LOGO_LANDING_SCALE = 0.88f
 
+private val HomeHeroCardHorizontalSafetyPadding = 12.dp
+private val HomeHeroCardVerticalSafetyGap = 12.dp
+
 internal data class HomeResponsiveLayout(
     val heroCardWidth: Dp,
     val heroCardHeight: Dp,
@@ -40,7 +43,6 @@ internal fun calculateHomeResponsiveLayout(
     val menuButtonTop = availableHeight - menuButtonSize
     val heroCardWidth = calculateHomeHeroCardWidth(
         availableWidth = availableWidth,
-        availableHeight = availableHeight,
         availableMiddleGap = (menuButtonTop - logoBottom).coerceAtLeast(0.dp),
     )
     val heroCardHeight = heroCardWidth / TRADING_CARD_WIDTH_OVER_HEIGHT
@@ -65,14 +67,11 @@ internal fun calculateHomeResponsiveLayout(
 
 private fun calculateHomeHeroCardWidth(
     availableWidth: Dp,
-    availableHeight: Dp,
     availableMiddleGap: Dp,
 ): Dp {
-    val widthLimitedSize = availableWidth * 0.82f
-    val heightLimitedSize = availableHeight * 0.37f
-    val middleGapLimitedSize = availableMiddleGap * TRADING_CARD_WIDTH_OVER_HEIGHT
-    return widthLimitedSize
-        .coerceAtMost(heightLimitedSize)
-        .coerceAtMost(middleGapLimitedSize)
-        .coerceAtMost(320.dp)
+    val widthLimitedSize = (availableWidth - (HomeHeroCardHorizontalSafetyPadding * 2f))
+        .coerceAtLeast(0.dp)
+    val middleGapLimitedSize = (availableMiddleGap - (HomeHeroCardVerticalSafetyGap * 2f))
+        .coerceAtLeast(0.dp) * TRADING_CARD_WIDTH_OVER_HEIGHT
+    return minOf(widthLimitedSize, middleGapLimitedSize)
 }
