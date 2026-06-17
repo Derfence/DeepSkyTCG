@@ -11,6 +11,9 @@ import fr.aumombelli.dstcg.data.StandaloneGameSettings
 import fr.aumombelli.dstcg.data.buildPackChargeUiStatus
 import fr.aumombelli.dstcg.data.drawCooldownDuration
 import fr.aumombelli.dstcg.data.requireUsableProgress
+import fr.aumombelli.dstcg.model.EquipmentBadgeProgress
+import fr.aumombelli.dstcg.model.EquipmentCardDefinition
+import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.model.HomeMenuNoveltyState
 import fr.aumombelli.dstcg.model.LibraryCardNoveltyState
 import fr.aumombelli.dstcg.model.MiniGameDailyState
@@ -20,6 +23,8 @@ import fr.aumombelli.dstcg.model.MiniGamesProgress
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.OwnedCardEntry
 import fr.aumombelli.dstcg.model.OwnedCollection
+import fr.aumombelli.dstcg.model.OwnedEquipmentCardEntry
+import fr.aumombelli.dstcg.model.OwnedEquipmentInventory
 import fr.aumombelli.dstcg.model.OwnedVariantCount
 import fr.aumombelli.dstcg.model.StandaloneProgress
 import java.time.Duration
@@ -51,6 +56,7 @@ class ProgressRepositoryTest {
         assertEquals(0, loaded.progress.openedPackCount)
         assertEquals(false, loaded.progress.hasOpenedEpicBoostedPack)
         assertEquals(NewPlayerOnboardingStep.ShowWelcomeIntro, loaded.progress.newPlayerOnboardingStep)
+        assertEquals(0, loaded.progress.newPlayerOnboardingPackCount)
         assertEquals(MiniGamesProgress(), loaded.progress.miniGamesProgress)
         assertFalse(fixture.secureDataStore.data.first().isEmpty())
     }
@@ -67,6 +73,7 @@ class ProgressRepositoryTest {
             openedPackCount = 3,
             hasOpenedEpicBoostedPack = true,
             newPlayerOnboardingStep = NewPlayerOnboardingStep.LearnLibraryVariants,
+            newPlayerOnboardingPackCount = 2,
             homeMenuNoveltyState = HomeMenuNoveltyState(
                 library = true,
                 badgeBook = true,
@@ -99,6 +106,7 @@ class ProgressRepositoryTest {
                 openedPackCount = 1,
                 hasOpenedEpicBoostedPack = true,
                 newPlayerOnboardingStep = NewPlayerOnboardingStep.Completed,
+                newPlayerOnboardingPackCount = 2,
             ),
         )
 
@@ -106,6 +114,7 @@ class ProgressRepositoryTest {
 
         val reloaded = fixture.repository.loadProgress().requireUsableProgress().progress
         assertEquals(NewPlayerOnboardingStep.ShowWelcomeIntro, reloaded.newPlayerOnboardingStep)
+        assertEquals(0, reloaded.newPlayerOnboardingPackCount)
         assertEquals(0, reloaded.openedPackCount)
         assertEquals(false, reloaded.hasOpenedEpicBoostedPack)
         assertEquals(OwnedCollection(), reloaded.collection)
@@ -113,6 +122,72 @@ class ProgressRepositoryTest {
         assertEquals(HomeMenuNoveltyState(), reloaded.homeMenuNoveltyState)
         assertEquals(LibraryCardNoveltyState(), reloaded.libraryCardNoveltyState)
         assertEquals(MiniGamesProgress(), reloaded.miniGamesProgress)
+    }
+
+    @Test
+    fun `reset new player onboarding preserves real player progression`() = runTest {
+        val equipmentCard = testEquipmentCardDefinition(
+            id = "observatory-lv1",
+            type = EquipmentType.Observatory,
+        )
+        val fixture = newFixture(equipmentCards = listOf(equipmentCard))
+        val originalCollection = ownedCollectionOf("ALP-001" to 4)
+        val originalRechargeState = testRechargeStateWithNextChargeAt(
+            availableDrawCount = 5,
+            nextChargeAt = "2026-03-25T00:00:00Z",
+        )
+        val miniGamesProgress = MiniGamesProgress(
+            dailyStates = mapOf(
+                MiniGameId.Memory to MiniGameDailyState(
+                    dateUtc = "2026-03-24",
+                    hasPlayed = true,
+                    reward = MiniGameReward.fromMinutes(30L),
+                ),
+            ),
+        )
+        val progress = StandaloneProgress(
+            collection = originalCollection,
+            rechargeState = originalRechargeState,
+            openedPackCount = 8,
+            hasOpenedEpicBoostedPack = true,
+            newPlayerOnboardingStep = NewPlayerOnboardingStep.Completed,
+            newPlayerOnboardingPackCount = 2,
+            equipmentInventory = OwnedEquipmentInventory(
+                cards = mapOf(
+                    equipmentCard.id to OwnedEquipmentCardEntry(
+                        countOwned = 1,
+                        activationCount = 2,
+                    ),
+                ),
+            ),
+            equipmentBadgeProgress = EquipmentBadgeProgress(affectedPackCount = 3),
+            homeMenuNoveltyState = HomeMenuNoveltyState(
+                library = true,
+                equipment = true,
+                badgeBook = true,
+                miniGames = true,
+            ),
+            libraryCardNoveltyState = LibraryCardNoveltyState(newCardIds = setOf("ALP-001")),
+            miniGamesMenuUnlocked = true,
+            miniGamesProgress = miniGamesProgress,
+        )
+        fixture.repository.saveProgress(progress)
+
+        fixture.repository.resetNewPlayerOnboarding()
+
+        val reloaded = fixture.repository.loadProgress().requireUsableProgress().progress
+        assertEquals(NewPlayerOnboardingStep.ShowWelcomeIntro, reloaded.newPlayerOnboardingStep)
+        assertEquals(0, reloaded.newPlayerOnboardingPackCount)
+        assertEquals(8, reloaded.openedPackCount)
+        assertEquals(true, reloaded.hasOpenedEpicBoostedPack)
+        assertEquals(originalCollection, reloaded.collection)
+        assertEquals(originalRechargeState, reloaded.rechargeState)
+        assertEquals(progress.equipmentInventory, reloaded.equipmentInventory)
+        assertEquals(EquipmentBadgeProgress(affectedPackCount = 3), reloaded.equipmentBadgeProgress)
+        assertEquals(progress.homeMenuNoveltyState, reloaded.homeMenuNoveltyState)
+        assertEquals(progress.libraryCardNoveltyState, reloaded.libraryCardNoveltyState)
+        assertEquals(true, reloaded.miniGamesMenuUnlocked)
+        assertEquals(miniGamesProgress, reloaded.miniGamesProgress)
     }
 
     @Test
@@ -314,7 +389,7 @@ class ProgressRepositoryTest {
     }
 
     @Test
-    fun `load progress migrates schema version 4 to version 6 without losing collection or recharge`() = runTest {
+    fun `load progress migrates legacy schema without losing collection recharge or guided pack count`() = runTest {
         val fixture = newFixture()
         val legacyRechargeState = testRechargeStateWithNextChargeAt(
             availableDrawCount = 4,
@@ -363,6 +438,7 @@ class ProgressRepositoryTest {
         assertEquals(2, loaded.collection.cards.getValue("ALP-001").totalOwned)
         assertEquals(4, loaded.rechargeState.availableDrawCount)
         assertEquals(2, loaded.openedPackCount)
+        assertEquals(2, loaded.newPlayerOnboardingPackCount)
         assertEquals(false, loaded.hasOpenedEpicBoostedPack)
         assertTrue(loaded.equipmentInventory.cards.isEmpty())
         assertTrue(loaded.activeEquipmentByType.isEmpty())
@@ -378,6 +454,7 @@ class ProgressRepositoryTest {
             elapsedRealtimeMs = 1_000L,
             bootSessionId = "test-boot",
         ),
+        equipmentCards: List<EquipmentCardDefinition> = emptyList(),
     ): RepositoryFixture {
         val secureDataStore = inMemoryDataStore(EncryptedProgressEnvelopeSerializer.defaultValue)
         val cipher = newTestProgressCipher()
@@ -386,6 +463,7 @@ class ProgressRepositoryTest {
         )
         val catalogGateway = FakeCatalogGateway().apply {
             cards = listOf(testCardDefinition("ALP-001", variantProfileId = "observation-default"))
+            this.equipmentCards = equipmentCards
         }
         return RepositoryFixture(
             secureDataStore = secureDataStore,

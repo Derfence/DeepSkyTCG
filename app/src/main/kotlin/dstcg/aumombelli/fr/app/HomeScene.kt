@@ -137,6 +137,15 @@ internal fun HomeScene(
             }
         },
         onResetProgress = homeViewModel::resetProgress,
+        onResetNewPlayerOnboarding = {
+            homeViewModel.resetNewPlayerOnboarding(
+                onResetCompleted = {
+                    scope.launch {
+                        onboardingCoordinator.syncFromProgress()
+                    }
+                },
+            )
+        },
         showBackground = false,
         contentVisible = sceneState.homeContentVisible,
         interactionsEnabled = !sceneState.transitionLocked,

@@ -101,8 +101,9 @@ class LocalPackEngineEquipmentTest {
         val response = engine.drawPack(
             extensionId = "astronomes-en-herbe",
             progress = testProgress(
-                openedPackCount = 0,
+                openedPackCount = 7,
                 newPlayerOnboardingStep = NewPlayerOnboardingStep.SelectFirstBooster,
+                newPlayerOnboardingPackCount = 0,
             ),
             now = fixedNow,
         )
@@ -250,8 +251,9 @@ class LocalPackEngineEquipmentTest {
         val response = engine.drawPack(
             extensionId = "astronomes-en-herbe",
             progress = testProgress(
-                openedPackCount = 1,
+                openedPackCount = 7,
                 newPlayerOnboardingStep = NewPlayerOnboardingStep.OpenSecondPackMenu,
+                newPlayerOnboardingPackCount = 1,
             ),
             now = fixedNow,
         )
@@ -653,12 +655,14 @@ class LocalPackEngineEquipmentTest {
     private fun testProgress(
         openedPackCount: Int = 0,
         newPlayerOnboardingStep: NewPlayerOnboardingStep = NewPlayerOnboardingStep.Completed,
+        newPlayerOnboardingPackCount: Int = openedPackCount.coerceAtLeast(0),
         activeEquipmentByType: Map<EquipmentType, ActiveEquipmentEffect> = emptyMap(),
     ): StandaloneProgress = StandaloneProgress(
         collection = ownedCollectionOf(),
         rechargeState = testRechargeState(),
         openedPackCount = openedPackCount,
         newPlayerOnboardingStep = newPlayerOnboardingStep,
+        newPlayerOnboardingPackCount = newPlayerOnboardingPackCount,
         activeEquipmentByType = activeEquipmentByType,
     )
 

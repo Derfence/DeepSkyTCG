@@ -408,6 +408,39 @@ class HomeScreenStateTest {
     }
 
     @Test
+    fun confirming_tutorial_reset_calls_callback_once() {
+        var tutorialResetCount = 0
+        composeRule.mainClock.autoAdvance = false
+        setHomeScreenContent(
+            initialState = HomeUiState(
+                isLoading = false,
+            ),
+            onResetNewPlayerOnboarding = { tutorialResetCount += 1 },
+        )
+
+        composeRule.onNodeWithTag("home-settings").performClick()
+        composeRule.mainClock.advanceTimeBy(1)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("home-settings-reset-tutorial").performClick()
+        composeRule.mainClock.advanceTimeBy(1)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("home-tutorial-reset-confirmation").assertIsDisplayed()
+        composeRule.onNodeWithTag("home-tutorial-reset-confirmation-message")
+            .assertTextContains("Ta collection et ta progression")
+        composeRule.mainClock.advanceTimeBy(2_000)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("home-tutorial-reset-confirmation-confirm").performClick()
+        composeRule.mainClock.advanceTimeBy(1)
+        composeRule.waitForIdle()
+        composeRule.mainClock.autoAdvance = true
+
+        composeRule.onAllNodesWithTag("home-tutorial-reset-confirmation").assertCountEquals(0)
+        composeRule.runOnIdle {
+            assertEquals(1, tutorialResetCount)
+        }
+    }
+
+    @Test
     fun pack_card_size_adapts_to_viewport_height_while_preserving_ratio() {
         val viewportWidthFraction = mutableStateOf(1f)
         val viewportHeightFraction = mutableStateOf(0.86f)
@@ -451,6 +484,7 @@ class HomeScreenStateTest {
         onOpenCrafting: () -> Unit = {},
         onOpenMiniGamesMenu: () -> Unit = {},
         onResetProgress: () -> Unit = {},
+        onResetNewPlayerOnboarding: () -> Unit = {},
         onCoachmarkTargetBoundsChanged: (
             NewPlayerOnboardingTarget,
             Rect?,
@@ -468,6 +502,7 @@ class HomeScreenStateTest {
                     onOpenBadgeBook = {},
                     onOpenMiniGamesMenu = onOpenMiniGamesMenu,
                     onResetProgress = onResetProgress,
+                    onResetNewPlayerOnboarding = onResetNewPlayerOnboarding,
                     showBackground = false,
                     contentVisible = true,
                     onCoachmarkTargetBoundsChanged = onCoachmarkTargetBoundsChanged,
@@ -502,6 +537,7 @@ class HomeScreenStateTest {
                             onOpenBadgeBook = {},
                             onOpenMiniGamesMenu = {},
                             onResetProgress = {},
+                            onResetNewPlayerOnboarding = {},
                             showBackground = false,
                             contentVisible = true,
                         )

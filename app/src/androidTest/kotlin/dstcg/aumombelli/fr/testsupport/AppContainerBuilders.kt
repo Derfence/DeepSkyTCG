@@ -390,6 +390,13 @@ private class MutableProgressGateway(
             newPlayerOnboardingStep = NewPlayerOnboardingStep.ShowWelcomeIntro,
         )
     }
+
+    override suspend fun resetNewPlayerOnboarding() {
+        progress = progress.copy(
+            newPlayerOnboardingStep = NewPlayerOnboardingStep.ShowWelcomeIntro,
+            newPlayerOnboardingPackCount = 0,
+        )
+    }
 }
 
 private fun navigationVariantProfile(): VariantProfile = VariantProfile(

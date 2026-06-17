@@ -363,12 +363,14 @@ class LocalPackEngineTest {
         rechargeState: fr.aumombelli.dstcg.model.PackRechargeState,
         openedPackCount: Int = 2,
         newPlayerOnboardingStep: NewPlayerOnboardingStep = NewPlayerOnboardingStep.Completed,
+        newPlayerOnboardingPackCount: Int = openedPackCount.coerceAtLeast(0),
     ): StandaloneProgress =
         StandaloneProgress(
             collection = ownedCollectionOf(),
             rechargeState = rechargeState,
             openedPackCount = openedPackCount,
             newPlayerOnboardingStep = newPlayerOnboardingStep,
+            newPlayerOnboardingPackCount = newPlayerOnboardingPackCount,
         )
 
     private fun queuedGameSettings(vararg values: Int): StandaloneGameSettings = StandaloneGameSettings(

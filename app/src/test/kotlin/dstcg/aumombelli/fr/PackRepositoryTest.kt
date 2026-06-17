@@ -68,6 +68,7 @@ class PackRepositoryTest {
         assertEquals(response, repository.currentPackResult().value)
         assertEquals(response.rechargeState, progressGateway.progress.rechargeState)
         assertEquals(1, progressGateway.progress.openedPackCount)
+        assertEquals(1, progressGateway.progress.newPlayerOnboardingPackCount)
         assertEquals(false, progressGateway.progress.hasOpenedEpicBoostedPack)
         assertEquals(3, progressGateway.progress.collection.cards.values.sumOf { it.totalOwned })
         assertEquals(
@@ -333,6 +334,7 @@ class PackRepositoryTest {
                 collection = ownedCollectionOf(),
                 rechargeState = testRechargeState(),
                 openedPackCount = 1,
+                newPlayerOnboardingPackCount = 1,
                 newPlayerOnboardingStep = NewPlayerOnboardingStep.OpenSecondPackMenu,
             )
         }
@@ -372,8 +374,53 @@ class PackRepositoryTest {
         assertEquals(listOf(rewardCard.id), response.equipmentCards.map { it.id })
         assertEquals(1, progressGateway.progress.equipmentInventory.entryFor(rewardCard.id).countOwned)
         assertEquals(2, progressGateway.progress.openedPackCount)
+        assertEquals(2, progressGateway.progress.newPlayerOnboardingPackCount)
         assertEquals(1, progressGateway.progress.collection.cards.values.sumOf { it.totalOwned })
         assertEquals(true, progressGateway.progress.homeMenuNoveltyState.equipment)
+    }
+
+    @Test
+    fun `open regular pack keeps onboarding pack count unchanged`() = runTest {
+        val fixedNow = Instant.parse("2026-03-24T12:00:00Z")
+        val progressGateway = FakeProgressGateway().apply {
+            progress = StandaloneProgress(
+                collection = ownedCollectionOf("ALP-001" to 1),
+                rechargeState = testRechargeState(),
+                openedPackCount = 8,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.Completed,
+                newPlayerOnboardingPackCount = 2,
+            )
+        }
+        val catalogGateway = FakeCatalogGateway().apply {
+            cards = listOf(
+                testCardDefinition("ALP-001", name = "Nebuleuse d'Orion", variantProfileId = "local-pack-profile"),
+            )
+            variantProfiles = listOf(localPackProfile())
+            gameBalance = testGameBalanceDefinition(
+                cardsPerDraw = 1,
+                suburbanMeanPerDay = 1.0,
+                ruralMeanPerDay = 1.0,
+                mountainMeanPerDay = 1.0,
+            )
+        }
+        val repository = PackRepository(
+            progressRepository = progressGateway,
+            collectionRepository = CollectionRepository(progressGateway),
+            localPackEngine = LocalPackEngine(
+                catalogRepository = catalogGateway,
+                settings = testGameSettings(
+                    now = fixedNow,
+                    maxStoredDraws = 10,
+                    randomSeed = 1,
+                ),
+            ),
+            homeMenuNoveltyEvaluator = HomeMenuNoveltyEvaluator(catalogGateway),
+        )
+
+        repository.openPack("astronomes-en-herbe")
+
+        assertEquals(9, progressGateway.progress.openedPackCount)
+        assertEquals(2, progressGateway.progress.newPlayerOnboardingPackCount)
     }
 
     @Test

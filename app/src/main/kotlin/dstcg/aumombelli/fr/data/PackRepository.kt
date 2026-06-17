@@ -41,6 +41,7 @@ class PackRepository(
             now = loadedProgress.trustedNow,
             isEpicBoosted = isEpicBoosted,
         )
+        val openedSpecialOnboardingPack = isSpecialOnboardingPack(progress)
         val mergedCollection = collectionRepository.mergeCards(progress.collection, packResponse.cards)
         val mergedEquipmentInventory = progress.equipmentInventory.addRewards(packResponse.equipmentCards)
         val afterProgress = progress.copy(
@@ -48,6 +49,11 @@ class PackRepository(
             equipmentInventory = mergedEquipmentInventory,
             rechargeState = packResponse.rechargeState,
             openedPackCount = progress.openedPackCount + 1,
+            newPlayerOnboardingPackCount = if (openedSpecialOnboardingPack) {
+                progress.newPlayerOnboardingPackCount.coerceAtLeast(0) + 1
+            } else {
+                progress.newPlayerOnboardingPackCount
+            },
             hasOpenedEpicBoostedPack = progress.hasOpenedEpicBoostedPack || packResponse.isEpicBoosted,
         )
             .recordAffectedPackIfEquipmentActive()

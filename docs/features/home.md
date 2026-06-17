@@ -62,9 +62,10 @@ Source de verite : `feature/home/HomeResponsiveLayout.kt`.
 Le menu contient :
 
 - `Réinitialiser la bibliothèque` ;
+- `Réinitialiser le tutoriel` ;
 - `À propos`.
 
-Le reset demande une confirmation puis attend `2 s` avant d'activer `Valider`.
+Les deux resets demandent une confirmation puis attendent `2 s` avant d'activer `Valider`. Le reset du tutoriel relance l'onboarding et ses packs guidés sans effacer la collection ni la progression réelle.
 
 Le panneau `À propos` affiche la version et les credits depuis `feature/home/HomeAboutContent.kt`.
 
