@@ -54,9 +54,9 @@ import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.motion.SkyBackdropVariant
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
 
-private val TimelinePreferredCardWidth = 164.dp
-private val TimelineMinimumCardWidth = 92.dp
 private val TimelineCardGap = 14.dp
+private val TimelineBoardEdgePadding = 14.dp
+private val TimelineBoardVerticalGap = 16.dp
 private val TimelineValidateButtonSlotHeight = 58.dp
 
 @Composable
@@ -341,20 +341,21 @@ private fun TimelineComparisonBoard(
             .testTag("timeline-comparison-board"),
     ) {
         val cardGap = TimelineCardGap
-        val sidePadding = 8.dp
-        val verticalGap = 14.dp
+        val sidePadding = TimelineBoardEdgePadding
+        val verticalPadding = TimelineBoardEdgePadding
+        val verticalGap = TimelineBoardVerticalGap
         val widthLimited = ((maxWidth - (sidePadding * 2f) - cardGap) / 2f)
-            .coerceAtLeast(48.dp)
-        val heightLimited = (((maxHeight - verticalGap).coerceAtLeast(120.dp)) / 2f) *
-            TRADING_CARD_WIDTH_OVER_HEIGHT
-        val cardWidth = minOf(TimelinePreferredCardWidth, widthLimited, heightLimited)
-            .coerceAtLeast(minOf(TimelineMinimumCardWidth, widthLimited))
+            .coerceAtLeast(1.dp)
+        val verticalSpaceForCards = (maxHeight - (verticalPadding * 2f) - verticalGap)
+            .coerceAtLeast(1.dp)
+        val heightLimited = (verticalSpaceForCards / 2f) * TRADING_CARD_WIDTH_OVER_HEIGHT
+        val cardWidth = minOf(widthLimited, heightLimited)
         val cardHeight = cardWidth / TRADING_CARD_WIDTH_OVER_HEIGHT
         val contentHeight = (cardHeight * 2f) + verticalGap
-        val slotTop = if (maxHeight >= contentHeight) {
+        val slotTop = if (maxHeight >= contentHeight + (verticalPadding * 2f)) {
             (maxHeight - contentHeight) / 2f
         } else {
-            0.dp
+            verticalPadding
         }
         val handTop = slotTop + cardHeight + verticalGap
         val isDraggingPlacedCard = playing.slots.any { it.placedCard?.id == draggingCardId }

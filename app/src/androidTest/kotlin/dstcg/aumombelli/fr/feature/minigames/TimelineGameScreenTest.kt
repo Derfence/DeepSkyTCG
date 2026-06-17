@@ -2,6 +2,9 @@ package fr.aumombelli.dstcg.feature.minigames
 
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -241,6 +244,61 @@ class TimelineGameScreenTest {
         assertTrue(secondHandBounds.right <= boardBounds.right)
         assertTrue(firstSlotBounds.right < secondSlotBounds.left)
         assertTrue(firstHandBounds.right < secondHandBounds.left)
+        assertTrue(firstSlotBounds.top > boardBounds.top)
+        assertTrue(firstHandBounds.top > firstSlotBounds.bottom)
+        assertTrue(firstHandBounds.bottom < boardBounds.bottom)
+    }
+
+    @Test
+    fun card_size_grows_with_available_width_and_height() {
+        val firstCard = timelineCard("ALP-001", "M42")
+        val secondCard = timelineCard("ALP-002", "M31")
+        val screen = playingScreen(
+            slots = listOf(
+                TimelineSlotUi(index = 0, placedCard = null),
+                TimelineSlotUi(index = 1, placedCard = null),
+            ),
+            handCards = listOf(firstCard, secondCard),
+        )
+        var containerWidth by mutableStateOf(320.dp)
+        var containerHeight by mutableStateOf(560.dp)
+
+        composeRule.setContent {
+            DstcgTheme {
+                TimelineGameScreen(
+                    state = MiniGamesUiState(
+                        isLoading = false,
+                        screen = screen,
+                    ),
+                    onBackToMenu = {},
+                    onSelectDifficulty = {},
+                    onPlaceCard = { _, _ -> },
+                    onReturnCardToHand = { _, _ -> },
+                    onValidate = {},
+                    modifier = Modifier
+                        .width(containerWidth)
+                        .height(containerHeight),
+                )
+            }
+        }
+
+        val smallSlotWidth = composeRule.onNodeWithTag("timeline-slot-0")
+            .fetchSemanticsNode()
+            .boundsInRoot
+            .width
+
+        composeRule.runOnIdle {
+            containerWidth = 520.dp
+            containerHeight = 900.dp
+        }
+        composeRule.waitForIdle()
+
+        val largeSlotWidth = composeRule.onNodeWithTag("timeline-slot-0")
+            .fetchSemanticsNode()
+            .boundsInRoot
+            .width
+
+        assertTrue(largeSlotWidth > smallSlotWidth)
     }
 
     @Test

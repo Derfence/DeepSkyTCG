@@ -18,6 +18,7 @@ import fr.aumombelli.dstcg.model.EquipmentSettingsDefinition
 import fr.aumombelli.dstcg.model.EquipmentState
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.GameBalanceDefinition
+import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.PackCard
 import fr.aumombelli.dstcg.model.PackRechargeState
@@ -43,6 +44,7 @@ class FakeProgressGateway : ProgressGateway {
     val savedProgress = mutableListOf<StandaloneProgress>()
     var loadCallCount = AtomicInteger(0)
     var resetCallCount = AtomicInteger(0)
+    var resetNewPlayerOnboardingCallCount = AtomicInteger(0)
 
     override suspend fun loadProgress(): ProgressLoadResult {
         loadCallCount.incrementAndGet()
@@ -77,6 +79,14 @@ class FakeProgressGateway : ProgressGateway {
         progress = StandaloneProgress(
             collection = OwnedCollection(),
             rechargeState = PackRechargeState(),
+        )
+    }
+
+    override suspend fun resetNewPlayerOnboarding() {
+        resetNewPlayerOnboardingCallCount.incrementAndGet()
+        progress = progress.copy(
+            newPlayerOnboardingStep = NewPlayerOnboardingStep.ShowWelcomeIntro,
+            newPlayerOnboardingPackCount = 0,
         )
     }
 }

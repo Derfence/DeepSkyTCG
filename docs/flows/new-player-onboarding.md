@@ -48,6 +48,7 @@ Chaque etape est stockee dans la progression locale securisee et rejouee jusqu'a
 - Le coachmark disparait des le clic pour ne pas suivre l'animation.
 - Le tout premier pack contient uniquement des cartes `Common`.
 - Aucune carte holographique, tamponnee ou d'equipement n'est autorisee.
+- Ce pack guidé est contrôlé par `newPlayerOnboardingPackCount == 0`, indépendamment de `openedPackCount`.
 
 ## Retour apres premier pack
 
@@ -83,7 +84,7 @@ Chaque etape est stockee dans la progression locale securisee et rejouee jusqu'a
 - `Home`, `Bibliotheque`, `Badges`, `Packs` et retour Android redeviennent normaux ;
 - `Equipements` reste absent tant qu'aucune carte d'equipement n'a ete obtenue.
 
-Le premier pack effectivement ouvert apres cette pause est le deuxieme tirage d'onboarding :
+Le premier pack effectivement ouvert après cette pause est le deuxième tirage d'onboarding, contrôlé par `newPlayerOnboardingPackCount == 1` :
 
 - cartes astronomiques plafonnees a `Uncommon` ;
 - remplacements aleatoires d'equipement desactives ;
@@ -132,11 +133,14 @@ Au retour accueil, le bouton `Equipements` devient visible et recoit un coachmar
 
 ## Persistance et reprise
 
-- Champ persiste : `newPlayerOnboardingStep`.
-- Un reset remet l'etape a `ShowWelcomeIntro`.
+- Champ persisté : `newPlayerOnboardingStep`.
+- Champ persisté : `newPlayerOnboardingPackCount`, qui pilote uniquement les deux packs guidés.
+- Le bouton Home `Réinitialiser le tutoriel` remet `newPlayerOnboardingStep` à `ShowWelcomeIntro` et `newPlayerOnboardingPackCount` à `0`, sans effacer la collection, les équipements, les badges, les mini-jeux, la recharge ni `openedPackCount`.
+- Un reset complet de la bibliothèque remet aussi l'étape à `ShowWelcomeIntro`.
 - Anciennes sauvegardes sans champ :
   - collection vide et `openedPackCount == 0` : `ShowWelcomeIntro` ;
   - collection non vide ou `openedPackCount > 0` : `Completed`.
+- Anciennes sauvegardes sans `newPlayerOnboardingPackCount` migrent le compteur depuis `openedPackCount`, plafonné aux deux packs guidés, pour ne pas rejouer un pack spécial déjà consommé.
 - Entre le premier pack et `LearnLibraryVariants`, le guidage reprend depuis l'etape persistante.
 - Pendant les chapitres equipement ou fabrication, le guidage reprend sur l'etape sauvegardee.
 - `AwaitCraftingEligibility` reste silencieuse jusqu'a l'eligibilite de fabrication.

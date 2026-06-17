@@ -8,6 +8,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -305,7 +306,7 @@ class HomeScreenStateTest {
         composeRule.onNodeWithTag("home-settings-about").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("home-about-sheet").assertIsDisplayed()
-        composeRule.onNodeWithTag("home-about-sheet-version").assertTextContains("v2.6.3")
+        composeRule.onNodeWithTag("home-about-sheet-version").assertTextContains("v2.6.6")
     }
 
     @Test
@@ -407,6 +408,39 @@ class HomeScreenStateTest {
     }
 
     @Test
+    fun confirming_tutorial_reset_calls_callback_once() {
+        var tutorialResetCount = 0
+        composeRule.mainClock.autoAdvance = false
+        setHomeScreenContent(
+            initialState = HomeUiState(
+                isLoading = false,
+            ),
+            onResetNewPlayerOnboarding = { tutorialResetCount += 1 },
+        )
+
+        composeRule.onNodeWithTag("home-settings").performClick()
+        composeRule.mainClock.advanceTimeBy(1)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("home-settings-reset-tutorial").performClick()
+        composeRule.mainClock.advanceTimeBy(1)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("home-tutorial-reset-confirmation").assertIsDisplayed()
+        composeRule.onNodeWithTag("home-tutorial-reset-confirmation-message")
+            .assertTextContains("Ta collection et ta progression")
+        composeRule.mainClock.advanceTimeBy(2_000)
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("home-tutorial-reset-confirmation-confirm").performClick()
+        composeRule.mainClock.advanceTimeBy(1)
+        composeRule.waitForIdle()
+        composeRule.mainClock.autoAdvance = true
+
+        composeRule.onAllNodesWithTag("home-tutorial-reset-confirmation").assertCountEquals(0)
+        composeRule.runOnIdle {
+            assertEquals(1, tutorialResetCount)
+        }
+    }
+
+    @Test
     fun pack_card_size_adapts_to_viewport_height_while_preserving_ratio() {
         val viewportWidthFraction = mutableStateOf(1f)
         val viewportHeightFraction = mutableStateOf(0.86f)
@@ -417,6 +451,7 @@ class HomeScreenStateTest {
         )
         composeRule.waitForIdle()
         val shortViewportBounds = composeRule.onNodeWithTag("home-open-pack").fetchSemanticsNode().boundsInRoot
+        val shortContainerBounds = composeRule.onNodeWithTag("home-test-viewport").fetchSemanticsNode().boundsInRoot
 
         composeRule.runOnIdle {
             viewportWidthFraction.value = 0.96f
@@ -424,11 +459,14 @@ class HomeScreenStateTest {
         }
         composeRule.waitForIdle()
         val tallViewportBounds = composeRule.onNodeWithTag("home-open-pack").fetchSemanticsNode().boundsInRoot
+        val tallContainerBounds = composeRule.onNodeWithTag("home-test-viewport").fetchSemanticsNode().boundsInRoot
 
         assertTrue(
             "Expected the pack card to grow when the viewport gets taller.",
             tallViewportBounds.width > shortViewportBounds.width,
         )
+        assertInsideWithMargin(shortContainerBounds, shortViewportBounds, marginPx = 10f)
+        assertInsideWithMargin(tallContainerBounds, tallViewportBounds, marginPx = 10f)
         assertEquals(
             TRADING_CARD_WIDTH_OVER_HEIGHT,
             shortViewportBounds.width / shortViewportBounds.height,
@@ -446,6 +484,7 @@ class HomeScreenStateTest {
         onOpenCrafting: () -> Unit = {},
         onOpenMiniGamesMenu: () -> Unit = {},
         onResetProgress: () -> Unit = {},
+        onResetNewPlayerOnboarding: () -> Unit = {},
         onCoachmarkTargetBoundsChanged: (
             NewPlayerOnboardingTarget,
             Rect?,
@@ -463,6 +502,7 @@ class HomeScreenStateTest {
                     onOpenBadgeBook = {},
                     onOpenMiniGamesMenu = onOpenMiniGamesMenu,
                     onResetProgress = onResetProgress,
+                    onResetNewPlayerOnboarding = onResetNewPlayerOnboarding,
                     showBackground = false,
                     contentVisible = true,
                     onCoachmarkTargetBoundsChanged = onCoachmarkTargetBoundsChanged,
@@ -481,10 +521,12 @@ class HomeScreenStateTest {
             DstcgTheme {
                 BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
                     Box(
-                        modifier = Modifier.size(
-                            width = maxWidth * widthFraction.value.coerceIn(0f, 1f),
-                            height = maxHeight * heightFraction.value.coerceIn(0f, 1f),
-                        ),
+                        modifier = Modifier
+                            .size(
+                                width = maxWidth * widthFraction.value.coerceIn(0f, 1f),
+                                height = maxHeight * heightFraction.value.coerceIn(0f, 1f),
+                            )
+                            .testTag("home-test-viewport"),
                     ) {
                         HomeScreen(
                             state = state,
@@ -495,6 +537,7 @@ class HomeScreenStateTest {
                             onOpenBadgeBook = {},
                             onOpenMiniGamesMenu = {},
                             onResetProgress = {},
+                            onResetNewPlayerOnboarding = {},
                             showBackground = false,
                             contentVisible = true,
                         )
@@ -502,5 +545,16 @@ class HomeScreenStateTest {
                 }
             }
         }
+    }
+
+    private fun assertInsideWithMargin(
+        containerBounds: Rect,
+        childBounds: Rect,
+        marginPx: Float,
+    ) {
+        assertTrue(childBounds.left >= containerBounds.left + marginPx)
+        assertTrue(childBounds.right <= containerBounds.right - marginPx)
+        assertTrue(childBounds.top >= containerBounds.top + marginPx)
+        assertTrue(childBounds.bottom <= containerBounds.bottom - marginPx)
     }
 }

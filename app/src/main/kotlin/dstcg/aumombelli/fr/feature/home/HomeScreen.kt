@@ -69,6 +69,7 @@ fun HomeScreen(
     onOpenBadgeBook: () -> Unit,
     onOpenMiniGamesMenu: () -> Unit = {},
     onResetProgress: () -> Unit,
+    onResetNewPlayerOnboarding: () -> Unit = {},
     modifier: Modifier = Modifier,
     showBackground: Boolean = true,
     contentVisible: Boolean = true,
@@ -82,6 +83,7 @@ fun HomeScreen(
 ) {
     var settingsExpanded by remember { mutableStateOf(false) }
     var resetConfirmationVisible by remember { mutableStateOf(false) }
+    var tutorialResetConfirmationVisible by remember { mutableStateOf(false) }
     var aboutSheetVisible by remember { mutableStateOf(false) }
     val density = LocalDensity.current
     val contentAlpha by animateFloatAsState(
@@ -115,14 +117,17 @@ fun HomeScreen(
     val navigationEnabled = interactionsEnabled &&
         !state.isLoading &&
         state.errorMessage == null &&
-        !state.isResettingProgress
+        !state.isResettingProgress &&
+        !state.isResettingTutorial
     val settingsEnabled = interactionsEnabled && contentVisible
+    val resetActionsEnabled = !state.isLoading && !state.isResettingProgress && !state.isResettingTutorial
 
     LaunchedEffect(contentVisible) {
         if (!contentVisible) {
             onContentEntranceSettledChanged(false)
             settingsExpanded = false
             resetConfirmationVisible = false
+            tutorialResetConfirmationVisible = false
             aboutSheetVisible = false
             onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeOpenPack, null)
             onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeLibrary, null)
@@ -167,13 +172,17 @@ fun HomeScreen(
         if (!allowAuxiliaryActions) {
             settingsExpanded = false
             resetConfirmationVisible = false
+            tutorialResetConfirmationVisible = false
             aboutSheetVisible = false
         }
     }
 
-    BackHandler(enabled = settingsExpanded || resetConfirmationVisible || aboutSheetVisible) {
+    BackHandler(
+        enabled = settingsExpanded || resetConfirmationVisible || tutorialResetConfirmationVisible || aboutSheetVisible,
+    ) {
         when {
             resetConfirmationVisible -> resetConfirmationVisible = false
+            tutorialResetConfirmationVisible -> tutorialResetConfirmationVisible = false
             aboutSheetVisible -> aboutSheetVisible = false
             else -> settingsExpanded = false
         }
@@ -252,10 +261,22 @@ fun HomeScreen(
                                 onClick = {
                                     settingsExpanded = false
                                     aboutSheetVisible = false
+                                    tutorialResetConfirmationVisible = false
                                     resetConfirmationVisible = true
                                 },
-                                enabled = !state.isLoading && !state.isResettingProgress,
+                                enabled = resetActionsEnabled,
                                 modifier = Modifier.testTag("home-settings-reset"),
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Réinitialiser le tutoriel") },
+                                onClick = {
+                                    settingsExpanded = false
+                                    aboutSheetVisible = false
+                                    resetConfirmationVisible = false
+                                    tutorialResetConfirmationVisible = true
+                                },
+                                enabled = resetActionsEnabled,
+                                modifier = Modifier.testTag("home-settings-reset-tutorial"),
                             )
                             DropdownMenuItem(
                                 text = { Text("À propos") },
@@ -270,10 +291,11 @@ fun HomeScreen(
 
                     HomePackCard(
                         enabled = navigationEnabled,
-                        isBusy = state.isLoading || state.isResettingProgress,
+                        isBusy = state.isLoading || state.isResettingProgress || state.isResettingTutorial,
                         title = "Ouvrir un pack",
                         subtitle = when {
                             state.isResettingProgress -> "Réinitialisation en cours..."
+                            state.isResettingTutorial -> "Réinitialisation du tutoriel..."
                             state.isLoading -> "Préparation de ta collection locale..."
                             else -> "Traverse l'observatoire et découvre une nouvelle extension."
                         },
@@ -430,6 +452,22 @@ fun HomeScreen(
                     onResetProgress()
                 },
                 onCancel = { resetConfirmationVisible = false },
+            )
+        }
+
+        if (tutorialResetConfirmationVisible && contentVisible) {
+            HomeResetConfirmationDialog(
+                title = "Réinitialiser le tutoriel ?",
+                message = "Le tutoriel et ses packs guidés seront relancés. Ta collection et ta progression seront conservées.",
+                testTag = "home-tutorial-reset-confirmation",
+                messageTestTag = "home-tutorial-reset-confirmation-message",
+                confirmTestTag = "home-tutorial-reset-confirmation-confirm",
+                cancelTestTag = "home-tutorial-reset-confirmation-cancel",
+                onConfirm = {
+                    tutorialResetConfirmationVisible = false
+                    onResetNewPlayerOnboarding()
+                },
+                onCancel = { tutorialResetConfirmationVisible = false },
             )
         }
     }

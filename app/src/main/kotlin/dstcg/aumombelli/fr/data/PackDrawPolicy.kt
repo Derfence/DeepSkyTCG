@@ -63,7 +63,7 @@ internal fun resolveAstronomyRarityCap(progress: StandaloneProgress): String? = 
 }
 
 internal fun resolveAstronomyVariantDrawPolicy(progress: StandaloneProgress): AstronomyVariantDrawPolicy {
-    val protectsOpeningVariants = isFirstOnboardingPack(progress) || isSecondOnboardingPack(progress)
+    val protectsOpeningVariants = isSpecialOnboardingPack(progress)
     return AstronomyVariantDrawPolicy(
         allowHolographic = !protectsOpeningVariants,
         allowStamped = !protectsOpeningVariants,
@@ -104,10 +104,13 @@ private val FIRST_PACK_ONBOARDING_STEPS = setOf(
     NewPlayerOnboardingStep.SelectFirstBooster,
 )
 
+internal fun isSpecialOnboardingPack(progress: StandaloneProgress): Boolean =
+    isFirstOnboardingPack(progress) || isSecondOnboardingPack(progress)
+
 private fun isFirstOnboardingPack(progress: StandaloneProgress): Boolean =
-    progress.openedPackCount == 0 &&
+    progress.newPlayerOnboardingPackCount == 0 &&
         progress.newPlayerOnboardingStep in FIRST_PACK_ONBOARDING_STEPS
 
 private fun isSecondOnboardingPack(progress: StandaloneProgress): Boolean =
-    progress.openedPackCount == 1 &&
+    progress.newPlayerOnboardingPackCount == 1 &&
         progress.newPlayerOnboardingStep == NewPlayerOnboardingStep.OpenSecondPackMenu

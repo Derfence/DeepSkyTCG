@@ -88,6 +88,7 @@ class ProgressRepository(
             openedPackCount = sanitizedProgress.openedPackCount.coerceAtLeast(0),
             hasOpenedEpicBoostedPack = sanitizedProgress.hasOpenedEpicBoostedPack,
             newPlayerOnboardingStep = sanitizedProgress.newPlayerOnboardingStep,
+            newPlayerOnboardingPackCount = sanitizedProgress.newPlayerOnboardingPackCount.coerceAtLeast(0),
         ).withNormalizedPackCharge(
             now = effectiveNow,
             drawCooldown = drawCooldown,
@@ -104,6 +105,7 @@ class ProgressRepository(
             openedPackCount = normalizedProgress.openedPackCount.coerceAtLeast(0),
             hasOpenedEpicBoostedPack = normalizedProgress.hasOpenedEpicBoostedPack,
             newPlayerOnboardingStep = normalizedProgress.newPlayerOnboardingStep,
+            newPlayerOnboardingPackCount = normalizedProgress.newPlayerOnboardingPackCount.coerceAtLeast(0),
             equipmentInventory = normalizedProgress.equipmentInventory,
             activeEquipmentByType = normalizedProgress.activeEquipmentByType,
             lastActivatedCardIdByType = normalizedProgress.lastActivatedCardIdByType,
@@ -131,6 +133,7 @@ class ProgressRepository(
             openedPackCount = 0,
             hasOpenedEpicBoostedPack = false,
             newPlayerOnboardingStep = NewPlayerOnboardingStep.ShowWelcomeIntro,
+            newPlayerOnboardingPackCount = 0,
             equipmentBadgeProgress = EquipmentBadgeProgress(),
             homeMenuNoveltyState = HomeMenuNoveltyState(),
             libraryCardNoveltyState = LibraryCardNoveltyState(),
@@ -143,6 +146,16 @@ class ProgressRepository(
             tamperFlag = false,
         )
         writeSnapshot(snapshot)
+    }
+
+    override suspend fun resetNewPlayerOnboarding() = progressMutationMutex.withLock {
+        val loadedProgress = loadProgressRecord().result.requireUsableProgress()
+        persistProgress(
+            loadedProgress.progress.copy(
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.ShowWelcomeIntro,
+                newPlayerOnboardingPackCount = 0,
+            ),
+        )
     }
 
     private suspend fun loadProgressRecord(): ProgressRecord {
@@ -171,6 +184,7 @@ class ProgressRepository(
                 openedPackCount = 0,
                 hasOpenedEpicBoostedPack = false,
                 newPlayerOnboardingStep = NewPlayerOnboardingStep.ShowWelcomeIntro,
+                newPlayerOnboardingPackCount = 0,
                 equipmentBadgeProgress = EquipmentBadgeProgress(),
                 homeMenuNoveltyState = HomeMenuNoveltyState(),
                 libraryCardNoveltyState = LibraryCardNoveltyState(),
@@ -205,6 +219,7 @@ class ProgressRepository(
             collection = sanitizedCollection,
             isLegacySnapshot = snapshot.schemaVersion < ProgressSnapshot.ONBOARDING_STATE_SCHEMA_VERSION,
         )
+        val normalizedOnboardingPackCount = normalizeNewPlayerOnboardingPackCount(snapshot)
         val rechargeMultiplier = resolveActiveEquipmentBonus(
             activeEquipmentByType = sanitizedProgress.activeEquipmentByType,
             equipmentCards = equipmentCards,
@@ -214,6 +229,7 @@ class ProgressRepository(
             openedPackCount = snapshot.openedPackCount.coerceAtLeast(0),
             hasOpenedEpicBoostedPack = snapshot.hasOpenedEpicBoostedPack,
             newPlayerOnboardingStep = normalizedOnboardingStep,
+            newPlayerOnboardingPackCount = normalizedOnboardingPackCount,
         ).withNormalizedPackCharge(
             now = trustedTime.trustedNow,
             drawCooldown = drawCooldown,
@@ -229,6 +245,7 @@ class ProgressRepository(
             openedPackCount = normalizedProgress.openedPackCount.coerceAtLeast(0),
             hasOpenedEpicBoostedPack = normalizedProgress.hasOpenedEpicBoostedPack,
             newPlayerOnboardingStep = normalizedProgress.newPlayerOnboardingStep,
+            newPlayerOnboardingPackCount = normalizedProgress.newPlayerOnboardingPackCount.coerceAtLeast(0),
             equipmentInventory = normalizedProgress.equipmentInventory,
             activeEquipmentByType = normalizedProgress.activeEquipmentByType,
             lastActivatedCardIdByType = normalizedProgress.lastActivatedCardIdByType,
@@ -250,6 +267,7 @@ class ProgressRepository(
             snapshot.openedPackCount != normalizedSnapshot.openedPackCount ||
             snapshot.hasOpenedEpicBoostedPack != normalizedSnapshot.hasOpenedEpicBoostedPack ||
             snapshot.newPlayerOnboardingStep != normalizedSnapshot.newPlayerOnboardingStep ||
+            snapshot.newPlayerOnboardingPackCount != normalizedSnapshot.newPlayerOnboardingPackCount ||
             snapshot.equipmentInventory != normalizedSnapshot.equipmentInventory ||
             snapshot.activeEquipmentByType != normalizedSnapshot.activeEquipmentByType ||
             snapshot.lastActivatedCardIdByType != normalizedSnapshot.lastActivatedCardIdByType ||
@@ -294,6 +312,14 @@ class ProgressRepository(
     }
 
     private fun emptyCollection(): OwnedCollection = OwnedCollection()
+
+    private fun normalizeNewPlayerOnboardingPackCount(snapshot: ProgressSnapshot): Int {
+        val persistedPackCount = snapshot.newPlayerOnboardingPackCount.coerceAtLeast(0)
+        if (snapshot.schemaVersion >= ProgressSnapshot.ONBOARDING_PACK_COUNT_SCHEMA_VERSION) {
+            return persistedPackCount
+        }
+        return snapshot.openedPackCount.coerceIn(0, GUIDED_ONBOARDING_PACK_COUNT)
+    }
 
     private suspend fun writeSnapshot(snapshot: ProgressSnapshot) {
         val payload = progressCipher.encrypt(
@@ -465,6 +491,7 @@ class ProgressRepository(
             "La progression locale semble corrompue. Reinitialise-la pour continuer."
         private const val RECOVERED_PROGRESS_MESSAGE =
             "La progression locale a ete securisee et certaines donnees ont ete normalisees."
+        private const val GUIDED_ONBOARDING_PACK_COUNT = 2
 
         fun fromContext(
             context: Context,

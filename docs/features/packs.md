@@ -44,7 +44,7 @@ Les variantes sont tirees au runtime depuis `variant_profiles.json` et `game_bal
 - qualite de ciel : `city`, `suburban`, `rural`, `mountain`, `holographic` ;
 - finition : `standard`, `stamped`.
 
-Les premieres ouvertures de l'onboarding protegent les variantes premium : pas d'holographique ni de tamponne.
+Les deux premières ouvertures guidées de l'onboarding protègent les variantes premium : pas d'holographique ni de tamponné. Elles dépendent de `newPlayerOnboardingPackCount`, pas de `openedPackCount`, afin que le tutoriel puisse être relancé sans effacer la progression réelle.
 
 ## Boost Epic
 

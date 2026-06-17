@@ -19,6 +19,7 @@ data class HomeUiState(
     val isLoading: Boolean = true,
     val errorMessage: String? = null,
     val isResettingProgress: Boolean = false,
+    val isResettingTutorial: Boolean = false,
     val isLibraryMenuVisible: Boolean = false,
     val isEquipmentMenuVisible: Boolean = false,
     val isBadgeBookMenuVisible: Boolean = false,
@@ -63,7 +64,7 @@ class HomeViewModel(
 
     fun resetProgress() {
         val state = _uiState.value
-        if (state.isLoading || state.isResettingProgress) {
+        if (state.isLoading || state.isResettingProgress || state.isResettingTutorial) {
             return
         }
 
@@ -82,9 +83,36 @@ class HomeViewModel(
         }
     }
 
+    fun resetNewPlayerOnboarding(onResetCompleted: () -> Unit = {}) {
+        val state = _uiState.value
+        if (state.isLoading || state.isResettingProgress || state.isResettingTutorial) {
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = state.copy(isResettingTutorial = true)
+            runCatching { progressRepository.resetNewPlayerOnboarding() }
+                .onSuccess {
+                    onResetCompleted()
+                    refreshProgressState()
+                }
+                .onFailure { exception ->
+                    _uiState.value = state.copy(
+                        isResettingTutorial = false,
+                        errorMessage = exception.message ?: "Impossible de réinitialiser le tutoriel.",
+                    )
+                }
+        }
+    }
+
     private fun markMenuSeen(destination: HomeMenuDestination) {
         val currentState = _uiState.value
-        if (currentState.isLoading || currentState.isResettingProgress || !currentState.hasNewIndicator(destination)) {
+        if (
+            currentState.isLoading ||
+            currentState.isResettingProgress ||
+            currentState.isResettingTutorial ||
+            !currentState.hasNewIndicator(destination)
+        ) {
             return
         }
 

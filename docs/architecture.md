@@ -74,12 +74,13 @@ Repository
 
 ## Persistance locale
 
-`ProgressSnapshot.CURRENT_SCHEMA_VERSION` vaut `11`. Le snapshot contient notamment :
+`ProgressSnapshot.CURRENT_SCHEMA_VERSION` vaut `13`. Le snapshot contient notamment :
 
 - collection et variantes possedees ;
 - stock/recharge de packs ;
 - compteur `openedPackCount` ;
-- etape d'onboarding ;
+- étape d'onboarding ;
+- compteur `newPlayerOnboardingPackCount` des packs guidés du tutoriel ;
 - inventaire et effets actifs d'equipements ;
 - progression de badges d'equipements ;
 - indicateurs de nouveaute Home/Bibliotheque ;

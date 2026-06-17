@@ -53,7 +53,7 @@ Source de verite : `feature/home/HomeResponsiveLayout.kt`.
 - logo d'arrivee : `16%` de la hauteur utile, borne entre `96.dp` et `124.dp` ;
 - padding haut du logo : `2%`, borne entre `8.dp` et `18.dp` ;
 - boutons bas : `10.5%`, bornes entre `64.dp` et `78.dp` ;
-- carte centrale : ratio `TRADING_CARD_WIDTH_OVER_HEIGHT`, placee entre le logo et les boutons bas.
+- carte centrale : ratio `TRADING_CARD_WIDTH_OVER_HEIGHT`, placée entre le logo et les boutons bas, à la plus grande taille permise par la largeur et la hauteur disponibles avec marges de sécurité.
 
 `AppSceneHost` reutilise ces mesures pour aligner la fin de l'animation de lancement avec le layout final.
 
@@ -62,9 +62,10 @@ Source de verite : `feature/home/HomeResponsiveLayout.kt`.
 Le menu contient :
 
 - `Réinitialiser la bibliothèque` ;
+- `Réinitialiser le tutoriel` ;
 - `À propos`.
 
-Le reset demande une confirmation puis attend `2 s` avant d'activer `Valider`.
+Les deux resets demandent une confirmation puis attendent `2 s` avant d'activer `Valider`. Le reset du tutoriel relance l'onboarding et ses packs guidés sans effacer la collection ni la progression réelle.
 
 Le panneau `À propos` affiche la version et les credits depuis `feature/home/HomeAboutContent.kt`.
 

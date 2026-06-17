@@ -41,6 +41,30 @@ class HomeResponsiveLayoutTest {
     }
 
     @Test
+    fun layout_preserves_safe_space_around_hero_card() {
+        val layout = calculateHomeResponsiveLayout(
+            availableWidth = 367.dp,
+            availableHeight = 625.dp,
+            logoVariant = BrandLogoVariant.Lockup19,
+        )
+
+        assertTrue(layout.heroCardWidth <= 367.dp - 24.dp)
+        assertTrue(layout.heroCardTop >= layout.logoBottom + 12.dp)
+        assertTrue(layout.heroCardTop + layout.heroCardHeight <= layout.menuButtonTop - 12.dp)
+    }
+
+    @Test
+    fun layout_uses_more_than_legacy_fixed_card_width_when_space_allows() {
+        val layout = calculateHomeResponsiveLayout(
+            availableWidth = 430.dp,
+            availableHeight = 1_200.dp,
+            logoVariant = BrandLogoVariant.Lockup19,
+        )
+
+        assertTrue(layout.heroCardWidth > 320.dp)
+    }
+
+    @Test
     fun layout_preserves_trading_card_ratio() {
         val layout = calculateHomeResponsiveLayout(
             availableWidth = 349.dp,

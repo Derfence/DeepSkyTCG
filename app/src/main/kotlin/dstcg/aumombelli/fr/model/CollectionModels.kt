@@ -26,6 +26,7 @@ data class StandaloneProgress(
     val openedPackCount: Int = 0,
     val hasOpenedEpicBoostedPack: Boolean = false,
     val newPlayerOnboardingStep: NewPlayerOnboardingStep = NewPlayerOnboardingStep.ShowWelcomeIntro,
+    val newPlayerOnboardingPackCount: Int = 0,
     val equipmentInventory: OwnedEquipmentInventory = OwnedEquipmentInventory(),
     val activeEquipmentByType: Map<EquipmentType, ActiveEquipmentEffect> = emptyMap(),
     val lastActivatedCardIdByType: Map<EquipmentType, String> = emptyMap(),

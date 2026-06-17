@@ -379,6 +379,47 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `tutorial reset preserves player progress and invokes completion callback`() = runTest {
+        val originalCollection = ownedCollectionOf("ALP-001" to 3)
+        val progressGateway = FakeProgressGateway().apply {
+            progress = progress.copy(
+                collection = originalCollection,
+                openedPackCount = 7,
+                hasOpenedEpicBoostedPack = true,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.Completed,
+                newPlayerOnboardingPackCount = 2,
+                miniGamesMenuUnlocked = true,
+                homeMenuNoveltyState = HomeMenuNoveltyState(
+                    library = true,
+                    miniGames = true,
+                ),
+            )
+        }
+        var completionCount = 0
+
+        val viewModel = HomeViewModel(progressGateway)
+        advanceUntilIdle()
+
+        viewModel.resetNewPlayerOnboarding {
+            completionCount += 1
+        }
+        advanceUntilIdle()
+
+        assertEquals(1, progressGateway.resetNewPlayerOnboardingCallCount.get())
+        assertEquals(NewPlayerOnboardingStep.ShowWelcomeIntro, progressGateway.progress.newPlayerOnboardingStep)
+        assertEquals(0, progressGateway.progress.newPlayerOnboardingPackCount)
+        assertEquals(7, progressGateway.progress.openedPackCount)
+        assertEquals(originalCollection, progressGateway.progress.collection)
+        assertTrue(progressGateway.progress.hasOpenedEpicBoostedPack)
+        assertTrue(progressGateway.progress.miniGamesMenuUnlocked)
+        assertTrue(progressGateway.progress.homeMenuNoveltyState.library)
+        assertTrue(progressGateway.progress.homeMenuNoveltyState.miniGames)
+        assertEquals(1, completionCount)
+        assertFalse(viewModel.uiState.value.isResettingTutorial)
+        assertNull(viewModel.uiState.value.errorMessage)
+    }
+
+    @Test
     fun `compromised progress can be reset and reloads clean state`() = runTest {
         val progressGateway = FakeProgressGateway().apply {
             compromisedMessage = "La progression locale semble corrompue."
@@ -417,6 +458,13 @@ class HomeViewModelTest {
             progress = StandaloneProgress(
                 collection = ownedCollectionOf(),
                 rechargeState = testRechargeState(),
+            )
+        }
+
+        override suspend fun resetNewPlayerOnboarding() {
+            progress = progress.copy(
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.ShowWelcomeIntro,
+                newPlayerOnboardingPackCount = 0,
             )
         }
     }

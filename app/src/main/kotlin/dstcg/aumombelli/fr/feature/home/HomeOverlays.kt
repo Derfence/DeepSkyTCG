@@ -146,6 +146,12 @@ internal fun HomeResetConfirmationDialog(
     onConfirm: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
+    title: String = "Réinitialiser la bibliothèque ?",
+    message: String = "Cette action efface la progression locale et recrée une bibliothèque vide.",
+    testTag: String = "home-reset-confirmation",
+    messageTestTag: String = "home-reset-confirmation-message",
+    confirmTestTag: String = "home-reset-confirmation-confirm",
+    cancelTestTag: String = "home-reset-confirmation-cancel",
 ) {
     val confirmUnlockProgress = remember { androidx.compose.animation.core.Animatable(0f) }
 
@@ -160,13 +166,13 @@ internal fun HomeResetConfirmationDialog(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .testTag("home-reset-confirmation"),
+            .testTag(testTag),
     ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black.copy(alpha = 0.68f))
-                .testTag("home-reset-confirmation-scrim"),
+                .testTag("$testTag-scrim"),
         )
 
         Card(
@@ -182,14 +188,14 @@ internal fun HomeResetConfirmationDialog(
                     .padding(24.dp),
             ) {
                 Text(
-                    text = "Réinitialiser la bibliothèque ?",
+                    text = title,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    text = "Cette action efface la progression locale et recrée une bibliothèque vide.",
+                    text = message,
                     style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.testTag("home-reset-confirmation-message"),
+                    modifier = Modifier.testTag(messageTestTag),
                 )
                 Text(
                     text = "Le bouton de validation s'active après un court délai de sécurité.",
@@ -201,7 +207,7 @@ internal fun HomeResetConfirmationDialog(
                     enabled = confirmUnlockProgress.value >= 0.999f,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .testTag("home-reset-confirmation-confirm"),
+                        .testTag(confirmTestTag),
                 ) {
                     Text("Valider")
                 }
@@ -209,7 +215,7 @@ internal fun HomeResetConfirmationDialog(
                     onClick = onCancel,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .testTag("home-reset-confirmation-cancel"),
+                        .testTag(cancelTestTag),
                 ) {
                     Text("Annuler")
                 }
