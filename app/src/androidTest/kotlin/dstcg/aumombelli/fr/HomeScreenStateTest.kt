@@ -310,6 +310,20 @@ class HomeScreenStateTest {
     }
 
     @Test
+    fun settings_menu_can_open_audio_credits_sheet() {
+        setHomeScreenContent(
+            HomeUiState(
+                isLoading = false,
+            ),
+        )
+
+        composeRule.onNodeWithTag("home-settings").assertIsDisplayed().performClick()
+        composeRule.onNodeWithTag("home-settings-audio-credits").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("home-audio-credits-sheet").assertIsDisplayed()
+    }
+
+    @Test
     fun settings_menu_exposes_sound_toggle() {
         var requestedSoundEnabled: Boolean? = null
         setHomeScreenContent(

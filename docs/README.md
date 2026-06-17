@@ -13,6 +13,7 @@ docs/README.md
 |-- architecture.md
 |-- visual-design.md
 |-- catalog-assets.md
+|-- audio-assets.md
 `-- features/home.md
     |-- features/packs.md
     |   `-- features/weather-recharge.md
@@ -38,6 +39,7 @@ docs/README.md
 | Comprendre les frontières techniques | [Architecture](architecture.md) |
 | Retrouver les couleurs et conventions visuelles | [Design visuel](visual-design.md) |
 | Modifier le catalogue ou les images | [Catalogue et assets](catalog-assets.md) |
+| Remplacer sons, musiques et crédits audio | [Sons et crédits audio](audio-assets.md) |
 | Documenter un écran précis | Pages [fonctionnalités](features/home.md) |
 | Vérifier le premier parcours joueur | [Onboarding](new-player-onboarding.md) |
 

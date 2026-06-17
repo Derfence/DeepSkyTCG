@@ -1,0 +1,86 @@
+# Sons, musiques et crédits audio
+
+[← Index documentation](README.md) | [Architecture](architecture.md) | [Catalogue et assets](catalog-assets.md)
+
+Cette page sert de checklist pour remplacer les sons et musiques embarqués tout en créditant correctement les artistes.
+
+## Fichiers runtime
+
+Les fichiers joués par l'application sont dans `app/src/main/res/raw/`.
+
+| Fichier | Usage |
+| --- | --- |
+| `ambient_starfield.wav` | Ambiance générale de l'application |
+| `ambient_minigames.wav` | Ambiance du menu mini-jeux |
+| `sound_ui_navigate.wav` | Navigation dans l'interface |
+| `sound_pack_burst.wav` | Ouverture d'un pack |
+| `sound_pack_reveal.wav` | Révélation d'une carte |
+| `sound_holographic_reveal.wav` | Révélation holographique |
+| `sound_minigame_success.wav` | Réussite dans un mini-jeu |
+| `sound_minigame_error.wav` | Erreur dans un mini-jeu |
+| `sound_minigame_special.wav` | Événement spécial de mini-jeu |
+| `sound_minigame_completion.wav` | Fin réussie d'un mini-jeu |
+| `sound_badge_unlock.wav` | Déblocage de badge |
+
+Règles importantes :
+
+- garde le même nom de ressource, par exemple `sound_pack_reveal`, sinon le code Android ne le trouvera plus ;
+- tu peux remplacer un `.wav` par un `.ogg` si le nom de base reste identique, par exemple `sound_pack_reveal.ogg` ;
+- ne garde pas deux fichiers avec le même nom de base, par exemple `sound_pack_reveal.wav` et `sound_pack_reveal.ogg` en même temps ;
+- utilise uniquement des noms en minuscules, chiffres et underscores ;
+- préfère `.ogg` pour les musiques ou ambiances longues afin de réduire la taille de l'APK.
+
+## Crédits runtime
+
+Les crédits audio affichés dans le panneau `Paramètres > Crédits audio` viennent de :
+
+```text
+app/src/main/assets/audio/audio_credits.json
+```
+
+Une entrée doit rester associée au fichier runtime correspondant :
+
+```json
+{
+  "fileName": "sound_pack_reveal.ogg",
+  "usage": "Révélation d'une carte",
+  "title": "Nom du son ou du morceau",
+  "artist": "Nom de l'artiste",
+  "license": "CC BY",
+  "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+  "sourcePage": "https://example.com/source",
+  "downloadedAt": "2026-06-17",
+  "changes": "Converti en OGG, volume normalisé",
+  "notes": ""
+}
+```
+
+Licences acceptées pour ce projet :
+
+- `CC0` : attribution non obligatoire, mais garde quand même la source pour tracer l'origine ;
+- `CC BY` : attribution obligatoire ;
+- `CC BY-NC` : accepté tant que l'application reste gratuite, sans publicité, sans achat intégré et sans usage commercial.
+
+À éviter par défaut :
+
+- `ND`, car l'intégration, le montage, les boucles et les fades peuvent devenir problématiques ;
+- `SA`, à signaler avant intégration parce que le partage à l'identique peut avoir des conséquences sur la distribution ;
+- toute licence floue ou sans page source vérifiable.
+
+## Marche à suivre
+
+1. Télécharge le son depuis une source compatible : Kenney, Freesound, OpenGameArt, Incompetech, Musopen, Free Music Archive, ccMixter ou Openverse.
+2. Note immédiatement le titre, l'artiste, la licence, l'URL de licence, la page source et la date de téléchargement.
+3. Convertis le fichier si besoin, idéalement en `.ogg` pour les ambiances longues.
+4. Remplace le fichier dans `app/src/main/res/raw/` en gardant le même nom de base.
+5. Mets à jour l'entrée correspondante dans `app/src/main/assets/audio/audio_credits.json`.
+6. Lance les tests et une compilation Android.
+
+Commandes utiles :
+
+```bash
+./gradlew test
+./gradlew assembleDebug
+```
+
+[← Index documentation](README.md)

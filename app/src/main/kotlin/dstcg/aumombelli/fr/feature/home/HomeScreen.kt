@@ -88,6 +88,7 @@ fun HomeScreen(
     var resetConfirmationVisible by remember { mutableStateOf(false) }
     var tutorialResetConfirmationVisible by remember { mutableStateOf(false) }
     var aboutSheetVisible by remember { mutableStateOf(false) }
+    var audioCreditsSheetVisible by remember { mutableStateOf(false) }
     val density = LocalDensity.current
     val contentAlpha by animateFloatAsState(
         targetValue = if (contentVisible) 1f else 0f,
@@ -132,6 +133,7 @@ fun HomeScreen(
             resetConfirmationVisible = false
             tutorialResetConfirmationVisible = false
             aboutSheetVisible = false
+            audioCreditsSheetVisible = false
             onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeOpenPack, null)
             onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeLibrary, null)
             onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeEquipment, null)
@@ -177,15 +179,21 @@ fun HomeScreen(
             resetConfirmationVisible = false
             tutorialResetConfirmationVisible = false
             aboutSheetVisible = false
+            audioCreditsSheetVisible = false
         }
     }
 
     BackHandler(
-        enabled = settingsExpanded || resetConfirmationVisible || tutorialResetConfirmationVisible || aboutSheetVisible,
+        enabled = settingsExpanded ||
+            resetConfirmationVisible ||
+            tutorialResetConfirmationVisible ||
+            aboutSheetVisible ||
+            audioCreditsSheetVisible,
     ) {
         when {
             resetConfirmationVisible -> resetConfirmationVisible = false
             tutorialResetConfirmationVisible -> tutorialResetConfirmationVisible = false
+            audioCreditsSheetVisible -> audioCreditsSheetVisible = false
             aboutSheetVisible -> aboutSheetVisible = false
             else -> settingsExpanded = false
         }
@@ -264,6 +272,7 @@ fun HomeScreen(
                                 onClick = {
                                     settingsExpanded = false
                                     aboutSheetVisible = false
+                                    audioCreditsSheetVisible = false
                                     tutorialResetConfirmationVisible = false
                                     resetConfirmationVisible = true
                                 },
@@ -275,6 +284,7 @@ fun HomeScreen(
                                 onClick = {
                                     settingsExpanded = false
                                     aboutSheetVisible = false
+                                    audioCreditsSheetVisible = false
                                     resetConfirmationVisible = false
                                     tutorialResetConfirmationVisible = true
                                 },
@@ -299,9 +309,19 @@ fun HomeScreen(
                                 text = { Text("À propos") },
                                 onClick = {
                                     settingsExpanded = false
+                                    audioCreditsSheetVisible = false
                                     aboutSheetVisible = true
                                 },
                                 modifier = Modifier.testTag("home-settings-about"),
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Crédits audio") },
+                                onClick = {
+                                    settingsExpanded = false
+                                    aboutSheetVisible = false
+                                    audioCreditsSheetVisible = true
+                                },
+                                modifier = Modifier.testTag("home-settings-audio-credits"),
                             )
                         }
                     }
@@ -460,6 +480,11 @@ fun HomeScreen(
         HomeAboutSheet(
             visible = aboutSheetVisible && contentVisible,
             onDismiss = { aboutSheetVisible = false },
+        )
+
+        HomeAudioCreditsSheet(
+            visible = audioCreditsSheetVisible && contentVisible,
+            onDismiss = { audioCreditsSheetVisible = false },
         )
 
         if (resetConfirmationVisible && contentVisible) {
