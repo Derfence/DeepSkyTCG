@@ -5,6 +5,7 @@ import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import fr.aumombelli.dstcg.AppContainer
+import fr.aumombelli.dstcg.audio.SoundCue
 import fr.aumombelli.dstcg.ui.motion.SkyBackdropVariant
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -29,6 +30,7 @@ internal class AppSceneTransitionController(
     suspend fun finishPackOpeningToHome() {
         val state = readState()
         if (state.transitionLocked) return
+        playNavigationCue()
 
         writeState(state.lockTransitions().preparePackOpeningReturnToHome())
         awaitNextFrame()
@@ -50,6 +52,7 @@ internal class AppSceneTransitionController(
     suspend fun finishPackOpeningToPackSelection() {
         val state = readState()
         if (state.transitionLocked) return
+        playNavigationCue()
 
         writeState(state.lockTransitions().preparePackOpeningReturnToPackSelection())
         awaitNextFrame()
@@ -86,6 +89,7 @@ internal class AppSceneTransitionController(
     suspend fun animateHomeToPackSelection() {
         val state = readState()
         if (state.transitionLocked) return
+        playNavigationCue()
 
         writeState(
             state.lockTransitions()
@@ -107,6 +111,7 @@ internal class AppSceneTransitionController(
     suspend fun animateHomeToLibrary() {
         val state = readState()
         if (state.transitionLocked) return
+        playNavigationCue()
 
         coroutineScope {
             writeState(
@@ -133,6 +138,7 @@ internal class AppSceneTransitionController(
     suspend fun animateHomeToCrafting() {
         val state = readState()
         if (state.transitionLocked) return
+        playNavigationCue()
 
         writeState(
             state.lockTransitions()
@@ -152,6 +158,7 @@ internal class AppSceneTransitionController(
     suspend fun animateHomeToEquipment() {
         val state = readState()
         if (state.transitionLocked) return
+        playNavigationCue()
 
         writeState(
             state.lockTransitions()
@@ -188,6 +195,7 @@ internal class AppSceneTransitionController(
     suspend fun animateHomeToBadgeBook() {
         val state = readState()
         if (state.transitionLocked) return
+        playNavigationCue()
 
         writeState(
             state.lockTransitions()
@@ -212,6 +220,7 @@ internal class AppSceneTransitionController(
     suspend fun animateHomeToMiniGamesMenu() {
         val state = readState()
         if (state.transitionLocked) return
+        playNavigationCue()
 
         writeState(
             state.lockTransitions()
@@ -231,6 +240,7 @@ internal class AppSceneTransitionController(
     suspend fun animatePackSelectionToHome() {
         val state = readState()
         if (state.transitionLocked) return
+        playNavigationCue()
 
         writeState(
             state.lockTransitions()
@@ -251,6 +261,7 @@ internal class AppSceneTransitionController(
     suspend fun animateLibraryToHome() {
         val state = readState()
         if (state.transitionLocked) return
+        playNavigationCue()
 
         writeState(
             state.lockTransitions()
@@ -277,6 +288,7 @@ internal class AppSceneTransitionController(
     suspend fun animateCraftingToHome() {
         val state = readState()
         if (state.transitionLocked) return
+        playNavigationCue()
 
         writeState(
             state.lockTransitions()
@@ -301,6 +313,7 @@ internal class AppSceneTransitionController(
     suspend fun animateBadgeBookToHome() {
         val state = readState()
         if (state.transitionLocked) return
+        playNavigationCue()
 
         writeState(
             state.lockTransitions()
@@ -327,6 +340,7 @@ internal class AppSceneTransitionController(
     suspend fun animateEquipmentToHome() {
         val state = readState()
         if (state.transitionLocked) return
+        playNavigationCue()
 
         writeState(
             state.lockTransitions()
@@ -374,6 +388,7 @@ internal class AppSceneTransitionController(
     suspend fun animateMiniGamesMenuToHome() {
         val state = readState()
         if (state.transitionLocked) return
+        playNavigationCue()
 
         writeState(
             state.lockTransitions()
@@ -446,6 +461,10 @@ internal class AppSceneTransitionController(
     private suspend fun unlockTransitionsAndRevealOnboardingHints() {
         writeState(readState().unlockTransitions())
         revealOnboardingHintsAfterTransition()
+    }
+
+    private fun playNavigationCue() {
+        appContainer.audioController.play(SoundCue.UiNavigate)
     }
 
     private suspend fun revealOnboardingHintsAfterTransition(

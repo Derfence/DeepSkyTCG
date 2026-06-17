@@ -27,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -70,6 +71,8 @@ fun HomeScreen(
     onOpenMiniGamesMenu: () -> Unit = {},
     onResetProgress: () -> Unit,
     onResetNewPlayerOnboarding: () -> Unit = {},
+    soundEnabled: Boolean = true,
+    onSoundEnabledChange: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier,
     showBackground: Boolean = true,
     contentVisible: Boolean = true,
@@ -277,6 +280,20 @@ fun HomeScreen(
                                 },
                                 enabled = resetActionsEnabled,
                                 modifier = Modifier.testTag("home-settings-reset-tutorial"),
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Sons") },
+                                onClick = {
+                                    onSoundEnabledChange(!soundEnabled)
+                                },
+                                trailingIcon = {
+                                    Switch(
+                                        checked = soundEnabled,
+                                        onCheckedChange = onSoundEnabledChange,
+                                        modifier = Modifier.testTag("home-settings-sound-switch"),
+                                    )
+                                },
+                                modifier = Modifier.testTag("home-settings-sound-toggle"),
                             )
                             DropdownMenuItem(
                                 text = { Text("À propos") },

@@ -3,6 +3,7 @@ package fr.aumombelli.dstcg.testsupport
 import android.content.Context
 import androidx.datastore.core.DataStoreFactory
 import fr.aumombelli.dstcg.AppContainer
+import fr.aumombelli.dstcg.audio.NoOpAudioController
 import fr.aumombelli.dstcg.data.AesGcmProgressCipher
 import fr.aumombelli.dstcg.data.AndroidTrustedTimeSource
 import fr.aumombelli.dstcg.data.CatalogGateway
@@ -127,6 +128,7 @@ internal fun offlineMainActivityTestAppContainer(
         miniGamesRepository = miniGamesRepository,
         tradeRepository = tradeRepository,
         gameSettings = gameSettings,
+        audioController = NoOpAudioController(),
     )
 }
 
@@ -330,6 +332,7 @@ private fun navigationTestAppContainer(
             progressRepository = progressRepository,
         ),
         gameSettings = gameSettings,
+        audioController = NoOpAudioController(),
     )
 }
 

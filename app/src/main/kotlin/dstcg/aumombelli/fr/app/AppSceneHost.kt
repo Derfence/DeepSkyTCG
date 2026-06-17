@@ -30,6 +30,7 @@ import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.AppContainer
+import fr.aumombelli.dstcg.audio.AmbientTrack
 import fr.aumombelli.dstcg.feature.badges.BadgeUnlockCelebrationOverlay
 import fr.aumombelli.dstcg.feature.home.HOME_LOGO_LANDING_SCALE
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingContent
@@ -191,6 +192,10 @@ internal fun AppSceneHost(
         if (sceneState.currentScene != AppScene.Library) {
             selectedTradeCandidate.value = null
         }
+    }
+
+    LaunchedEffect(sceneState.currentScene) {
+        appContainer.audioController.setAmbient(sceneState.currentScene.ambientTrack())
     }
 
     LaunchedEffect(
@@ -443,6 +448,11 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this
     is ContextWrapper -> baseContext.findActivity()
     else -> null
+}
+
+private fun AppScene.ambientTrack(): AmbientTrack = when (this) {
+    AppScene.MiniGamesMenu -> AmbientTrack.MiniGames
+    else -> AmbientTrack.Starfield
 }
 
 internal fun AsterMascotSpec.centeredModalHeight(

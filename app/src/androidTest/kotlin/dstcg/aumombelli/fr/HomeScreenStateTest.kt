@@ -310,6 +310,23 @@ class HomeScreenStateTest {
     }
 
     @Test
+    fun settings_menu_exposes_sound_toggle() {
+        var requestedSoundEnabled: Boolean? = null
+        setHomeScreenContent(
+            initialState = HomeUiState(isLoading = false),
+            soundEnabled = false,
+            onSoundEnabledChange = { requestedSoundEnabled = it },
+        )
+
+        composeRule.onNodeWithTag("home-settings").performClick()
+        composeRule.onNodeWithTag("home-settings-sound-toggle").assertIsDisplayed().performClick()
+
+        composeRule.runOnIdle {
+            assertEquals(true, requestedSoundEnabled)
+        }
+    }
+
+    @Test
     fun about_sheet_closes_with_swipe_down_on_header() {
         setHomeScreenContent(
             HomeUiState(
@@ -485,6 +502,8 @@ class HomeScreenStateTest {
         onOpenMiniGamesMenu: () -> Unit = {},
         onResetProgress: () -> Unit = {},
         onResetNewPlayerOnboarding: () -> Unit = {},
+        soundEnabled: Boolean = true,
+        onSoundEnabledChange: (Boolean) -> Unit = {},
         onCoachmarkTargetBoundsChanged: (
             NewPlayerOnboardingTarget,
             Rect?,
@@ -503,6 +522,8 @@ class HomeScreenStateTest {
                     onOpenMiniGamesMenu = onOpenMiniGamesMenu,
                     onResetProgress = onResetProgress,
                     onResetNewPlayerOnboarding = onResetNewPlayerOnboarding,
+                    soundEnabled = soundEnabled,
+                    onSoundEnabledChange = onSoundEnabledChange,
                     showBackground = false,
                     contentVisible = true,
                     onCoachmarkTargetBoundsChanged = onCoachmarkTargetBoundsChanged,
