@@ -446,7 +446,7 @@ private fun feedbackPalette(tone: MiniGameFeedbackTone): MiniGameFeedbackPalette
 private fun MiniGameFeedbackTone.soundCue(): SoundCue? = when (this) {
     MiniGameFeedbackTone.Success -> SoundCue.MiniGameSuccess
     MiniGameFeedbackTone.Error -> SoundCue.MiniGameError
-    MiniGameFeedbackTone.Special -> null
+    MiniGameFeedbackTone.Special -> SoundCue.MiniGameSpecial
     MiniGameFeedbackTone.Completion -> SoundCue.MiniGameCompletion
 }
 

@@ -27,11 +27,27 @@ Les fichiers joués par l'application sont dans `app/src/main/assets/sounds/`.
 | `sound_minigame_completion.ogg` | Fin réussie d'un mini-jeu |
 | `sound_badge_unlock.ogg` | Déblocage de badge |
 
+## Mix runtime
+
+Le routage et les réglages de mix sont centralisés dans `AudioMix.kt` :
+
+- plusieurs cues métier peuvent réutiliser le même fichier audio, par exemple les entrées pack, artisanat ou mini-jeux peuvent pointer vers `sound_ui_navigate.ogg` tant qu'un son dédié n'existe pas ;
+- les volumes, variations de pitch, cooldowns, fondus d'ambiance et ducking sont définis au même endroit ;
+- les ambiances utilisent des fondus pour éviter les coupures entre les scènes ;
+- les gros effets, comme ouverture de pack, holographique, fin de mini-jeu et badge, baissent temporairement l'ambiance pour rester lisibles.
+
+Pour ajouter un son dédié à une future mise à jour :
+
+1. Ajoute le fichier dans `app/src/main/assets/sounds/`.
+2. Remplace uniquement `assetFileName` du cue concerné dans `AudioMix.kt`.
+3. Ajoute l'entrée correspondante dans `audio_credits.json`.
+4. Mets à jour le tableau ci-dessus si le nouveau fichier devient un fichier runtime distinct.
+
 Règles importantes :
 
-- garde le même nom de fichier que celui attendu par `AudioAssets.kt`, par exemple `sound_pack_reveal.ogg` ;
-- tu peux changer le format, mais il faudra alors mettre à jour `AudioAssets.kt` et `audio_credits.json` ;
-- retire de `AudioAssets.kt` tout son qui n'existe plus dans `app/src/main/assets/sounds/` ;
+- garde le même nom de fichier que celui attendu par `AudioMix.kt`, par exemple `sound_pack_reveal.ogg` ;
+- tu peux changer le format, mais il faudra alors mettre à jour `AudioMix.kt` et `audio_credits.json` ;
+- retire de `AudioMix.kt` tout son qui n'existe plus dans `app/src/main/assets/sounds/` ;
 - ne garde pas deux fichiers pour le même usage, par exemple `sound_pack_reveal.wav` et `sound_pack_reveal.ogg` en même temps ;
 - utilise uniquement des noms en minuscules, chiffres et underscores ;
 - préfère `.ogg` pour les musiques ou ambiances longues afin de réduire la taille de l'APK.
@@ -78,7 +94,7 @@ Licences acceptées pour ce projet :
 1. Télécharge le son depuis une source compatible : Kenney, Freesound, OpenGameArt, Incompetech, Musopen, Free Music Archive, ccMixter ou Openverse.
 2. Note immédiatement le titre, l'artiste, la licence, l'URL de licence, la page source et la date de téléchargement.
 3. Convertis le fichier si besoin, idéalement en `.ogg` pour les ambiances longues.
-4. Remplace le fichier dans `app/src/main/assets/sounds/` en gardant le nom attendu par `AudioAssets.kt`.
+4. Remplace le fichier dans `app/src/main/assets/sounds/` en gardant le nom attendu par `AudioMix.kt`.
 5. Mets à jour l'entrée correspondante dans `app/src/main/assets/sounds/audio_credits.json`.
 6. Lance les tests et une compilation Android.
 

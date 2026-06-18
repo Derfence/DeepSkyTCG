@@ -89,7 +89,7 @@ internal class AppSceneTransitionController(
     suspend fun animateHomeToPackSelection() {
         val state = readState()
         if (state.transitionLocked) return
-        playNavigationCue()
+        playNavigationCue(SoundCue.PackSelectionOpen)
 
         writeState(
             state.lockTransitions()
@@ -111,7 +111,6 @@ internal class AppSceneTransitionController(
     suspend fun animateHomeToLibrary() {
         val state = readState()
         if (state.transitionLocked) return
-        playNavigationCue(SoundCue.LibraryOpen)
 
         coroutineScope {
             writeState(
@@ -125,6 +124,8 @@ internal class AppSceneTransitionController(
         writeState(readState().prepareLibraryEntry(nextLibraryRefreshSignal = state.libraryRefreshSignal + 1))
         bookProgress.snapTo(0f)
         bookOverlayAlpha.snapTo(1f)
+        awaitNextFrame()
+        playNavigationCue(SoundCue.LibraryOpen)
         bookProgress.animateTo(1f, animationSpec = tween(durationMillis = 980, easing = FastOutSlowInEasing))
         writeState(readState().enterLibrary())
         awaitNextFrame()
@@ -138,7 +139,7 @@ internal class AppSceneTransitionController(
     suspend fun animateHomeToCrafting() {
         val state = readState()
         if (state.transitionLocked) return
-        playNavigationCue()
+        playNavigationCue(SoundCue.CraftingOpen)
 
         writeState(
             state.lockTransitions()
@@ -195,7 +196,6 @@ internal class AppSceneTransitionController(
     suspend fun animateHomeToBadgeBook() {
         val state = readState()
         if (state.transitionLocked) return
-        playNavigationCue(SoundCue.BadgeBookOpen)
 
         writeState(
             state.lockTransitions()
@@ -207,6 +207,8 @@ internal class AppSceneTransitionController(
         writeState(readState().prepareBadgeBookEntry(nextBadgeBookRefreshSignal = state.badgeBookRefreshSignal + 1))
         chestProgress.snapTo(0f)
         chestOverlayAlpha.snapTo(1f)
+        awaitNextFrame()
+        playNavigationCue(SoundCue.BadgeBookOpen)
         chestProgress.animateTo(1f, animationSpec = tween(durationMillis = 980, easing = FastOutSlowInEasing))
         writeState(readState().enterBadgeBook())
         awaitNextFrame()
@@ -220,7 +222,7 @@ internal class AppSceneTransitionController(
     suspend fun animateHomeToMiniGamesMenu() {
         val state = readState()
         if (state.transitionLocked) return
-        playNavigationCue()
+        playNavigationCue(SoundCue.MiniGamesOpen)
 
         writeState(
             state.lockTransitions()
@@ -240,7 +242,7 @@ internal class AppSceneTransitionController(
     suspend fun animatePackSelectionToHome() {
         val state = readState()
         if (state.transitionLocked) return
-        playNavigationCue()
+        playNavigationCue(SoundCue.PackSelectionClose)
 
         writeState(
             state.lockTransitions()
@@ -261,7 +263,6 @@ internal class AppSceneTransitionController(
     suspend fun animateLibraryToHome() {
         val state = readState()
         if (state.transitionLocked) return
-        playNavigationCue(SoundCue.LibraryClose)
 
         writeState(
             state.lockTransitions()
@@ -269,8 +270,10 @@ internal class AppSceneTransitionController(
         )
         bookProgress.snapTo(1f)
         bookOverlayAlpha.snapTo(0f)
+        awaitNextFrame()
         bookOverlayAlpha.animateTo(1f, animationSpec = tween(durationMillis = 960, easing = FastOutSlowInEasing))
         writeState(readState().enterHome())
+        playNavigationCue(SoundCue.LibraryClose)
         bookProgress.animateTo(0f, animationSpec = tween(durationMillis = 980, easing = FastOutSlowInEasing))
         val nextState = readState().showHomeContent()
         writeState(
@@ -288,7 +291,7 @@ internal class AppSceneTransitionController(
     suspend fun animateCraftingToHome() {
         val state = readState()
         if (state.transitionLocked) return
-        playNavigationCue()
+        playNavigationCue(SoundCue.CraftingClose)
 
         writeState(
             state.lockTransitions()
@@ -313,7 +316,6 @@ internal class AppSceneTransitionController(
     suspend fun animateBadgeBookToHome() {
         val state = readState()
         if (state.transitionLocked) return
-        playNavigationCue(SoundCue.BadgeBookClose)
 
         writeState(
             state.lockTransitions()
@@ -321,8 +323,10 @@ internal class AppSceneTransitionController(
         )
         chestProgress.snapTo(1f)
         chestOverlayAlpha.snapTo(0f)
+        awaitNextFrame()
         chestOverlayAlpha.animateTo(1f, animationSpec = tween(durationMillis = 960, easing = FastOutSlowInEasing))
         writeState(readState().enterHome())
+        playNavigationCue(SoundCue.BadgeBookClose)
         chestProgress.animateTo(0f, animationSpec = tween(durationMillis = 980, easing = FastOutSlowInEasing))
         val nextState = readState().showHomeContent()
         writeState(
@@ -388,7 +392,7 @@ internal class AppSceneTransitionController(
     suspend fun animateMiniGamesMenuToHome() {
         val state = readState()
         if (state.transitionLocked) return
-        playNavigationCue()
+        playNavigationCue(SoundCue.MiniGamesClose)
 
         writeState(
             state.lockTransitions()

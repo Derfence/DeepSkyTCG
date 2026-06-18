@@ -47,7 +47,7 @@ AppSceneContent
 | Zone | Responsabilite |
 | --- | --- |
 | `app/` | Orchestration de scenes, transitions, onboarding global, coachmarks. |
-| `audio/` | Contrôleur audio, cues SFX, ambiance et préférence globale sons activés/désactivés. |
+| `audio/` | Contrôleur audio, cues SFX, mix runtime, ambiance et préférence globale sons activés/désactivés. |
 | `feature/*` | Ecrans Compose, composants de feature et ViewModels proches de l'UI. |
 | `data/` | Repositories, tirage local, recharge, meteo, catalogue, persistance. |
 | `domain/` | Regles pures partagees, notamment les badges. |
@@ -99,6 +99,7 @@ Elle ne change pas `ProgressSnapshot.schemaVersion` et n'est pas effacée par la
 
 - Toute regle de tirage doit rester dans `data/` ou `model/`, pas dans Compose.
 - Les cues audio doivent rester branchés depuis la couche UI/app et ne doivent pas modifier les ViewModels métier.
+- Les réglages audio doivent rester centralisés dans `AudioMix.kt` pour éviter les volumes, pitchs ou fichiers dupliqués dans les écrans.
 - Toute evolution de persistance doit passer par `ProgressSnapshot.schemaVersion`.
 - Les nouvelles scenes doivent respecter le decoupage `AppSceneContent` pour eviter de regonfler `AppSceneHost`.
 - Les tests doivent couvrir les regles pures avant les tests Compose quand c'est possible.

@@ -2,8 +2,8 @@ package fr.aumombelli.dstcg.audio
 
 import android.content.Context
 import android.media.AudioAttributes
-import android.media.MediaPlayer
 import android.media.SoundPool
+import android.os.SystemClock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -28,13 +28,17 @@ class AndroidAudioController(
         .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
         .build()
     private val soundPool = SoundPool.Builder()
-        .setMaxStreams(4)
+        .setMaxStreams(AudioMaxStreams)
         .setAudioAttributes(audioAttributes)
         .build()
     private val loadedSoundIds = mutableSetOf<Int>()
     private val soundIds = mutableMapOf<SoundCue, Int>()
-    private var ambientPlayer: MediaPlayer? = null
-    private var preparedAmbientTrack: AmbientTrack? = null
+    private val lastPlayedAtMillis = mutableMapOf<SoundCue, Long>()
+    private val ambientPlayback = AmbientPlaybackController(
+        assets = appContext.assets,
+        audioAttributes = ambientAudioAttributes,
+        scope = scope,
+    )
     private var currentAmbientTrack: AmbientTrack? = null
     private var appForegrounded = true
     private var released = false
@@ -51,9 +55,17 @@ class AndroidAudioController(
                 loadedSoundIds += sampleId
             }
         }
+        val soundIdsByAssetPath = SoundCue.entries
+            .map { it.assetPath }
+            .distinct()
+            .associateWith { assetPath ->
+                appContext.assets.openFd(assetPath).use { asset ->
+                    soundPool.load(asset, 1)
+                }
+            }
         SoundCue.entries.associateWithTo(soundIds) { cue ->
-            appContext.assets.openFd(cue.assetPath).use { asset ->
-                soundPool.load(asset, 1)
+            checkNotNull(soundIdsByAssetPath[cue.assetPath]) {
+                "Missing loaded sound id for ${cue.assetPath}"
             }
         }
         scope.launch {
@@ -65,17 +77,26 @@ class AndroidAudioController(
 
     override fun play(cue: SoundCue) {
         if (released || !settings.value.enabled) return
+        val mix = cue.mix
+        val now = SystemClock.elapsedRealtime()
+        val lastPlayedAt = lastPlayedAtMillis[cue]
+        if (lastPlayedAt != null && now - lastPlayedAt < mix.cooldownMillis) return
+
         val soundId = soundIds[cue] ?: return
         if (soundId !in loadedSoundIds) return
 
-        soundPool.play(
+        val streamId = soundPool.play(
             soundId,
-            cue.volume,
-            cue.volume,
+            mix.volume,
+            mix.volume,
             1,
             0,
-            cue.playbackRate,
+            mix.playbackRate,
         )
+        if (streamId != 0) {
+            lastPlayedAtMillis[cue] = now
+            mix.ambientDucking?.let(ambientPlayback::duck)
+        }
     }
 
     override fun setAmbient(track: AmbientTrack?) {
@@ -89,6 +110,7 @@ class AndroidAudioController(
         if (!enabled) {
             soundPool.autoPause()
         }
+        applyAmbientState(enabled = enabled)
     }
 
     override fun onAppForegrounded() {
@@ -98,76 +120,26 @@ class AndroidAudioController(
 
     override fun onAppBackgrounded() {
         appForegrounded = false
-        ambientPlayer?.pause()
+        applyAmbientState()
         soundPool.autoPause()
     }
 
     override fun release() {
         if (released) return
         released = true
-        ambientPlayer?.release()
-        ambientPlayer = null
+        ambientPlayback.release()
         soundPool.release()
         scope.cancel()
     }
 
-    private fun applyAmbientState() {
+    private fun applyAmbientState(
+        enabled: Boolean = settings.value.enabled,
+    ) {
         if (released) return
-        val track = currentAmbientTrack
-        if (!settings.value.enabled || !appForegrounded || track == null) {
-            ambientPlayer?.pause()
-            return
-        }
-
-        val player = ambientPlayer?.takeIf { preparedAmbientTrack == track } ?: createAmbientPlayer(track)
-        ambientPlayer = player
-        if (!player.isPlaying) {
-            runCatching { player.start() }
-        }
-    }
-
-    private fun createAmbientPlayer(track: AmbientTrack): MediaPlayer {
-        ambientPlayer?.release()
-        preparedAmbientTrack = track
-        return MediaPlayer().apply {
-            setAudioAttributes(ambientAudioAttributes)
-            appContext.assets.openFd(track.assetPath).use { asset ->
-                setDataSource(asset.fileDescriptor, asset.startOffset, asset.length)
-            }
-            isLooping = true
-            setVolume(track.volume, track.volume)
-            prepare()
-        }
+        ambientPlayback.update(
+            track = currentAmbientTrack,
+            enabled = enabled,
+            foregrounded = appForegrounded,
+        )
     }
 }
-
-private val SoundCue.volume: Float
-    get() = when (this) {
-        SoundCue.UiNavigate -> 0.34f
-        SoundCue.LibraryOpen -> 0.38f
-        SoundCue.LibraryClose -> 0.34f
-        SoundCue.EquipmentOpen -> 0.38f
-        SoundCue.EquipmentClose -> 0.34f
-        SoundCue.BadgeBookOpen -> 0.38f
-        SoundCue.BadgeBookClose -> 0.34f
-        SoundCue.PackBurst -> 0.48f
-        SoundCue.PackReveal -> 0.42f
-        SoundCue.HolographicReveal -> 0.48f
-        SoundCue.MiniGameSuccess -> 0.38f
-        SoundCue.MiniGameError -> 0.34f
-        SoundCue.MiniGameCompletion -> 0.52f
-        SoundCue.BadgeUnlock -> 0.48f
-    }
-
-private val SoundCue.playbackRate: Float
-    get() = when (this) {
-        SoundCue.MiniGameError -> 0.92f
-        SoundCue.MiniGameCompletion -> 1.04f
-        else -> 1f
-    }
-
-private val AmbientTrack.volume: Float
-    get() = when (this) {
-        AmbientTrack.Starfield -> 0.20f
-        AmbientTrack.MiniGames -> 0.22f
-    }
