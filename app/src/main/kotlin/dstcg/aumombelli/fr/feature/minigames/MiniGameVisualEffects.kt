@@ -224,7 +224,7 @@ internal fun MiniGameFeedbackOverlay(
     val progress = remember { Animatable(1f) }
     LaunchedEffect(cue?.id) {
         if (cue != null) {
-            audioController.play(cue.tone.soundCue())
+            cue.tone.soundCue()?.let(audioController::play)
             progress.snapTo(0f)
             progress.animateTo(
                 targetValue = 1f,
@@ -443,10 +443,10 @@ private fun feedbackPalette(tone: MiniGameFeedbackTone): MiniGameFeedbackPalette
     )
 }
 
-private fun MiniGameFeedbackTone.soundCue(): SoundCue = when (this) {
+private fun MiniGameFeedbackTone.soundCue(): SoundCue? = when (this) {
     MiniGameFeedbackTone.Success -> SoundCue.MiniGameSuccess
     MiniGameFeedbackTone.Error -> SoundCue.MiniGameError
-    MiniGameFeedbackTone.Special -> SoundCue.MiniGameSpecial
+    MiniGameFeedbackTone.Special -> null
     MiniGameFeedbackTone.Completion -> SoundCue.MiniGameCompletion
 }
 

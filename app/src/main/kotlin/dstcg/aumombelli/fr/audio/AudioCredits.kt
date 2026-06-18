@@ -4,7 +4,7 @@ import android.content.res.AssetManager
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
-internal const val AudioCreditsAssetPath = "audio/audio_credits.json"
+internal const val AudioCreditsAssetPath = "sounds/audio_credits.json"
 
 @Serializable
 internal data class AudioCreditEntry(

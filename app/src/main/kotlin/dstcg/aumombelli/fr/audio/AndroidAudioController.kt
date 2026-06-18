@@ -4,7 +4,6 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.SoundPool
-import fr.aumombelli.dstcg.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -23,6 +22,10 @@ class AndroidAudioController(
     private val audioAttributes = AudioAttributes.Builder()
         .setUsage(AudioAttributes.USAGE_GAME)
         .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+        .build()
+    private val ambientAudioAttributes = AudioAttributes.Builder()
+        .setUsage(AudioAttributes.USAGE_GAME)
+        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
         .build()
     private val soundPool = SoundPool.Builder()
         .setMaxStreams(4)
@@ -49,7 +52,9 @@ class AndroidAudioController(
             }
         }
         SoundCue.entries.associateWithTo(soundIds) { cue ->
-            soundPool.load(appContext, cue.rawResourceId, 1)
+            appContext.assets.openFd(cue.assetPath).use { asset ->
+                soundPool.load(asset, 1)
+            }
         }
         scope.launch {
             settings.collect {
@@ -124,35 +129,32 @@ class AndroidAudioController(
     private fun createAmbientPlayer(track: AmbientTrack): MediaPlayer {
         ambientPlayer?.release()
         preparedAmbientTrack = track
-        return MediaPlayer.create(appContext, track.rawResourceId).apply {
+        return MediaPlayer().apply {
+            setAudioAttributes(ambientAudioAttributes)
+            appContext.assets.openFd(track.assetPath).use { asset ->
+                setDataSource(asset.fileDescriptor, asset.startOffset, asset.length)
+            }
             isLooping = true
             setVolume(track.volume, track.volume)
+            prepare()
         }
     }
 }
 
-private val SoundCue.rawResourceId: Int
-    get() = when (this) {
-        SoundCue.UiNavigate -> R.raw.sound_ui_navigate
-        SoundCue.PackBurst -> R.raw.sound_pack_burst
-        SoundCue.PackReveal -> R.raw.sound_pack_reveal
-        SoundCue.HolographicReveal -> R.raw.sound_holographic_reveal
-        SoundCue.MiniGameSuccess -> R.raw.sound_minigame_success
-        SoundCue.MiniGameError -> R.raw.sound_minigame_error
-        SoundCue.MiniGameSpecial -> R.raw.sound_minigame_special
-        SoundCue.MiniGameCompletion -> R.raw.sound_minigame_completion
-        SoundCue.BadgeUnlock -> R.raw.sound_badge_unlock
-    }
-
 private val SoundCue.volume: Float
     get() = when (this) {
         SoundCue.UiNavigate -> 0.34f
+        SoundCue.LibraryOpen -> 0.38f
+        SoundCue.LibraryClose -> 0.34f
+        SoundCue.EquipmentOpen -> 0.38f
+        SoundCue.EquipmentClose -> 0.34f
+        SoundCue.BadgeBookOpen -> 0.38f
+        SoundCue.BadgeBookClose -> 0.34f
         SoundCue.PackBurst -> 0.48f
         SoundCue.PackReveal -> 0.42f
         SoundCue.HolographicReveal -> 0.48f
         SoundCue.MiniGameSuccess -> 0.38f
         SoundCue.MiniGameError -> 0.34f
-        SoundCue.MiniGameSpecial -> 0.42f
         SoundCue.MiniGameCompletion -> 0.52f
         SoundCue.BadgeUnlock -> 0.48f
     }
@@ -162,12 +164,6 @@ private val SoundCue.playbackRate: Float
         SoundCue.MiniGameError -> 0.92f
         SoundCue.MiniGameCompletion -> 1.04f
         else -> 1f
-    }
-
-private val AmbientTrack.rawResourceId: Int
-    get() = when (this) {
-        AmbientTrack.Starfield -> R.raw.ambient_starfield
-        AmbientTrack.MiniGames -> R.raw.ambient_minigames
     }
 
 private val AmbientTrack.volume: Float

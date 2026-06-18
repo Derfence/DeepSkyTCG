@@ -111,7 +111,7 @@ internal class AppSceneTransitionController(
     suspend fun animateHomeToLibrary() {
         val state = readState()
         if (state.transitionLocked) return
-        playNavigationCue()
+        playNavigationCue(SoundCue.LibraryOpen)
 
         coroutineScope {
             writeState(
@@ -158,7 +158,7 @@ internal class AppSceneTransitionController(
     suspend fun animateHomeToEquipment() {
         val state = readState()
         if (state.transitionLocked) return
-        playNavigationCue()
+        playNavigationCue(SoundCue.EquipmentOpen)
 
         writeState(
             state.lockTransitions()
@@ -195,7 +195,7 @@ internal class AppSceneTransitionController(
     suspend fun animateHomeToBadgeBook() {
         val state = readState()
         if (state.transitionLocked) return
-        playNavigationCue()
+        playNavigationCue(SoundCue.BadgeBookOpen)
 
         writeState(
             state.lockTransitions()
@@ -261,7 +261,7 @@ internal class AppSceneTransitionController(
     suspend fun animateLibraryToHome() {
         val state = readState()
         if (state.transitionLocked) return
-        playNavigationCue()
+        playNavigationCue(SoundCue.LibraryClose)
 
         writeState(
             state.lockTransitions()
@@ -313,7 +313,7 @@ internal class AppSceneTransitionController(
     suspend fun animateBadgeBookToHome() {
         val state = readState()
         if (state.transitionLocked) return
-        playNavigationCue()
+        playNavigationCue(SoundCue.BadgeBookClose)
 
         writeState(
             state.lockTransitions()
@@ -340,7 +340,7 @@ internal class AppSceneTransitionController(
     suspend fun animateEquipmentToHome() {
         val state = readState()
         if (state.transitionLocked) return
-        playNavigationCue()
+        playNavigationCue(SoundCue.EquipmentClose)
 
         writeState(
             state.lockTransitions()
@@ -463,8 +463,8 @@ internal class AppSceneTransitionController(
         revealOnboardingHintsAfterTransition()
     }
 
-    private fun playNavigationCue() {
-        appContainer.audioController.play(SoundCue.UiNavigate)
+    private fun playNavigationCue(cue: SoundCue = SoundCue.UiNavigate) {
+        appContainer.audioController.play(cue)
     }
 
     private suspend fun revealOnboardingHintsAfterTransition(

@@ -8,12 +8,17 @@ data class AudioSettings(
 
 enum class SoundCue {
     UiNavigate,
+    LibraryOpen,
+    LibraryClose,
+    EquipmentOpen,
+    EquipmentClose,
+    BadgeBookOpen,
+    BadgeBookClose,
     PackBurst,
     PackReveal,
     HolographicReveal,
     MiniGameSuccess,
     MiniGameError,
-    MiniGameSpecial,
     MiniGameCompletion,
     BadgeUnlock,
 }

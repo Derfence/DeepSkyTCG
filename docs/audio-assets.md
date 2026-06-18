@@ -6,27 +6,33 @@ Cette page sert de checklist pour remplacer les sons et musiques embarqués tout
 
 ## Fichiers runtime
 
-Les fichiers joués par l'application sont dans `app/src/main/res/raw/`.
+Les fichiers joués par l'application sont dans `app/src/main/assets/sounds/`.
 
 | Fichier | Usage |
 | --- | --- |
-| `ambient_starfield.wav` | Ambiance générale de l'application |
-| `ambient_minigames.wav` | Ambiance du menu mini-jeux |
-| `sound_ui_navigate.wav` | Navigation dans l'interface |
-| `sound_pack_burst.wav` | Ouverture d'un pack |
-| `sound_pack_reveal.wav` | Révélation d'une carte |
-| `sound_holographic_reveal.wav` | Révélation holographique |
-| `sound_minigame_success.wav` | Réussite dans un mini-jeu |
-| `sound_minigame_error.wav` | Erreur dans un mini-jeu |
-| `sound_minigame_special.wav` | Événement spécial de mini-jeu |
-| `sound_minigame_completion.wav` | Fin réussie d'un mini-jeu |
-| `sound_badge_unlock.wav` | Déblocage de badge |
+| `ambient_starfield.mp3` | Ambiance générale de l'application |
+| `ambient_minigames.mp3` | Ambiance du menu mini-jeux |
+| `sound_ui_navigate.ogg` | Navigation dans l'interface |
+| `sound_ui_library_open.ogg` | Ouverture du menu bibliothèque |
+| `sound_ui_library_close.ogg` | Fermeture du menu bibliothèque |
+| `sound_ui_equipment_open.ogg` | Ouverture du menu équipement |
+| `sound_ui_equipment_close.ogg` | Fermeture du menu équipement |
+| `sound_ui_badge_open.ogg` | Ouverture du menu badges |
+| `sound_ui_badge_close.ogg` | Fermeture du menu badges |
+| `sound_pack_burst.ogg` | Ouverture d'un pack |
+| `sound_pack_reveal.ogg` | Révélation d'une carte |
+| `sound_holographic_reveal.ogg` | Révélation holographique |
+| `sound_minigame_success.ogg` | Réussite dans un mini-jeu |
+| `sound_minigame_error.ogg` | Erreur dans un mini-jeu |
+| `sound_minigame_completion.ogg` | Fin réussie d'un mini-jeu |
+| `sound_badge_unlock.ogg` | Déblocage de badge |
 
 Règles importantes :
 
-- garde le même nom de ressource, par exemple `sound_pack_reveal`, sinon le code Android ne le trouvera plus ;
-- tu peux remplacer un `.wav` par un `.ogg` si le nom de base reste identique, par exemple `sound_pack_reveal.ogg` ;
-- ne garde pas deux fichiers avec le même nom de base, par exemple `sound_pack_reveal.wav` et `sound_pack_reveal.ogg` en même temps ;
+- garde le même nom de fichier que celui attendu par `AudioAssets.kt`, par exemple `sound_pack_reveal.ogg` ;
+- tu peux changer le format, mais il faudra alors mettre à jour `AudioAssets.kt` et `audio_credits.json` ;
+- retire de `AudioAssets.kt` tout son qui n'existe plus dans `app/src/main/assets/sounds/` ;
+- ne garde pas deux fichiers pour le même usage, par exemple `sound_pack_reveal.wav` et `sound_pack_reveal.ogg` en même temps ;
 - utilise uniquement des noms en minuscules, chiffres et underscores ;
 - préfère `.ogg` pour les musiques ou ambiances longues afin de réduire la taille de l'APK.
 
@@ -35,7 +41,7 @@ Règles importantes :
 Les crédits audio affichés dans le panneau `Paramètres > Crédits audio` viennent de :
 
 ```text
-app/src/main/assets/audio/audio_credits.json
+app/src/main/assets/sounds/audio_credits.json
 ```
 
 Une entrée doit rester associée au fichier runtime correspondant :
@@ -72,8 +78,8 @@ Licences acceptées pour ce projet :
 1. Télécharge le son depuis une source compatible : Kenney, Freesound, OpenGameArt, Incompetech, Musopen, Free Music Archive, ccMixter ou Openverse.
 2. Note immédiatement le titre, l'artiste, la licence, l'URL de licence, la page source et la date de téléchargement.
 3. Convertis le fichier si besoin, idéalement en `.ogg` pour les ambiances longues.
-4. Remplace le fichier dans `app/src/main/res/raw/` en gardant le même nom de base.
-5. Mets à jour l'entrée correspondante dans `app/src/main/assets/audio/audio_credits.json`.
+4. Remplace le fichier dans `app/src/main/assets/sounds/` en gardant le nom attendu par `AudioAssets.kt`.
+5. Mets à jour l'entrée correspondante dans `app/src/main/assets/sounds/audio_credits.json`.
 6. Lance les tests et une compilation Android.
 
 Commandes utiles :
