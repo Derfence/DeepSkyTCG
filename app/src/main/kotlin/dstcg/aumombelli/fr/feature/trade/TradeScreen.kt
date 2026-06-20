@@ -77,17 +77,25 @@ import fr.aumombelli.dstcg.model.DisplayCard
 import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.ui.component.AstroCardPreviewSurface
 import fr.aumombelli.dstcg.ui.component.AstroCardSurfaceMode
-import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.component.calculateTradingCardFitWidth
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
 import kotlin.math.abs
 import kotlinx.coroutines.delay
 
 private val MinimumTradeCardPreviewWidth = 150.dp
-private val TradeRevealOutgoingLift = 92.dp
-private val TradeRevealIncomingDrop = 54.dp
-private val TradeRevealStageTopPadding = 16.dp
-private val TradeRevealStageBottomPadding = 14.dp
+private val TradeSuccessBottomSafetyPadding = 80.dp
+private val TradeRevealStageTopPadding = 8.dp
+private val TradeRevealStageBottomPadding = 8.dp
+private val TradeRevealMinOutgoingLift = 28.dp
+private val TradeRevealMaxOutgoingLift = 64.dp
+private val TradeRevealMinIncomingDrop = 16.dp
+private val TradeRevealMaxIncomingDrop = 36.dp
+private val TradeRevealMaxCardWidth = 220.dp
+
+private data class TradeRevealMotion(
+    val outgoingLift: Dp,
+    val incomingDrop: Dp,
+)
 
 private fun calculateTradeCardPreviewWidth(
     availableWidth: Dp,
@@ -105,15 +113,47 @@ private fun calculateTradeCardPreviewWidth(
     return fittedWidth.coerceAtLeast(minOf(MinimumTradeCardPreviewWidth, widthLimit))
 }
 
-private fun calculateTradeRevealStageHeight(
-    cardWidth: Dp,
+private fun calculateTradeRevealMotion(cardWidth: Dp): TradeRevealMotion {
+    if (cardWidth <= 0.dp) {
+        return TradeRevealMotion(outgoingLift = 0.dp, incomingDrop = 0.dp)
+    }
+    return TradeRevealMotion(
+        outgoingLift = minOf(
+            TradeRevealMaxOutgoingLift,
+            maxOf(TradeRevealMinOutgoingLift, cardWidth * 0.24f),
+        ),
+        incomingDrop = minOf(
+            TradeRevealMaxIncomingDrop,
+            maxOf(TradeRevealMinIncomingDrop, cardWidth * 0.14f),
+        ),
+    )
+}
+
+private fun calculateTradeRevealCardWidth(
+    availableWidth: Dp,
+    availableHeight: Dp,
 ): Dp {
-    val cardHeight = cardWidth / TRADING_CARD_WIDTH_OVER_HEIGHT
-    return cardHeight +
-        TradeRevealOutgoingLift +
-        TradeRevealIncomingDrop +
-        TradeRevealStageTopPadding +
-        TradeRevealStageBottomPadding
+    val widthLimit = minOf(availableWidth * 0.58f, TradeRevealMaxCardWidth).coerceAtLeast(0.dp)
+    if (widthLimit <= 0.dp || availableHeight <= 0.dp) {
+        return 0.dp
+    }
+
+    var cardWidth = widthLimit
+    repeat(3) {
+        val motion = calculateTradeRevealMotion(cardWidth)
+        val cardHeightLimit = (
+            availableHeight -
+                motion.outgoingLift -
+                motion.incomingDrop -
+                TradeRevealStageTopPadding -
+                TradeRevealStageBottomPadding
+            ).coerceAtLeast(0.dp)
+        cardWidth = calculateTradingCardFitWidth(
+            maxWidth = widthLimit,
+            maxHeight = cardHeightLimit,
+        )
+    }
+    return cardWidth
 }
 
 @Composable
@@ -205,16 +245,6 @@ fun TradeScreen(
                 availableWidth = maxWidth,
                 availableHeight = maxHeight,
             )
-            val revealCardWidth = calculateTradeCardPreviewWidth(
-                availableWidth = maxWidth,
-                availableHeight = maxHeight,
-                widthFraction = 0.58f,
-                heightFraction = 0.48f,
-                maxWidth = 260.dp,
-            )
-            val revealStageHeight = calculateTradeRevealStageHeight(
-                cardWidth = revealCardWidth,
-            )
 
             if (isSucceeded) {
                 TradeSuccessBackdrop(modifier = Modifier.fillMaxSize())
@@ -238,7 +268,13 @@ fun TradeScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(top = 42.dp)
-                    .verticalScroll(tradeScrollState),
+                    .let { baseModifier ->
+                        if (isSucceeded) {
+                            baseModifier
+                        } else {
+                            baseModifier.verticalScroll(tradeScrollState)
+                        }
+                    },
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -278,16 +314,23 @@ fun TradeScreen(
                         onRetry = viewModel::retryExchange,
                         onDismiss = onDismiss,
                         proposedCardWidth = proposedCardWidth,
-                        revealCardWidth = revealCardWidth,
-                        revealStageHeight = revealStageHeight,
+                        modifier = if (isSucceeded) {
+                            Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                        } else {
+                            Modifier.fillMaxWidth()
+                        },
                     )
                 }
 
-                Spacer(
-                    modifier = Modifier
-                        .height(96.dp)
-                        .testTag("trade-scroll-bottom-spacer"),
-                )
+                if (!isSucceeded) {
+                    Spacer(
+                        modifier = Modifier
+                            .height(96.dp)
+                            .testTag("trade-scroll-bottom-spacer"),
+                    )
+                }
             }
         }
     }
@@ -367,8 +410,7 @@ private fun TradeReadyContent(
     onRetry: () -> Unit,
     onDismiss: () -> Unit,
     proposedCardWidth: Dp,
-    revealCardWidth: Dp,
-    revealStageHeight: Dp,
+    modifier: Modifier = Modifier,
 ) {
     val candidate = checkNotNull(state.selectedCandidate)
     val selectedDisplayCard = candidate.card.toDisplayCard(
@@ -384,15 +426,14 @@ private fun TradeReadyContent(
             isResolvingReceivedCard = state.isResolvingReceivedCard,
             message = state.message,
             onDismiss = onDismiss,
-            cardWidth = revealCardWidth,
-            stageHeight = revealStageHeight,
+            modifier = modifier,
         )
         return
     }
 
     Column(
         verticalArrangement = Arrangement.spacedBy(14.dp),
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .testTag("trade-ready"),
     ) {
@@ -658,8 +699,7 @@ private fun TradeSucceededContent(
     isResolvingReceivedCard: Boolean,
     message: String?,
     onDismiss: () -> Unit,
-    cardWidth: Dp,
-    stageHeight: Dp,
+    modifier: Modifier = Modifier,
 ) {
     var revealed by remember(
         receivedDisplayCard?.definition?.id,
@@ -668,106 +708,134 @@ private fun TradeSucceededContent(
         mutableStateOf(false)
     }
 
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .testTag("trade-success"),
+    BoxWithConstraints(
+        modifier = modifier.testTag("trade-success"),
     ) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = Icons.Filled.CheckCircle,
-                contentDescription = null,
-                tint = Color(0xFF8DF6E7),
-                modifier = Modifier.size(30.dp),
-            )
-            Text(
-                text = message ?: "Échange réussi !",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.testTag("trade-success-title"),
-            )
+        val compact = maxHeight < 560.dp
+        val contentSpacing = if (compact) 6.dp else 8.dp
+        val titleStyle = if (compact) {
+            MaterialTheme.typography.titleLarge
+        } else {
+            MaterialTheme.typography.headlineSmall
+        }
+        val copyStyle = if (compact) {
+            MaterialTheme.typography.bodyMedium
+        } else {
+            MaterialTheme.typography.bodyLarge
         }
 
-        Text(
-            text = if (receivedDisplayCard == null && isResolvingReceivedCard) {
-                "Ta carte reçue est ajoutée à ta bibliothèque."
-            } else if (receivedDisplayCard == null) {
-                "Ta carte reçue est dans ta bibliothèque. Elle sera visible en revenant à la collection."
-            } else if (revealed) {
-                "Ta nouvelle carte est maintenant dans ta bibliothèque."
-            } else {
-                "La connexion est validée. Révèle la carte reçue quand tu es prêt."
-            },
-            color = Color(0xFFD7F7F3),
-            style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.testTag("trade-success-copy"),
-        )
-
-        ExchangeCardRevealStage(
-            selectedDisplayCard = selectedDisplayCard,
-            receivedDisplayCard = receivedDisplayCard,
-            revealed = revealed,
-            onReveal = { revealed = true },
-            cardWidth = cardWidth,
-            stageHeight = stageHeight,
-            modifier = Modifier.fillMaxWidth(),
-        )
-
-        if (receivedDisplayCard == null && isResolvingReceivedCard) {
-            CircularProgressIndicator(
-                color = Color(0xFF8DF6E7),
-                modifier = Modifier.testTag("trade-received-loading"),
-            )
-        } else if (receivedDisplayCard == null) {
-            Button(
-                onClick = onDismiss,
-                modifier = Modifier.testTag("trade-done"),
-            ) {
-                Text("Terminer")
-            }
-        } else if (!revealed) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(contentSpacing),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = TradeSuccessBottomSafetyPadding),
+        ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Icon(
-                    imageVector = Icons.Filled.KeyboardArrowUp,
+                    imageVector = Icons.Filled.CheckCircle,
                     contentDescription = null,
-                    tint = Color(0xFFF7D985),
+                    tint = Color(0xFF8DF6E7),
+                    modifier = Modifier.size(if (compact) 26.dp else 30.dp),
                 )
                 Text(
-                    text = "Appuie ou glisse vers le haut.",
-                    color = Color(0xFFF7D985),
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.testTag("trade-reveal-hint"),
+                    text = message ?: "Échange réussi !",
+                    style = titleStyle,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .weight(1f, fill = false)
+                        .testTag("trade-success-title"),
                 )
             }
-            Button(
-                onClick = { revealed = true },
-                modifier = Modifier.testTag("trade-reveal-received"),
-            ) {
-                Text("Révéler la carte reçue")
-            }
-        } else {
+
             Text(
-                text = "Carte reçue",
-                color = Color(0xFF8DF6E7),
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.testTag("trade-received-label"),
+                text = if (receivedDisplayCard == null && isResolvingReceivedCard) {
+                    "Ta carte reçue est ajoutée à ta bibliothèque."
+                } else if (receivedDisplayCard == null) {
+                    "Ta carte reçue est dans ta bibliothèque. Elle sera visible en revenant à la collection."
+                } else if (revealed) {
+                    "Ta nouvelle carte est maintenant dans ta bibliothèque."
+                } else {
+                    "La connexion est validée. Révèle la carte reçue quand tu es prêt."
+                },
+                color = Color(0xFFD7F7F3),
+                style = copyStyle,
+                textAlign = TextAlign.Center,
+                maxLines = if (compact) 2 else 3,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.testTag("trade-success-copy"),
             )
-            Button(
-                onClick = onDismiss,
-                modifier = Modifier.testTag("trade-done"),
-            ) {
-                Text("Terminer")
+
+            ExchangeCardRevealStage(
+                selectedDisplayCard = selectedDisplayCard,
+                receivedDisplayCard = receivedDisplayCard,
+                revealed = revealed,
+                onReveal = { revealed = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+            )
+
+            if (receivedDisplayCard == null && isResolvingReceivedCard) {
+                CircularProgressIndicator(
+                    color = Color(0xFF8DF6E7),
+                    modifier = Modifier.testTag("trade-received-loading"),
+                )
+            } else if (receivedDisplayCard == null) {
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.testTag("trade-done"),
+                ) {
+                    Text("Terminer")
+                }
+            } else if (!revealed) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.KeyboardArrowUp,
+                        contentDescription = null,
+                        tint = Color(0xFFF7D985),
+                    )
+                    Text(
+                        text = "Appuie ou glisse vers le haut.",
+                        color = Color(0xFFF7D985),
+                        style = MaterialTheme.typography.bodyMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.testTag("trade-reveal-hint"),
+                    )
+                }
+                Button(
+                    onClick = { revealed = true },
+                    modifier = Modifier.testTag("trade-reveal-received"),
+                ) {
+                    Text("Révéler la carte reçue")
+                }
+            } else {
+                Text(
+                    text = "Carte reçue",
+                    color = Color(0xFF8DF6E7),
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    modifier = Modifier.testTag("trade-received-label"),
+                )
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.testTag("trade-done"),
+                ) {
+                    Text("Terminer")
+                }
             }
         }
     }
@@ -779,14 +847,8 @@ private fun ExchangeCardRevealStage(
     receivedDisplayCard: DisplayCard?,
     revealed: Boolean,
     onReveal: () -> Unit,
-    cardWidth: Dp,
-    stageHeight: Dp,
     modifier: Modifier = Modifier,
 ) {
-    val density = LocalDensity.current
-    val outgoingLiftPx = with(density) { TradeRevealOutgoingLift.toPx() }
-    val incomingDropPx = with(density) { TradeRevealIncomingDrop.toPx() }
-    val cardBottomInset = TradeRevealIncomingDrop + TradeRevealStageBottomPadding
     val progress = remember(
         selectedDisplayCard.definition.id,
         selectedDisplayCard.activeVariant.key,
@@ -827,79 +889,89 @@ private fun ExchangeCardRevealStage(
         Modifier
     }
 
-    Box(
-        contentAlignment = Alignment.Center,
+    BoxWithConstraints(
         modifier = modifier
-            .height(stageHeight)
             .then(gestureModifier)
             .testTag("trade-success-card-stage"),
     ) {
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = cardBottomInset),
-        ) {
-            AstroCardPreviewSurface(
-                displayCard = selectedDisplayCard,
-                mode = AstroCardSurfaceMode.Preview,
-                modifier = Modifier
-                    .width(cardWidth)
-                    .graphicsLayer {
-                        alpha = 1f - incomingProgress
-                        translationY = -outgoingLiftPx * revealProgress
-                        scaleX = 1f - 0.08f * revealProgress
-                        scaleY = 1f - 0.08f * revealProgress
-                        rotationZ = -5f * revealProgress
-                    }
-                    .testTag("trade-success-outgoing-card"),
-            )
-        }
+        val density = LocalDensity.current
+        val cardWidth = calculateTradeRevealCardWidth(
+            availableWidth = maxWidth,
+            availableHeight = maxHeight,
+        )
+        val motion = calculateTradeRevealMotion(cardWidth)
+        val outgoingLiftPx = with(density) { motion.outgoingLift.toPx() }
+        val incomingDropPx = with(density) { motion.incomingDrop.toPx() }
+        val cardBottomInset = motion.incomingDrop + TradeRevealStageBottomPadding
 
-        if (beamAlpha > 0f) {
-            Box(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .width(cardWidth * 1.18f)
-                    .height(10.dp)
-                    .graphicsLayer {
-                        alpha = beamAlpha * 0.72f
-                        scaleX = 0.55f + beamAlpha * 0.65f
-                        rotationZ = -7f
-                    }
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(
-                                Color.Transparent,
-                                Color(0xFF8DF6E7),
-                                Color(0xFFF7D985),
-                                Color.Transparent,
-                            ),
-                        ),
-                    )
-                    .testTag("trade-exchange-beam"),
-            )
-        }
-
-        if (receivedDisplayCard != null) {
+        Box(modifier = Modifier.fillMaxSize()) {
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(bottom = cardBottomInset),
             ) {
                 AstroCardPreviewSurface(
-                    displayCard = receivedDisplayCard,
+                    displayCard = selectedDisplayCard,
                     mode = AstroCardSurfaceMode.Preview,
                     modifier = Modifier
                         .width(cardWidth)
                         .graphicsLayer {
-                            alpha = incomingProgress
-                            translationY = incomingDropPx * (1f - incomingProgress)
-                            scaleX = 0.94f + 0.06f * incomingProgress
-                            scaleY = 0.94f + 0.06f * incomingProgress
-                            rotationZ = 4f * (1f - incomingProgress)
+                            alpha = 1f - incomingProgress
+                            translationY = -outgoingLiftPx * revealProgress
+                            scaleX = 1f - 0.08f * revealProgress
+                            scaleY = 1f - 0.08f * revealProgress
+                            rotationZ = -5f * revealProgress
                         }
-                        .testTag("trade-received-card"),
+                        .testTag("trade-success-outgoing-card"),
                 )
+            }
+
+            if (beamAlpha > 0f) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .width(cardWidth * 1.18f)
+                        .height(10.dp)
+                        .graphicsLayer {
+                            alpha = beamAlpha * 0.72f
+                            scaleX = 0.55f + beamAlpha * 0.65f
+                            rotationZ = -7f
+                        }
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(
+                                    Color.Transparent,
+                                    Color(0xFF8DF6E7),
+                                    Color(0xFFF7D985),
+                                    Color.Transparent,
+                                ),
+                            ),
+                        )
+                        .testTag("trade-exchange-beam"),
+                )
+            }
+
+            if (receivedDisplayCard != null) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = cardBottomInset),
+                ) {
+                    AstroCardPreviewSurface(
+                        displayCard = receivedDisplayCard,
+                        mode = AstroCardSurfaceMode.Preview,
+                        modifier = Modifier
+                            .width(cardWidth)
+                            .graphicsLayer {
+                                alpha = incomingProgress
+                                translationY = incomingDropPx * (1f - incomingProgress)
+                                scaleX = 0.94f + 0.06f * incomingProgress
+                                scaleY = 0.94f + 0.06f * incomingProgress
+                                rotationZ = 4f * (1f - incomingProgress)
+                            }
+                            .testTag("trade-received-card"),
+                    )
+                }
             }
         }
     }
