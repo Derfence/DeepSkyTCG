@@ -95,10 +95,13 @@ internal fun filterLibrarySections(
         section.copy(cards = filteredCards).takeIf { filteredCards.isNotEmpty() }
     }
 
-internal fun LibraryCardItem.firstVariantMatching(filters: LibraryFilters): DisplayCardVariant? =
-    availableVariants.firstOrNull { variant ->
-        variant.matchesVariantFilters(filters)
-    }
+internal fun LibraryFilters.affectsVariantChoice(): Boolean =
+    skyQuality != null || tradeableOnly
+
+internal fun LibraryCardItem.bestVariantMatching(filters: LibraryFilters): DisplayCardVariant? =
+    availableVariants
+        .filter { variant -> variant.matchesVariantFilters(filters) }
+        .maxWithOrNull(bestDisplayVariantComparator)
 
 private fun LibraryCardItem.matchesLibraryFilters(filters: LibraryFilters): Boolean {
     if (filters.rarityLabel != null && definition.rarityLabel != filters.rarityLabel) {
@@ -121,3 +124,8 @@ private fun DisplayCardVariant.matchesVariantFilters(filters: LibraryFilters): B
     }
     return !filters.tradeableOnly || canTradeAway()
 }
+
+private val bestDisplayVariantComparator: Comparator<DisplayCardVariant> =
+    compareBy<DisplayCardVariant> { it.isHolographic }
+        .thenBy { skyQualitySortPriority(it.skyQuality) }
+        .thenBy { it.count }

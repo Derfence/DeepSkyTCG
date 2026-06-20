@@ -101,20 +101,38 @@ class LibraryFiltersTest {
 
         assertEquals(listOf("beta"), filtered.map { it.extension.id })
         assertEquals(listOf("BET-001"), filtered.single().cards.map { it.definition.id })
-        assertEquals("holographic::standard", filtered.single().cards.single().firstVariantMatching(
+        assertEquals("holographic::standard", filtered.single().cards.single().bestVariantMatching(
             LibraryFilters(
                 skyQuality = "holographic",
                 tradeableOnly = true,
             ),
         )?.key)
         assertNull(
-            sections.last().cards.last().firstVariantMatching(
+            sections.last().cards.last().bestVariantMatching(
                 LibraryFilters(
                     skyQuality = "holographic",
                     tradeableOnly = true,
                 ),
             ),
         )
+    }
+
+    @Test
+    fun `tradeable filter selects best tradeable variant`() {
+        val item = libraryItem(
+            id = "ALP-001",
+            extensionId = "alpha",
+            rarityLabel = "Rare",
+            variants = listOf(
+                holographic(count = 1),
+                city(count = 4),
+                mountain(count = 2),
+            ),
+        )
+
+        val selectedVariant = item.bestVariantMatching(LibraryFilters(tradeableOnly = true))
+
+        assertEquals("mountain::standard", selectedVariant?.key)
     }
 
     private fun libraryItem(

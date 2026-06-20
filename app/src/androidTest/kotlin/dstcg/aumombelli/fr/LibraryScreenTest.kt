@@ -501,6 +501,45 @@ class LibraryScreenTest {
     }
 
     @Test
+    fun tradeable_filter_displays_best_tradeable_variant() {
+        val ownedItem = LibraryCardItem(
+            definition = testCardDefinition("M42", name = "Nebuleuse d'Orion"),
+            extensionName = "Astronomes en herbe",
+            ownedCount = 4,
+            availableVariants = listOf(
+                DisplayCardVariant("city", "Ville", "standard", "Standard", false, 2),
+                DisplayCardVariant("holographic", "Holographique", "standard", "Standard", true, 2),
+            ),
+        )
+
+        composeRule.setContent {
+            LibraryScreen(
+                state = LibraryUiState(
+                    isLoading = false,
+                    filterOptions = libraryFilterOptions(),
+                    sections = listOf(
+                        LibrarySection(
+                            extension = ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                            cards = listOf(ownedItem),
+                        ),
+                    ),
+                ),
+                onRefresh = {},
+            )
+        }
+
+        composeRule.onAllNodesWithText("Ville · Standard").assertCountEquals(1)
+
+        composeRule.clickLibraryFilter("library-filter-tradeable")
+
+        composeRule.onAllNodesWithText("Ville · Standard").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Holographique · Standard").assertCountEquals(1)
+        composeRule.onNodeWithTag("library-card-M42").performClick()
+        composeRule.onNodeWithTag("astro-card-variant-holographic-standard").assertIsSelected()
+        composeRule.onNodeWithTag("library-card-trade").assertIsDisplayed()
+    }
+
+    @Test
     fun preview_card_uses_trading_card_ratio() {
         val ownedItem = LibraryCardItem(
             definition = testCardDefinition("M42", name = "Nebuleuse d'Orion"),

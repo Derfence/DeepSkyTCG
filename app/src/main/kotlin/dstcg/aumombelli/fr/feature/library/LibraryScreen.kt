@@ -244,8 +244,8 @@ fun LibraryScreen(
                         )
                     }
                     items(cards, key = { it.definition.id }) { card ->
-                        val filteredVariantKey = if (filters.skyQuality != null) {
-                            card.firstVariantMatching(filters)?.key
+                        val filteredVariantKey = if (filters.affectsVariantChoice()) {
+                            card.bestVariantMatching(filters)?.key
                         } else {
                             null
                         }
@@ -257,7 +257,7 @@ fun LibraryScreen(
                                 {
                                     audioController.play(SoundCue.UiNavigate)
                                     previewCardId = card.definition.id
-                                    selectedVariantKey = card.firstVariantMatching(filters)?.key
+                                    selectedVariantKey = filteredVariantKey
                                         ?: card.availableVariants.firstOrNull()?.key
                                     fullscreenCardId = null
                                 }
