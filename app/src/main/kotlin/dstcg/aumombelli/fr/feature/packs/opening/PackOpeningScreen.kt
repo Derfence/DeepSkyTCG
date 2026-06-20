@@ -176,7 +176,7 @@ fun PackOpeningScreen(
         dismissRequested = true
     }
 
-    val swipeModifier = if (revealItems.isNotEmpty() && state.errorMessage == null) {
+    val swipeModifier = if (cardsVisible && revealItems.isNotEmpty() && state.errorMessage == null) {
         Modifier.pointerInput(packResult?.drawnAt) {
             detectVerticalDragGestures(
                 onDragStart = {
