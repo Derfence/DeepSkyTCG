@@ -40,23 +40,23 @@ python3 -m unittest discover -s scripts -p 'test_*.py'
 
 ## Tests instrumentes
 
-`connectedDebugAndroidTest` demande un emulateur ou un appareil ADB disponible. Le workflow GitHub lance ces tests sur emulateur API 36 uniquement sur pull request vers `master` ou `workflow_dispatch`.
+`connectedDebugAndroidTest` demande un émulateur ou un appareil ADB disponible. Le workflow GitHub lance ces tests sur émulateur API 36 uniquement sur pull request vers `master` ou `workflow_dispatch`.
 
 ## CI
 
 - `.github/workflows/android-ci.yml` : unit tests + `assembleDebug` sur `dev`, `master`, PR vers `master`, et lancement manuel.
-- `.github/workflows/android-instrumented.yml` : tests instrumentes sur emulateur API 36.
+- `.github/workflows/android-instrumented.yml` : tests instrumentés sur émulateur API 36.
 
 ## Benchmarks
 
-Le module `benchmark` cible `fr.aumombelli.dstcg`. Les scenarios macrobench couvrent notamment :
+Le module `benchmark` cible `fr.aumombelli.dstcg`. Les scénarios macrobench couvrent notamment :
 
-- demarrage jusqu'a l'accueil ;
-- ouverture bibliotheque et scroll ;
+- démarrage jusqu'à l'accueil ;
+- ouverture bibliothèque et scroll ;
 - ouverture d'un pack puis retour accueil.
 
 ## Couverture actuelle
 
-Les tests couvrent les repositories, le tirage local, la recharge, la meteo, l'onboarding, les ecrans Compose principaux, l'artisanat, l'echange NFC, les badges, les equipements et les animations critiques.
+Les tests couvrent les repositories, le tirage local, la recharge, la météo, l'onboarding, les écrans Compose principaux, l'artisanat, l'échange Bluetooth, les badges, les équipements et les animations critiques.
 
 [← Index documentation](README.md)

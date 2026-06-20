@@ -25,6 +25,8 @@ import fr.aumombelli.dstcg.data.ProgressRepository
 import fr.aumombelli.dstcg.data.RandomEntropySource
 import fr.aumombelli.dstcg.data.StandaloneGameSettings
 import fr.aumombelli.dstcg.data.TradeRepository
+import fr.aumombelli.dstcg.data.TradeSettings
+import fr.aumombelli.dstcg.data.TradeSettingsGateway
 import fr.aumombelli.dstcg.model.AbsoluteMagnitudeMeasurement
 import fr.aumombelli.dstcg.model.CardDefinition
 import fr.aumombelli.dstcg.model.CardFinishDefinition
@@ -128,6 +130,7 @@ internal fun offlineMainActivityTestAppContainer(
         packRepository = packRepository,
         miniGamesRepository = miniGamesRepository,
         tradeRepository = tradeRepository,
+        tradeSettingsRepository = InMemoryTradeSettingsGateway(),
         gameSettings = gameSettings,
         audioController = NoOpAudioController(),
     )
@@ -336,6 +339,7 @@ private fun navigationTestAppContainer(
             catalogRepository = catalogRepository,
             progressRepository = progressRepository,
         ),
+        tradeSettingsRepository = InMemoryTradeSettingsGateway(),
         gameSettings = gameSettings,
         audioController = audioController,
     )
@@ -480,6 +484,22 @@ private class NavigationPackGateway(
         )
         packFlow.value = openPackResponse
         return openPackResponse
+    }
+}
+
+private class InMemoryTradeSettingsGateway(
+    initialName: String = "Observatoire test",
+) : TradeSettingsGateway {
+    private val mutableSettings = MutableStateFlow(TradeSettings(localName = initialName))
+
+    override val settings: StateFlow<TradeSettings> = mutableSettings
+
+    override suspend fun ensureLocalName(): String = mutableSettings.value.localName
+
+    override suspend fun setLocalName(name: String): String {
+        val nextName = name.trim().ifBlank { "Observatoire test" }
+        mutableSettings.value = TradeSettings(localName = nextName)
+        return nextName
     }
 }
 

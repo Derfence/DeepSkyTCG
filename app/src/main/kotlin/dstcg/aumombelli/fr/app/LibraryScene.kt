@@ -96,6 +96,7 @@ internal fun LibraryScene(
                 TradeViewModel(
                     selectedCandidate = tradeCandidate,
                     tradeRepository = appContainer.tradeRepository,
+                    tradeSettingsRepository = appContainer.tradeSettingsRepository,
                 )
             },
         )
