@@ -461,7 +461,7 @@ class HomeScreenStateTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("home-tutorial-reset-confirmation").assertIsDisplayed()
         composeRule.onNodeWithTag("home-tutorial-reset-confirmation-message")
-            .assertTextContains("Ta collection et ta progression")
+            .assertTextContains("Ta collection et ta progression", substring = true)
         composeRule.mainClock.advanceTimeBy(2_000)
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("home-tutorial-reset-confirmation-confirm").performClick()

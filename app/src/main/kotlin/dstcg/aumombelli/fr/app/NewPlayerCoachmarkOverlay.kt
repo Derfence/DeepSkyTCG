@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -39,10 +40,12 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToInt
 
 @Composable
 internal fun NewPlayerCoachmarkOverlay(
@@ -171,9 +174,11 @@ internal fun NewPlayerCoachmarkOverlay(
                 modifier = Modifier
                     .width(with(density) { bubbleWidthPx.toDp() })
                     .onSizeChanged { bubbleSize = it }
-                    .graphicsLayer {
-                        translationX = bubbleX
-                        translationY = bubbleY
+                    .offset {
+                        IntOffset(
+                            x = bubbleX.roundToInt(),
+                            y = bubbleY.roundToInt(),
+                        )
                     }
                     .testTag("new-player-coachmark-${spec.target.name}"),
             ) {

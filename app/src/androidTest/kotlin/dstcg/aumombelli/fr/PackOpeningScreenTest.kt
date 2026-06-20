@@ -305,15 +305,13 @@ class PackOpeningScreenTest {
 
         assertEquals(emptyList<SoundCue>(), audioController.playedCues)
 
-        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeLeft() }
-        composeRule.runOnIdle { }
-
-        assertEquals(listOf(SoundCue.PackReveal), audioController.playedCues)
-
         composeRule.mainClock.autoAdvance = true
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeLeft() }
         composeRule.waitUntil(timeoutMillis = 5_000) {
             composeRule.safeReadCurrentPackOpeningCardId() == "ALP-002"
         }
+
+        assertEquals(listOf(SoundCue.PackReveal), audioController.playedCues)
     }
 
     @Test
@@ -400,7 +398,13 @@ class PackOpeningScreenTest {
         composeRule.advanceToRevealedCards()
         audioController.clearPlayedCues()
 
+        composeRule.mainClock.autoAdvance = true
         composeRule.firstNodeWithTag("pack-opening-current-card-surface").performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("astro-card-fullscreen-close")
+                .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                .isNotEmpty()
+        }
         composeRule.onNodeWithTag("astro-card-fullscreen").assertIsDisplayed()
         assertEquals(listOf(SoundCue.UiNavigate), audioController.playedCues)
 
