@@ -9,11 +9,19 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import fr.aumombelli.dstcg.audio.AmbientTrack
+import fr.aumombelli.dstcg.audio.AudioController
+import fr.aumombelli.dstcg.audio.AudioSettings
+import fr.aumombelli.dstcg.audio.SoundCue
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.testsupport.badgeCelebrationBackNavigationTestAppContainer
 import fr.aumombelli.dstcg.testsupport.backNavigationTestAppContainer
 import fr.aumombelli.dstcg.testsupport.miniGamesMenuTestAppContainer
 import fr.aumombelli.dstcg.ui.theme.DstcgTheme
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -101,6 +109,42 @@ class DstcgAppBackNavigationTest {
         composeRule.onNodeWithTag("library-back").assertIsDisplayed()
 
         advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
+    }
+
+    @Test
+    fun home_menu_click_plays_navigation_sound_without_replacing_animation_sound() {
+        val audioController = RecordingAudioController()
+        setAppContent(backNavigationTestAppContainer(audioController = audioController))
+        startAndReachHome()
+        audioController.clearPlayedCues()
+
+        composeRule.onNodeWithTag("home-library").performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(SoundCue.UiNavigate, audioController.playedCues.firstOrNull())
+
+        advanceUntilTagDisplayed("library-grid", timeoutMillis = 10_000)
+        assertTrue(audioController.playedCues.contains(SoundCue.LibraryOpen))
+    }
+
+    @Test
+    fun visible_back_from_menu_plays_navigation_sound_without_replacing_animation_sound() {
+        val audioController = RecordingAudioController()
+        setAppContent(backNavigationTestAppContainer(audioController = audioController))
+        startAndReachHome()
+
+        composeRule.onNodeWithTag("home-library").performClick()
+        advanceUntilTagDisplayed("library-grid", timeoutMillis = 10_000)
+        advanceUntilTagGone("app-transition-book", timeoutMillis = 10_000)
+        audioController.clearPlayedCues()
+
+        composeRule.onNodeWithTag("library-back").performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(SoundCue.UiNavigate, audioController.playedCues.firstOrNull())
+
+        advanceBy(1_200)
+        assertTrue(audioController.playedCues.contains(SoundCue.LibraryClose))
     }
 
     @Test
@@ -241,6 +285,40 @@ class DstcgAppBackNavigationTest {
         pressAndroidBack()
         advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("home-open-pack").assertIsDisplayed()
+    }
+
+    @Test
+    fun selecting_pack_extension_plays_navigation_sound() {
+        val audioController = RecordingAudioController()
+        setAppContent(backNavigationTestAppContainer(audioController = audioController))
+        startAndReachHome()
+
+        composeRule.onNodeWithTag("home-open-pack").performClick()
+        advanceUntilTagEnabled("pack-extension-enter-astronomes-en-herbe", timeoutMillis = 10_000)
+        audioController.clearPlayedCues()
+
+        composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(listOf(SoundCue.UiNavigate), audioController.playedCues)
+    }
+
+    @Test
+    fun selecting_pack_booster_plays_navigation_sound() {
+        val audioController = RecordingAudioController()
+        setAppContent(backNavigationTestAppContainer(audioController = audioController))
+        startAndReachHome()
+
+        composeRule.onNodeWithTag("home-open-pack").performClick()
+        advanceUntilTagEnabled("pack-extension-enter-astronomes-en-herbe", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").performClick()
+        advanceUntilTagEnabled("pack-booster-0", timeoutMillis = 10_000)
+        audioController.clearPlayedCues()
+
+        composeRule.onNodeWithTag("pack-booster-0").performClick()
+        composeRule.waitForIdle()
+
+        assertEquals(listOf(SoundCue.UiNavigate), audioController.playedCues)
     }
 
     @Test
@@ -473,5 +551,39 @@ class DstcgAppBackNavigationTest {
         throw androidx.compose.ui.test.ComposeTimeoutException(
             "Condition still not satisfied after ${timeoutMillis} ms",
         )
+    }
+
+    private class RecordingAudioController : AudioController {
+        private val mutableSettings = MutableStateFlow(AudioSettings())
+        private val playedCueStorage = mutableListOf<SoundCue>()
+
+        override val settings: StateFlow<AudioSettings> = mutableSettings.asStateFlow()
+
+        val playedCues: List<SoundCue>
+            get() = synchronized(playedCueStorage) { playedCueStorage.toList() }
+
+        override fun play(cue: SoundCue) {
+            synchronized(playedCueStorage) {
+                playedCueStorage += cue
+            }
+        }
+
+        override fun setAmbient(track: AmbientTrack?) = Unit
+
+        override suspend fun setEnabled(enabled: Boolean) {
+            mutableSettings.value = mutableSettings.value.copy(enabled = enabled)
+        }
+
+        override fun onAppForegrounded() = Unit
+
+        override fun onAppBackgrounded() = Unit
+
+        override fun release() = Unit
+
+        fun clearPlayedCues() {
+            synchronized(playedCueStorage) {
+                playedCueStorage.clear()
+            }
+        }
     }
 }

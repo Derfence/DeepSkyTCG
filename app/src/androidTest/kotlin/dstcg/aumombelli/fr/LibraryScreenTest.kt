@@ -2,6 +2,7 @@ package fr.aumombelli.dstcg
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertCountEquals
@@ -22,6 +23,11 @@ import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.unit.dp
+import fr.aumombelli.dstcg.audio.AmbientTrack
+import fr.aumombelli.dstcg.audio.AudioController
+import fr.aumombelli.dstcg.audio.AudioSettings
+import fr.aumombelli.dstcg.audio.LocalAudioController
+import fr.aumombelli.dstcg.audio.SoundCue
 import fr.aumombelli.dstcg.feature.library.buildLibraryOnboardingVariantWalkthroughPages
 import fr.aumombelli.dstcg.feature.library.LibraryFilterOption
 import fr.aumombelli.dstcg.feature.library.LibraryFilterOptions
@@ -37,6 +43,9 @@ import fr.aumombelli.dstcg.ui.component.AstroCardDetailsPreviewTag
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.viewmodel.LibraryUiState
 import kotlin.math.abs
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -114,6 +123,60 @@ class LibraryScreenTest {
         composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
         composeRule.onAllNodesWithTag("library-card-preview").assertCountEquals(0)
         composeRule.onAllNodesWithTag("library-back").assertCountEquals(0)
+    }
+
+    @Test
+    fun library_card_click_and_return_play_navigation_sound() {
+        val ownedItem = LibraryCardItem(
+            definition = testCardDefinition("M42", name = "Nebuleuse d'Orion"),
+            extensionName = "Astronomes en herbe",
+            ownedCount = 1,
+            availableVariants = listOf(
+                DisplayCardVariant("city", "Ville", "standard", "Standard", false, 1),
+            ),
+        )
+        val audioController = RecordingAudioController()
+
+        composeRule.setContent {
+            CompositionLocalProvider(LocalAudioController provides audioController) {
+                LibraryScreen(
+                    state = LibraryUiState(
+                        isLoading = false,
+                        sections = listOf(
+                            LibrarySection(
+                                extension = ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                                cards = listOf(ownedItem),
+                            ),
+                        ),
+                    ),
+                    onRefresh = {},
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("library-card-M42").performClick()
+        composeRule.onNodeWithTag("library-card-preview").assertIsDisplayed()
+        assertEquals(listOf(SoundCue.UiNavigate), audioController.playedCues)
+
+        audioController.clearPlayedCues()
+        composeRule.onNodeWithTag("library-card-preview-close").performClick()
+        composeRule.onAllNodesWithTag("library-card-preview").assertCountEquals(0)
+        assertEquals(listOf(SoundCue.UiNavigate), audioController.playedCues)
+
+        audioController.clearPlayedCues()
+        composeRule.onNodeWithTag("library-card-M42").performClick()
+        composeRule.onNodeWithTag("library-card-preview").assertIsDisplayed()
+        audioController.clearPlayedCues()
+
+        composeRule.onNodeWithTag("library-card-preview-surface").performClick()
+        composeRule.onNodeWithTag("astro-card-fullscreen").assertIsDisplayed()
+        assertEquals(listOf(SoundCue.UiNavigate), audioController.playedCues)
+
+        audioController.clearPlayedCues()
+        composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
+        composeRule.onAllNodesWithTag("astro-card-fullscreen").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("library-card-preview").assertCountEquals(0)
+        assertEquals(listOf(SoundCue.UiNavigate), audioController.playedCues)
     }
 
     @Test
@@ -570,6 +633,40 @@ class LibraryScreenTest {
             "Expected $nodeTag vertical bounds $nodeBounds to stay inside modal bounds $modalBounds",
             nodeBounds.top >= modalBounds.top && nodeBounds.bottom <= modalBounds.bottom,
         )
+    }
+
+    private class RecordingAudioController : AudioController {
+        private val mutableSettings = MutableStateFlow(AudioSettings())
+        private val playedCueStorage = mutableListOf<SoundCue>()
+
+        override val settings: StateFlow<AudioSettings> = mutableSettings.asStateFlow()
+
+        val playedCues: List<SoundCue>
+            get() = synchronized(playedCueStorage) { playedCueStorage.toList() }
+
+        override fun play(cue: SoundCue) {
+            synchronized(playedCueStorage) {
+                playedCueStorage += cue
+            }
+        }
+
+        override fun setAmbient(track: AmbientTrack?) = Unit
+
+        override suspend fun setEnabled(enabled: Boolean) {
+            mutableSettings.value = mutableSettings.value.copy(enabled = enabled)
+        }
+
+        override fun onAppForegrounded() = Unit
+
+        override fun onAppBackgrounded() = Unit
+
+        override fun release() = Unit
+
+        fun clearPlayedCues() {
+            synchronized(playedCueStorage) {
+                playedCueStorage.clear()
+            }
+        }
     }
 
     private companion object {

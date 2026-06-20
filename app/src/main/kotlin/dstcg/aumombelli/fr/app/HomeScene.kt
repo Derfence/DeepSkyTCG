@@ -9,6 +9,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.aumombelli.dstcg.AppContainer
+import fr.aumombelli.dstcg.audio.SoundCue
 import fr.aumombelli.dstcg.feature.home.HomeScreen
 import fr.aumombelli.dstcg.feature.home.HomeViewModel
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
@@ -65,6 +66,7 @@ internal fun HomeScene(
                 !sceneState.transitionLocked &&
                 NewPlayerOnboardingInteractionPolicy.allowsHomeOpenPack(onboardingStep)
             ) {
+                appContainer.audioController.play(SoundCue.UiNavigate)
                 scope.launch {
                     onboardingCoordinator.onHomeOpenPackSelected()
                     transitions.animateHomeToPackSelection()
@@ -77,6 +79,7 @@ internal fun HomeScene(
                 uiState.isLibraryMenuVisible &&
                 NewPlayerOnboardingInteractionPolicy.allowsHomeLibrary(onboardingStep)
             ) {
+                appContainer.audioController.play(SoundCue.UiNavigate)
                 homeViewModel.markLibrarySeen()
                 scope.launch {
                     val shouldResumeBadgeCelebration = onboardingCoordinator.onLibraryOpened()
@@ -93,6 +96,7 @@ internal fun HomeScene(
                 uiState.isCraftingMenuAvailable &&
                 NewPlayerOnboardingInteractionPolicy.allowsHomeCrafting(onboardingStep)
             ) {
+                appContainer.audioController.play(SoundCue.UiNavigate)
                 scope.launch {
                     onboardingCoordinator.onCraftingOpened()
                     transitions.animateHomeToCrafting()
@@ -104,6 +108,7 @@ internal fun HomeScene(
                 !sceneState.transitionLocked &&
                 NewPlayerOnboardingInteractionPolicy.allowsHomeEquipment(onboardingStep)
             ) {
+                appContainer.audioController.play(SoundCue.UiNavigate)
                 homeViewModel.markEquipmentSeen()
                 scope.launch {
                     onboardingCoordinator.onEquipmentOpened()
@@ -117,6 +122,7 @@ internal fun HomeScene(
                 uiState.isBadgeBookMenuVisible &&
                 NewPlayerOnboardingInteractionPolicy.allowsHomeBadgeBook(onboardingStep)
             ) {
+                appContainer.audioController.play(SoundCue.UiNavigate)
                 homeViewModel.markBadgeBookSeen()
                 scope.launch {
                     onboardingCoordinator.onBadgeBookOpened()
@@ -130,6 +136,7 @@ internal fun HomeScene(
                 uiState.isMiniGamesMenuVisible &&
                 NewPlayerOnboardingInteractionPolicy.allowsHomeMiniGames(onboardingStep)
             ) {
+                appContainer.audioController.play(SoundCue.UiNavigate)
                 homeViewModel.markMiniGamesSeen()
                 scope.launch {
                     onboardingCoordinator.onMiniGamesMenuOpened()

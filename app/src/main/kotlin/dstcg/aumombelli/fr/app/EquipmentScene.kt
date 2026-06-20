@@ -7,6 +7,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.aumombelli.dstcg.AppContainer
+import fr.aumombelli.dstcg.audio.SoundCue
 import fr.aumombelli.dstcg.feature.equipment.EquipmentEvent
 import fr.aumombelli.dstcg.feature.equipment.EquipmentScreen
 import fr.aumombelli.dstcg.feature.equipment.EquipmentViewModel
@@ -64,6 +65,7 @@ internal fun EquipmentScene(
     val equipmentBackAllowed = equipmentBackVisible && !sceneState.transitionLocked
     val navigateBackToHome: () -> Unit = {
         if (equipmentBackAllowed) {
+            appContainer.audioController.play(SoundCue.UiNavigate)
             scope.launch { transitions.animateEquipmentToHome() }
         }
     }

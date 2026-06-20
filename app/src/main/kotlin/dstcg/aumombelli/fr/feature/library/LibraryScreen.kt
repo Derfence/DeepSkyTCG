@@ -37,6 +37,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.app.NewPlayerBlockingModal
 import fr.aumombelli.dstcg.app.NewPlayerBlockingModalPage
+import fr.aumombelli.dstcg.audio.LocalAudioController
+import fr.aumombelli.dstcg.audio.SoundCue
 import fr.aumombelli.dstcg.model.TradeCardCandidate
 import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.ui.component.AstroCardThumbnail
@@ -68,6 +70,7 @@ fun LibraryScreen(
             .flatMap { it.cards }
             .associateBy { it.definition.id }
     }
+    val audioController = LocalAudioController.current
     var previewCardId by remember(state.sections) { mutableStateOf<String?>(null) }
     var fullscreenCardId by remember(state.sections) { mutableStateOf<String?>(null) }
     var selectedVariantKey by remember(state.sections) { mutableStateOf<String?>(null) }
@@ -90,6 +93,7 @@ fun LibraryScreen(
     val fullscreenCard = fullscreenItem?.toDisplayCard(selectedVariantKey)
     val walkthroughVisible = showOnboardingVariantWalkthrough && state.onboardingVariantWalkthroughPages.isNotEmpty()
     val closePreviewToLibrary = {
+        audioController.play(SoundCue.UiNavigate)
         previewCardId = null
         fullscreenCardId = null
         selectedVariantKey = null
@@ -237,6 +241,7 @@ fun LibraryScreen(
                         selectedVariantKey = filteredVariantKey,
                         onClick = if (interactionsEnabled && !walkthroughVisible) {
                             {
+                                audioController.play(SoundCue.UiNavigate)
                                 previewCardId = card.definition.id
                                 selectedVariantKey = card.firstVariantMatching(filters)?.key
                                     ?: card.availableVariants.firstOrNull()?.key
@@ -256,6 +261,7 @@ fun LibraryScreen(
                 selectedVariantKey = selectedVariantKey,
                 onDismiss = closePreviewToLibrary,
                 onExpand = {
+                    audioController.play(SoundCue.UiNavigate)
                     fullscreenCardId = previewCardId
                 },
                 onVariantSelected = { variantKey ->

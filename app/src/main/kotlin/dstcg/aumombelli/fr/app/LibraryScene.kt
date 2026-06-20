@@ -8,6 +8,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.aumombelli.dstcg.AppContainer
+import fr.aumombelli.dstcg.audio.SoundCue
 import fr.aumombelli.dstcg.feature.library.LibraryScreen
 import fr.aumombelli.dstcg.feature.library.LibraryViewModel
 import fr.aumombelli.dstcg.feature.trade.TradeScreen
@@ -52,6 +53,7 @@ internal fun LibraryScene(
     val libraryBackAllowed = libraryBackVisible && !sceneState.transitionLocked
     val navigateBackToHome: () -> Unit = {
         if (libraryBackAllowed) {
+            appContainer.audioController.play(SoundCue.UiNavigate)
             scope.launch { transitions.animateLibraryToHome() }
         }
     }

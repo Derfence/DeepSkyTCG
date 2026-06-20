@@ -3,6 +3,7 @@ package fr.aumombelli.dstcg.testsupport
 import android.content.Context
 import androidx.datastore.core.DataStoreFactory
 import fr.aumombelli.dstcg.AppContainer
+import fr.aumombelli.dstcg.audio.AudioController
 import fr.aumombelli.dstcg.audio.NoOpAudioController
 import fr.aumombelli.dstcg.data.AesGcmProgressCipher
 import fr.aumombelli.dstcg.data.AndroidTrustedTimeSource
@@ -132,7 +133,9 @@ internal fun offlineMainActivityTestAppContainer(
     )
 }
 
-internal fun backNavigationTestAppContainer(): AppContainer {
+internal fun backNavigationTestAppContainer(
+    audioController: AudioController = NoOpAudioController(),
+): AppContainer {
     return navigationTestAppContainer(
         initialCollection = OwnedCollection(
             cards = mapOf(
@@ -149,6 +152,7 @@ internal fun backNavigationTestAppContainer(): AppContainer {
             ),
         ),
         unlockEquipmentMenu = true,
+        audioController = audioController,
     )
 }
 
@@ -248,6 +252,7 @@ private fun navigationTestAppContainer(
     initialOnboardingStep: NewPlayerOnboardingStep? = null,
     homeMenuNoveltyState: HomeMenuNoveltyState = HomeMenuNoveltyState(),
     libraryCardNoveltyState: LibraryCardNoveltyState = LibraryCardNoveltyState(),
+    audioController: AudioController = NoOpAudioController(),
 ): AppContainer {
     val extension = ExtensionDefinition(
         id = "astronomes-en-herbe",
@@ -332,7 +337,7 @@ private fun navigationTestAppContainer(
             progressRepository = progressRepository,
         ),
         gameSettings = gameSettings,
-        audioController = NoOpAudioController(),
+        audioController = audioController,
     )
 }
 
