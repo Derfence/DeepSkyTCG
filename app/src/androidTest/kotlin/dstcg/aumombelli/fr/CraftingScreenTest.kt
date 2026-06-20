@@ -207,6 +207,38 @@ class CraftingScreenTest {
     }
 
     @Test
+    fun darken_sky_library_exposes_apply_all_button() {
+        val candidate = testCraftingCandidate(CraftingMode.DarkenSky)
+        var applyAllCount = 0
+
+        composeRule.setContent {
+            DstcgTheme {
+                CraftingScreen(
+                    state = CraftingUiState(
+                        selectedMode = CraftingMode.DarkenSky,
+                        sections = listOf(testCraftingSection(candidate)),
+                    ),
+                    onRefresh = {},
+                    onSelectMode = {},
+                    onBackHome = {},
+                    onBackToModes = {},
+                    onApplyCrafting = {},
+                    onApplyAllDarkenSky = { applyAllCount += 1 },
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("crafting-apply-all-darken-sky")
+            .assertIsDisplayed()
+            .assertTextContains("Tout assombrir")
+            .performClick()
+
+        composeRule.runOnIdle {
+            assertEquals(1, applyAllCount)
+        }
+    }
+
+    @Test
     fun empty_filtered_library_keeps_filter_locked() {
         composeRule.setContent {
             DstcgTheme {

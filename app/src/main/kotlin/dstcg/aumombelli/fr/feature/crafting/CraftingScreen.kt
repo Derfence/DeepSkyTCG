@@ -31,6 +31,7 @@ fun CraftingScreen(
     onBackHome: () -> Unit,
     onBackToModes: () -> Unit,
     onApplyCrafting: (CraftingCardCandidate) -> Unit,
+    onApplyAllDarkenSky: () -> Unit = {},
     contentVisible: Boolean = true,
     onCoachmarkTargetBoundsChanged: (NewPlayerOnboardingTarget, Rect?) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
@@ -87,6 +88,7 @@ fun CraftingScreen(
                     selectedGroup = group
                     selectedVariantKey = group.candidates.firstOrNull()?.sourceVariant?.key
                 },
+                onApplyAllDarkenSky = onApplyAllDarkenSky,
                 onCoachmarkTargetBoundsChanged = onCoachmarkTargetBoundsChanged,
                 modifier = Modifier
                     .fillMaxSize()

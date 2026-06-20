@@ -132,6 +132,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.isCraftingMenuAvailable)
+        assertTrue(viewModel.uiState.value.showCraftingDarkenSkyIndicator)
     }
 
     @Test
@@ -147,6 +148,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.isCraftingMenuAvailable)
+        assertFalse(viewModel.uiState.value.showCraftingDarkenSkyIndicator)
 
         progressGateway.progress = progressGateway.progress.copy(
             newPlayerOnboardingStep = NewPlayerOnboardingStep.DiscoverMiniGames,
@@ -156,6 +158,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.isCraftingMenuAvailable)
+        assertFalse(viewModel.uiState.value.showCraftingDarkenSkyIndicator)
 
         progressGateway.progress = progressGateway.progress.copy(
             newPlayerOnboardingStep = NewPlayerOnboardingStep.ShowConclusion,
@@ -165,6 +168,31 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.isCraftingMenuAvailable)
+        assertFalse(viewModel.uiState.value.showCraftingDarkenSkyIndicator)
+    }
+
+    @Test
+    fun `crafting darken sky indicator follows current darken sky candidates after unlock`() = runTest {
+        val progressGateway = FakeProgressGateway().apply {
+            progress = progress.copy(
+                openedPackCount = 3,
+                newPlayerOnboardingStep = NewPlayerOnboardingStep.Completed,
+            )
+        }
+        val craftingGateway = FakeCraftingGateway()
+
+        val viewModel = HomeViewModel(progressGateway, craftingGateway)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isCraftingMenuAvailable)
+        assertFalse(viewModel.uiState.value.showCraftingDarkenSkyIndicator)
+
+        craftingGateway.candidatesByMode = mapOf(CraftingMode.DarkenSky to listOf(testDarkenSkyCandidate()))
+        viewModel.refresh()
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.isCraftingMenuAvailable)
+        assertTrue(viewModel.uiState.value.showCraftingDarkenSkyIndicator)
     }
 
     @Test

@@ -103,6 +103,7 @@ class HomeScreenStateTest {
         composeRule.onAllNodesWithTag("home-library-new-indicator", useUnmergedTree = true).assertCountEquals(0)
         composeRule.onAllNodesWithTag("home-equipment-new-indicator", useUnmergedTree = true).assertCountEquals(0)
         composeRule.onAllNodesWithTag("home-badges-new-indicator", useUnmergedTree = true).assertCountEquals(0)
+        composeRule.onAllNodesWithTag("home-crafting-new-indicator", useUnmergedTree = true).assertCountEquals(0)
     }
 
     @Test
@@ -283,15 +284,18 @@ class HomeScreenStateTest {
                 isLibraryMenuVisible = true,
                 isEquipmentMenuVisible = true,
                 isBadgeBookMenuVisible = true,
+                isCraftingMenuAvailable = true,
                 showLibraryNewIndicator = true,
                 showEquipmentNewIndicator = true,
                 showBadgeBookNewIndicator = true,
+                showCraftingDarkenSkyIndicator = true,
             ),
         )
 
         composeRule.onNodeWithTag("home-library-new-indicator", useUnmergedTree = true).assertIsDisplayed()
         composeRule.onNodeWithTag("home-equipment-new-indicator", useUnmergedTree = true).assertIsDisplayed()
         composeRule.onNodeWithTag("home-badges-new-indicator", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("home-crafting-new-indicator", useUnmergedTree = true).assertIsDisplayed()
     }
 
     @Test

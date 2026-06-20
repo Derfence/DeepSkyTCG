@@ -97,6 +97,16 @@ internal fun CraftingScene(
                 craftingViewModel.applyCrafting(candidate)
             }
         },
+        onApplyAllDarkenSky = {
+            if (
+                NewPlayerOnboardingInteractionPolicy.allowsCraftingApplication(
+                    step = onboardingStep,
+                    mode = uiState.selectedMode,
+                )
+            ) {
+                craftingViewModel.applyAllVisibleDarkenSkyCandidates()
+            }
+        },
         contentVisible = sceneState.craftingContentVisible,
         onCoachmarkTargetBoundsChanged = { target, bounds ->
             updateSceneState { it.withCoachmarkTargetBounds(target, bounds) }
