@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -37,9 +38,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.app.NewPlayerBlockingModal
 import fr.aumombelli.dstcg.app.NewPlayerBlockingModalPage
+import fr.aumombelli.dstcg.audio.LocalAudioController
+import fr.aumombelli.dstcg.audio.SoundCue
+import fr.aumombelli.dstcg.model.LibraryCardItem
 import fr.aumombelli.dstcg.model.TradeCardCandidate
+import fr.aumombelli.dstcg.model.raritySortPriority
 import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.ui.component.AstroCardThumbnail
+import fr.aumombelli.dstcg.ui.component.RarityStarBadge
 import fr.aumombelli.dstcg.ui.component.SceneNavigationButton
 import fr.aumombelli.dstcg.ui.component.SceneNavigationIcon
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
@@ -68,6 +74,7 @@ fun LibraryScreen(
             .flatMap { it.cards }
             .associateBy { it.definition.id }
     }
+    val audioController = LocalAudioController.current
     var previewCardId by remember(state.sections) { mutableStateOf<String?>(null) }
     var fullscreenCardId by remember(state.sections) { mutableStateOf<String?>(null) }
     var selectedVariantKey by remember(state.sections) { mutableStateOf<String?>(null) }
@@ -90,6 +97,7 @@ fun LibraryScreen(
     val fullscreenCard = fullscreenItem?.toDisplayCard(selectedVariantKey)
     val walkthroughVisible = showOnboardingVariantWalkthrough && state.onboardingVariantWalkthroughPages.isNotEmpty()
     val closePreviewToLibrary = {
+        audioController.play(SoundCue.UiNavigate)
         previewCardId = null
         fullscreenCardId = null
         selectedVariantKey = null
@@ -225,27 +233,39 @@ fun LibraryScreen(
                             .padding(top = 8.dp, bottom = 4.dp),
                     )
                 }
-                items(section.cards, key = { it.definition.id }) { card ->
-                    val filteredVariantKey = if (filters.skyQuality != null) {
-                        card.firstVariantMatching(filters)?.key
-                    } else {
-                        null
+                section.cards.groupedByRarity().forEach { (rarityLabel, cards) ->
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        LibraryRaritySubsectionHeader(
+                            extensionId = section.extension.id,
+                            rarityLabel = rarityLabel,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 4.dp, bottom = 2.dp),
+                        )
                     }
-                    AstroCardThumbnail(
-                        item = card,
-                        modifier = Modifier.fillMaxWidth(),
-                        selectedVariantKey = filteredVariantKey,
-                        onClick = if (interactionsEnabled && !walkthroughVisible) {
-                            {
-                                previewCardId = card.definition.id
-                                selectedVariantKey = card.firstVariantMatching(filters)?.key
-                                    ?: card.availableVariants.firstOrNull()?.key
-                                fullscreenCardId = null
-                            }
+                    items(cards, key = { it.definition.id }) { card ->
+                        val filteredVariantKey = if (filters.affectsVariantChoice()) {
+                            card.bestVariantMatching(filters)?.key
                         } else {
-                            {}
-                        },
-                    )
+                            null
+                        }
+                        AstroCardThumbnail(
+                            item = card,
+                            modifier = Modifier.fillMaxWidth(),
+                            selectedVariantKey = filteredVariantKey,
+                            onClick = if (interactionsEnabled && !walkthroughVisible) {
+                                {
+                                    audioController.play(SoundCue.UiNavigate)
+                                    previewCardId = card.definition.id
+                                    selectedVariantKey = filteredVariantKey
+                                        ?: card.availableVariants.firstOrNull()?.key
+                                    fullscreenCardId = null
+                                }
+                            } else {
+                                {}
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -256,6 +276,7 @@ fun LibraryScreen(
                 selectedVariantKey = selectedVariantKey,
                 onDismiss = closePreviewToLibrary,
                 onExpand = {
+                    audioController.play(SoundCue.UiNavigate)
                     fullscreenCardId = previewCardId
                 },
                 onVariantSelected = { variantKey ->
@@ -336,3 +357,42 @@ private fun LibrarySectionHeader(
         )
     }
 }
+
+@Composable
+private fun LibraryRaritySubsectionHeader(
+    extensionId: String,
+    rarityLabel: String,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.testTag("library-rarity-section-$extensionId-$rarityLabel"),
+    ) {
+        RarityStarBadge(
+            rarityLabel = rarityLabel,
+            modifier = Modifier
+                .size(20.dp)
+                .padding(start = 2.dp)
+                .testTag("library-rarity-section-star-$extensionId-$rarityLabel"),
+        )
+        Text(
+            text = rarityLabel,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFFD0E0F2),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+private fun List<LibraryCardItem>.groupedByRarity(): List<Pair<String, List<LibraryCardItem>>> =
+    groupBy { card -> card.definition.rarityLabel }
+        .toList()
+        .sortedWith(
+            compareBy(
+                { (rarityLabel, _) -> raritySortPriority(rarityLabel) },
+                { (rarityLabel, _) -> rarityLabel },
+            ),
+        )

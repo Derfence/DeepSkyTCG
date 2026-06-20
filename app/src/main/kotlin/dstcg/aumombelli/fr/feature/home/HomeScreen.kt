@@ -458,7 +458,7 @@ fun HomeScreen(
                             enabled = navigationEnabled,
                             onClick = onOpenCrafting,
                             buttonSize = homeLayout.menuButtonSize,
-                            showNewIndicator = false,
+                            showNewIndicator = state.showCraftingDarkenSkyIndicator,
                             newIndicatorTestTag = "home-crafting-new-indicator",
                             modifier = Modifier
                                 .align(Alignment.BottomEnd)

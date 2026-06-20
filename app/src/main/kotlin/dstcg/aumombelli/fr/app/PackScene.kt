@@ -7,6 +7,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.aumombelli.dstcg.AppContainer
+import fr.aumombelli.dstcg.audio.SoundCue
 import fr.aumombelli.dstcg.feature.packs.opening.PackOpeningScreen
 import fr.aumombelli.dstcg.feature.packs.opening.PackOpeningViewModel
 import fr.aumombelli.dstcg.feature.packs.selection.PackEvent
@@ -78,8 +79,10 @@ internal fun PackScene(
         val currentPackState = packViewModel.uiState.value
         if (!currentPackState.isAwaitingPackResult) {
             if (currentPackState.selectedExtensionId != null) {
+                appContainer.audioController.play(SoundCue.UiNavigate)
                 packViewModel.clearExtensionSelection()
             } else if (!sceneState.transitionLocked) {
+                appContainer.audioController.play(SoundCue.UiNavigate)
                 scope.launch { transitions.animatePackSelectionToHome() }
             }
         }
@@ -106,6 +109,7 @@ internal fun PackScene(
             onRefresh = packViewModel::refresh,
             onSelectExtension = { extensionId ->
                 if (NewPlayerOnboardingInteractionPolicy.allowsPackSelectionExtensionSelection(onboardingStep)) {
+                    appContainer.audioController.play(SoundCue.UiNavigate)
                     packViewModel.selectExtension(extensionId)
                     scope.launch { onboardingCoordinator.onExtensionSelected() }
                 }
@@ -113,6 +117,7 @@ internal fun PackScene(
             onSelectBooster = { boosterIndex ->
                 if (NewPlayerOnboardingInteractionPolicy.allowsPackSelectionBoosterSelection(onboardingStep)) {
                     val decorSeed = packViewModel.uiState.value.decorSeedForBooster(boosterIndex)
+                    appContainer.audioController.play(SoundCue.UiNavigate)
                     packViewModel.selectBooster(boosterIndex)
                     updateSceneState { it.withSelectedPackDecorSeed(decorSeed) }
                 }

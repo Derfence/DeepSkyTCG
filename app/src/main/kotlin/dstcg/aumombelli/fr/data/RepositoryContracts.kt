@@ -24,6 +24,7 @@ import fr.aumombelli.dstcg.model.TradeCardCandidate
 import fr.aumombelli.dstcg.model.TradeCardRef
 import fr.aumombelli.dstcg.model.TradeValidationResult
 import fr.aumombelli.dstcg.model.VariantProfile
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 
 interface CatalogGateway {
@@ -107,9 +108,25 @@ interface TradeGateway {
         localOutgoing: TradeCardRef,
         remoteOutgoing: TradeCardRef,
     ): TradeValidationResult
+    suspend fun prepareTrade(
+        tradeId: String,
+        outgoing: TradeCardRef,
+        incoming: TradeCardRef,
+    ): TradeValidationResult
+    suspend fun clearPreparedTrade(tradeId: String)
     suspend fun applyTrade(
         tradeId: String,
         outgoing: TradeCardRef,
         incoming: TradeCardRef,
     ): TradeValidationResult
+}
+
+data class TradeSettings(
+    val localName: String,
+)
+
+interface TradeSettingsGateway {
+    val settings: Flow<TradeSettings>
+    suspend fun ensureLocalName(): String
+    suspend fun setLocalName(name: String): String
 }

@@ -7,6 +7,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.aumombelli.dstcg.AppContainer
+import fr.aumombelli.dstcg.audio.SoundCue
 import fr.aumombelli.dstcg.feature.minigames.MemoryGameScreen
 import fr.aumombelli.dstcg.feature.minigames.MiniGamesMenuScreen
 import fr.aumombelli.dstcg.feature.minigames.MiniGamesScreenUiState
@@ -44,16 +45,32 @@ internal fun MiniGamesScene(
     }
 
     val backAllowed = !sceneState.transitionLocked
+    val playNavigationSound = {
+        appContainer.audioController.play(SoundCue.UiNavigate)
+    }
     val navigateBackToHome: () -> Unit = {
         if (backAllowed) {
+            playNavigationSound()
             scope.launch { transitions.animateMiniGamesMenuToHome() }
+        }
+    }
+    val navigateBackToMiniGamesMenu: () -> Unit = {
+        if (backAllowed) {
+            playNavigationSound()
+            miniGamesViewModel.backToMenu()
         }
     }
     val navigateBack: () -> Unit = {
         if (uiState.screen is MiniGamesScreenUiState.Menu) {
             navigateBackToHome()
         } else {
-            miniGamesViewModel.backToMenu()
+            navigateBackToMiniGamesMenu()
+        }
+    }
+    val openMiniGame: (() -> Unit) -> Unit = { open ->
+        if (backAllowed) {
+            playNavigationSound()
+            open()
         }
     }
 
@@ -65,10 +82,10 @@ internal fun MiniGamesScene(
         is MiniGamesScreenUiState.Menu -> MiniGamesMenuScreen(
             state = uiState,
             onBack = navigateBackToHome,
-            onOpenQuiz = miniGamesViewModel::openQuiz,
-            onOpenMemory = miniGamesViewModel::openMemory,
-            onOpenTimeline = miniGamesViewModel::openTimeline,
-            onOpenObservatory = miniGamesViewModel::openObservatory,
+            onOpenQuiz = { openMiniGame(miniGamesViewModel::openQuiz) },
+            onOpenMemory = { openMiniGame(miniGamesViewModel::openMemory) },
+            onOpenTimeline = { openMiniGame(miniGamesViewModel::openTimeline) },
+            onOpenObservatory = { openMiniGame(miniGamesViewModel::openObservatory) },
             contentVisible = sceneState.miniGamesMenuContentVisible,
             interactionsEnabled = !sceneState.transitionLocked,
         )
@@ -78,7 +95,7 @@ internal fun MiniGamesScene(
         is MiniGamesScreenUiState.QuizResult,
         is MiniGamesScreenUiState.QuizUnavailable -> QuizGameScreen(
             state = uiState,
-            onBackToMenu = miniGamesViewModel::backToMenu,
+            onBackToMenu = navigateBackToMiniGamesMenu,
             onSelectDifficulty = miniGamesViewModel::selectQuizDifficulty,
             onSelectAnswer = miniGamesViewModel::selectQuizAnswer,
             onContinue = miniGamesViewModel::continueQuiz,
@@ -89,7 +106,7 @@ internal fun MiniGamesScene(
         is MiniGamesScreenUiState.TimelineResult,
         is MiniGamesScreenUiState.TimelineUnavailable -> TimelineGameScreen(
             state = uiState,
-            onBackToMenu = miniGamesViewModel::backToMenu,
+            onBackToMenu = navigateBackToMiniGamesMenu,
             onSelectDifficulty = miniGamesViewModel::selectTimelineDifficulty,
             onPlaceCard = miniGamesViewModel::placeTimelineCard,
             onReturnCardToHand = miniGamesViewModel::returnTimelineCardToHand,
@@ -101,7 +118,7 @@ internal fun MiniGamesScene(
         is MiniGamesScreenUiState.ObservatoryResult,
         is MiniGamesScreenUiState.ObservatoryUnavailable -> ObservatoryGameScreen(
             state = uiState,
-            onBackToMenu = miniGamesViewModel::backToMenu,
+            onBackToMenu = navigateBackToMiniGamesMenu,
             onSelectDifficulty = miniGamesViewModel::selectObservatoryDifficulty,
             onSetDomeProgress = miniGamesViewModel::setObservatoryDomeProgress,
             onValidateDomeProgress = miniGamesViewModel::validateObservatoryDomeProgress,
@@ -116,7 +133,7 @@ internal fun MiniGamesScene(
 
         else -> MemoryGameScreen(
             state = uiState,
-            onBackToMenu = miniGamesViewModel::backToMenu,
+            onBackToMenu = navigateBackToMiniGamesMenu,
             onSelectDifficulty = miniGamesViewModel::selectMemoryDifficulty,
             onSelectCell = miniGamesViewModel::selectMemoryCell,
         )

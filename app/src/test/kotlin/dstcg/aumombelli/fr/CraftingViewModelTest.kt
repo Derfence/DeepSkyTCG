@@ -7,6 +7,7 @@ import fr.aumombelli.dstcg.model.CraftingApplyResult
 import fr.aumombelli.dstcg.model.CraftingCardCandidate
 import fr.aumombelli.dstcg.model.CraftingCardRef
 import fr.aumombelli.dstcg.model.CraftingMode
+import fr.aumombelli.dstcg.model.CraftingRecipe
 import fr.aumombelli.dstcg.model.DisplayCardVariant
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.OwnedVariantCount
@@ -86,6 +87,36 @@ class CraftingViewModelTest {
     }
 
     @Test
+    fun `apply all visible darken sky candidates applies one candidate per visible card`() = runTest {
+        val firstCandidate = testCraftingCandidate(cardId = "ALP-001")
+        val secondCandidate = testCraftingCandidate(cardId = "ALP-002")
+        val gateway = RecordingCraftingGateway(
+            initialCandidates = listOf(firstCandidate, secondCandidate),
+            refreshedCandidates = emptyList(),
+        )
+        val viewModel = CraftingViewModel(
+            craftingRepository = gateway,
+        )
+        viewModel.selectMode(CraftingMode.DarkenSky)
+        advanceUntilIdle()
+
+        viewModel.applyAllVisibleDarkenSkyCandidates()
+        advanceUntilIdle()
+
+        assertEquals(
+            listOf(
+                CraftingMode.DarkenSky to firstCandidate.sourceRef,
+                CraftingMode.DarkenSky to secondCandidate.sourceRef,
+            ),
+            gateway.applied,
+        )
+        val state = viewModel.uiState.value
+        assertFalse(state.isApplying)
+        assertTrue(state.sections.isEmpty())
+        assertEquals("2 cartes ont été assombries.", state.successMessage)
+    }
+
+    @Test
     fun `apply crafting ignores repeated requests while first request is pending`() = runTest {
         val candidate = testCraftingCandidate()
         val gateway = InvalidCraftingGateway(candidate)
@@ -125,9 +156,9 @@ class CraftingViewModelTest {
         )
     }
 
-    private fun testCraftingCandidate(): CraftingCardCandidate =
+    private fun testCraftingCandidate(cardId: String = "ALP-001"): CraftingCardCandidate =
         CraftingCardCandidate(
-            card = testCardDefinition("ALP-001"),
+            card = testCardDefinition(cardId),
             extensionName = "Astronomes en herbe",
             mode = CraftingMode.DarkenSky,
             sourceVariant = DisplayCardVariant(
@@ -148,6 +179,39 @@ class CraftingViewModelTest {
             ),
             consumedCount = 2,
         )
+
+    private class RecordingCraftingGateway(
+        private val initialCandidates: List<CraftingCardCandidate>,
+        private val refreshedCandidates: List<CraftingCardCandidate>,
+    ) : CraftingGateway {
+        private val candidatesByRef = (initialCandidates + refreshedCandidates).associateBy { it.sourceRef }
+        private var loadCount = 0
+        val applied = mutableListOf<Pair<CraftingMode, CraftingCardRef>>()
+        var applyCallCount = 0
+            private set
+
+        override suspend fun loadCraftingCandidates(mode: CraftingMode): List<CraftingCardCandidate> =
+            if (loadCount++ == 0) initialCandidates else refreshedCandidates
+
+        override suspend fun hasDarkenSkyCandidates(): Boolean = initialCandidates.isNotEmpty()
+
+        override suspend fun applyCrafting(
+            mode: CraftingMode,
+            source: CraftingCardRef,
+        ): CraftingApplyResult {
+            applyCallCount += 1
+            applied += mode to source
+            val candidate = candidatesByRef.getValue(source)
+            return CraftingApplyResult.Success(
+                CraftingRecipe(
+                    mode = mode,
+                    source = source,
+                    target = candidate.targetRef,
+                    consumedCount = candidate.consumedCount,
+                ),
+            )
+        }
+    }
 
     private class InvalidCraftingGateway(
         private val candidate: CraftingCardCandidate,

@@ -3,6 +3,7 @@ package fr.aumombelli.dstcg.testsupport
 import android.content.Context
 import androidx.datastore.core.DataStoreFactory
 import fr.aumombelli.dstcg.AppContainer
+import fr.aumombelli.dstcg.audio.AudioController
 import fr.aumombelli.dstcg.audio.NoOpAudioController
 import fr.aumombelli.dstcg.data.AesGcmProgressCipher
 import fr.aumombelli.dstcg.data.AndroidTrustedTimeSource
@@ -24,6 +25,8 @@ import fr.aumombelli.dstcg.data.ProgressRepository
 import fr.aumombelli.dstcg.data.RandomEntropySource
 import fr.aumombelli.dstcg.data.StandaloneGameSettings
 import fr.aumombelli.dstcg.data.TradeRepository
+import fr.aumombelli.dstcg.data.TradeSettings
+import fr.aumombelli.dstcg.data.TradeSettingsGateway
 import fr.aumombelli.dstcg.model.AbsoluteMagnitudeMeasurement
 import fr.aumombelli.dstcg.model.CardDefinition
 import fr.aumombelli.dstcg.model.CardFinishDefinition
@@ -127,12 +130,15 @@ internal fun offlineMainActivityTestAppContainer(
         packRepository = packRepository,
         miniGamesRepository = miniGamesRepository,
         tradeRepository = tradeRepository,
+        tradeSettingsRepository = InMemoryTradeSettingsGateway(),
         gameSettings = gameSettings,
         audioController = NoOpAudioController(),
     )
 }
 
-internal fun backNavigationTestAppContainer(): AppContainer {
+internal fun backNavigationTestAppContainer(
+    audioController: AudioController = NoOpAudioController(),
+): AppContainer {
     return navigationTestAppContainer(
         initialCollection = OwnedCollection(
             cards = mapOf(
@@ -149,6 +155,7 @@ internal fun backNavigationTestAppContainer(): AppContainer {
             ),
         ),
         unlockEquipmentMenu = true,
+        audioController = audioController,
     )
 }
 
@@ -248,6 +255,7 @@ private fun navigationTestAppContainer(
     initialOnboardingStep: NewPlayerOnboardingStep? = null,
     homeMenuNoveltyState: HomeMenuNoveltyState = HomeMenuNoveltyState(),
     libraryCardNoveltyState: LibraryCardNoveltyState = LibraryCardNoveltyState(),
+    audioController: AudioController = NoOpAudioController(),
 ): AppContainer {
     val extension = ExtensionDefinition(
         id = "astronomes-en-herbe",
@@ -331,8 +339,9 @@ private fun navigationTestAppContainer(
             catalogRepository = catalogRepository,
             progressRepository = progressRepository,
         ),
+        tradeSettingsRepository = InMemoryTradeSettingsGateway(),
         gameSettings = gameSettings,
-        audioController = NoOpAudioController(),
+        audioController = audioController,
     )
 }
 
@@ -475,6 +484,22 @@ private class NavigationPackGateway(
         )
         packFlow.value = openPackResponse
         return openPackResponse
+    }
+}
+
+private class InMemoryTradeSettingsGateway(
+    initialName: String = "Observatoire test",
+) : TradeSettingsGateway {
+    private val mutableSettings = MutableStateFlow(TradeSettings(localName = initialName))
+
+    override val settings: StateFlow<TradeSettings> = mutableSettings
+
+    override suspend fun ensureLocalName(): String = mutableSettings.value.localName
+
+    override suspend fun setLocalName(name: String): String {
+        val nextName = name.trim().ifBlank { "Observatoire test" }
+        mutableSettings.value = TradeSettings(localName = nextName)
+        return nextName
     }
 }
 

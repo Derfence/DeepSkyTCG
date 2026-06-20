@@ -391,17 +391,22 @@ internal fun PackOpeningFullscreenDialog(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color(0xE608101A))
-                .dstcgContentInsetsPadding(includeBottom = true)
-                .padding(14.dp)
                 .testTag("astro-card-fullscreen"),
         ) {
-            AstroCardDetailsSurface(
-                displayCard = displayCard,
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = 42.dp),
-            )
-            AstroCardFullscreenCloseButton(onClick = onDismiss)
+                    .dstcgContentInsetsPadding(includeBottom = true)
+                    .padding(14.dp),
+            ) {
+                AstroCardDetailsSurface(
+                    displayCard = displayCard,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(top = 42.dp),
+                )
+                AstroCardFullscreenCloseButton(onClick = onDismiss)
+            }
         }
     }
 }

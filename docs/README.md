@@ -18,7 +18,7 @@ docs/README.md
     |-- features/packs.md
     |   `-- features/weather-recharge.md
     |-- features/library-badges.md
-    |   `-- features/trade-nfc.md
+    |   `-- features/trade-bluetooth.md
 |-- features/equipment.md
 |-- features/crafting.md
 |-- features/mini-games.md
@@ -56,7 +56,7 @@ docs/README.md
 - [Quiz](features/quiz.md)
 - [Memory](features/memory.md)
 - [Timeline](features/timeline.md)
-- [Échange NFC](features/trade-nfc.md)
+- [Échange Bluetooth](features/trade-bluetooth.md)
 
 ## Rattrapage depuis git
 
@@ -64,14 +64,14 @@ L'audit a comparé les docs existantes, les fichiers sources et l'historique ré
 
 - `v1.6.0` : ajout de l'artisanat, menu `Atelier`, modes `Assombrir le ciel` et `Agence spatiale`.
 - Mini-jeux : accès Home recto-verso, menu carte, Quiz, Memory et Timeline.
-- `v1.5.0` : échange de cartes par NFC, validation par rareté/variante et empreinte de catalogue.
+- Migration actuelle : échange de cartes par Bluetooth LE, découverte de partenaire et confirmation bilatérale.
 - Refactor scenes : `HomeScene`, `LibraryScene`, `CraftingScene`, `EquipmentScene`, `BadgeBookScene`, `PackScene` via `AppSceneContent`.
 - Visuels récents : nouveaux boosters, fond Home, portail-livre, portail-équipement, arrivée holographique, logos et tampons SVG.
 - Progression : nouveaux champs `tradeLedgerState`, `equipmentBadgeProgress`, indicateurs de nouveauté et onboarding étendu.
 
 ## Anciennes pages conservées
 
-Ces chemins restent presents pour ne pas casser les liens existants :
+Ces chemins restent présents pour ne pas casser les liens existants :
 
 - [new-player-onboarding.md](new-player-onboarding.md)
 - [equipment-system.md](equipment-system.md)

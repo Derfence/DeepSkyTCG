@@ -60,6 +60,29 @@ class TradeRepositoryTest {
     }
 
     @Test
+    fun `prepare trade stores pending trade without mutating collection`() = runTest {
+        val fixture = testTradeRepository(
+            collection = ownedCollectionWithVariants(
+                "ALP-001",
+                OwnedVariantCount("city", "standard", 2),
+            ),
+        )
+        val outgoing = TradeCardRef("ALP-001", "city", "standard")
+        val incoming = TradeCardRef("ALP-002", "city", "standard")
+
+        val result = fixture.repository.prepareTrade(
+            tradeId = "trade-pending",
+            outgoing = outgoing,
+            incoming = incoming,
+        )
+
+        assertEquals(TradeValidationResult.Valid, result)
+        assertEquals(2, fixture.progressGateway.progress.collection.tradeCountFor(outgoing))
+        assertEquals(0, fixture.progressGateway.progress.collection.tradeCountFor(incoming))
+        assertEquals("trade-pending", fixture.progressGateway.progress.tradeLedgerState.pendingTrade?.tradeId)
+    }
+
+    @Test
     fun `apply trade adds incoming card to user library and resolves it for success screen`() = runTest {
         val fixture = testTradeRepository(
             collection = ownedCollectionWithVariants(

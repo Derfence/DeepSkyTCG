@@ -105,6 +105,7 @@ fun PackOpeningScreen(
     var revealCelebrationLayerBounds by remember(packResult?.drawnAt) { mutableStateOf<PackRevealBounds?>(null) }
     var playedHolographicCuePages by remember(packResult?.drawnAt) { mutableStateOf(setOf<Int>()) }
     var lastObservedCuePage by remember(packResult?.drawnAt) { mutableIntStateOf(0) }
+    var lastPackRevealCuePage by remember(packResult?.drawnAt) { mutableIntStateOf(0) }
     var activeHolographicCuePage by remember(packResult?.drawnAt) { mutableStateOf<Int?>(null) }
     val scale = remember(packResult?.drawnAt) { Animatable(1f) }
     val burstProgress = remember(packResult?.drawnAt) { Animatable(0f) }
@@ -130,6 +131,7 @@ fun PackOpeningScreen(
         revealCelebrationLayerBounds = null
         playedHolographicCuePages = emptySet()
         lastObservedCuePage = 0
+        lastPackRevealCuePage = 0
         activeHolographicCuePage = null
         scale.snapTo(1f)
         burstProgress.snapTo(0f)
@@ -176,7 +178,7 @@ fun PackOpeningScreen(
         dismissRequested = true
     }
 
-    val swipeModifier = if (revealItems.isNotEmpty() && state.errorMessage == null) {
+    val swipeModifier = if (cardsVisible && revealItems.isNotEmpty() && state.errorMessage == null) {
         Modifier.pointerInput(packResult?.drawnAt) {
             detectVerticalDragGestures(
                 onDragStart = {
@@ -197,6 +199,7 @@ fun PackOpeningScreen(
                     verticalDragActive = false
                     if (swipeOffset < -220f) {
                         dismissStartOffset = swipeOffset
+                        audioController.play(SoundCue.PackReveal)
                         dismissRequested = true
                     } else {
                         swipeOffset = 0f
@@ -350,6 +353,13 @@ fun PackOpeningScreen(
                             if (settledPage == revealItems.lastIndex && !hasReachedLastCardOnce) {
                                 hasReachedLastCardOnce = true
                             }
+                        }
+
+                        LaunchedEffect(packResult.drawnAt, currentPage, cardsVisible) {
+                            if (!cardsVisible || currentPage == lastPackRevealCuePage) return@LaunchedEffect
+
+                            lastPackRevealCuePage = currentPage
+                            audioController.play(SoundCue.PackReveal)
                         }
 
                         LaunchedEffect(packResult.drawnAt, currentPage, cardsVisible) {
@@ -521,6 +531,7 @@ fun PackOpeningScreen(
                                         },
                                         onOpenFullscreen = {
                                             if (revealItems[page] is AstroPackRevealUiItem) {
+                                                audioController.play(SoundCue.UiNavigate)
                                                 fullscreenPage = page
                                             }
                                         },
@@ -583,7 +594,10 @@ fun PackOpeningScreen(
         if (fullscreenCard != null) {
             PackOpeningFullscreenDialog(
                 displayCard = fullscreenCard,
-                onDismiss = { fullscreenPage = null },
+                onDismiss = {
+                    audioController.play(SoundCue.UiNavigate)
+                    fullscreenPage = null
+                },
             )
         }
     }

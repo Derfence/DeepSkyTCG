@@ -29,6 +29,7 @@ data class HomeUiState(
     val showBadgeBookNewIndicator: Boolean = false,
     val showMiniGamesNewIndicator: Boolean = false,
     val isCraftingMenuAvailable: Boolean = false,
+    val showCraftingDarkenSkyIndicator: Boolean = false,
 )
 
 class HomeViewModel(
@@ -135,12 +136,10 @@ class HomeViewModel(
             runCatching { progressRepository.loadProgress() }
                 .onSuccess { result ->
                     _uiState.value = when (result) {
-                        is ProgressLoadResult.Ok -> result.toHomeUiState(
-                            isCraftingMenuAvailable = result.progress.isCraftingMenuAvailable(craftingRepository),
-                        )
+                        is ProgressLoadResult.Ok -> result.toHomeUiState(result.progress.homeCraftingStatus(craftingRepository))
 
                         is ProgressLoadResult.Recovered -> result.toHomeUiState(
-                            isCraftingMenuAvailable = result.progress.isCraftingMenuAvailable(craftingRepository),
+                            result.progress.homeCraftingStatus(craftingRepository),
                         )
 
                         is ProgressLoadResult.Compromised -> HomeUiState(
@@ -160,14 +159,15 @@ class HomeViewModel(
 }
 
 private fun ProgressLoadResult.Ok.toHomeUiState(
-    isCraftingMenuAvailable: Boolean,
+    craftingStatus: HomeCraftingStatus,
 ): HomeUiState = HomeUiState(
     isLoading = false,
     isLibraryMenuVisible = progress.hasOpenedFirstPack(),
     isEquipmentMenuVisible = progress.hasUnlockedEquipmentMenu(),
     isBadgeBookMenuVisible = progress.hasOpenedFirstPack(),
     isMiniGamesMenuVisible = progress.miniGamesMenuUnlocked,
-    isCraftingMenuAvailable = isCraftingMenuAvailable,
+    isCraftingMenuAvailable = craftingStatus.isMenuAvailable,
+    showCraftingDarkenSkyIndicator = craftingStatus.hasDarkenSkyCandidates,
     showLibraryNewIndicator = progress.homeMenuNoveltyState.library,
     showEquipmentNewIndicator = progress.homeMenuNoveltyState.equipment,
     showBadgeBookNewIndicator = progress.homeMenuNoveltyState.badgeBook,
@@ -175,34 +175,48 @@ private fun ProgressLoadResult.Ok.toHomeUiState(
 )
 
 private fun ProgressLoadResult.Recovered.toHomeUiState(
-    isCraftingMenuAvailable: Boolean,
+    craftingStatus: HomeCraftingStatus,
 ): HomeUiState = HomeUiState(
     isLoading = false,
     isLibraryMenuVisible = progress.hasOpenedFirstPack(),
     isEquipmentMenuVisible = progress.hasUnlockedEquipmentMenu(),
     isBadgeBookMenuVisible = progress.hasOpenedFirstPack(),
     isMiniGamesMenuVisible = progress.miniGamesMenuUnlocked,
-    isCraftingMenuAvailable = isCraftingMenuAvailable,
+    isCraftingMenuAvailable = craftingStatus.isMenuAvailable,
+    showCraftingDarkenSkyIndicator = craftingStatus.hasDarkenSkyCandidates,
     showLibraryNewIndicator = progress.homeMenuNoveltyState.library,
     showEquipmentNewIndicator = progress.homeMenuNoveltyState.equipment,
     showBadgeBookNewIndicator = progress.homeMenuNoveltyState.badgeBook,
     showMiniGamesNewIndicator = progress.homeMenuNoveltyState.miniGames,
 )
 
-private suspend fun StandaloneProgress.isCraftingMenuAvailable(
+private data class HomeCraftingStatus(
+    val isMenuAvailable: Boolean,
+    val hasDarkenSkyCandidates: Boolean,
+)
+
+private suspend fun StandaloneProgress.homeCraftingStatus(
     craftingRepository: CraftingGateway? = null,
-): Boolean {
-    if (openedPackCount < CraftingMenuMinOpenedPackCount) return false
+): HomeCraftingStatus {
+    if (openedPackCount < CraftingMenuMinOpenedPackCount) {
+        return HomeCraftingStatus(
+            isMenuAvailable = false,
+            hasDarkenSkyCandidates = false,
+        )
+    }
+    val hasDarkenSkyCandidates = craftingRepository?.let { repository ->
+        runCatching { repository.hasDarkenSkyCandidates() }.getOrDefault(false)
+    } ?: false
     val alreadyUnlocked = newPlayerOnboardingStep == NewPlayerOnboardingStep.ViewCraftingMenu ||
         newPlayerOnboardingStep == NewPlayerOnboardingStep.LearnCraftingTools ||
         newPlayerOnboardingStep == NewPlayerOnboardingStep.UseSkyDarkening ||
         newPlayerOnboardingStep == NewPlayerOnboardingStep.DiscoverMiniGames ||
         newPlayerOnboardingStep == NewPlayerOnboardingStep.ShowConclusion ||
         newPlayerOnboardingStep == NewPlayerOnboardingStep.Completed
-    if (alreadyUnlocked) return true
-    return craftingRepository?.let { repository ->
-        runCatching { repository.hasDarkenSkyCandidates() }.getOrDefault(false)
-    } ?: false
+    return HomeCraftingStatus(
+        isMenuAvailable = alreadyUnlocked || hasDarkenSkyCandidates,
+        hasDarkenSkyCandidates = hasDarkenSkyCandidates,
+    )
 }
 
 private const val CraftingMenuMinOpenedPackCount = 3

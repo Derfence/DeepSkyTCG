@@ -7,6 +7,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.aumombelli.dstcg.AppContainer
+import fr.aumombelli.dstcg.audio.SoundCue
 import fr.aumombelli.dstcg.feature.crafting.CraftingEvent
 import fr.aumombelli.dstcg.feature.crafting.CraftingOnboardingToolsWalkthrough
 import fr.aumombelli.dstcg.feature.crafting.CraftingScreen
@@ -67,8 +68,10 @@ internal fun CraftingScene(
             NewPlayerOnboardingInteractionPolicy.allowsCraftingBack(onboardingStep),
     ) {
         if (uiState.selectedMode != null) {
+            appContainer.audioController.play(SoundCue.UiNavigate)
             craftingViewModel.backToModeSelection()
         } else {
+            appContainer.audioController.play(SoundCue.UiNavigate)
             scope.launch { transitions.animateCraftingToHome() }
         }
     }
@@ -78,15 +81,20 @@ internal fun CraftingScene(
         onRefresh = craftingViewModel::refresh,
         onSelectMode = { mode ->
             if (NewPlayerOnboardingInteractionPolicy.allowsCraftingModeSelection(onboardingStep, mode)) {
+                appContainer.audioController.play(SoundCue.UiNavigate)
                 craftingViewModel.selectMode(mode)
             }
         },
         onBackHome = {
             if (NewPlayerOnboardingInteractionPolicy.allowsCraftingBack(onboardingStep)) {
+                appContainer.audioController.play(SoundCue.UiNavigate)
                 scope.launch { transitions.animateCraftingToHome() }
             }
         },
-        onBackToModes = craftingViewModel::backToModeSelection,
+        onBackToModes = {
+            appContainer.audioController.play(SoundCue.UiNavigate)
+            craftingViewModel.backToModeSelection()
+        },
         onApplyCrafting = { candidate ->
             if (
                 NewPlayerOnboardingInteractionPolicy.allowsCraftingApplication(
@@ -95,6 +103,16 @@ internal fun CraftingScene(
                 )
             ) {
                 craftingViewModel.applyCrafting(candidate)
+            }
+        },
+        onApplyAllDarkenSky = {
+            if (
+                NewPlayerOnboardingInteractionPolicy.allowsCraftingApplication(
+                    step = onboardingStep,
+                    mode = uiState.selectedMode,
+                )
+            ) {
+                craftingViewModel.applyAllVisibleDarkenSkyCandidates()
             }
         },
         contentVisible = sceneState.craftingContentVisible,

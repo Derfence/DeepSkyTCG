@@ -101,6 +101,64 @@ class TradeRepository(
         )
     }
 
+    override suspend fun prepareTrade(
+        tradeId: String,
+        outgoing: TradeCardRef,
+        incoming: TradeCardRef,
+    ): TradeValidationResult {
+        val cardsById = catalogRepository.loadCards().associateBy(CardDefinition::id)
+        val variantProfilesById = catalogRepository.loadVariantProfiles().associateBy(VariantProfile::id)
+        var result: TradeValidationResult = TradeValidationResult.Invalid("Échange non préparé.")
+
+        progressRepository.updateProgress { progress ->
+            when {
+                progress.tradeLedgerState.hasCompleted(tradeId) -> {
+                    result = TradeValidationResult.Valid
+                    progress
+                }
+
+                progress.tradeLedgerState.pendingTrade == null ||
+                    progress.tradeLedgerState.pendingTrade.tradeId == tradeId -> {
+                    val validation = validateTradePair(
+                        localCollection = progress.collection,
+                        localOutgoing = outgoing,
+                        remoteOutgoing = incoming,
+                        cardsById = cardsById,
+                        variantProfilesById = variantProfilesById,
+                    )
+                    if (validation is TradeValidationResult.Invalid) {
+                        result = validation
+                        progress
+                    } else {
+                        result = TradeValidationResult.Valid
+                        progress.copy(
+                            tradeLedgerState = progress.tradeLedgerState.beginPending(
+                                tradeId = tradeId,
+                                outgoing = outgoing,
+                                incoming = incoming,
+                            ),
+                        )
+                    }
+                }
+
+                else -> {
+                    result = TradeValidationResult.Invalid("Un autre échange est déjà en attente.")
+                    progress
+                }
+            }
+        }
+
+        return result
+    }
+
+    override suspend fun clearPreparedTrade(tradeId: String) {
+        progressRepository.updateProgress { progress ->
+            progress.copy(
+                tradeLedgerState = progress.tradeLedgerState.clearPending(tradeId),
+            )
+        }
+    }
+
     override suspend fun applyTrade(
         tradeId: String,
         outgoing: TradeCardRef,
@@ -108,7 +166,7 @@ class TradeRepository(
     ): TradeValidationResult {
         val cardsById = catalogRepository.loadCards().associateBy(CardDefinition::id)
         val variantProfilesById = catalogRepository.loadVariantProfiles().associateBy(VariantProfile::id)
-        var result: TradeValidationResult = TradeValidationResult.Invalid("Echange non applique.")
+        var result: TradeValidationResult = TradeValidationResult.Invalid("Échange non appliqué.")
 
         progressRepository.updateProgress { progress ->
             if (progress.tradeLedgerState.hasCompleted(tradeId)) {

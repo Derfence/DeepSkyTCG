@@ -7,6 +7,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.aumombelli.dstcg.AppContainer
+import fr.aumombelli.dstcg.audio.SoundCue
 import fr.aumombelli.dstcg.feature.badges.BadgeBookScreen
 import fr.aumombelli.dstcg.feature.badges.BadgeBookViewModel
 import fr.aumombelli.dstcg.ui.viewmodel.DstcgViewModelFactory
@@ -40,6 +41,7 @@ internal fun BadgeBookScene(
     val badgeBookBackAllowed = !sceneState.transitionLocked
     val navigateBackToHome: () -> Unit = {
         if (badgeBookBackAllowed) {
+            appContainer.audioController.play(SoundCue.UiNavigate)
             scope.launch { transitions.animateBadgeBookToHome() }
         }
     }

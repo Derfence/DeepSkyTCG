@@ -3,6 +3,7 @@ package fr.aumombelli.dstcg
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -25,6 +26,11 @@ import androidx.compose.ui.test.swipeLeft
 import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.dp
+import fr.aumombelli.dstcg.audio.AmbientTrack
+import fr.aumombelli.dstcg.audio.AudioController
+import fr.aumombelli.dstcg.audio.AudioSettings
+import fr.aumombelli.dstcg.audio.LocalAudioController
+import fr.aumombelli.dstcg.audio.SoundCue
 import fr.aumombelli.dstcg.feature.packs.opening.AstroPackRevealUiItem
 import fr.aumombelli.dstcg.feature.packs.opening.EquipmentPackRevealUiItem
 import fr.aumombelli.dstcg.feature.packs.opening.PackOpeningRevealSlotProbe
@@ -41,6 +47,9 @@ import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.screen.PackOpeningScreen
 import fr.aumombelli.dstcg.ui.viewmodel.PackOpeningUiState
 import kotlin.math.abs
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -96,6 +105,48 @@ class PackOpeningScreenTest {
         composeRule.onNodeWithTag("pack-opening-close").performClick()
 
         assertEquals(1, dismissClicks)
+    }
+
+    @Test
+    fun pack_opening_ignores_swipe_up_on_booster_before_cards_are_visible() {
+        val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
+        val packResult = DrawPackResponse.fromCards(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
+            cards = listOf(testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox")),
+        )
+
+        var doneCallCount = 0
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackOpeningScreen(
+                state = PackOpeningUiState(
+                    packResult = packResult,
+                    displayCards = listOf(
+                        firstCard.toDisplayCard(
+                            extensionName = "Astronomes en herbe",
+                            activeVariant = packResult.cards[0].variant.toDisplayVariant(),
+                        ),
+                    ),
+                ),
+                onDone = { doneCallCount += 1 },
+            )
+        }
+
+        composeRule.mainClock.advanceTimeBy(PACK_OPENING_INITIAL_BOOSTER_ASSERTION_MS)
+        composeRule.runOnIdle { }
+        composeRule.onNodeWithTag("pack-opening-booster").assertIsDisplayed()
+
+        composeRule.onNodeWithTag("pack-opening-booster").performTouchInput { swipeUp() }
+        composeRule.mainClock.advanceTimeBy(1_000)
+        composeRule.runOnIdle { }
+
+        composeRule.onNodeWithTag("pack-opening-booster").assertIsDisplayed()
+        assertEquals(0, doneCallCount)
     }
 
     @Test
@@ -202,6 +253,167 @@ class PackOpeningScreenTest {
         composeRule.runOnIdle { }
         composeRule.mainClock.autoAdvance = true
         assertEquals(1, doneCallCount)
+    }
+
+    @Test
+    fun pack_opening_card_change_plays_reveal_sound() {
+        val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
+        val secondCard = testCardDefinition("ALP-002", name = "Galaxie d'Andromede")
+        val packResult = DrawPackResponse.fromCards(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
+            cards = listOf(
+                testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
+                testPackCard("ALP-002", "Galaxie d'Andromede", "Rare", "steam_golem"),
+            ),
+        )
+        val audioController = RecordingAudioController()
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            CompositionLocalProvider(LocalAudioController provides audioController) {
+                PackOpeningScreen(
+                    state = PackOpeningUiState(
+                        packResult = packResult,
+                        displayCards = listOf(
+                            firstCard.toDisplayCard(
+                                extensionName = "Astronomes en herbe",
+                                activeVariant = packResult.cards[0].variant.toDisplayVariant(),
+                            ),
+                            secondCard.toDisplayCard(
+                                extensionName = "Astronomes en herbe",
+                                activeVariant = packResult.cards[1].variant.toDisplayVariant(),
+                            ),
+                        ),
+                        highestBurstRarity = "Rare",
+                        hasHolographicBurst = false,
+                    ),
+                    onDone = {},
+                )
+            }
+        }
+
+        composeRule.advanceToRevealedCards()
+        audioController.clearPlayedCues()
+
+        composeRule.performPartialHorizontalSwipeOnCurrentCard()
+        composeRule.runOnIdle { }
+
+        assertEquals(emptyList<SoundCue>(), audioController.playedCues)
+
+        composeRule.mainClock.autoAdvance = true
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeLeft() }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.safeReadCurrentPackOpeningCardId() == "ALP-002"
+        }
+
+        assertEquals(listOf(SoundCue.PackReveal), audioController.playedCues)
+    }
+
+    @Test
+    fun pack_opening_swipe_up_dismiss_plays_reveal_sound() {
+        val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
+        val packResult = DrawPackResponse.fromCards(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
+            cards = listOf(
+                testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
+            ),
+        )
+        val audioController = RecordingAudioController()
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            CompositionLocalProvider(LocalAudioController provides audioController) {
+                PackOpeningScreen(
+                    state = PackOpeningUiState(
+                        packResult = packResult,
+                        displayCards = listOf(
+                            firstCard.toDisplayCard(
+                                extensionName = "Astronomes en herbe",
+                                activeVariant = packResult.cards[0].variant.toDisplayVariant(),
+                            ),
+                        ),
+                        highestBurstRarity = "Common",
+                        hasHolographicBurst = false,
+                    ),
+                    onDone = {},
+                )
+            }
+        }
+
+        composeRule.advanceToRevealedCards()
+        audioController.clearPlayedCues()
+
+        composeRule.performDismissSwipeOnCurrentCard()
+        composeRule.runOnIdle { }
+
+        assertEquals(listOf(SoundCue.PackReveal), audioController.playedCues)
+    }
+
+    @Test
+    fun pack_opening_card_click_and_fullscreen_return_play_navigation_sound() {
+        val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
+        val packResult = DrawPackResponse.fromCards(
+            extensionId = "astronomes-en-herbe",
+            drawnAt = "2026-03-23T12:00:00Z",
+            rechargeState = androidTestRechargeStateWithNextChargeAt(
+                availableDrawCount = 9,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+            ),
+            cards = listOf(
+                testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
+            ),
+        )
+        val audioController = RecordingAudioController()
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            CompositionLocalProvider(LocalAudioController provides audioController) {
+                PackOpeningScreen(
+                    state = PackOpeningUiState(
+                        packResult = packResult,
+                        displayCards = listOf(
+                            firstCard.toDisplayCard(
+                                extensionName = "Astronomes en herbe",
+                                activeVariant = packResult.cards[0].variant.toDisplayVariant(),
+                            ),
+                        ),
+                        highestBurstRarity = "Common",
+                        hasHolographicBurst = false,
+                    ),
+                    onDone = {},
+                )
+            }
+        }
+
+        composeRule.advanceToRevealedCards()
+        audioController.clearPlayedCues()
+
+        composeRule.mainClock.autoAdvance = true
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performClick()
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.onAllNodesWithTag("astro-card-fullscreen-close")
+                .fetchSemanticsNodes(atLeastOneRootRequired = false)
+                .isNotEmpty()
+        }
+        composeRule.onNodeWithTag("astro-card-fullscreen").assertIsDisplayed()
+        assertEquals(listOf(SoundCue.UiNavigate), audioController.playedCues)
+
+        audioController.clearPlayedCues()
+        composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
+        composeRule.runOnIdle { }
+
+        composeRule.onAllNodesWithTag("astro-card-fullscreen").assertCountEquals(0)
+        assertEquals(listOf(SoundCue.UiNavigate), audioController.playedCues)
     }
 
     @Test
@@ -1341,6 +1553,16 @@ class PackOpeningScreenTest {
         }
     }
 
+    private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.performPartialHorizontalSwipeOnCurrentCard() {
+        firstNodeWithTag("pack-opening-current-card-surface").performTouchInput {
+            down(center)
+            advanceEventTime(16L)
+            moveBy(Offset(-48f, 0f))
+            advanceEventTime(16L)
+            up()
+        }
+    }
+
     private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertCurrentCardCentered(
         tolerancePx: Float = 24f,
     ) {
@@ -1361,6 +1583,40 @@ class PackOpeningScreenTest {
         }
         true
     }.getOrDefault(false)
+
+    private class RecordingAudioController : AudioController {
+        private val mutableSettings = MutableStateFlow(AudioSettings())
+        private val playedCueStorage = mutableListOf<SoundCue>()
+
+        override val settings: StateFlow<AudioSettings> = mutableSettings.asStateFlow()
+
+        val playedCues: List<SoundCue>
+            get() = synchronized(playedCueStorage) { playedCueStorage.toList() }
+
+        override fun play(cue: SoundCue) {
+            synchronized(playedCueStorage) {
+                playedCueStorage += cue
+            }
+        }
+
+        override fun setAmbient(track: AmbientTrack?) = Unit
+
+        override suspend fun setEnabled(enabled: Boolean) {
+            mutableSettings.value = mutableSettings.value.copy(enabled = enabled)
+        }
+
+        override fun onAppForegrounded() = Unit
+
+        override fun onAppBackgrounded() = Unit
+
+        override fun release() = Unit
+
+        fun clearPlayedCues() {
+            synchronized(playedCueStorage) {
+                playedCueStorage.clear()
+            }
+        }
+    }
 
     private fun buildPackOpeningState(
         drawnAt: String,

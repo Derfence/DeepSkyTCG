@@ -103,6 +103,7 @@ class HomeScreenStateTest {
         composeRule.onAllNodesWithTag("home-library-new-indicator", useUnmergedTree = true).assertCountEquals(0)
         composeRule.onAllNodesWithTag("home-equipment-new-indicator", useUnmergedTree = true).assertCountEquals(0)
         composeRule.onAllNodesWithTag("home-badges-new-indicator", useUnmergedTree = true).assertCountEquals(0)
+        composeRule.onAllNodesWithTag("home-crafting-new-indicator", useUnmergedTree = true).assertCountEquals(0)
     }
 
     @Test
@@ -283,15 +284,18 @@ class HomeScreenStateTest {
                 isLibraryMenuVisible = true,
                 isEquipmentMenuVisible = true,
                 isBadgeBookMenuVisible = true,
+                isCraftingMenuAvailable = true,
                 showLibraryNewIndicator = true,
                 showEquipmentNewIndicator = true,
                 showBadgeBookNewIndicator = true,
+                showCraftingDarkenSkyIndicator = true,
             ),
         )
 
         composeRule.onNodeWithTag("home-library-new-indicator", useUnmergedTree = true).assertIsDisplayed()
         composeRule.onNodeWithTag("home-equipment-new-indicator", useUnmergedTree = true).assertIsDisplayed()
         composeRule.onNodeWithTag("home-badges-new-indicator", useUnmergedTree = true).assertIsDisplayed()
+        composeRule.onNodeWithTag("home-crafting-new-indicator", useUnmergedTree = true).assertIsDisplayed()
     }
 
     @Test
@@ -306,7 +310,7 @@ class HomeScreenStateTest {
         composeRule.onNodeWithTag("home-settings-about").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("home-about-sheet").assertIsDisplayed()
-        composeRule.onNodeWithTag("home-about-sheet-version").assertTextContains("v2.7.0")
+        composeRule.onNodeWithTag("home-about-sheet-version").assertTextContains("v2.7.8")
     }
 
     @Test
@@ -457,7 +461,7 @@ class HomeScreenStateTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("home-tutorial-reset-confirmation").assertIsDisplayed()
         composeRule.onNodeWithTag("home-tutorial-reset-confirmation-message")
-            .assertTextContains("Ta collection et ta progression")
+            .assertTextContains("Ta collection et ta progression", substring = true)
         composeRule.mainClock.advanceTimeBy(2_000)
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("home-tutorial-reset-confirmation-confirm").performClick()

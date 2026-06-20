@@ -25,6 +25,9 @@ import fr.aumombelli.dstcg.data.ProgressRepository
 import fr.aumombelli.dstcg.data.StandaloneGameSettings
 import fr.aumombelli.dstcg.data.TradeGateway
 import fr.aumombelli.dstcg.data.TradeRepository
+import fr.aumombelli.dstcg.data.TradeSettingsGateway
+import fr.aumombelli.dstcg.data.TradeSettingsRepository
+import fr.aumombelli.dstcg.data.tradeSettingsDataStore
 
 class AppContainer(
     val progressRepository: ProgressGateway,
@@ -35,6 +38,7 @@ class AppContainer(
     val packRepository: PackGateway,
     val miniGamesRepository: MiniGamesGateway,
     val tradeRepository: TradeGateway,
+    val tradeSettingsRepository: TradeSettingsGateway,
     val gameSettings: StandaloneGameSettings,
     val audioController: AudioController,
 ) {
@@ -82,6 +86,7 @@ class AppContainer(
                 catalogRepository = catalogRepository,
                 progressRepository = progressRepository,
             )
+            val tradeSettingsRepository = TradeSettingsRepository(appContext.tradeSettingsDataStore)
             val audioController = AndroidAudioController(
                 context = appContext,
                 settingsRepository = AudioSettingsRepository(appContext.audioSettingsDataStore),
@@ -96,6 +101,7 @@ class AppContainer(
                 packRepository = packRepository,
                 miniGamesRepository = miniGamesRepository,
                 tradeRepository = tradeRepository,
+                tradeSettingsRepository = tradeSettingsRepository,
                 gameSettings = gameSettings,
                 audioController = audioController,
             )

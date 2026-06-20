@@ -1,8 +1,8 @@
 # Vue d'ensemble
 
-[← Index documentation](README.md) | [Architecture](architecture.md) | [Fonctionnalites](features/home.md)
+[← Index documentation](README.md) | [Architecture](architecture.md) | [Fonctionnalités](features/home.md)
 
-Deep Sky TCG est une application Android Compose offline. Elle remplace les flux compte/serveur par une progression locale chiffree et par un catalogue embarque.
+Deep Sky TCG est une application Android Compose offline. Elle remplace les flux compte/serveur par une progression locale chiffrée et par un catalogue embarqué.
 
 ## Boucle de jeu
 
@@ -11,33 +11,33 @@ Accueil
   |
   v
 Packs -> Ouverture -> Collection
-                      |-- Bibliotheque -> Artisanat -> Bibliotheque
-                      |                `-- Echange NFC
+                      |-- Bibliothèque -> Artisanat -> Bibliothèque
+                      |                `-- Échange Bluetooth
                       `-- Badges
 
-Ouverture -> Equipements -> Packs
+Ouverture -> Équipements -> Packs
 ```
 
-Le joueur ouvre des packs, enrichit sa collection, consulte ses variantes, active des equipements, debloque des badges, fabrique des variantes avec ses doublons et peut echanger certaines cartes en NFC.
+Le joueur ouvre des packs, enrichit sa collection, consulte ses variantes, active des équipements, débloque des badges, fabrique des variantes avec ses doublons et peut échanger certaines cartes en Bluetooth LE.
 
 ## Contraintes produit
 
-- Aucun login, logout, compte distant ou compatibilite client/serveur.
-- Aucun appel reseau requis pour jouer.
+- Aucun login, logout, compte distant ou compatibilité client/serveur.
+- Aucun appel réseau requis pour jouer.
 - Un seul profil local par installation.
-- La meteo de recharge est deterministe a partir d'une date UTC de confiance.
-- Le NFC est optionnel : l'application reste utilisable sans puce NFC.
+- La météo de recharge est déterministe à partir d'une date UTC de confiance.
+- Le Bluetooth LE est optionnel : l'application reste utilisable sans support d'annonce BLE, hors échange de cartes.
 
 ## Parcours principal
 
 1. Lancement avec animation de marque.
 2. Accueil centre sur `Ouvrir un pack`.
-3. Premier parcours guide : pack, bibliotheque, badges, equipements, puis artisanat.
-4. Boucle libre : packs, consultation, activation d'equipement, fabrication, echange NFC.
+3. Premier parcours guidé : pack, bibliothèque, badges, équipements, puis artisanat.
+4. Boucle libre : packs, consultation, activation d'équipement, fabrication, échange Bluetooth.
 
-## Donnees embarquees
+## Données embarquées
 
-Les donnees runtime viennent de `app/src/main/assets/catalog/` :
+Les données runtime viennent de `app/src/main/assets/catalog/` :
 
 - `extensions.json`
 - `cards.json`
@@ -46,6 +46,6 @@ Les donnees runtime viennent de `app/src/main/assets/catalog/` :
 - `equipment_cards.json`
 - `equipment_settings.json`
 
-Le classeur source est `catalogue_astronomie.xlsx`. La synchronisation est documentee dans [Catalogue et assets](catalog-assets.md).
+Le classeur source est `catalogue_astronomie.xlsx`. La synchronisation est documentée dans [Catalogue et assets](catalog-assets.md).
 
 [← Index documentation](README.md)

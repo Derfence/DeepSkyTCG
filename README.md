@@ -1,6 +1,6 @@
 # Deep Sky TCG - Client Android Standalone
 
-Client Android natif et autonome de Deep Sky TCG. L'application fonctionne hors ligne : catalogue embarque, progression locale chiffree, tirage de packs, collection, badges, equipements, artisanat et echange NFC sans serveur.
+Client Android natif et autonome de Deep Sky TCG. L'application fonctionne hors ligne : catalogue embarqué, progression locale chiffrée, tirage de packs, collection, badges, équipements, artisanat et échange Bluetooth sans serveur.
 
 ## Documentation
 
@@ -10,23 +10,23 @@ Lectures utiles :
 
 - [Vue d'ensemble](docs/overview.md) : objectif produit, boucle de jeu et parcours.
 - [Architecture](docs/architecture.md) : modules, scenes Compose, repositories et persistance.
-- [Installation et tests](docs/setup-and-tests.md) : prerequis Android, commandes Gradle, CI et benchmarks.
-- [Design visuel](docs/visual-design.md) : couleurs, raretes, qualites de ciel, equipements et assets de marque.
-- [Catalogue et assets](docs/catalog-assets.md) : XLSX, JSON embarques, scripts et illustrations.
+- [Installation et tests](docs/setup-and-tests.md) : prérequis Android, commandes Gradle, CI et benchmarks.
+- [Design visuel](docs/visual-design.md) : couleurs, raretés, qualités de ciel, équipements et assets de marque.
+- [Catalogue et assets](docs/catalog-assets.md) : XLSX, JSON embarqués, scripts et illustrations.
 - [Politique de confidentialité](POLITIQUE_DE_CONFIDENTIALITE.md) : document officiel sur les données locales, le NFC et l'absence de collecte.
 
 Fonctionnalites :
 
 - [Accueil](docs/features/home.md)
 - [Packs et tirage local](docs/features/packs.md)
-- [Meteo et recharge](docs/features/weather-recharge.md)
-- [Bibliotheque et badges](docs/features/library-badges.md)
-- [Equipements](docs/features/equipment.md)
+- [Météo et recharge](docs/features/weather-recharge.md)
+- [Bibliothèque et badges](docs/features/library-badges.md)
+- [Équipements](docs/features/equipment.md)
 - [Artisanat](docs/features/crafting.md)
-- [Echange NFC](docs/features/trade-nfc.md)
+- [Échange Bluetooth](docs/features/trade-bluetooth.md)
 - [Onboarding nouveaux joueurs](docs/new-player-onboarding.md)
 
-## Demarrage rapide
+## Démarrage rapide
 
 Depuis Windows :
 
@@ -34,29 +34,29 @@ Depuis Windows :
 .\gradlew.bat :app:testDebugUnitTest :app:assembleDebug
 ```
 
-Depuis WSL/Bash, utilise le wrapper Windows pour reutiliser le SDK local :
+Depuis WSL/Bash, utilise le wrapper Windows pour réutiliser le SDK local :
 
 ```bash
 cmd.exe /c gradlew.bat :app:testDebugUnitTest :app:assembleDebug
 ```
 
-Prerequis principaux :
+Prérequis principaux :
 
 - Java 21
 - Android SDK Platform 36.1
 - Android SDK Build-Tools 36.1.0
 - `local.properties` pointant vers le SDK Android Windows local
 
-Les commandes detaillees sont dans [Installation et tests](docs/setup-and-tests.md).
+Les commandes détaillées sont dans [Installation et tests](docs/setup-and-tests.md).
 
-## Etat fonctionnel actuel
+## État fonctionnel actuel
 
-- Version affichée dans l'application : `v2.7.0`.
-- Application mono-profil, sans login, sans backend et sans publicite.
-- Progression securisee dans DataStore avec chiffrement AES-GCM via Android Keystore.
-- Stock local de `10` ouvertures, `5` cartes par pack et cooldown de `6 h` module par la meteo UTC.
-- Catalogue embarque synchronise depuis `catalogue_astronomie.xlsx`.
-- NFC optionnel pour echanger une variante en doublon contre une variante compatible.
-- Onboarding local guide jusqu'a l'artisanat, avec explication des outils et de leurs couts.
+- Version affichée dans l'application : `v2.7.8`.
+- Application mono-profil, sans login, sans backend et sans publicité.
+- Progression sécurisée dans DataStore avec chiffrement AES-GCM via Android Keystore.
+- Stock local de `10` ouvertures, `5` cartes par pack et cooldown de `6 h` modulé par la météo UTC.
+- Catalogue embarqué synchronisé depuis `catalogue_astronomie.xlsx`.
+- Bluetooth LE pour échanger une variante en doublon contre une variante compatible, sans serveur ni appairage système.
+- Onboarding local guidé jusqu'à l'artisanat, avec explication des outils et de leurs coûts.
 
-Ne pousse rien depuis ce depot sans instruction explicite.
+Ne pousse rien depuis ce dépôt sans instruction explicite.

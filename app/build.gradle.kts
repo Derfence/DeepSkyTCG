@@ -43,8 +43,8 @@ android {
         applicationId = "fr.aumombelli.dstcg"
         minSdk = 26
         targetSdk = 36
-        versionCode = 12
-        versionName = "2.7.0"
+        versionCode = 13
+        versionName = "2.7.8"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }

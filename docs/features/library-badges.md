@@ -1,6 +1,6 @@
 # Bibliothèque et badges
 
-[← Index documentation](../README.md) | [Échange NFC](trade-nfc.md) | [Onboarding](../flows/new-player-onboarding.md)
+[← Index documentation](../README.md) | [Échange Bluetooth](trade-bluetooth.md) | [Onboarding](../flows/new-player-onboarding.md)
 
 ## Bibliothèque
 

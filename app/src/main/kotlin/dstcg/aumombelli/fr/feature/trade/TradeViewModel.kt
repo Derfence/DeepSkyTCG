@@ -3,6 +3,8 @@ package fr.aumombelli.dstcg.feature.trade
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import fr.aumombelli.dstcg.data.TradeGateway
+import fr.aumombelli.dstcg.data.TradeSettingsGateway
+import fr.aumombelli.dstcg.data.normalizeTradeLocalName
 import fr.aumombelli.dstcg.model.DisplayCard
 import fr.aumombelli.dstcg.model.TradeCardCandidate
 import fr.aumombelli.dstcg.model.TradeCardRef
@@ -15,16 +17,37 @@ import kotlinx.coroutines.launch
 data class TradeUiState(
     val isLoading: Boolean = true,
     val catalogFingerprint: String? = null,
+    val localName: String = "",
+    val editableLocalName: String = "",
     val selectedCandidate: TradeCardCandidate? = null,
+    val discoveredPartners: List<BluetoothTradePartner> = emptyList(),
+    val selectedPartner: BluetoothTradePartner? = null,
+    val remotePartnerName: String? = null,
+    val remoteCardRef: TradeCardRef? = null,
+    val remoteDisplayCard: DisplayCard? = null,
     val receivedCardRef: TradeCardRef? = null,
     val receivedDisplayCard: DisplayCard? = null,
+    val isResolvingRemoteCard: Boolean = false,
     val isResolvingReceivedCard: Boolean = false,
-    val phase: TradePhase = TradePhase.Ready,
+    val verificationCode: String? = null,
+    val localConfirmed: Boolean = false,
+    val remoteConfirmed: Boolean = false,
+    val phase: TradePhase = TradePhase.Preparing,
     val message: String? = null,
+    val connectionCommand: TradeConnectionCommand? = null,
+    val confirmationCommandId: Long = 0L,
+)
+
+data class TradeConnectionCommand(
+    val id: Long,
+    val partnerId: String,
 )
 
 enum class TradePhase {
-    Ready,
+    Preparing,
+    Discovering,
+    Connecting,
+    Confirming,
     Exchanging,
     Succeeded,
     Failed,
@@ -33,11 +56,12 @@ enum class TradePhase {
 class TradeViewModel(
     selectedCandidate: TradeCardCandidate,
     private val tradeRepository: TradeGateway,
+    private val tradeSettingsRepository: TradeSettingsGateway,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(
         TradeUiState(
             selectedCandidate = selectedCandidate,
-            message = "Préparation de l'échange NFC...",
+            message = "Préparation de l'échange Bluetooth...",
         ),
     )
     val uiState: StateFlow<TradeUiState> = _uiState.asStateFlow()
@@ -51,25 +75,34 @@ class TradeViewModel(
             _uiState.update {
                 it.copy(
                     isLoading = true,
-                    phase = TradePhase.Ready,
+                    phase = TradePhase.Preparing,
+                    discoveredPartners = emptyList(),
+                    selectedPartner = null,
+                    remotePartnerName = null,
+                    remoteCardRef = null,
+                    remoteDisplayCard = null,
                     receivedCardRef = null,
                     receivedDisplayCard = null,
+                    isResolvingRemoteCard = false,
                     isResolvingReceivedCard = false,
-                    message = "Préparation de l'échange NFC...",
+                    verificationCode = null,
+                    localConfirmed = false,
+                    remoteConfirmed = false,
+                    connectionCommand = null,
+                    message = "Préparation de l'échange Bluetooth...",
                 )
             }
             runCatching {
-                tradeRepository.catalogFingerprint()
-            }.onSuccess { content ->
+                tradeRepository.catalogFingerprint() to tradeSettingsRepository.ensureLocalName()
+            }.onSuccess { (catalogFingerprint, localName) ->
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        catalogFingerprint = content,
-                        phase = TradePhase.Ready,
-                        receivedCardRef = null,
-                        receivedDisplayCard = null,
-                        isResolvingReceivedCard = false,
-                        message = "Rapproche les deux téléphones et garde-les immobiles.",
+                        catalogFingerprint = catalogFingerprint,
+                        localName = localName,
+                        editableLocalName = localName,
+                        phase = TradePhase.Discovering,
+                        message = "Recherche de partenaires Bluetooth proches.",
                     )
                 }
             }.onFailure { exception ->
@@ -77,10 +110,7 @@ class TradeViewModel(
                     it.copy(
                         isLoading = false,
                         phase = TradePhase.Failed,
-                        receivedCardRef = null,
-                        receivedDisplayCard = null,
-                        isResolvingReceivedCard = false,
-                        message = exception.message ?: "Impossible de préparer l'échange NFC.",
+                        message = exception.message ?: "Impossible de préparer l'échange Bluetooth.",
                     )
                 }
             }
@@ -90,47 +120,183 @@ class TradeViewModel(
     fun retryExchange() {
         _uiState.update {
             it.copy(
-                phase = TradePhase.Ready,
+                phase = TradePhase.Discovering,
+                discoveredPartners = emptyList(),
+                selectedPartner = null,
+                remotePartnerName = null,
+                remoteCardRef = null,
+                remoteDisplayCard = null,
                 receivedCardRef = null,
                 receivedDisplayCard = null,
+                isResolvingRemoteCard = false,
                 isResolvingReceivedCard = false,
-                message = "Rapproche les deux téléphones et garde-les immobiles.",
+                verificationCode = null,
+                localConfirmed = false,
+                remoteConfirmed = false,
+                connectionCommand = null,
+                message = "Recherche de partenaires Bluetooth proches.",
             )
         }
     }
 
-    internal fun onNfcEvent(event: NfcTradeControllerEvent) {
-        if (event is NfcTradeControllerEvent.Succeeded) {
+    fun onLocalNameEdited(name: String) {
+        _uiState.update { it.copy(editableLocalName = name.normalizeTradeLocalName()) }
+    }
+
+    fun saveLocalName() {
+        val name = _uiState.value.editableLocalName
+        viewModelScope.launch {
+            val savedName = tradeSettingsRepository.setLocalName(name)
+            _uiState.update {
+                it.copy(
+                    localName = savedName,
+                    editableLocalName = savedName,
+                    phase = TradePhase.Discovering,
+                    discoveredPartners = emptyList(),
+                    message = "Nom visible mis à jour.",
+                )
+            }
+        }
+    }
+
+    fun selectPartner(partner: BluetoothTradePartner) {
+        _uiState.update { state ->
+            val commandId = (state.connectionCommand?.id ?: 0L) + 1L
+            state.copy(
+                selectedPartner = partner,
+                phase = TradePhase.Connecting,
+                connectionCommand = TradeConnectionCommand(
+                    id = commandId,
+                    partnerId = partner.id,
+                ),
+                message = "Connexion à ${partner.displayName}...",
+            )
+        }
+    }
+
+    fun confirmExchange() {
+        _uiState.update { state ->
+            state.copy(
+                localConfirmed = true,
+                confirmationCommandId = state.confirmationCommandId + 1L,
+                message = if (state.remoteConfirmed) {
+                    "Confirmation reçue, échange en cours..."
+                } else {
+                    "Confirmation envoyée. En attente du partenaire."
+                },
+            )
+        }
+    }
+
+    internal fun onBluetoothEvent(event: BluetoothTradeControllerEvent) {
+        if (event is BluetoothTradeControllerEvent.Succeeded) {
             onExchangeSucceeded(event.receivedCard)
             return
         }
-        _uiState.update { state ->
-            when (event) {
-                NfcTradeControllerEvent.Waiting -> state.copy(
-                    phase = TradePhase.Ready,
-                    receivedCardRef = null,
-                    receivedDisplayCard = null,
-                    isResolvingReceivedCard = false,
-                    message = "Rapproche les deux téléphones et garde-les immobiles.",
+        when (event) {
+            BluetoothTradeControllerEvent.Discovering -> _uiState.update {
+                it.copy(
+                    phase = TradePhase.Discovering,
+                    message = "Recherche de partenaires Bluetooth proches.",
                 )
+            }
 
-                NfcTradeControllerEvent.Exchanging -> state.copy(
+            is BluetoothTradeControllerEvent.PartnerFound -> _uiState.update { state ->
+                val partners = (state.discoveredPartners.filterNot { it.id == event.partner.id } + event.partner)
+                    .sortedBy { it.displayName.lowercase() }
+                state.copy(
+                    discoveredPartners = partners,
+                    message = if (partners.isEmpty()) {
+                        "Recherche de partenaires Bluetooth proches."
+                    } else {
+                        "Sélectionne le partenaire d'échange."
+                    },
+                )
+            }
+
+            is BluetoothTradeControllerEvent.PartnerLeft -> _uiState.update { state ->
+                val partners = state.discoveredPartners.filterNot { partner ->
+                    partner.id == event.partnerId || partner.sessionId == event.sessionId
+                }
+                state.copy(
+                    discoveredPartners = partners,
+                    selectedPartner = state.selectedPartner?.takeUnless { partner ->
+                        partner.id == event.partnerId || partner.sessionId == event.sessionId
+                    },
+                    message = if (partners.isEmpty() && state.phase == TradePhase.Discovering) {
+                        "Recherche de partenaires Bluetooth proches."
+                    } else {
+                        state.message
+                    },
+                )
+            }
+
+            is BluetoothTradeControllerEvent.Connecting -> _uiState.update {
+                it.copy(
+                    selectedPartner = event.partner,
+                    phase = TradePhase.Connecting,
+                    message = "Connexion à ${event.partner.displayName}...",
+                )
+            }
+
+            is BluetoothTradeControllerEvent.RemoteOffer -> onRemoteOffer(event)
+
+            BluetoothTradeControllerEvent.RemoteConfirmed -> _uiState.update {
+                it.copy(
+                    remoteConfirmed = true,
+                    message = if (it.localConfirmed) {
+                        "Confirmations reçues, échange en cours..."
+                    } else {
+                        "Le partenaire a confirmé. Vérifie la carte puis confirme."
+                    },
+                )
+            }
+
+            BluetoothTradeControllerEvent.Exchanging -> _uiState.update {
+                it.copy(
                     phase = TradePhase.Exchanging,
-                    receivedCardRef = null,
-                    receivedDisplayCard = null,
-                    isResolvingReceivedCard = false,
-                    message = "Échange en cours...",
+                    message = "Échange Bluetooth en cours...",
                 )
+            }
 
-                is NfcTradeControllerEvent.Failed -> state.copy(
+            is BluetoothTradeControllerEvent.Failed -> _uiState.update {
+                it.copy(
                     phase = TradePhase.Failed,
-                    receivedCardRef = null,
-                    receivedDisplayCard = null,
+                    isResolvingRemoteCard = false,
                     isResolvingReceivedCard = false,
                     message = event.message,
                 )
+            }
 
-                is NfcTradeControllerEvent.Succeeded -> state
+            is BluetoothTradeControllerEvent.Succeeded -> Unit
+        }
+    }
+
+    private fun onRemoteOffer(event: BluetoothTradeControllerEvent.RemoteOffer) {
+        _uiState.update {
+            it.copy(
+                phase = TradePhase.Confirming,
+                remotePartnerName = event.partnerName,
+                remoteCardRef = event.remoteCard,
+                remoteDisplayCard = null,
+                isResolvingRemoteCard = true,
+                verificationCode = event.verificationCode,
+                message = "Vérifie la carte proposée par ${event.partnerName}.",
+            )
+        }
+        viewModelScope.launch {
+            val displayCard = runCatching {
+                tradeRepository.loadTradeCard(event.remoteCard)
+            }.getOrNull()
+            _uiState.update { state ->
+                if (state.remoteCardRef == event.remoteCard && state.phase == TradePhase.Confirming) {
+                    state.copy(
+                        remoteDisplayCard = displayCard,
+                        isResolvingRemoteCard = false,
+                    )
+                } else {
+                    state
+                }
             }
         }
     }

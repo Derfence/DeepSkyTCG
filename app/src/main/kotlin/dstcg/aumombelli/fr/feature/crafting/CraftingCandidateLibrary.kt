@@ -6,12 +6,14 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -29,6 +31,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
+import fr.aumombelli.dstcg.model.CraftingMode
 import fr.aumombelli.dstcg.model.LibraryCardItem
 import fr.aumombelli.dstcg.ui.component.AstroCardThumbnail
 
@@ -38,6 +41,7 @@ internal fun CraftingCandidateLibrary(
     onRefresh: () -> Unit,
     onBackToModes: () -> Unit,
     onOpenGroup: (CraftingCardGroup) -> Unit,
+    onApplyAllDarkenSky: () -> Unit,
     onCoachmarkTargetBoundsChanged: (NewPlayerOnboardingTarget, Rect?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -89,6 +93,35 @@ internal fun CraftingCandidateLibrary(
                                 modifier = Modifier.testTag("crafting-mode-costs-${selectedMode.name}"),
                             )
                         }
+                    }
+                }
+                if (
+                    state.selectedMode == CraftingMode.DarkenSky &&
+                    !state.isLoading &&
+                    state.sections.isNotEmpty()
+                ) {
+                    Button(
+                        onClick = onApplyAllDarkenSky,
+                        enabled = !state.isApplying,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("crafting-apply-all-darken-sky"),
+                    ) {
+                        if (state.isApplying) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp,
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Filled.AutoAwesome,
+                                contentDescription = null,
+                            )
+                        }
+                        Text(
+                            text = if (state.isApplying) "En cours..." else "Tout assombrir",
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
                     }
                 }
                 state.successMessage?.let { message ->

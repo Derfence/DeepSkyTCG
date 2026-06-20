@@ -126,6 +126,57 @@ class CraftingViewModel(
         }
     }
 
+    fun applyAllVisibleDarkenSkyCandidates() {
+        val state = _uiState.value
+        if (state.selectedMode != CraftingMode.DarkenSky || state.isApplying) return
+        val candidates = state.sections.flatMap { section ->
+            section.cards.mapNotNull { group -> group.candidates.firstOrNull() }
+        }
+        if (candidates.isEmpty()) return
+        _uiState.update {
+            it.copy(
+                isApplying = true,
+                errorMessage = null,
+                successMessage = null,
+                completion = null,
+            )
+        }
+        viewModelScope.launch {
+            var appliedCount = 0
+            var errorMessage: String? = null
+            for (candidate in candidates) {
+                when (val result = craftingRepository.applyCrafting(CraftingMode.DarkenSky, candidate.sourceRef)) {
+                    is CraftingApplyResult.Invalid -> {
+                        errorMessage = result.message
+                        break
+                    }
+
+                    is CraftingApplyResult.Success -> {
+                        appliedCount += 1
+                    }
+                }
+            }
+            val refreshedSections = runCatching {
+                craftingRepository.loadCraftingCandidates(CraftingMode.DarkenSky).toCraftingSections()
+            }.getOrDefault(emptyList())
+            _uiState.update {
+                it.copy(
+                    isApplying = false,
+                    sections = refreshedSections,
+                    successMessage = if (appliedCount > 0) {
+                        bulkSuccessMessageForDarkenSky(appliedCount)
+                    } else {
+                        null
+                    },
+                    errorMessage = errorMessage,
+                )
+            }
+            if (appliedCount > 0) {
+                _events.tryEmit(CraftingEvent.Applied(CraftingMode.DarkenSky))
+            }
+        }
+    }
+
     private fun refreshSelectedMode() {
         val mode = _uiState.value.selectedMode ?: return
         viewModelScope.launch {
@@ -190,3 +241,10 @@ private fun successMessageFor(mode: CraftingMode): String = when (mode) {
     CraftingMode.DarkenSky -> "Le ciel de la carte a été assombri."
     CraftingMode.SpaceAgency -> "La carte a été tamponnée."
 }
+
+private fun bulkSuccessMessageForDarkenSky(count: Int): String =
+    if (count == 1) {
+        "1 carte a été assombrie."
+    } else {
+        "$count cartes ont été assombries."
+    }

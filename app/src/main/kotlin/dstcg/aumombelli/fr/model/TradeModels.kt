@@ -18,16 +18,56 @@ data class TradeCardRef(
 @Serializable
 data class TradeLedgerState(
     val completedTradeIds: List<String> = emptyList(),
+    val pendingTrade: PendingTradeState? = null,
     val pendingTradeId: String? = null,
 ) {
     fun hasCompleted(tradeId: String): Boolean = tradeId in completedTradeIds
 
+    fun hasPending(tradeId: String): Boolean =
+        pendingTrade?.tradeId == tradeId || pendingTradeId == tradeId
+
+    fun beginPending(
+        tradeId: String,
+        outgoing: TradeCardRef,
+        incoming: TradeCardRef,
+    ): TradeLedgerState =
+        if (hasCompleted(tradeId)) {
+            this
+        } else {
+            copy(
+                pendingTrade = PendingTradeState(
+                    tradeId = tradeId,
+                    outgoing = outgoing,
+                    incoming = incoming,
+                ),
+                pendingTradeId = tradeId,
+            )
+        }
+
+    fun clearPending(tradeId: String): TradeLedgerState =
+        if (hasPending(tradeId)) {
+            copy(
+                pendingTrade = null,
+                pendingTradeId = null,
+            )
+        } else {
+            this
+        }
+
     fun markCompleted(tradeId: String, maxRememberedTrades: Int = 32): TradeLedgerState =
         copy(
             completedTradeIds = (completedTradeIds + tradeId).distinct().takeLast(maxRememberedTrades),
+            pendingTrade = null,
             pendingTradeId = null,
         )
 }
+
+@Serializable
+data class PendingTradeState(
+    val tradeId: String,
+    val outgoing: TradeCardRef,
+    val incoming: TradeCardRef,
+)
 
 data class TradeCardCandidate(
     val card: CardDefinition,
