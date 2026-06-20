@@ -107,6 +107,11 @@ class LibraryScreenTest {
 
         composeRule.onNodeWithTag("library-card-M31").assertHasNoClickAction()
         composeRule.onNodeWithTag("library-section-count-astronomes-en-herbe").assertTextEquals("1/2")
+        composeRule.onNodeWithTag("library-rarity-section-astronomes-en-herbe-Common").assertIsDisplayed()
+        composeRule.onAllNodesWithTag(
+            "library-rarity-section-star-astronomes-en-herbe-Common",
+            useUnmergedTree = true,
+        ).assertCountEquals(1)
         composeRule.onAllNodesWithTag("library-owned-M42").assertCountEquals(0)
         composeRule.onAllNodesWithTag("library-owned-M31").assertCountEquals(0)
         composeRule.onAllNodesWithTag(CARD_BACKGROUND_HIDDEN_PLACEHOLDER_TAG, useUnmergedTree = true).assertCountEquals(1)
@@ -123,6 +128,50 @@ class LibraryScreenTest {
         composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
         composeRule.onAllNodesWithTag("library-card-preview").assertCountEquals(0)
         composeRule.onAllNodesWithTag("library-back").assertCountEquals(0)
+    }
+
+    @Test
+    fun library_sections_show_rarity_subsections_in_sort_order() {
+        val commonItem = LibraryCardItem(
+            definition = testCardDefinition("ALP-001", name = "Amas ouvert", rarityLabel = "Common"),
+            extensionName = "Astronomes en herbe",
+            ownedCount = 1,
+            availableVariants = listOf(
+                DisplayCardVariant("city", "Ville", "standard", "Standard", false, 1),
+            ),
+        )
+        val rareItem = LibraryCardItem(
+            definition = testCardDefinition("ALP-002", name = "Nebuleuse rare", rarityLabel = "Rare"),
+            extensionName = "Astronomes en herbe",
+            ownedCount = 1,
+            availableVariants = listOf(
+                DisplayCardVariant("city", "Ville", "standard", "Standard", false, 1),
+            ),
+        )
+
+        composeRule.setContent {
+            LibraryScreen(
+                state = LibraryUiState(
+                    isLoading = false,
+                    sections = listOf(
+                        LibrarySection(
+                            extension = ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                            cards = listOf(rareItem, commonItem),
+                        ),
+                    ),
+                ),
+                onRefresh = {},
+            )
+        }
+
+        val commonHeaderBounds = composeRule.onNodeWithTag("library-rarity-section-astronomes-en-herbe-Common")
+            .fetchSemanticsNode()
+            .boundsInRoot
+        val rareHeaderBounds = composeRule.onNodeWithTag("library-rarity-section-astronomes-en-herbe-Rare")
+            .fetchSemanticsNode()
+            .boundsInRoot
+
+        assertTrue(commonHeaderBounds.top < rareHeaderBounds.top)
     }
 
     @Test
