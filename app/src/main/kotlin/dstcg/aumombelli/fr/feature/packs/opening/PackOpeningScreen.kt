@@ -43,6 +43,8 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import fr.aumombelli.dstcg.audio.LocalAudioController
+import fr.aumombelli.dstcg.audio.SoundCue
 import fr.aumombelli.dstcg.performance.LocalAppPerformanceProfile
 import fr.aumombelli.dstcg.ui.component.SceneNavigationButton
 import fr.aumombelli.dstcg.ui.component.SceneNavigationIcon
@@ -78,6 +80,7 @@ fun PackOpeningScreen(
     val packResult = state.packResult
     val displayCards = state.displayCards
     val performanceProfile = LocalAppPerformanceProfile.current
+    val audioController = LocalAudioController.current
     val density = LocalDensity.current
     val swipeHintNudgeDistancePx = with(density) { PackOpeningSwipeHintNudgeDistance.toPx() }
     val revealItems = if (state.revealItems.isNotEmpty()) {
@@ -112,6 +115,7 @@ fun PackOpeningScreen(
 
     LaunchedEffect(packResult?.drawnAt) {
         if (packResult == null) return@LaunchedEffect
+        audioController.play(SoundCue.PackBurst)
         cardsVisible = false
         fullscreenPage = null
         dismissStartOffset = 0f
@@ -143,6 +147,7 @@ fun PackOpeningScreen(
             )
         }
         delay(PACK_OPENING_REVEAL_DELAY_MS.toLong())
+        audioController.play(SoundCue.PackReveal)
         cardsVisible = true
         cardsEntranceProgress.animateTo(
             targetValue = 1f,
@@ -365,6 +370,7 @@ fun PackOpeningScreen(
 
                             playedHolographicCuePages = playedHolographicCuePages + currentPage
                             activeHolographicCuePage = currentPage
+                            audioController.play(SoundCue.HolographicReveal)
                             holographicCueProgress.snapTo(1f - PACK_OPENING_HOLOGRAPHIC_CUE_PREWARM_PROGRESS)
                             holographicCueProgress.animateTo(
                                 targetValue = 0f,

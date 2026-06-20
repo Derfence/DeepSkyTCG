@@ -31,6 +31,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import fr.aumombelli.dstcg.audio.LocalAudioController
+import fr.aumombelli.dstcg.audio.SoundCue
 import kotlin.math.PI
 import kotlin.math.min
 import kotlin.math.sin
@@ -49,6 +51,7 @@ internal fun BadgeUnlockCelebrationOverlay(
     if (!visible || badges.isEmpty()) return
 
     val sortedBadges = remember(badges) { sortBadgeCelebrationItems(badges) }
+    val audioController = LocalAudioController.current
     val density = LocalDensity.current
     val glowSizePx = with(density) { 220.dp.toPx() }
     val coinSizePx = with(density) { 92.dp.toPx() }
@@ -79,6 +82,7 @@ internal fun BadgeUnlockCelebrationOverlay(
         overlayAlpha.snapTo(0f)
         flightProgress.snapTo(0f)
         fadeOutProgress.snapTo(0f)
+        audioController.play(SoundCue.BadgeUnlock)
 
         overlayAlpha.animateTo(
             targetValue = 1f,

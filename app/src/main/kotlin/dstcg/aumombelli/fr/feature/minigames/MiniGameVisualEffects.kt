@@ -40,6 +40,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import fr.aumombelli.dstcg.audio.LocalAudioController
+import fr.aumombelli.dstcg.audio.SoundCue
 import fr.aumombelli.dstcg.performance.LocalAppPerformanceProfile
 import fr.aumombelli.dstcg.ui.component.TwinklingStarsOverlay
 import fr.aumombelli.dstcg.ui.motion.AppSkyBackdrop
@@ -218,9 +220,11 @@ internal fun MiniGameFeedbackOverlay(
     modifier: Modifier = Modifier,
 ) {
     val performanceProfile = LocalAppPerformanceProfile.current
+    val audioController = LocalAudioController.current
     val progress = remember { Animatable(1f) }
     LaunchedEffect(cue?.id) {
         if (cue != null) {
+            cue.tone.soundCue()?.let(audioController::play)
             progress.snapTo(0f)
             progress.animateTo(
                 targetValue = 1f,
@@ -437,6 +441,13 @@ private fun feedbackPalette(tone: MiniGameFeedbackTone): MiniGameFeedbackPalette
         glow = Color(0xFF8DEBFF),
         accents = listOf(Color(0xFFF6C75D), Color(0xFF8DEBFF), Color(0xFFFFC7EF), Color.White),
     )
+}
+
+private fun MiniGameFeedbackTone.soundCue(): SoundCue? = when (this) {
+    MiniGameFeedbackTone.Success -> SoundCue.MiniGameSuccess
+    MiniGameFeedbackTone.Error -> SoundCue.MiniGameError
+    MiniGameFeedbackTone.Special -> SoundCue.MiniGameSpecial
+    MiniGameFeedbackTone.Completion -> SoundCue.MiniGameCompletion
 }
 
 private fun normalizedProgress(progress: Float, delay: Float): Float {

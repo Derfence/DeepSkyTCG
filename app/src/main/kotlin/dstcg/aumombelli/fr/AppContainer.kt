@@ -1,6 +1,10 @@
 package fr.aumombelli.dstcg
 
 import android.content.Context
+import fr.aumombelli.dstcg.audio.AndroidAudioController
+import fr.aumombelli.dstcg.audio.AudioController
+import fr.aumombelli.dstcg.audio.AudioSettingsRepository
+import fr.aumombelli.dstcg.audio.audioSettingsDataStore
 import fr.aumombelli.dstcg.data.AndroidKeystoreProgressCipher
 import fr.aumombelli.dstcg.data.CatalogGateway
 import fr.aumombelli.dstcg.data.CollectionGateway
@@ -32,6 +36,7 @@ class AppContainer(
     val miniGamesRepository: MiniGamesGateway,
     val tradeRepository: TradeGateway,
     val gameSettings: StandaloneGameSettings,
+    val audioController: AudioController,
 ) {
     companion object {
         fun create(context: Context): AppContainer {
@@ -77,6 +82,10 @@ class AppContainer(
                 catalogRepository = catalogRepository,
                 progressRepository = progressRepository,
             )
+            val audioController = AndroidAudioController(
+                context = appContext,
+                settingsRepository = AudioSettingsRepository(appContext.audioSettingsDataStore),
+            )
 
             return AppContainer(
                 progressRepository = progressRepository,
@@ -88,6 +97,7 @@ class AppContainer(
                 miniGamesRepository = miniGamesRepository,
                 tradeRepository = tradeRepository,
                 gameSettings = gameSettings,
+                audioController = audioController,
             )
         }
     }

@@ -41,6 +41,7 @@ internal fun HomeScene(
         },
     )
     val uiState by homeViewModel.uiState.collectAsState()
+    val audioSettings by appContainer.audioController.settings.collectAsState()
 
     LaunchedEffect(Unit) {
         if (hasEnteredHomeOnce.value) {
@@ -145,6 +146,12 @@ internal fun HomeScene(
                     }
                 },
             )
+        },
+        soundEnabled = audioSettings.enabled,
+        onSoundEnabledChange = { enabled ->
+            scope.launch {
+                appContainer.audioController.setEnabled(enabled)
+            }
         },
         showBackground = false,
         contentVisible = sceneState.homeContentVisible,

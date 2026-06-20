@@ -306,7 +306,38 @@ class HomeScreenStateTest {
         composeRule.onNodeWithTag("home-settings-about").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("home-about-sheet").assertIsDisplayed()
-        composeRule.onNodeWithTag("home-about-sheet-version").assertTextContains("v2.6.6")
+        composeRule.onNodeWithTag("home-about-sheet-version").assertTextContains("v2.7.0")
+    }
+
+    @Test
+    fun settings_menu_can_open_audio_credits_sheet() {
+        setHomeScreenContent(
+            HomeUiState(
+                isLoading = false,
+            ),
+        )
+
+        composeRule.onNodeWithTag("home-settings").assertIsDisplayed().performClick()
+        composeRule.onNodeWithTag("home-settings-audio-credits").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("home-audio-credits-sheet").assertIsDisplayed()
+    }
+
+    @Test
+    fun settings_menu_exposes_sound_toggle() {
+        var requestedSoundEnabled: Boolean? = null
+        setHomeScreenContent(
+            initialState = HomeUiState(isLoading = false),
+            soundEnabled = false,
+            onSoundEnabledChange = { requestedSoundEnabled = it },
+        )
+
+        composeRule.onNodeWithTag("home-settings").performClick()
+        composeRule.onNodeWithTag("home-settings-sound-toggle").assertIsDisplayed().performClick()
+
+        composeRule.runOnIdle {
+            assertEquals(true, requestedSoundEnabled)
+        }
     }
 
     @Test
@@ -485,6 +516,8 @@ class HomeScreenStateTest {
         onOpenMiniGamesMenu: () -> Unit = {},
         onResetProgress: () -> Unit = {},
         onResetNewPlayerOnboarding: () -> Unit = {},
+        soundEnabled: Boolean = true,
+        onSoundEnabledChange: (Boolean) -> Unit = {},
         onCoachmarkTargetBoundsChanged: (
             NewPlayerOnboardingTarget,
             Rect?,
@@ -503,6 +536,8 @@ class HomeScreenStateTest {
                     onOpenMiniGamesMenu = onOpenMiniGamesMenu,
                     onResetProgress = onResetProgress,
                     onResetNewPlayerOnboarding = onResetNewPlayerOnboarding,
+                    soundEnabled = soundEnabled,
+                    onSoundEnabledChange = onSoundEnabledChange,
                     showBackground = false,
                     contentVisible = true,
                     onCoachmarkTargetBoundsChanged = onCoachmarkTargetBoundsChanged,

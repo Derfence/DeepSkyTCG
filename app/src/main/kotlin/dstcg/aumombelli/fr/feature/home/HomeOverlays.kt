@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,11 +30,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import fr.aumombelli.dstcg.audio.loadAudioCredits
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,6 +44,146 @@ internal fun HomeAboutSheet(
     visible: Boolean,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+) {
+    if (!visible) return
+
+    val aboutSections = remember { homeAboutSections() }
+
+    HomeCreditsBottomSheet(
+        title = "Crédits",
+        versionLabel = HomeAboutAppVersion,
+        visible = visible,
+        onDismiss = onDismiss,
+        modifier = modifier,
+        sheetTestTag = "home-about-sheet",
+    ) {
+        HomeAboutSectionsList(sections = aboutSections)
+    }
+}
+
+@Composable
+internal fun HomeAudioCreditsSheet(
+    visible: Boolean,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    if (!visible) return
+
+    val context = LocalContext.current
+    val audioCredits = remember(context) {
+        loadAudioCredits(context.assets)
+    }
+    val displayEntries = remember(audioCredits) {
+        homeAudioCreditDisplayEntries(audioCredits)
+    }
+
+    HomeCreditsBottomSheet(
+        title = "Crédits audio",
+        visible = visible,
+        onDismiss = onDismiss,
+        modifier = modifier,
+        sheetTestTag = "home-audio-credits-sheet",
+    ) {
+        if (displayEntries.isEmpty()) {
+            Text(
+                text = "Aucun crédit audio externe renseigné pour le moment.",
+                color = Color(0xFFE6EEF9),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.testTag("home-audio-credits-empty"),
+            )
+        } else {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                displayEntries.forEach { entry ->
+                    HomeAudioCreditEntryBlock(entry = entry)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomeAboutSectionsList(sections: List<HomeAboutSection>) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        sections.forEach { section ->
+            Column(
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = section.title,
+                    color = Color(0xFFB9D5F5),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                section.lines.forEach { line ->
+                    Text(
+                        text = line,
+                        color = Color(0xFFE6EEF9),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomeAudioCreditEntryBlock(entry: HomeAudioCreditDisplayEntry) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("home-audio-credit-${entry.fileName}"),
+    ) {
+        Text(
+            text = entry.title,
+            color = Color(0xFFB9D5F5),
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Text(
+            text = "${entry.artist} - ${entry.license}",
+            color = Color(0xFFE6EEF9),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Text(
+            text = "Fichier : ${entry.fileName}",
+            color = Color(0xFF9FB4CD),
+            style = MaterialTheme.typography.bodySmall,
+        )
+        entry.sourcePage?.let { sourcePage ->
+            Text(
+                text = "Source : $sourcePage",
+                color = Color(0xFF9FB4CD),
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        entry.changes?.let { changes ->
+            Text(
+                text = "Modifs : $changes",
+                color = Color(0xFF9FB4CD),
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun HomeCreditsBottomSheet(
+    title: String,
+    visible: Boolean,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    sheetTestTag: String,
+    versionLabel: String? = null,
+    content: @Composable ColumnScope.() -> Unit,
 ) {
     if (!visible) return
 
@@ -55,7 +198,7 @@ internal fun HomeAboutSheet(
         containerColor = Color.Transparent,
         scrimColor = Color.Black.copy(alpha = 0.62f),
         sheetMaxWidth = Dp.Unspecified,
-        modifier = modifier.testTag("home-about-sheet-container"),
+        modifier = modifier.testTag("$sheetTestTag-container"),
         dragHandle = null,
     ) {
         Column(
@@ -70,7 +213,7 @@ internal fun HomeAboutSheet(
                         ),
                     ),
                 )
-                .testTag("home-about-sheet")
+                .testTag(sheetTestTag)
                 .padding(horizontal = 24.dp, vertical = 20.dp),
         ) {
             Column(
@@ -78,7 +221,7 @@ internal fun HomeAboutSheet(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .testTag("home-about-sheet-header"),
+                    .testTag("$sheetTestTag-header"),
             ) {
                 Box(
                     modifier = Modifier
@@ -88,20 +231,22 @@ internal fun HomeAboutSheet(
                             color = Color(0xFF7992AE),
                             shape = RoundedCornerShape(999.dp),
                         )
-                        .testTag("home-about-sheet-handle"),
+                        .testTag("$sheetTestTag-handle"),
                 )
                 Text(
-                    text = "Crédits",
+                    text = title,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
                 )
-                Text(
-                    text = HomeAboutAppVersion,
-                    color = Color(0xFFF4D48A),
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.testTag("home-about-sheet-version"),
-                )
+                versionLabel?.let { version ->
+                    Text(
+                        text = version,
+                        color = Color(0xFFF4D48A),
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.testTag("$sheetTestTag-version"),
+                    )
+                }
                 Text(
                     text = "Fais glisser le panneau vers le bas ou touche le fond pour le fermer.",
                     color = Color(0xFF9FB4CD),
@@ -116,26 +261,7 @@ internal fun HomeAboutSheet(
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState()),
             ) {
-                HomeAboutSections.forEach { section ->
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Text(
-                            text = section.title,
-                            color = Color(0xFFB9D5F5),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        section.lines.forEach { line ->
-                            Text(
-                                text = line,
-                                color = Color(0xFFE6EEF9),
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                        }
-                    }
-                }
+                content()
             }
         }
     }

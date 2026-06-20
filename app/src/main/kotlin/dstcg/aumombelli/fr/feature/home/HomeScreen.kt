@@ -27,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -70,6 +71,8 @@ fun HomeScreen(
     onOpenMiniGamesMenu: () -> Unit = {},
     onResetProgress: () -> Unit,
     onResetNewPlayerOnboarding: () -> Unit = {},
+    soundEnabled: Boolean = true,
+    onSoundEnabledChange: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier,
     showBackground: Boolean = true,
     contentVisible: Boolean = true,
@@ -85,6 +88,7 @@ fun HomeScreen(
     var resetConfirmationVisible by remember { mutableStateOf(false) }
     var tutorialResetConfirmationVisible by remember { mutableStateOf(false) }
     var aboutSheetVisible by remember { mutableStateOf(false) }
+    var audioCreditsSheetVisible by remember { mutableStateOf(false) }
     val density = LocalDensity.current
     val contentAlpha by animateFloatAsState(
         targetValue = if (contentVisible) 1f else 0f,
@@ -129,6 +133,7 @@ fun HomeScreen(
             resetConfirmationVisible = false
             tutorialResetConfirmationVisible = false
             aboutSheetVisible = false
+            audioCreditsSheetVisible = false
             onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeOpenPack, null)
             onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeLibrary, null)
             onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeEquipment, null)
@@ -174,15 +179,21 @@ fun HomeScreen(
             resetConfirmationVisible = false
             tutorialResetConfirmationVisible = false
             aboutSheetVisible = false
+            audioCreditsSheetVisible = false
         }
     }
 
     BackHandler(
-        enabled = settingsExpanded || resetConfirmationVisible || tutorialResetConfirmationVisible || aboutSheetVisible,
+        enabled = settingsExpanded ||
+            resetConfirmationVisible ||
+            tutorialResetConfirmationVisible ||
+            aboutSheetVisible ||
+            audioCreditsSheetVisible,
     ) {
         when {
             resetConfirmationVisible -> resetConfirmationVisible = false
             tutorialResetConfirmationVisible -> tutorialResetConfirmationVisible = false
+            audioCreditsSheetVisible -> audioCreditsSheetVisible = false
             aboutSheetVisible -> aboutSheetVisible = false
             else -> settingsExpanded = false
         }
@@ -261,6 +272,7 @@ fun HomeScreen(
                                 onClick = {
                                     settingsExpanded = false
                                     aboutSheetVisible = false
+                                    audioCreditsSheetVisible = false
                                     tutorialResetConfirmationVisible = false
                                     resetConfirmationVisible = true
                                 },
@@ -272,6 +284,7 @@ fun HomeScreen(
                                 onClick = {
                                     settingsExpanded = false
                                     aboutSheetVisible = false
+                                    audioCreditsSheetVisible = false
                                     resetConfirmationVisible = false
                                     tutorialResetConfirmationVisible = true
                                 },
@@ -279,12 +292,36 @@ fun HomeScreen(
                                 modifier = Modifier.testTag("home-settings-reset-tutorial"),
                             )
                             DropdownMenuItem(
+                                text = { Text("Sons") },
+                                onClick = {
+                                    onSoundEnabledChange(!soundEnabled)
+                                },
+                                trailingIcon = {
+                                    Switch(
+                                        checked = soundEnabled,
+                                        onCheckedChange = onSoundEnabledChange,
+                                        modifier = Modifier.testTag("home-settings-sound-switch"),
+                                    )
+                                },
+                                modifier = Modifier.testTag("home-settings-sound-toggle"),
+                            )
+                            DropdownMenuItem(
                                 text = { Text("À propos") },
                                 onClick = {
                                     settingsExpanded = false
+                                    audioCreditsSheetVisible = false
                                     aboutSheetVisible = true
                                 },
                                 modifier = Modifier.testTag("home-settings-about"),
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Crédits audio") },
+                                onClick = {
+                                    settingsExpanded = false
+                                    aboutSheetVisible = false
+                                    audioCreditsSheetVisible = true
+                                },
+                                modifier = Modifier.testTag("home-settings-audio-credits"),
                             )
                         }
                     }
@@ -443,6 +480,11 @@ fun HomeScreen(
         HomeAboutSheet(
             visible = aboutSheetVisible && contentVisible,
             onDismiss = { aboutSheetVisible = false },
+        )
+
+        HomeAudioCreditsSheet(
+            visible = audioCreditsSheetVisible && contentVisible,
+            onDismiss = { audioCreditsSheetVisible = false },
         )
 
         if (resetConfirmationVisible && contentVisible) {
