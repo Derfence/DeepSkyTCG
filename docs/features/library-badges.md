@@ -8,6 +8,7 @@ La bibliothèque affiche la collection locale persistante.
 
 - Les cartes non obtenues restent visibles avec leur cadre et leurs informations, mais leur illustration est masquée.
 - Les cartes obtenues peuvent être ouvertes en aperçu puis en plein écran.
+- Depuis l'aperçu ou le plein écran, un swipe horizontal permet de passer à la carte obtenue précédente ou suivante parmi les cartes actuellement visibles.
 - Les filtres sont affichés entre la description de la bibliothèque et la liste des cartes.
 - Les filtres `Extension`, `Rareté`, `Qualité du ciel` et `Échangeable` sont combinables.
 - Dans chaque groupe catalogue, une option active remplace l'option déjà active du même groupe ; toucher l'option active la désactive.

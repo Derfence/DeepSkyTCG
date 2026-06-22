@@ -131,6 +131,151 @@ class LibraryScreenTest {
     }
 
     @Test
+    fun preview_swipes_between_visible_owned_cards_and_skips_unowned_cards() {
+        val firstOwned = libraryCardItem(
+            id = "M42",
+            name = "Nébuleuse d'Orion",
+            rarityLabel = "Common",
+        )
+        val unowned = libraryCardItem(
+            id = "M31",
+            name = "Galaxie d'Andromède",
+            rarityLabel = "Common",
+            variants = emptyList(),
+        )
+        val secondOwned = libraryCardItem(
+            id = "M57",
+            name = "Nébuleuse de la Lyre",
+            rarityLabel = "Rare",
+        )
+
+        composeRule.setContent {
+            LibraryScreen(
+                state = LibraryUiState(
+                    isLoading = false,
+                    sections = listOf(
+                        LibrarySection(
+                            extension = ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                            cards = listOf(firstOwned, unowned, secondOwned),
+                        ),
+                    ),
+                ),
+                onRefresh = {},
+            )
+        }
+
+        composeRule.onNodeWithTag("library-card-M42").performClick()
+        composeRule.assertPreviewCurrentCard("M42")
+        composeRule.onAllNodesWithTag("library-card-preview-arrow-left", useUnmergedTree = true)
+            .assertCountEquals(0)
+        composeRule.onAllNodesWithTag("library-card-preview-arrow-right", useUnmergedTree = true)
+            .assertCountEquals(1)
+
+        composeRule.onNodeWithTag("library-card-preview-pager").performTouchInput { swipeLeft() }
+        composeRule.assertPreviewCurrentCard("M57")
+        composeRule.onAllNodesWithTag("library-card-preview-arrow-left", useUnmergedTree = true)
+            .assertCountEquals(1)
+        composeRule.onAllNodesWithTag("library-card-preview-arrow-right", useUnmergedTree = true)
+            .assertCountEquals(0)
+
+        composeRule.onNodeWithTag("library-card-preview-pager").performTouchInput { swipeRight() }
+        composeRule.assertPreviewCurrentCard("M42")
+        composeRule.onNodeWithTag("library-card-preview-close").performClick()
+        composeRule.onAllNodesWithTag("library-card-preview").assertCountEquals(0)
+    }
+
+    @Test
+    fun fullscreen_swipes_between_cards_without_returning_to_library() {
+        val firstOwned = libraryCardItem(id = "M42", name = "Nébuleuse d'Orion")
+        val secondOwned = libraryCardItem(id = "M57", name = "Nébuleuse de la Lyre", rarityLabel = "Rare")
+
+        composeRule.setContent {
+            LibraryScreen(
+                state = LibraryUiState(
+                    isLoading = false,
+                    sections = listOf(
+                        LibrarySection(
+                            extension = ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                            cards = listOf(firstOwned, secondOwned),
+                        ),
+                    ),
+                ),
+                onRefresh = {},
+            )
+        }
+
+        composeRule.onNodeWithTag("library-card-M42").performClick()
+        composeRule.onNodeWithTag("library-card-preview-surface").performClick()
+        composeRule.onNodeWithTag("astro-card-fullscreen").assertIsDisplayed()
+        composeRule.assertFullscreenCurrentCard("M42")
+
+        composeRule.onNodeWithTag("astro-card-fullscreen-pager").performTouchInput { swipeLeft() }
+        composeRule.assertFullscreenCurrentCard("M57")
+        composeRule.onNodeWithTag("astro-card-fullscreen").assertIsDisplayed()
+
+        composeRule.onNodeWithTag("astro-card-fullscreen-pager").performTouchInput { swipeRight() }
+        composeRule.assertFullscreenCurrentCard("M42")
+        composeRule.onNodeWithTag("astro-card-fullscreen-close").performClick()
+        composeRule.onAllNodesWithTag("astro-card-fullscreen").assertCountEquals(0)
+        composeRule.onAllNodesWithTag("library-card-preview").assertCountEquals(0)
+    }
+
+    @Test
+    fun preview_swipe_navigation_is_limited_to_filtered_visible_cards() {
+        val cityAlpha = libraryCardItem(
+            id = "ALP-CITY",
+            extensionId = "astronomes-en-herbe",
+            name = "Carte ville alpha",
+            variants = listOf(cityVariant(count = 1)),
+        )
+        val holographicBeta = libraryCardItem(
+            id = "BET-HOLO",
+            extensionId = "systeme-solaire",
+            name = "Carte holographique bêta",
+            variants = listOf(holographicVariant(count = 1)),
+        )
+        val cityBeta = libraryCardItem(
+            id = "BET-CITY",
+            extensionId = "systeme-solaire",
+            name = "Carte ville beta",
+            variants = listOf(cityVariant(count = 1)),
+        )
+
+        composeRule.setContent {
+            LibraryScreen(
+                state = LibraryUiState(
+                    isLoading = false,
+                    filterOptions = libraryFilterOptions(),
+                    sections = listOf(
+                        LibrarySection(
+                            extension = ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                            cards = listOf(cityAlpha),
+                        ),
+                        LibrarySection(
+                            extension = ExtensionDefinition("systeme-solaire", "Système solaire", "cover"),
+                            cards = listOf(holographicBeta, cityBeta),
+                        ),
+                    ),
+                ),
+                onRefresh = {},
+            )
+        }
+
+        composeRule.clickLibraryFilter("library-filter-extension-systeme-solaire")
+        composeRule.clickLibraryFilter("library-filter-sky-city")
+        composeRule.onAllNodesWithTag("library-card-BET-HOLO").assertCountEquals(0)
+        composeRule.onNodeWithTag("library-card-BET-CITY").performClick()
+
+        composeRule.assertPreviewCurrentCard("BET-CITY")
+        composeRule.onAllNodesWithTag("library-card-preview-arrow-left", useUnmergedTree = true)
+            .assertCountEquals(0)
+        composeRule.onAllNodesWithTag("library-card-preview-arrow-right", useUnmergedTree = true)
+            .assertCountEquals(0)
+        composeRule.onNodeWithTag("library-card-preview-pager").performTouchInput { swipeLeft() }
+        composeRule.assertPreviewCurrentCard("BET-CITY")
+    }
+
+    @Test
     fun library_sections_show_rarity_subsections_in_sort_order() {
         val commonItem = LibraryCardItem(
             definition = testCardDefinition("ALP-001", name = "Amas ouvert", rarityLabel = "Common"),
@@ -722,6 +867,41 @@ class LibraryScreenTest {
             nodeBounds.top >= modalBounds.top && nodeBounds.bottom <= modalBounds.bottom,
         )
     }
+
+    private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertPreviewCurrentCard(cardId: String) {
+        waitForIdle()
+        onNodeWithTag("library-card-preview-current-id", useUnmergedTree = true).assertTextEquals(cardId)
+    }
+
+    private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertFullscreenCurrentCard(cardId: String) {
+        waitForIdle()
+        onNodeWithTag("astro-card-fullscreen-current-id", useUnmergedTree = true).assertTextEquals(cardId)
+    }
+
+    private fun libraryCardItem(
+        id: String,
+        extensionId: String = "astronomes-en-herbe",
+        name: String,
+        rarityLabel: String = "Common",
+        variants: List<DisplayCardVariant> = listOf(cityVariant(count = 1)),
+    ): LibraryCardItem =
+        LibraryCardItem(
+            definition = testCardDefinition(
+                id = id,
+                extensionId = extensionId,
+                name = name,
+                rarityLabel = rarityLabel,
+            ),
+            extensionName = extensionId,
+            ownedCount = variants.sumOf { it.count },
+            availableVariants = variants,
+        )
+
+    private fun cityVariant(count: Int): DisplayCardVariant =
+        DisplayCardVariant("city", "Ville", "standard", "Standard", false, count)
+
+    private fun holographicVariant(count: Int): DisplayCardVariant =
+        DisplayCardVariant("holographic", "Holographique", "standard", "Standard", true, count)
 
     private class RecordingAudioController : AudioController {
         private val mutableSettings = MutableStateFlow(AudioSettings())

@@ -8,11 +8,22 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -22,8 +33,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.compose.material3.Button
-import androidx.compose.material3.Text
 import fr.aumombelli.dstcg.model.LibraryCardItem
 import fr.aumombelli.dstcg.model.TradeCardCandidate
 import fr.aumombelli.dstcg.model.canTradeAway
@@ -40,27 +49,33 @@ import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
 
 @Composable
 internal fun CardPreviewDialog(
-    item: LibraryCardItem?,
-    selectedVariantKey: String?,
+    items: List<LibraryCardItem>,
+    initialPage: Int,
+    selectedVariantKey: (LibraryCardItem) -> String?,
+    onPageChanged: (LibraryCardItem) -> Unit,
     onDismiss: () -> Unit,
-    onExpand: () -> Unit,
-    onVariantSelected: (String) -> Unit,
+    onExpand: (LibraryCardItem) -> Unit,
+    onVariantSelected: (LibraryCardItem, String) -> Unit,
     onTrade: ((TradeCardCandidate) -> Unit)? = null,
 ) {
-    val libraryItem = item ?: return
-    val displayCard = libraryItem.toDisplayCard(selectedVariantKey) ?: return
-    val activeVariant = displayCard.activeVariant
-    val tradeCandidate = if (activeVariant.canTradeAway()) {
-        TradeCardCandidate(
-            card = libraryItem.definition,
-            extensionName = libraryItem.extensionName,
-            variant = activeVariant,
-        )
-    } else {
-        null
-    }
+    if (items.isEmpty()) return
+    val safeInitialPage = initialPage.coerceIn(0, items.lastIndex)
+    val pagerState = rememberPagerState(
+        initialPage = safeInitialPage,
+        pageCount = { items.size },
+    )
 
     BackHandler(onBack = onDismiss)
+
+    LaunchedEffect(items.size) {
+        if (pagerState.currentPage > items.lastIndex) {
+            pagerState.scrollToPage(items.lastIndex)
+        }
+    }
+
+    LaunchedEffect(items, pagerState.settledPage) {
+        items.getOrNull(pagerState.settledPage)?.let(onPageChanged)
+    }
 
     BoxWithConstraints(
         modifier = Modifier
@@ -91,39 +106,96 @@ internal fun CardPreviewDialog(
                     testTag = "library-card-preview-close",
                 )
             }
-            BoxWithConstraints(
-                contentAlignment = Alignment.Center,
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f, fill = true),
             ) {
-                val cardWidth = calculateTradingCardFitWidth(
-                    maxWidth = maxWidth,
-                    maxHeight = maxHeight,
-                )
-                AstroCardPreviewSurface(
-                    displayCard = displayCard,
-                    mode = AstroCardSurfaceMode.Preview,
+                HorizontalPager(
+                    state = pagerState,
                     modifier = Modifier
-                        .width(cardWidth)
-                        .testTag("library-card-preview-surface"),
-                    onClick = onExpand,
-                )
-            }
-            DisplayCardVariantSelector(
-                variants = displayCard.availableVariants,
-                selectedVariantKey = displayCard.activeVariant.key,
-                onVariantSelected = { variant -> onVariantSelected(variant.key) },
-                modifier = Modifier.fillMaxWidth(),
-            )
-            if (tradeCandidate != null && onTrade != null) {
-                Button(
-                    onClick = { onTrade(tradeCandidate) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("library-card-trade"),
-                ) {
-                    Text("Échanger")
+                        .fillMaxSize()
+                        .testTag("library-card-preview-pager"),
+                ) { page ->
+                    val libraryItem = items[page]
+                    val displayCard = libraryItem.toDisplayCard(selectedVariantKey(libraryItem)) ?: return@HorizontalPager
+                    val tradeCandidate = libraryItem.toTradeCandidateOrNull(displayCard.activeVariant)
+
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        if (page == pagerState.settledPage) {
+                            Text(
+                                text = libraryItem.definition.id,
+                                modifier = Modifier
+                                    .size(0.dp)
+                                    .testTag("library-card-preview-current-id"),
+                            )
+                        }
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(14.dp),
+                            modifier = Modifier.fillMaxSize(),
+                        ) {
+                            BoxWithConstraints(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .weight(1f, fill = true),
+                            ) {
+                                val cardWidth = calculateTradingCardFitWidth(
+                                    maxWidth = maxWidth,
+                                    maxHeight = maxHeight,
+                                )
+                                AstroCardPreviewSurface(
+                                    displayCard = displayCard,
+                                    mode = AstroCardSurfaceMode.Preview,
+                                    modifier = Modifier
+                                        .width(cardWidth)
+                                        .testTag(
+                                            if (page == pagerState.currentPage) {
+                                                "library-card-preview-surface"
+                                            } else {
+                                                "library-card-preview-surface-${libraryItem.definition.id}"
+                                            },
+                                        ),
+                                    onClick = { onExpand(libraryItem) },
+                                )
+                            }
+                            DisplayCardVariantSelector(
+                                variants = displayCard.availableVariants,
+                                selectedVariantKey = displayCard.activeVariant.key,
+                                onVariantSelected = { variant -> onVariantSelected(libraryItem, variant.key) },
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            if (tradeCandidate != null && onTrade != null) {
+                                Button(
+                                    onClick = { onTrade(tradeCandidate) },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .testTag("library-card-trade"),
+                                ) {
+                                    Text("Échanger")
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (pagerState.currentPage > 0) {
+                    LibraryNavigationHintArrow(
+                        direction = LibraryNavigationHintDirection.Left,
+                        testTag = "library-card-preview-arrow-left",
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
+                            .absoluteOffset(x = -LibraryNavigationHintOuterOffset),
+                    )
+                }
+                if (pagerState.currentPage < items.lastIndex) {
+                    LibraryNavigationHintArrow(
+                        direction = LibraryNavigationHintDirection.Right,
+                        testTag = "library-card-preview-arrow-right",
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .absoluteOffset(x = LibraryNavigationHintOuterOffset),
+                    )
                 }
             }
         }
@@ -132,12 +204,29 @@ internal fun CardPreviewDialog(
 
 @Composable
 internal fun FullscreenCardDialog(
-    item: LibraryCardItem?,
-    selectedVariantKey: String?,
+    items: List<LibraryCardItem>,
+    initialPage: Int,
+    selectedVariantKey: (LibraryCardItem) -> String?,
+    onPageChanged: (LibraryCardItem) -> Unit,
     onDismiss: () -> Unit,
-    onVariantSelected: (String) -> Unit,
+    onVariantSelected: (LibraryCardItem, String) -> Unit,
 ) {
-    val displayCard = item?.toDisplayCard(selectedVariantKey) ?: return
+    if (items.isEmpty()) return
+    val safeInitialPage = initialPage.coerceIn(0, items.lastIndex)
+    val pagerState = rememberPagerState(
+        initialPage = safeInitialPage,
+        pageCount = { items.size },
+    )
+
+    LaunchedEffect(items.size) {
+        if (pagerState.currentPage > items.lastIndex) {
+            pagerState.scrollToPage(items.lastIndex)
+        }
+    }
+
+    LaunchedEffect(items, pagerState.settledPage) {
+        items.getOrNull(pagerState.settledPage)?.let(onPageChanged)
+    }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -154,21 +243,98 @@ internal fun FullscreenCardDialog(
                 .padding(14.dp)
                 .testTag("astro-card-fullscreen"),
         ) {
-            AstroCardDetailsSurface(
-                displayCard = displayCard,
+            HorizontalPager(
+                state = pagerState,
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = 42.dp),
-                accessoryContent = {
-                    DisplayCardVariantSelector(
-                        variants = displayCard.availableVariants,
-                        selectedVariantKey = displayCard.activeVariant.key,
-                        onVariantSelected = { variant -> onVariantSelected(variant.key) },
-                        modifier = Modifier.fillMaxWidth(),
+                    .testTag("astro-card-fullscreen-pager"),
+            ) { page ->
+                val libraryItem = items[page]
+                val displayCard = libraryItem.toDisplayCard(selectedVariantKey(libraryItem)) ?: return@HorizontalPager
+
+                Box(modifier = Modifier.fillMaxSize()) {
+                    if (page == pagerState.settledPage) {
+                        Text(
+                            text = libraryItem.definition.id,
+                            modifier = Modifier
+                                .size(0.dp)
+                                .testTag("astro-card-fullscreen-current-id"),
+                        )
+                    }
+                    AstroCardDetailsSurface(
+                        displayCard = displayCard,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(top = 42.dp),
+                        accessoryContent = {
+                            DisplayCardVariantSelector(
+                                variants = displayCard.availableVariants,
+                                selectedVariantKey = displayCard.activeVariant.key,
+                                onVariantSelected = { variant -> onVariantSelected(libraryItem, variant.key) },
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                        },
                     )
-                },
-            )
+                }
+            }
+            if (pagerState.currentPage > 0) {
+                LibraryNavigationHintArrow(
+                    direction = LibraryNavigationHintDirection.Left,
+                    testTag = "astro-card-fullscreen-arrow-left",
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .absoluteOffset(x = -LibraryNavigationHintOuterOffset),
+                )
+            }
+            if (pagerState.currentPage < items.lastIndex) {
+                LibraryNavigationHintArrow(
+                    direction = LibraryNavigationHintDirection.Right,
+                    testTag = "astro-card-fullscreen-arrow-right",
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .absoluteOffset(x = LibraryNavigationHintOuterOffset),
+                )
+            }
             AstroCardFullscreenCloseButton(onClick = onDismiss)
         }
     }
+}
+
+private fun LibraryCardItem.toTradeCandidateOrNull(
+    activeVariant: fr.aumombelli.dstcg.model.DisplayCardVariant,
+): TradeCardCandidate? =
+    if (activeVariant.canTradeAway()) {
+        TradeCardCandidate(
+            card = definition,
+            extensionName = extensionName,
+            variant = activeVariant,
+        )
+    } else {
+        null
+    }
+
+private enum class LibraryNavigationHintDirection {
+    Left,
+    Right,
+}
+
+private val LibraryNavigationHintOuterOffset = 25.dp
+
+@Composable
+private fun LibraryNavigationHintArrow(
+    direction: LibraryNavigationHintDirection,
+    testTag: String,
+    modifier: Modifier = Modifier,
+) {
+    Icon(
+        imageVector = when (direction) {
+            LibraryNavigationHintDirection.Left -> Icons.AutoMirrored.Filled.KeyboardArrowLeft
+            LibraryNavigationHintDirection.Right -> Icons.AutoMirrored.Filled.KeyboardArrowRight
+        },
+        contentDescription = null,
+        tint = Color.White.copy(alpha = 0.74f),
+        modifier = modifier
+            .size(46.dp)
+            .testTag(testTag),
+    )
 }
