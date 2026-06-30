@@ -155,6 +155,75 @@ class PackOpeningScreenTest {
     }
 
     @Test
+    fun pack_opening_ignores_swipe_up_until_fifth_card_then_enables_it_for_all_cards() {
+        val state = buildPackOpeningState(
+            drawnAt = "2026-03-23T12:00:00Z",
+            cards = (1..5).map { index ->
+                testPackCard(
+                    "ALP-${index.toString().padStart(3, '0')}",
+                    "Carte $index",
+                    "Common",
+                    "card_$index",
+                )
+            },
+            definitions = (1..5).map { index ->
+                testCardDefinition(
+                    "ALP-${index.toString().padStart(3, '0')}",
+                    name = "Carte $index",
+                )
+            },
+            highestBurstRarity = "Common",
+        )
+        var doneCallCount = 0
+        val implicitDismissAvailability = mutableListOf<Boolean>()
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            PackOpeningScreen(
+                state = state,
+                onDone = { doneCallCount += 1 },
+                onImplicitDismissAvailabilityChanged = { available ->
+                    implicitDismissAvailability += available
+                },
+            )
+        }
+
+        composeRule.advanceToRevealedCards()
+        assertEquals("ALP-001", composeRule.readCurrentPackOpeningCardId())
+
+        composeRule.performDismissSwipeOnCurrentCard()
+        composeRule.mainClock.advanceTimeBy(600)
+        composeRule.runOnIdle { }
+
+        assertEquals(0, doneCallCount)
+        assertEquals(false, implicitDismissAvailability.lastOrNull())
+
+        composeRule.mainClock.autoAdvance = true
+        repeat(4) {
+            composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeLeft() }
+            composeRule.waitForIdle()
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.safeReadCurrentPackOpeningCardId() == "ALP-005"
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            implicitDismissAvailability.lastOrNull() == true
+        }
+
+        composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeRight() }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.safeReadCurrentPackOpeningCardId() == "ALP-004"
+        }
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.performDismissSwipeOnCurrentCard()
+        composeRule.mainClock.advanceTimeBy(600)
+        composeRule.runOnIdle { }
+
+        assertEquals(1, doneCallCount)
+    }
+
+    @Test
     fun pack_opening_reveals_cards_supports_swipe_and_fullscreen() {
         val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
         val secondCard = testCardDefinition("ALP-002", name = "Galaxie d'Andromede")

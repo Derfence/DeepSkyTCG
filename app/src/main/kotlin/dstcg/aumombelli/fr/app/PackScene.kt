@@ -5,6 +5,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.aumombelli.dstcg.AppContainer
 import fr.aumombelli.dstcg.audio.SoundCue
@@ -89,6 +92,9 @@ internal fun PackScene(
     }
     val packOpeningDismissAllowed = sceneState.currentScene == AppScene.PackOpening &&
         sceneState.packOpeningExitSignal == 0
+    var packOpeningImplicitDismissAvailable by remember(sceneState.currentScene, sceneState.packReadySignal) {
+        mutableStateOf(false)
+    }
     val requestPackOpeningExit: () -> Unit = {
         updateSceneState { it.requestPackOpeningExit() }
     }
@@ -97,9 +103,11 @@ internal fun PackScene(
         BackHandler(enabled = packSelectionBackAllowed) {
             navigateBackFromPackSelection()
         }
-    } else {
-        BackHandler(enabled = packOpeningDismissAllowed) {
-            requestPackOpeningExit()
+    } else if (sceneState.currentScene == AppScene.PackOpening) {
+        BackHandler(enabled = true) {
+            if (packOpeningDismissAllowed && packOpeningImplicitDismissAvailable) {
+                requestPackOpeningExit()
+            }
         }
     }
 
@@ -176,6 +184,9 @@ internal fun PackScene(
             initialBoosterBounds = sceneState.selectedPackRevealBounds,
             initialBoosterDecorSeed = sceneState.selectedPackDecorSeed ?: uiState.selectedBoosterDecorSeed,
             onDismissRequest = if (packOpeningDismissAllowed) requestPackOpeningExit else null,
+            onImplicitDismissAvailabilityChanged = { available ->
+                packOpeningImplicitDismissAvailable = available
+            },
             dismissSignal = sceneState.packOpeningExitSignal,
             onDone = {
                 scope.launch {

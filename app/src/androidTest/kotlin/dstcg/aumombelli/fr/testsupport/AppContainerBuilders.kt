@@ -141,8 +141,8 @@ internal fun backNavigationTestAppContainer(
 ): AppContainer {
     return navigationTestAppContainer(
         initialCollection = OwnedCollection(
-            cards = mapOf(
-                "ALP-001" to fr.aumombelli.dstcg.model.OwnedCardEntry(
+            cards = (1..5).associate { index ->
+                "ALP-${index.toString().padStart(3, '0')}" to fr.aumombelli.dstcg.model.OwnedCardEntry(
                     totalOwned = 1,
                     variants = listOf(
                         OwnedVariantCount(
@@ -151,8 +151,8 @@ internal fun backNavigationTestAppContainer(
                             count = 1,
                         ),
                     ),
-                ),
-            ),
+                )
+            },
         ),
         unlockEquipmentMenu = true,
         audioController = audioController,
@@ -262,8 +262,8 @@ private fun navigationTestAppContainer(
         name = "Astronomes en herbe",
         coverImageRef = "cover",
     )
-    val cardDefinitions = initialCollection.cards.keys
-        .ifEmpty { setOf("ALP-001") }
+    val packRewardCardIds = (1..5).map { index -> "ALP-${index.toString().padStart(3, '0')}" }
+    val cardDefinitions = (initialCollection.cards.keys + packRewardCardIds)
         .sorted()
         .map(::navigationCardDefinition)
     val progressRepository = MutableProgressGateway(
@@ -306,14 +306,14 @@ private fun navigationTestAppContainer(
             availableDrawCount = 9,
             nextChargeAt = "2026-03-24T18:00:00Z",
         ),
-        cards = listOf(
+        cards = packRewardCardIds.mapIndexed { index, cardId ->
             testPackCard(
-                cardId = "ALP-001",
-                name = "Nebuleuse d'Orion",
+                cardId = cardId,
+                name = if (index == 0) "Nebuleuse d'Orion" else "Carte ${index + 1}",
                 rarityLabel = "Common",
                 imageRef = "m42_orion_nebula",
-            ),
-        ),
+            )
+        },
     )
 
     return AppContainer(
