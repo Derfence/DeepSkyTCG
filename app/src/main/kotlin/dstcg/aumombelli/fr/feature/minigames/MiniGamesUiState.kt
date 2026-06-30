@@ -102,6 +102,7 @@ internal sealed interface MiniGamesScreenUiState {
         val handSlots: List<TimelineCardUi?> = handCards,
         val canValidate: Boolean,
         val feedbackEvent: MiniGameFeedbackEvent?,
+        val currentCorrection: TimelineComparisonResultUi? = null,
     ) : MiniGamesScreenUiState
 
     data class TimelineResult(

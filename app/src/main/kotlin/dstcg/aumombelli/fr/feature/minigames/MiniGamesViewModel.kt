@@ -150,6 +150,10 @@ internal class MiniGamesViewModel(
         timelineController.validate()
     }
 
+    fun continueTimeline() {
+        timelineController.continueTimeline()
+    }
+
     fun selectObservatoryDifficulty(difficulty: MiniGameDifficulty) {
         observatoryController.selectDifficulty(difficulty)
     }

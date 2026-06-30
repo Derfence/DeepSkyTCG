@@ -115,6 +115,7 @@ internal fun MiniGamesScene(
             onPlaceCard = miniGamesViewModel::placeTimelineCard,
             onReturnCardToHand = miniGamesViewModel::returnTimelineCardToHand,
             onValidate = miniGamesViewModel::validateTimeline,
+            onContinue = miniGamesViewModel::continueTimeline,
         )
 
         is MiniGamesScreenUiState.ObservatoryDifficultySelection,
