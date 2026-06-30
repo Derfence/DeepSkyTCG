@@ -13,6 +13,7 @@ import fr.aumombelli.dstcg.feature.minigames.MiniGamesMenuScreen
 import fr.aumombelli.dstcg.feature.minigames.MiniGamesScreenUiState
 import fr.aumombelli.dstcg.feature.minigames.MiniGamesViewModel
 import fr.aumombelli.dstcg.feature.minigames.ObservatoryGameScreen
+import fr.aumombelli.dstcg.feature.minigames.ObservatoryStep
 import fr.aumombelli.dstcg.feature.minigames.QuizGameScreen
 import fr.aumombelli.dstcg.feature.minigames.TimelineGameScreen
 import fr.aumombelli.dstcg.ui.viewmodel.DstcgViewModelFactory
@@ -73,9 +74,12 @@ internal fun MiniGamesScene(
             open()
         }
     }
+    val nativeBackBlocked = shouldBlockMiniGamesNativeBackNavigation(uiState.screen)
 
     BackHandler(enabled = backAllowed) {
-        navigateBack()
+        if (!nativeBackBlocked) {
+            navigateBack()
+        }
     }
 
     when (uiState.screen) {
@@ -139,3 +143,6 @@ internal fun MiniGamesScene(
         )
     }
 }
+
+internal fun shouldBlockMiniGamesNativeBackNavigation(screen: MiniGamesScreenUiState): Boolean =
+    (screen as? MiniGamesScreenUiState.ObservatoryPlaying)?.step == ObservatoryStep.ClearCloud
