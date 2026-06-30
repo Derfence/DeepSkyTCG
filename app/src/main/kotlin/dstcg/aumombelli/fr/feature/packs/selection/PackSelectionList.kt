@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
@@ -68,105 +67,104 @@ internal fun ExtensionList(
         null
     }
 
-    LazyColumn(
+    Column(
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = modifier
             .testTag("pack-extension-list"),
     ) {
-        itemsIndexed(
-            items = extensions,
-            key = { _, extension -> extension.id },
-        ) { index, extension ->
-            val entranceProgress = remember(extension.id, entranceSignal) {
-                Animatable(if (entranceSignal > 0) 0f else 1f)
-            }
-            LaunchedEffect(extension.id, entranceSignal) {
-                if (entranceSignal <= 0) {
-                    entranceProgress.snapTo(1f)
-                    return@LaunchedEffect
+        extensions.forEachIndexed { index, extension ->
+            key(extension.id) {
+                val entranceProgress = remember(extension.id, entranceSignal) {
+                    Animatable(if (entranceSignal > 0) 0f else 1f)
                 }
+                LaunchedEffect(extension.id, entranceSignal) {
+                    if (entranceSignal <= 0) {
+                        entranceProgress.snapTo(1f)
+                        return@LaunchedEffect
+                    }
 
-                entranceProgress.snapTo(0f)
-                delay(extensionEntranceDelayMillis(index).toLong())
-                entranceProgress.animateTo(
-                    targetValue = 1f,
-                    animationSpec = tween(
-                        durationMillis = EXTENSION_CARD_ENTRANCE_DURATION_MS,
-                        easing = FastOutSlowInEasing,
-                    ),
-                )
-            }
-            val alpha = when {
-                highlightedExtensionId == null -> 1f
-                extension.id == highlightedExtensionId -> (1f - highlightProgress * 4f).coerceIn(0f, 1f)
-                else -> (1f - highlightProgress).coerceIn(0f, 1f)
-            }
-            val progress = extensionCardProgress[extension.id]
-            val cardVisibleForInteraction = alpha * extensionEntranceAlpha(entranceProgress.value) >= 0.99f
-            MotionCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(EXTENSION_CARD_HEIGHT)
-                    .graphicsLayer {
-                        this.alpha = alpha * extensionEntranceAlpha(entranceProgress.value)
-                        translationY = extensionEntranceTranslationYPx(entranceProgress.value)
-                    },
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    horizontalAlignment = Alignment.Start,
+                    entranceProgress.snapTo(0f)
+                    delay(extensionEntranceDelayMillis(index).toLong())
+                    entranceProgress.animateTo(
+                        targetValue = 1f,
+                        animationSpec = tween(
+                            durationMillis = EXTENSION_CARD_ENTRANCE_DURATION_MS,
+                            easing = FastOutSlowInEasing,
+                        ),
+                    )
+                }
+                val alpha = when {
+                    highlightedExtensionId == null -> 1f
+                    extension.id == highlightedExtensionId -> (1f - highlightProgress * 4f).coerceIn(0f, 1f)
+                    else -> (1f - highlightProgress).coerceIn(0f, 1f)
+                }
+                val progress = extensionCardProgress[extension.id]
+                val cardVisibleForInteraction = alpha * extensionEntranceAlpha(entranceProgress.value) >= 0.99f
+                MotionCard(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxSize()
-                        .padding(18.dp)
-                        .testTag("pack-extension-${extension.id}"),
+                        .height(EXTENSION_CARD_HEIGHT)
+                        .graphicsLayer {
+                            this.alpha = alpha * extensionEntranceAlpha(entranceProgress.value)
+                            translationY = extensionEntranceTranslationYPx(entranceProgress.value)
+                        },
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        ResizableExtensionName(
-                            text = extension.name,
-                            modifier = Modifier.weight(1f),
-                        )
-                        progress?.let {
-                            Text(
-                                text = it.displayLabel,
-                                style = MaterialTheme.typography.labelLarge,
-                                color = Color(0xFFCFE6FF),
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier
-                                    .padding(start = 10.dp)
-                                    .testTag("pack-extension-progress-${extension.id}"),
-                            )
-                        }
-                        ExtensionAnimatedBadge(
-                            extensionId = extension.id,
-                            animationsEnabled = badgeAnimationsEnabled,
-                            startDelayMillis = extensionBadgeStartDelayMillis(index),
-                            modifier = Modifier
-                                .padding(start = 12.dp)
-                                .width(78.dp)
-                                .height(54.dp),
-                        )
-                    }
-                    Button(
-                        onClick = { onSelectExtension(extension.id) },
-                        enabled = !drawLocked && interactionsEnabled && cardVisibleForInteraction,
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalAlignment = Alignment.Start,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .then(
-                                if (extension.id == firstEnabledExtensionId && highlightedExtensionId == null) {
-                                    Modifier.onGloballyPositioned { coordinates ->
-                                        onFirstEnabledExtensionBoundsChanged(coordinates.boundsInRoot())
-                                    }
-                                } else {
-                                    Modifier
-                                },
-                            )
-                            .testTag("pack-extension-enter-${extension.id}"),
+                            .fillMaxSize()
+                            .padding(18.dp)
+                            .testTag("pack-extension-${extension.id}"),
                     ) {
-                        Text(if (drawLocked) "Pas de pack disponible" else "Observer")
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            ResizableExtensionName(
+                                text = extension.name,
+                                modifier = Modifier.weight(1f),
+                            )
+                            progress?.let {
+                                Text(
+                                    text = it.displayLabel,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = Color(0xFFCFE6FF),
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier
+                                        .padding(start = 10.dp)
+                                        .testTag("pack-extension-progress-${extension.id}"),
+                                )
+                            }
+                            ExtensionAnimatedBadge(
+                                extensionId = extension.id,
+                                animationsEnabled = badgeAnimationsEnabled,
+                                startDelayMillis = extensionBadgeStartDelayMillis(index),
+                                modifier = Modifier
+                                    .padding(start = 12.dp)
+                                    .width(78.dp)
+                                    .height(54.dp),
+                            )
+                        }
+                        Button(
+                            onClick = { onSelectExtension(extension.id) },
+                            enabled = !drawLocked && interactionsEnabled && cardVisibleForInteraction,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .then(
+                                    if (extension.id == firstEnabledExtensionId && highlightedExtensionId == null) {
+                                        Modifier.onGloballyPositioned { coordinates ->
+                                            onFirstEnabledExtensionBoundsChanged(coordinates.boundsInRoot())
+                                        }
+                                    } else {
+                                        Modifier
+                                    },
+                                )
+                                .testTag("pack-extension-enter-${extension.id}"),
+                        ) {
+                            Text(if (drawLocked) "Pas de pack disponible" else "Observer")
+                        }
                     }
                 }
             }

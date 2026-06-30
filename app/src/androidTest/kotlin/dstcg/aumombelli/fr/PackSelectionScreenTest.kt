@@ -149,6 +149,47 @@ class PackSelectionScreenTest {
     }
 
     @Test
+    fun extension_selection_scrolls_weather_charge_equipment_and_extensions_together() {
+        val extensions = (1..8).map { index ->
+            ExtensionDefinition("extension-$index", "Extension $index", "cover")
+        }
+
+        composeRule.setContent {
+            Box(modifier = Modifier.size(width = 411.dp, height = 420.dp)) {
+                PackSelectionScreen(
+                    state = PackSelectionUiState(
+                        isLoading = false,
+                        extensions = extensions,
+                        activeEquipmentReminders = listOf(
+                            ActiveEquipmentPackReminderUi(
+                                type = EquipmentType.Telescope,
+                                level = 2,
+                                packsRemaining = 3,
+                            ),
+                        ),
+                    ),
+                    onRefresh = {},
+                    onSelectExtension = {},
+                    onSelectBooster = {},
+                    onOpenPack = {},
+                    onPackRevealReady = {},
+                    packReadySignal = 0,
+                    showBackground = false,
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("pack-weather-forecast").assertIsDisplayed()
+        composeRule.onNodeWithTag("pack-status").assertIsDisplayed()
+        composeRule.onNodeWithTag("pack-active-equipment-reminders").assertIsDisplayed()
+
+        composeRule.onNodeWithTag("pack-extension-selection-scroll")
+            .performScrollToNode(hasTestTag("pack-extension-enter-extension-8"))
+
+        composeRule.onNodeWithTag("pack-extension-enter-extension-8").assertIsDisplayed()
+    }
+
+    @Test
     fun selected_extension_draws_constellation_and_centers_chosen_booster_before_reveal() {
         var packReadySignal by mutableIntStateOf(0)
         var revealReady = false

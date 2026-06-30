@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -152,6 +154,7 @@ fun PackSelectionScreen(
     var screenBounds by remember { mutableStateOf<Rect?>(null) }
     var openingRevealTargetBounds by remember(displayedExtension?.id) { mutableStateOf<PackRevealBounds?>(null) }
     var handledPackSignal by remember(displayedExtension?.id) { mutableIntStateOf(packReadySignal) }
+    val extensionSelectionScrollState = rememberScrollState()
 
     LaunchedEffect(state.extensions, drawLocked) {
         if (state.extensions.isEmpty() || drawLocked) {
@@ -285,7 +288,15 @@ fun PackSelectionScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .dstcgContentInsetsPadding(includeBottom = true)
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .testTag("pack-extension-selection-scroll")
+                    .then(
+                        if (displayedExtension == null) {
+                            Modifier.verticalScroll(extensionSelectionScrollState)
+                        } else {
+                            Modifier
+                        },
+                    ),
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -375,7 +386,11 @@ fun PackSelectionScreen(
                     }
                 } else {
                     Box(
-                        modifier = Modifier.weight(1f, fill = true),
+                        modifier = if (displayedExtension == null) {
+                            Modifier.fillMaxWidth()
+                        } else {
+                            Modifier.weight(1f, fill = true)
+                        },
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -419,7 +434,13 @@ fun PackSelectionScreen(
                             },
                             entranceSignal = activeExtensionListEntranceSignal,
                             modifier = Modifier
-                                .fillMaxSize()
+                                .then(
+                                    if (displayedExtension == null) {
+                                        Modifier.fillMaxWidth()
+                                    } else {
+                                        Modifier.fillMaxSize()
+                                    },
+                                )
                                 .padding(top = EXTENSION_LIST_TOP_PADDING)
                                 .graphicsLayer {
                                     alpha = extensionListAlpha * listFadeProgress
