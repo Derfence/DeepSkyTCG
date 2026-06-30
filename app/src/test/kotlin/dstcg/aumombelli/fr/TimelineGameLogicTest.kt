@@ -38,8 +38,8 @@ class TimelineGameLogicTest {
     fun `criterion endpoint labels explain comparison slots`() {
         assertEquals("La plus proche", TimelineCriterion.StellarDistance.firstSlotLabel)
         assertEquals("La plus lointaine", TimelineCriterion.StellarDistance.lastSlotLabel)
-        assertEquals("La plus lumineuse", TimelineCriterion.Luminosity.firstSlotLabel)
-        assertEquals("La moins lumineuse", TimelineCriterion.Luminosity.lastSlotLabel)
+        assertEquals("La moins lumineuse", TimelineCriterion.Luminosity.firstSlotLabel)
+        assertEquals("La plus lumineuse", TimelineCriterion.Luminosity.lastSlotLabel)
     }
 
     @Test
@@ -79,6 +79,26 @@ class TimelineGameLogicTest {
 
         assertEquals(
             listOf("ALP-001", "ALP-003"),
+            game.comparisons.single().correctSlots.map { it.id },
+        )
+    }
+
+    @Test
+    fun `visual magnitude comparison orders dimmest then brightest`() {
+        val cards = listOf(
+            deepSkyCard("ALP-001", absoluteMagnitude = -1.0),
+            deepSkyCard("ALP-002", absoluteMagnitude = 7.0),
+        )
+
+        val game = buildReadyGame(
+            difficulty = MiniGameDifficulty.Apprentice,
+            criterion = TimelineCriterion.Luminosity,
+            cards = cards,
+            resolvedCards = cards.map { resolved(it.id) },
+        )
+
+        assertEquals(
+            listOf("ALP-002", "ALP-001"),
             game.comparisons.single().correctSlots.map { it.id },
         )
     }

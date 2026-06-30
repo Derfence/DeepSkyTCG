@@ -22,6 +22,7 @@ internal enum class TimelineCriterion(
     val instruction: String,
     val firstSlotLabel: String,
     val lastSlotLabel: String,
+    val lowerValueFirst: Boolean = true,
 ) {
     StellarDistance(
         id = "stellar-distance",
@@ -55,8 +56,9 @@ internal enum class TimelineCriterion(
         id = "luminosity",
         title = "Luminosité",
         instruction = "Compare les deux cartes selon leur luminosité.",
-        firstSlotLabel = "La plus lumineuse",
-        lastSlotLabel = "La moins lumineuse",
+        firstSlotLabel = "La moins lumineuse",
+        lastSlotLabel = "La plus lumineuse",
+        lowerValueFirst = false,
     ),
     SkyPosition(
         id = "sky-position",
@@ -253,7 +255,7 @@ private fun buildTimelineComparisons(
                 if (left.value.sortValue == right.value.sortValue) {
                     null
                 } else {
-                    val ordered = listOf(left, right).sortedBy { it.value.sortValue }
+                    val ordered = criterion.orderComparisonEntries(listOf(left, right))
                     val displayCards = ordered
                         .map(TimelineCardEntry::card)
                         .sortedWith(
@@ -294,6 +296,14 @@ private fun buildTimelineComparisons(
             }.thenBy { it.cardIds.joinToString(":") },
         )
         .map(TimelineComparisonCandidate::comparison)
+
+private fun TimelineCriterion.orderComparisonEntries(
+    entries: List<TimelineCardEntry>,
+): List<TimelineCardEntry> = if (lowerValueFirst) {
+    entries.sortedBy { it.value.sortValue }
+} else {
+    entries.sortedByDescending { it.value.sortValue }
+}
 
 internal fun evaluateTimelineComparison(
     game: TimelineGame,
