@@ -29,6 +29,7 @@ internal class TimelineMiniGameController(
     private var handSlots: List<String?> = emptyList()
     private var score: Int = 0
     private var corrections: List<TimelineComparisonResultUi> = emptyList()
+    private var currentCorrection: TimelineComparisonResultUi? = null
     private var completionStarted: Boolean = false
     private var feedbackEvent: MiniGameFeedbackEvent? = null
 
@@ -78,7 +79,7 @@ internal class TimelineMiniGameController(
 
     fun placeCard(cardId: String, slotIndex: Int) {
         val comparison = activeComparison() ?: return
-        if (completionStarted) return
+        if (completionStarted || currentCorrection != null) return
         if (slotIndex !in comparison.correctSlots.indices) return
         if (comparison.cards.none { it.id == cardId }) return
 
@@ -109,7 +110,7 @@ internal class TimelineMiniGameController(
 
     fun returnCardToHand(cardId: String, handSlotIndex: Int) {
         val comparison = activeComparison() ?: return
-        if (completionStarted) return
+        if (completionStarted || currentCorrection != null) return
         if (handSlotIndex !in comparison.cards.indices) return
         if (comparison.cards.none { it.id == cardId }) return
 
@@ -136,7 +137,7 @@ internal class TimelineMiniGameController(
 
     fun validate() {
         val timeline = activeTimeline ?: return
-        if (completionStarted || placements.any { it == null }) return
+        if (completionStarted || currentCorrection != null || placements.any { it == null }) return
 
         val evaluation = evaluateTimelineComparison(
             game = timeline,
@@ -147,25 +148,28 @@ internal class TimelineMiniGameController(
         if (evaluation.isCorrect) {
             score += 1
         }
-        corrections += evaluation.toUi(timeline.criterion)
+        val correction = evaluation.toUi(timeline.criterion)
+        corrections += correction
+        currentCorrection = correction
+        feedbackEvent = feedbackEmitter.next(
+            tone = if (evaluation.isCorrect) MiniGameFeedbackTone.Success else MiniGameFeedbackTone.Error,
+            sourceIndexes = setOf(0, 1),
+        )
+        publishPlayingState()
+    }
 
+    fun continueTimeline() {
+        val timeline = activeTimeline ?: return
+        if (completionStarted || currentCorrection == null) return
         if (comparisonIndex < timeline.comparisons.lastIndex) {
-            feedbackEvent = feedbackEmitter.next(
-                tone = if (evaluation.isCorrect) MiniGameFeedbackTone.Success else MiniGameFeedbackTone.Error,
-                sourceIndexes = setOf(0, 1),
-            )
             comparisonIndex += 1
+            currentCorrection = null
+            feedbackEvent = null
             resetComparisonState(timeline.comparisons[comparisonIndex])
             publishPlayingState()
             return
         }
 
-        completionStarted = true
-        feedbackEvent = feedbackEmitter.next(
-            tone = MiniGameFeedbackTone.Completion,
-            sourceIndexes = emptySet(),
-        )
-        publishPlayingState()
         completeTimeline(timeline)
     }
 
@@ -176,6 +180,7 @@ internal class TimelineMiniGameController(
         handSlots = emptyList()
         score = 0
         corrections = emptyList()
+        currentCorrection = null
         completionStarted = false
         feedbackEvent = null
     }
@@ -247,6 +252,7 @@ internal class TimelineMiniGameController(
                 comparisonIndex = 0
                 score = 0
                 corrections = emptyList()
+                currentCorrection = null
                 completionStarted = false
                 feedbackEvent = null
                 resetComparisonState(game.comparisons.first())
@@ -317,8 +323,16 @@ internal class TimelineMiniGameController(
     }
 
     private fun completeTimeline(timeline: TimelineGame) {
+        if (completionStarted) return
         val finalScore = score
         val finalCorrections = corrections
+        completionStarted = true
+        currentCorrection = null
+        feedbackEvent = feedbackEmitter.next(
+            tone = MiniGameFeedbackTone.Completion,
+            sourceIndexes = emptySet(),
+        )
+        publishPlayingState()
         launch {
             runCatching {
                 val reward = calculateTimelineReward(
@@ -413,8 +427,10 @@ internal class TimelineMiniGameController(
             handSlots = handSlotIds.map { cardId -> cardId?.let(cardsById::get)?.toUi() },
             canValidate = placements.size == comparison.correctSlots.size &&
                 placements.all { it != null } &&
-                !completionStarted,
+                !completionStarted &&
+                currentCorrection == null,
             feedbackEvent = feedbackEvent,
+            currentCorrection = currentCorrection,
         )
     }
 

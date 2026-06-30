@@ -75,7 +75,7 @@ class AndroidAudioController(
         }
     }
 
-    override fun play(cue: SoundCue) {
+    override fun play(cue: SoundCue, options: AudioPlaybackOptions) {
         if (released || !settings.value.enabled) return
         val mix = cue.mix
         val now = SystemClock.elapsedRealtime()
@@ -85,13 +85,18 @@ class AndroidAudioController(
         val soundId = soundIds[cue] ?: return
         if (soundId !in loadedSoundIds) return
 
+        val volume = (mix.volume * options.volumeMultiplier).coerceIn(0f, 1f)
+        val playbackRate = (mix.playbackRate * options.playbackRateMultiplier).coerceIn(
+            SoundPoolMinPlaybackRate,
+            SoundPoolMaxPlaybackRate,
+        )
         val streamId = soundPool.play(
             soundId,
-            mix.volume,
-            mix.volume,
+            volume,
+            volume,
             1,
             0,
-            mix.playbackRate,
+            playbackRate,
         )
         if (streamId != 0) {
             lastPlayedAtMillis[cue] = now

@@ -16,6 +16,7 @@ fun PackOpeningScreen(
     modifier: Modifier = Modifier,
     dismissSignal: Int = 0,
     onDismissRequest: (() -> Unit)? = null,
+    onImplicitDismissAvailabilityChanged: (Boolean) -> Unit = {},
 ) {
     PackOpeningFeatureScreen(
         state = state,
@@ -26,5 +27,6 @@ fun PackOpeningScreen(
         initialBoosterBounds = initialBoosterBounds,
         initialBoosterDecorSeed = initialBoosterDecorSeed,
         modifier = modifier,
+        onImplicitDismissAvailabilityChanged = onImplicitDismissAvailabilityChanged,
     )
 }

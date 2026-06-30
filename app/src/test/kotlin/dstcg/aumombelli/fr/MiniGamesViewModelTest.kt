@@ -240,6 +240,14 @@ class MiniGamesViewModelTest {
         viewModel.validateTimeline()
         advanceUntilIdle()
 
+        val feedback = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelinePlaying
+        assertTrue(!feedback.canValidate)
+        assertEquals(true, feedback.currentCorrection?.isCorrect)
+        assertNull(fixture.progressGateway.progress.miniGamesProgress.dailyStateFor(MiniGameId.Timeline, "2026-05-10").reward)
+
+        viewModel.continueTimeline()
+        advanceUntilIdle()
+
         val progress = fixture.progressGateway.progress.miniGamesProgress
         val dailyState = progress.dailyStateFor(MiniGameId.Timeline, "2026-05-10")
         val result = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelineResult

@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,6 +16,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -37,15 +40,21 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
 import fr.aumombelli.dstcg.feature.packs.opening.PackOpeningRevealSlotProbe
+import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.performance.LocalAppPerformanceProfile
-import fr.aumombelli.dstcg.ui.motion.MotionCard
-import fr.aumombelli.dstcg.ui.motion.PackRevealBounds
 import fr.aumombelli.dstcg.ui.component.SceneNavigationButton
 import fr.aumombelli.dstcg.ui.component.SceneNavigationIcon
+import fr.aumombelli.dstcg.ui.component.drawEquipmentMountGlyph
+import fr.aumombelli.dstcg.ui.component.drawEquipmentObservatoryGlyph
+import fr.aumombelli.dstcg.ui.component.drawEquipmentTelescopeGlyph
+import fr.aumombelli.dstcg.ui.component.equipmentCategoryColorTokens
+import fr.aumombelli.dstcg.ui.motion.MotionCard
+import fr.aumombelli.dstcg.ui.motion.PackRevealBounds
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
 import kotlinx.coroutines.delay
 import kotlin.math.abs
@@ -145,6 +154,7 @@ fun PackSelectionScreen(
     var screenBounds by remember { mutableStateOf<Rect?>(null) }
     var openingRevealTargetBounds by remember(displayedExtension?.id) { mutableStateOf<PackRevealBounds?>(null) }
     var handledPackSignal by remember(displayedExtension?.id) { mutableIntStateOf(packReadySignal) }
+    val extensionSelectionScrollState = rememberScrollState()
 
     LaunchedEffect(state.extensions, drawLocked) {
         if (state.extensions.isEmpty() || drawLocked) {
@@ -278,7 +288,15 @@ fun PackSelectionScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .dstcgContentInsetsPadding(includeBottom = true)
-                    .padding(16.dp),
+                    .padding(16.dp)
+                    .testTag("pack-extension-selection-scroll")
+                    .then(
+                        if (displayedExtension == null) {
+                            Modifier.verticalScroll(extensionSelectionScrollState)
+                        } else {
+                            Modifier
+                        },
+                    ),
             ) {
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -368,18 +386,36 @@ fun PackSelectionScreen(
                     }
                 } else {
                     Box(
-                        modifier = Modifier.weight(1f, fill = true),
+                        modifier = if (displayedExtension == null) {
+                            Modifier.fillMaxWidth()
+                        } else {
+                            Modifier.weight(1f, fill = true)
+                        },
                     ) {
-                        Text(
-                            text = "Choisis l'extension a contempler.",
-                            color = Color(0xFFEAF4FF),
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.graphicsLayer {
-                                alpha = introTextAlpha
-                            },
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .graphicsLayer {
+                                    alpha = introTextAlpha
+                                },
+                        ) {
+                            Text(
+                                text = "Choisis une extension.",
+                                color = Color(0xFFEAF4FF),
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                            if (state.activeEquipmentReminders.isNotEmpty()) {
+                                Spacer(modifier = Modifier.weight(1f))
+                                ActiveEquipmentReminderStrip(
+                                    reminders = state.activeEquipmentReminders,
+                                    modifier = Modifier.testTag("pack-active-equipment-reminders"),
+                                )
+                            }
+                        }
                         ExtensionList(
                             extensions = state.extensions,
+                            extensionCardProgress = state.extensionCardProgress,
                             drawLocked = drawLocked,
                             onSelectExtension = { extensionId ->
                                 onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.PackSelectionExtension, null)
@@ -398,7 +434,13 @@ fun PackSelectionScreen(
                             },
                             entranceSignal = activeExtensionListEntranceSignal,
                             modifier = Modifier
-                                .fillMaxSize()
+                                .then(
+                                    if (displayedExtension == null) {
+                                        Modifier.fillMaxWidth()
+                                    } else {
+                                        Modifier.fillMaxSize()
+                                    },
+                                )
                                 .padding(top = EXTENSION_LIST_TOP_PADDING)
                                 .graphicsLayer {
                                     alpha = extensionListAlpha * listFadeProgress
@@ -456,6 +498,81 @@ fun PackSelectionScreen(
                     modifier = Modifier.fillMaxSize(),
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun ActiveEquipmentReminderStrip(
+    reminders: List<ActiveEquipmentPackReminderUi>,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier,
+    ) {
+        reminders.forEach { reminder ->
+            ActiveEquipmentReminder(
+                reminder = reminder,
+                modifier = Modifier.testTag("pack-active-equipment-reminder-${reminder.type.code}"),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ActiveEquipmentReminder(
+    reminder: ActiveEquipmentPackReminderUi,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier.semantics(mergeDescendants = true) {},
+    ) {
+        Text(
+            text = "lvl${reminder.level}",
+            color = Color(0xFFCFE6FF),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+        )
+        ActiveEquipmentGlyph(
+            type = reminder.type,
+            modifier = Modifier.size(16.dp),
+        )
+        Text(
+            text = ":${reminder.packsRemaining}",
+            color = Color(0xFFCFE6FF),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+        )
+    }
+}
+
+@Composable
+private fun ActiveEquipmentGlyph(
+    type: EquipmentType,
+    modifier: Modifier = Modifier,
+) {
+    val strokeColor = equipmentCategoryColorTokens(type).iconStroke
+    Canvas(modifier = modifier) {
+        val strokeWidth = minOf(size.width, size.height) * 0.09f
+        when (type) {
+            EquipmentType.Observatory -> drawEquipmentObservatoryGlyph(
+                strokeColor = strokeColor,
+                strokeWidth = strokeWidth,
+            )
+
+            EquipmentType.Telescope -> drawEquipmentTelescopeGlyph(
+                strokeColor = strokeColor,
+                strokeWidth = strokeWidth,
+            )
+
+            EquipmentType.Mount -> drawEquipmentMountGlyph(
+                strokeColor = strokeColor,
+                strokeWidth = strokeWidth,
+            )
         }
     }
 }

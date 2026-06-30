@@ -11,6 +11,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -205,6 +206,49 @@ class TimelineGameScreenTest {
     }
 
     @Test
+    fun feedback_after_wrong_comparison_highlights_slots_without_extra_panel_and_shows_continue_action() {
+        val firstCard = timelineCard("ALP-001", "M42")
+        val secondCard = timelineCard("ALP-002", "M31")
+        var continueClicks = 0
+
+        setTimelineContent(
+            screen = playingScreen(
+                slots = listOf(
+                    TimelineSlotUi(index = 0, placedCard = secondCard),
+                    TimelineSlotUi(index = 1, placedCard = firstCard),
+                ),
+                handCards = emptyList(),
+                handSlots = listOf(null, null),
+                currentCorrection = TimelineComparisonResultUi(
+                    index = 0,
+                    firstSlotLabel = "La plus proche",
+                    lastSlotLabel = "La plus lointaine",
+                    placedCards = listOf(secondCard, firstCard),
+                    correctCards = listOf(firstCard, secondCard),
+                    isCorrect = false,
+                ),
+            ),
+            onContinue = { continueClicks += 1 },
+        )
+
+        composeRule.onAllNodesWithTag("timeline-feedback").assertCountEquals(0)
+        composeRule.onNodeWithTag("timeline-slot-feedback-0")
+            .assertTextContains("Faux")
+        composeRule.onNodeWithTag("timeline-slot-feedback-1")
+            .assertTextContains("Faux")
+        composeRule.onAllNodesWithTag("timeline-validate").assertCountEquals(0)
+        composeRule.onNodeWithTag("timeline-continue")
+            .assertIsDisplayed()
+            .assertIsEnabled()
+            .assertTextContains("Voir le résultat")
+            .performClick()
+
+        composeRule.runOnIdle {
+            assertEquals(1, continueClicks)
+        }
+    }
+
+    @Test
     fun two_slots_and_two_cards_fit_the_available_width() {
         val firstCard = timelineCard("ALP-001", "M42")
         val secondCard = timelineCard("ALP-002", "M31")
@@ -275,6 +319,7 @@ class TimelineGameScreenTest {
                     onPlaceCard = { _, _ -> },
                     onReturnCardToHand = { _, _ -> },
                     onValidate = {},
+                    onContinue = {},
                     modifier = Modifier
                         .width(containerWidth)
                         .height(containerHeight),
@@ -416,6 +461,7 @@ class TimelineGameScreenTest {
         handCards: List<TimelineCardUi>,
         handSlots: List<TimelineCardUi?> = handCards,
         canValidate: Boolean = false,
+        currentCorrection: TimelineComparisonResultUi? = null,
     ): MiniGamesScreenUiState.TimelinePlaying =
         MiniGamesScreenUiState.TimelinePlaying(
             difficultyName = "Apprenti",
@@ -430,6 +476,7 @@ class TimelineGameScreenTest {
             handSlots = handSlots,
             canValidate = canValidate,
             feedbackEvent = null,
+            currentCorrection = currentCorrection,
         )
 
     private fun setTimelineContent(
@@ -438,6 +485,7 @@ class TimelineGameScreenTest {
         onSelectDifficulty: (MiniGameDifficulty) -> Unit = {},
         onPlaceCard: (String, Int) -> Unit = { _, _ -> },
         onReturnCardToHand: (String, Int) -> Unit = { _, _ -> },
+        onContinue: () -> Unit = {},
         modifier: Modifier = Modifier,
     ) {
         composeRule.setContent {
@@ -453,6 +501,7 @@ class TimelineGameScreenTest {
                     onPlaceCard = onPlaceCard,
                     onReturnCardToHand = onReturnCardToHand,
                     onValidate = {},
+                    onContinue = onContinue,
                     modifier = modifier,
                 )
             }

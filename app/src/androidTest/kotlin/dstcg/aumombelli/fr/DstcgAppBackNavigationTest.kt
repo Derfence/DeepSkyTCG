@@ -5,12 +5,16 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
 import fr.aumombelli.dstcg.audio.AmbientTrack
 import fr.aumombelli.dstcg.audio.AudioController
+import fr.aumombelli.dstcg.audio.AudioPlaybackOptions
 import fr.aumombelli.dstcg.audio.AudioSettings
 import fr.aumombelli.dstcg.audio.SoundCue
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
@@ -356,6 +360,11 @@ class DstcgAppBackNavigationTest {
         composeRule.onNodeWithTag("pack-opening-current-card-surface").assertIsDisplayed()
 
         pressAndroidBack()
+        advanceBy(500)
+        composeRule.onNodeWithTag("pack-opening-current-card-surface").assertIsDisplayed()
+
+        advancePackOpeningToFifthCard()
+        pressAndroidBack()
         advanceUntilTagEnabled("pack-extension-enter-astronomes-en-herbe", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").assertIsDisplayed()
     }
@@ -426,6 +435,7 @@ class DstcgAppBackNavigationTest {
         composeRule.onNodeWithTag("pack-booster-0").performClick()
         advanceUntilTagDisplayed("pack-opening-current-card-surface", timeoutMillis = 15_000)
 
+        advancePackOpeningToFifthCard()
         pressAndroidBack()
         advanceUntilTagEnabled("pack-extension-enter-astronomes-en-herbe", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").assertIsDisplayed()
@@ -445,6 +455,7 @@ class DstcgAppBackNavigationTest {
         advanceUntilTagDisplayed("pack-opening-current-card-surface", timeoutMillis = 15_000)
         composeRule.onNodeWithTag("pack-opening-current-card-surface").assertIsDisplayed()
 
+        advancePackOpeningToFifthCard()
         pressAndroidBack()
         advanceUntilTagDisplayed("new-player-coachmark-HomeLibrary", timeoutMillis = 10_000)
         composeRule.onNodeWithTag("new-player-coachmark-HomeLibrary").assertIsDisplayed()
@@ -512,6 +523,20 @@ class DstcgAppBackNavigationTest {
         composeRule.waitForIdle()
     }
 
+    private fun advancePackOpeningToFifthCard() {
+        repeat(4) { pageOffset ->
+            composeRule.onNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeLeft() }
+            val expectedCardId = "ALP-${(pageOffset + 2).toString().padStart(3, '0')}"
+            advanceUntil(timeoutMillis = 5_000) {
+                runCatching {
+                    composeRule.onNodeWithTag("pack-opening-current-card-id", useUnmergedTree = true)
+                        .assertTextContains(expectedCardId)
+                    true
+                }.getOrDefault(false)
+            }
+        }
+    }
+
     private fun advanceUntilTagDisplayed(tag: String, timeoutMillis: Long = 5_000) {
         advanceUntil(timeoutMillis) {
             runCatching {
@@ -562,7 +587,7 @@ class DstcgAppBackNavigationTest {
         val playedCues: List<SoundCue>
             get() = synchronized(playedCueStorage) { playedCueStorage.toList() }
 
-        override fun play(cue: SoundCue) {
+        override fun play(cue: SoundCue, options: AudioPlaybackOptions) {
             synchronized(playedCueStorage) {
                 playedCueStorage += cue
             }

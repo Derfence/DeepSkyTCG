@@ -39,6 +39,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -67,6 +68,7 @@ internal fun TimelineGameScreen(
     onPlaceCard: (String, Int) -> Unit,
     onReturnCardToHand: (String, Int) -> Unit,
     onValidate: () -> Unit,
+    onContinue: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val resultScreen = state.screen as? MiniGamesScreenUiState.TimelineResult
@@ -125,6 +127,7 @@ internal fun TimelineGameScreen(
                     onPlaceCard = onPlaceCard,
                     onReturnCardToHand = onReturnCardToHand,
                     onValidate = onValidate,
+                    onContinue = onContinue,
                     modifier = Modifier
                         .align(Alignment.Center)
                         .fillMaxSize(),
@@ -227,9 +230,11 @@ private fun TimelinePlayingPanel(
     onPlaceCard: (String, Int) -> Unit,
     onReturnCardToHand: (String, Int) -> Unit,
     onValidate: () -> Unit,
+    onContinue: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var slotBounds by remember { mutableStateOf<Map<Int, Rect>>(emptyMap()) }
+    val currentCorrection = playing.currentCorrection
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -268,7 +273,7 @@ private fun TimelinePlayingPanel(
                 },
                 onPlaceCard = onPlaceCard,
                 onReturnCardToHand = onReturnCardToHand,
-                enabled = !playing.feedbackEvent.isCompletion(),
+                enabled = currentCorrection == null && !playing.feedbackEvent.isCompletion(),
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -278,7 +283,22 @@ private fun TimelinePlayingPanel(
                 .fillMaxWidth()
                 .height(TimelineValidateButtonSlotHeight),
         ) {
-            if (playing.canValidate) {
+            if (currentCorrection != null) {
+                Button(
+                    onClick = onContinue,
+                    modifier = Modifier
+                        .padding(top = 10.dp)
+                        .testTag("timeline-continue"),
+                ) {
+                    Text(
+                        text = if (playing.comparisonIndex == playing.comparisonCount - 1) {
+                            "Voir le résultat"
+                        } else {
+                            "Comparaison suivante"
+                        },
+                    )
+                }
+            } else if (playing.canValidate) {
                 Button(
                     onClick = onValidate,
                     modifier = Modifier
@@ -386,6 +406,7 @@ private fun TimelineComparisonBoard(
                             draggingCardId = placedCard?.id?.takeIf { isDragging }
                         },
                         enabled = enabled,
+                        feedback = playing.currentCorrection?.feedbackForSlot(slot.index),
                         modifier = Modifier
                             .zIndex(if (placedCard?.id == draggingCardId) 8f else 0f)
                             .width(cardWidth)
@@ -490,6 +511,7 @@ private fun TimelineCardSlot(
     onReturnCardToHand: (String, Int) -> Unit,
     onDragStateChange: (Boolean) -> Unit,
     enabled: Boolean,
+    feedback: TimelineSlotFeedbackUi?,
     modifier: Modifier = Modifier,
 ) {
     val shape = RoundedCornerShape(14.dp)
@@ -529,20 +551,60 @@ private fun TimelineCardSlot(
                 }
             }
         } else {
-            TimelineDraggableCard(
-                card = placedCard,
-                slotBounds = slotBounds,
-                onPlaceCard = onPlaceCard,
-                handSlotBounds = handSlotBounds,
-                emptyHandSlotIndexes = emptyHandSlotIndexes,
-                onReturnCardToHand = onReturnCardToHand,
-                onDragStateChange = onDragStateChange,
-                enabled = enabled,
-                modifier = Modifier.fillMaxSize(),
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .then(feedback?.slotModifier(shape) ?: Modifier),
+            ) {
+                TimelineDraggableCard(
+                    card = placedCard,
+                    slotBounds = slotBounds,
+                    onPlaceCard = onPlaceCard,
+                    handSlotBounds = handSlotBounds,
+                    emptyHandSlotIndexes = emptyHandSlotIndexes,
+                    onReturnCardToHand = onReturnCardToHand,
+                    onDragStateChange = onDragStateChange,
+                    enabled = enabled,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                feedback?.let { slotFeedback ->
+                    Surface(
+                        shape = RoundedCornerShape(999.dp),
+                        color = slotFeedback.color,
+                        contentColor = Color.White,
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = 6.dp)
+                            .testTag("timeline-slot-feedback-${slot.index}")
+                            .semantics(mergeDescendants = true) {},
+                    ) {
+                        Text(
+                            text = slotFeedback.label,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                        )
+                    }
+                }
+            }
         }
     }
 }
+
+private data class TimelineSlotFeedbackUi(
+    val isCorrect: Boolean,
+) {
+    val color: Color = if (isCorrect) Color(0xFF78E4BC) else Color(0xFFFF8E87)
+    val label: String = if (isCorrect) "Correct" else "Faux"
+}
+
+private fun TimelineSlotFeedbackUi.slotModifier(shape: RoundedCornerShape): Modifier =
+    Modifier.border(width = 3.dp, color = color, shape = shape)
+
+private fun TimelineComparisonResultUi.feedbackForSlot(slotIndex: Int): TimelineSlotFeedbackUi? =
+    TimelineSlotFeedbackUi(
+        isCorrect = placedCards.getOrNull(slotIndex)?.id == correctCards.getOrNull(slotIndex)?.id,
+    )
 
 @Composable
 private fun TimelineDraggableCard(

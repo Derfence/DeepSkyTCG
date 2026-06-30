@@ -26,6 +26,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,6 +65,7 @@ private const val PACK_OPENING_BURST_DURATION_MS = 4_800
 private const val PACK_OPENING_REVEAL_DELAY_MS = 3_200
 private const val PACK_OPENING_CARDS_ENTRANCE_DURATION_MS = 760
 private const val PACK_OPENING_HOLOGRAPHIC_CUE_PREWARM_PROGRESS = 0.08f
+private const val PACK_OPENING_IMPLICIT_DISMISS_UNLOCK_PAGE_INDEX = 4
 private val PackOpeningSwipeHintNudgeDistance = 10.dp
 
 @Composable
@@ -76,6 +78,7 @@ fun PackOpeningScreen(
     initialBoosterDecorSeed: Any? = Unit,
     modifier: Modifier = Modifier,
     onDismissRequest: (() -> Unit)? = null,
+    onImplicitDismissAvailabilityChanged: (Boolean) -> Unit = {},
 ) {
     val packResult = state.packResult
     val displayCards = state.displayCards
@@ -98,6 +101,7 @@ fun PackOpeningScreen(
     var swipeOffset by remember(packResult?.drawnAt) { mutableFloatStateOf(0f) }
     var dismissRequested by remember(packResult?.drawnAt) { mutableStateOf(false) }
     var handledDismissSignal by remember(packResult?.drawnAt) { mutableIntStateOf(dismissSignal) }
+    var implicitDismissAvailable by remember(packResult?.drawnAt) { mutableStateOf(false) }
     var verticalDragActive by remember(packResult?.drawnAt) { mutableStateOf(false) }
     var rootHeightPx by remember(packResult?.drawnAt) { mutableFloatStateOf(0f) }
     var transitionBoosterBounds by remember(packResult?.drawnAt) { mutableStateOf<PackRevealBounds?>(null) }
@@ -113,6 +117,9 @@ fun PackOpeningScreen(
     val dismissProgress = remember(packResult?.drawnAt) { Animatable(0f) }
     val swipeHintOffset = remember(packResult?.drawnAt) { Animatable(0f) }
     val holographicCueProgress = remember(packResult?.drawnAt) { Animatable(0f) }
+    val currentOnImplicitDismissAvailabilityChanged by rememberUpdatedState(
+        onImplicitDismissAvailabilityChanged,
+    )
 
     LaunchedEffect(packResult?.drawnAt) {
         if (packResult == null) return@LaunchedEffect
@@ -125,6 +132,7 @@ fun PackOpeningScreen(
         swipeHintLabelActivated = false
         swipeOffset = 0f
         dismissRequested = false
+        implicitDismissAvailable = false
         verticalDragActive = false
         transitionBoosterBounds = null
         currentRevealCardBounds = null
@@ -149,7 +157,7 @@ fun PackOpeningScreen(
             )
         }
         delay(PACK_OPENING_REVEAL_DELAY_MS.toLong())
-        audioController.play(SoundCue.PackReveal)
+        playPackOpeningSoftRevealCue(audioController)
         cardsVisible = true
         cardsEntranceProgress.animateTo(
             targetValue = 1f,
@@ -158,6 +166,10 @@ fun PackOpeningScreen(
                 easing = FastOutSlowInEasing,
             ),
         )
+    }
+
+    LaunchedEffect(packResult?.drawnAt, implicitDismissAvailable) {
+        currentOnImplicitDismissAvailabilityChanged(implicitDismissAvailable)
     }
 
     LaunchedEffect(dismissRequested) {
@@ -178,7 +190,12 @@ fun PackOpeningScreen(
         dismissRequested = true
     }
 
-    val swipeModifier = if (cardsVisible && revealItems.isNotEmpty() && state.errorMessage == null) {
+    val swipeModifier = if (
+        implicitDismissAvailable &&
+        cardsVisible &&
+        revealItems.isNotEmpty() &&
+        state.errorMessage == null
+    ) {
         Modifier.pointerInput(packResult?.drawnAt) {
             detectVerticalDragGestures(
                 onDragStart = {
@@ -199,7 +216,7 @@ fun PackOpeningScreen(
                     verticalDragActive = false
                     if (swipeOffset < -220f) {
                         dismissStartOffset = swipeOffset
-                        audioController.play(SoundCue.PackReveal)
+                        playPackOpeningSoftRevealCue(audioController)
                         dismissRequested = true
                     } else {
                         swipeOffset = 0f
@@ -326,6 +343,7 @@ fun PackOpeningScreen(
                                 abs(pagerState.currentPageOffsetFraction) < 0.001f
                         val shouldAnimateSwipeHint =
                             cardsVisible &&
+                                implicitDismissAvailable &&
                                 swipeHintUnlocked &&
                                 pagerIsFullySettled &&
                                 fullscreenPage == null &&
@@ -353,13 +371,18 @@ fun PackOpeningScreen(
                             if (settledPage == revealItems.lastIndex && !hasReachedLastCardOnce) {
                                 hasReachedLastCardOnce = true
                             }
+                            val implicitDismissUnlockPage = PACK_OPENING_IMPLICIT_DISMISS_UNLOCK_PAGE_INDEX
+                                .coerceAtMost(revealItems.lastIndex)
+                            if (!implicitDismissAvailable && settledPage >= implicitDismissUnlockPage) {
+                                implicitDismissAvailable = true
+                            }
                         }
 
                         LaunchedEffect(packResult.drawnAt, currentPage, cardsVisible) {
                             if (!cardsVisible || currentPage == lastPackRevealCuePage) return@LaunchedEffect
 
                             lastPackRevealCuePage = currentPage
-                            audioController.play(SoundCue.PackReveal)
+                            playPackOpeningSoftRevealCue(audioController)
                         }
 
                         LaunchedEffect(packResult.drawnAt, currentPage, cardsVisible) {

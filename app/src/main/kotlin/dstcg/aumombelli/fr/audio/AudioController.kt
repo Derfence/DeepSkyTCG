@@ -6,6 +6,11 @@ data class AudioSettings(
     val enabled: Boolean = true,
 )
 
+data class AudioPlaybackOptions(
+    val volumeMultiplier: Float = 1f,
+    val playbackRateMultiplier: Float = 1f,
+)
+
 enum class SoundCue {
     UiNavigate,
     PackSelectionOpen,
@@ -38,7 +43,7 @@ enum class AmbientTrack {
 interface AudioController {
     val settings: StateFlow<AudioSettings>
 
-    fun play(cue: SoundCue)
+    fun play(cue: SoundCue, options: AudioPlaybackOptions = AudioPlaybackOptions())
     fun setAmbient(track: AmbientTrack?)
     suspend fun setEnabled(enabled: Boolean)
     fun onAppForegrounded()

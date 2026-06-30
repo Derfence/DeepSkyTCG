@@ -8,3 +8,5 @@ local.properties
 __pycache__/
 *.pyc
 .codex
+.venv
+graphify-out

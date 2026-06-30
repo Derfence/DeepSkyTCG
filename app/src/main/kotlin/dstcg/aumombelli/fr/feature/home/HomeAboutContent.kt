@@ -1,6 +1,6 @@
 package fr.aumombelli.dstcg.feature.home
 
-internal const val HomeAboutAppVersion: String = "v2.7.8"
+internal const val HomeAboutAppVersion: String = "v2.7.18"
 
 internal data class HomeAboutSection(
     val title: String,

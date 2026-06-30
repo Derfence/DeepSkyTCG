@@ -42,8 +42,6 @@ import fr.aumombelli.dstcg.audio.LocalAudioController
 import fr.aumombelli.dstcg.audio.SoundCue
 import fr.aumombelli.dstcg.model.LibraryCardItem
 import fr.aumombelli.dstcg.model.TradeCardCandidate
-import fr.aumombelli.dstcg.model.raritySortPriority
-import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.ui.component.AstroCardThumbnail
 import fr.aumombelli.dstcg.ui.component.RarityStarBadge
 import fr.aumombelli.dstcg.ui.component.SceneNavigationButton
@@ -69,15 +67,7 @@ fun LibraryScreen(
         animationSpec = tween(durationMillis = 960, easing = FastOutSlowInEasing),
         label = "library-content-alpha",
     )
-    val cardsById = remember(state.sections) {
-        state.sections
-            .flatMap { it.cards }
-            .associateBy { it.definition.id }
-    }
     val audioController = LocalAudioController.current
-    var previewCardId by remember(state.sections) { mutableStateOf<String?>(null) }
-    var fullscreenCardId by remember(state.sections) { mutableStateOf<String?>(null) }
-    var selectedVariantKey by remember(state.sections) { mutableStateOf<String?>(null) }
     var filters by remember(state.sections) { mutableStateOf(LibraryFilters()) }
     val displaySections = remember(state.sections, filters) {
         filterLibrarySections(
@@ -85,28 +75,51 @@ fun LibraryScreen(
             filters = filters,
         )
     }
+    val navigableCards = remember(displaySections) {
+        buildNavigableLibraryCards(displaySections)
+    }
+    var navigationState by remember(state.sections, filters) {
+        mutableStateOf<LibraryCardNavigationState?>(null)
+    }
+    var selectedVariantKeysByCardId by remember(state.sections, filters) {
+        mutableStateOf<Map<String, String>>(emptyMap())
+    }
     val totalCardsByExtension = remember(state.sections) {
         state.sections.associate { section ->
             section.extension.id to section.cards.size
         }
     }
 
-    val previewItem = previewCardId?.let(cardsById::get)
-    val fullscreenItem = fullscreenCardId?.let(cardsById::get)
-    val previewCard = previewItem?.toDisplayCard(selectedVariantKey)
-    val fullscreenCard = fullscreenItem?.toDisplayCard(selectedVariantKey)
+    val openedCardIndex = navigationState?.cardId?.let { openedCardId ->
+        navigableCards.indexOfFirst { it.definition.id == openedCardId }
+            .takeIf { it >= 0 }
+    }
+    fun selectedVariantKeyFor(card: LibraryCardItem): String? =
+        selectedVariantKeysByCardId[card.definition.id] ?: card.defaultLibraryVariantKey(filters)
+
+    fun selectVariant(cardId: String, variantKey: String) {
+        selectedVariantKeysByCardId = selectedVariantKeysByCardId + (cardId to variantKey)
+    }
+
     val walkthroughVisible = showOnboardingVariantWalkthrough && state.onboardingVariantWalkthroughPages.isNotEmpty()
     val closePreviewToLibrary = {
         audioController.play(SoundCue.UiNavigate)
-        previewCardId = null
-        fullscreenCardId = null
-        selectedVariantKey = null
+        navigationState = null
+        selectedVariantKeysByCardId = emptyMap()
     }
 
     LaunchedEffect(showOnboardingHint) {
         if (!showOnboardingHint) return@LaunchedEffect
         delay(2_800)
         onOnboardingHintConsumed()
+    }
+
+    LaunchedEffect(navigableCards, navigationState?.cardId) {
+        val openedCardId = navigationState?.cardId ?: return@LaunchedEffect
+        if (navigableCards.none { it.definition.id == openedCardId }) {
+            navigationState = null
+            selectedVariantKeysByCardId = emptyMap()
+        }
     }
 
     Box(
@@ -233,7 +246,7 @@ fun LibraryScreen(
                             .padding(top = 8.dp, bottom = 4.dp),
                     )
                 }
-                section.cards.groupedByRarity().forEach { (rarityLabel, cards) ->
+                section.cards.groupedByLibraryRarity().forEach { (rarityLabel, cards) ->
                     item(span = { GridItemSpan(maxLineSpan) }) {
                         LibraryRaritySubsectionHeader(
                             extensionId = section.extension.id,
@@ -256,10 +269,14 @@ fun LibraryScreen(
                             onClick = if (interactionsEnabled && !walkthroughVisible) {
                                 {
                                     audioController.play(SoundCue.UiNavigate)
-                                    previewCardId = card.definition.id
-                                    selectedVariantKey = filteredVariantKey
-                                        ?: card.availableVariants.firstOrNull()?.key
-                                    fullscreenCardId = null
+                                    val initialVariantKey = filteredVariantKey ?: card.defaultLibraryVariantKey(filters)
+                                    if (initialVariantKey != null) {
+                                        selectVariant(card.definition.id, initialVariantKey)
+                                    }
+                                    navigationState = LibraryCardNavigationState(
+                                        cardId = card.definition.id,
+                                        mode = LibraryCardDialogMode.Preview,
+                                    )
                                 }
                             } else {
                                 {}
@@ -270,17 +287,27 @@ fun LibraryScreen(
             }
         }
 
-        if (previewCard != null && fullscreenCardId == null) {
+        if (navigationState?.mode == LibraryCardDialogMode.Preview && openedCardIndex != null) {
             CardPreviewDialog(
-                item = previewItem,
-                selectedVariantKey = selectedVariantKey,
-                onDismiss = closePreviewToLibrary,
-                onExpand = {
-                    audioController.play(SoundCue.UiNavigate)
-                    fullscreenCardId = previewCardId
+                items = navigableCards,
+                initialPage = openedCardIndex,
+                selectedVariantKey = { card -> selectedVariantKeyFor(card) },
+                onPageChanged = { card ->
+                    navigationState = LibraryCardNavigationState(
+                        cardId = card.definition.id,
+                        mode = LibraryCardDialogMode.Preview,
+                    )
                 },
-                onVariantSelected = { variantKey ->
-                    selectedVariantKey = variantKey
+                onDismiss = closePreviewToLibrary,
+                onExpand = { card ->
+                    audioController.play(SoundCue.UiNavigate)
+                    navigationState = LibraryCardNavigationState(
+                        cardId = card.definition.id,
+                        mode = LibraryCardDialogMode.Fullscreen,
+                    )
+                },
+                onVariantSelected = { card, variantKey ->
+                    selectVariant(card.definition.id, variantKey)
                 },
                 onTrade = { candidate ->
                     closePreviewToLibrary()
@@ -289,13 +316,20 @@ fun LibraryScreen(
             )
         }
 
-        if (fullscreenCard != null) {
+        if (navigationState?.mode == LibraryCardDialogMode.Fullscreen && openedCardIndex != null) {
             FullscreenCardDialog(
-                item = fullscreenItem,
-                selectedVariantKey = selectedVariantKey,
+                items = navigableCards,
+                initialPage = openedCardIndex,
+                selectedVariantKey = { card -> selectedVariantKeyFor(card) },
+                onPageChanged = { card ->
+                    navigationState = LibraryCardNavigationState(
+                        cardId = card.definition.id,
+                        mode = LibraryCardDialogMode.Fullscreen,
+                    )
+                },
                 onDismiss = closePreviewToLibrary,
-                onVariantSelected = { variantKey ->
-                    selectedVariantKey = variantKey
+                onVariantSelected = { card, variantKey ->
+                    selectVariant(card.definition.id, variantKey)
                 },
             )
         }
@@ -386,13 +420,3 @@ private fun LibraryRaritySubsectionHeader(
         )
     }
 }
-
-private fun List<LibraryCardItem>.groupedByRarity(): List<Pair<String, List<LibraryCardItem>>> =
-    groupBy { card -> card.definition.rarityLabel }
-        .toList()
-        .sortedWith(
-            compareBy(
-                { (rarityLabel, _) -> raritySortPriority(rarityLabel) },
-                { (rarityLabel, _) -> rarityLabel },
-            ),
-        )
