@@ -1395,45 +1395,44 @@ class PackOpeningScreenTest {
 
     @Test
     fun pack_opening_swipe_up_dismiss_keeps_dragged_position_before_exit_animation_progresses() {
-        val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
-        val secondCard = testCardDefinition("ALP-002", name = "Galaxie d'Andromede")
-        val packResult = DrawPackResponse.fromCards(
-            extensionId = "astronomes-en-herbe",
+        val state = buildPackOpeningState(
             drawnAt = "2026-03-23T12:00:00Z",
-            rechargeState = androidTestRechargeStateWithNextChargeAt(
-                availableDrawCount = 9,
-                nextChargeAt = "2026-03-24T18:00:00Z",
-            ),
-            cards = listOf(
-                testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox"),
-                testPackCard("ALP-002", "Galaxie d'Andromede", "Rare", "steam_golem"),
-            ),
+            cards = (1..5).map { index ->
+                testPackCard(
+                    "ALP-${index.toString().padStart(3, '0')}",
+                    "Carte $index",
+                    "Common",
+                    "card_$index",
+                )
+            },
+            definitions = (1..5).map { index ->
+                testCardDefinition(
+                    "ALP-${index.toString().padStart(3, '0')}",
+                    name = "Carte $index",
+                )
+            },
         )
 
         var doneCallCount = 0
         composeRule.mainClock.autoAdvance = false
         composeRule.setContent {
             PackOpeningScreen(
-                state = PackOpeningUiState(
-                    packResult = packResult,
-                    displayCards = listOf(
-                        firstCard.toDisplayCard(
-                            extensionName = "Astronomes en herbe",
-                            activeVariant = packResult.cards[0].variant.toDisplayVariant(),
-                        ),
-                        secondCard.toDisplayCard(
-                            extensionName = "Astronomes en herbe",
-                            activeVariant = packResult.cards[1].variant.toDisplayVariant(),
-                        ),
-                    ),
-                    highestBurstRarity = "Rare",
-                    hasHolographicBurst = false,
-                ),
+                state = state,
                 onDone = { doneCallCount += 1 },
             )
         }
 
         composeRule.advanceToRevealedCards()
+        composeRule.mainClock.autoAdvance = true
+        repeat(4) {
+            composeRule.firstNodeWithTag("pack-opening-current-card-surface").performTouchInput { swipeLeft() }
+            composeRule.waitForIdle()
+        }
+        composeRule.waitUntil(timeoutMillis = 5_000) {
+            composeRule.safeReadCurrentPackOpeningCardId() == "ALP-005"
+        }
+
+        composeRule.mainClock.autoAdvance = false
         val restingBounds = composeRule.currentCardBounds()
 
         composeRule.performDismissSwipeOnCurrentCard()

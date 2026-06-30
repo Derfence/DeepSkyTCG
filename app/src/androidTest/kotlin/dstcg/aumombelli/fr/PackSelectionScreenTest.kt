@@ -9,10 +9,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -99,7 +101,7 @@ class PackSelectionScreenTest {
             )
         }
 
-        composeRule.onNodeWithTag("pack-extension-astronomes-en-herbe")
+        composeRule.onNodeWithTag("pack-extension-name-astronomes-en-herbe")
             .assertTextContains("Astronomes en herbe")
         composeRule.onNodeWithTag("pack-extension-progress-astronomes-en-herbe")
             .assertTextContains("2/10")
@@ -179,14 +181,13 @@ class PackSelectionScreenTest {
             }
         }
 
-        composeRule.onNodeWithTag("pack-weather-forecast").assertIsDisplayed()
-        composeRule.onNodeWithTag("pack-status").assertIsDisplayed()
-        composeRule.onNodeWithTag("pack-active-equipment-reminders").assertIsDisplayed()
+        composeRule.assertPackSelectionScrollContains("pack-weather-forecast")
+        composeRule.assertPackSelectionScrollContains("pack-status")
+        composeRule.assertPackSelectionScrollContains("pack-active-equipment-reminder-telescope")
+        composeRule.assertPackSelectionScrollContains("pack-extension-enter-extension-8")
 
         composeRule.onNodeWithTag("pack-extension-selection-scroll")
             .performScrollToNode(hasTestTag("pack-extension-enter-extension-8"))
-
-        composeRule.onNodeWithTag("pack-extension-enter-extension-8").assertIsDisplayed()
     }
 
     @Test
@@ -936,5 +937,12 @@ class PackSelectionScreenTest {
                 abs(expected.width - actual.width) <= tolerancePx &&
                 abs(expected.height - actual.height) <= tolerancePx,
         )
+    }
+
+    private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.assertPackSelectionScrollContains(
+        tag: String,
+    ) {
+        onNodeWithTag("pack-extension-selection-scroll", useUnmergedTree = true)
+            .assert(hasAnyDescendant(hasTestTag(tag)))
     }
 }

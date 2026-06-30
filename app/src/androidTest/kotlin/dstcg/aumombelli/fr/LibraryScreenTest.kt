@@ -172,14 +172,16 @@ class LibraryScreenTest {
         composeRule.onAllNodesWithTag("library-card-preview-arrow-right", useUnmergedTree = true)
             .assertCountEquals(1)
 
-        composeRule.onNodeWithTag("library-card-preview-pager").performTouchInput { swipeLeft() }
+        composeRule.onNodeWithTag("library-card-preview-pager", useUnmergedTree = true)
+            .performTouchInput { swipeLeft() }
         composeRule.assertPreviewCurrentCard("M57")
         composeRule.onAllNodesWithTag("library-card-preview-arrow-left", useUnmergedTree = true)
             .assertCountEquals(1)
         composeRule.onAllNodesWithTag("library-card-preview-arrow-right", useUnmergedTree = true)
             .assertCountEquals(0)
 
-        composeRule.onNodeWithTag("library-card-preview-pager").performTouchInput { swipeRight() }
+        composeRule.onNodeWithTag("library-card-preview-pager", useUnmergedTree = true)
+            .performTouchInput { swipeRight() }
         composeRule.assertPreviewCurrentCard("M42")
         composeRule.onNodeWithTag("library-card-preview-close").performClick()
         composeRule.onAllNodesWithTag("library-card-preview").assertCountEquals(0)
@@ -272,7 +274,8 @@ class LibraryScreenTest {
             .assertCountEquals(0)
         composeRule.onAllNodesWithTag("library-card-preview-arrow-right", useUnmergedTree = true)
             .assertCountEquals(0)
-        composeRule.onNodeWithTag("library-card-preview-pager").performTouchInput { swipeLeft() }
+        composeRule.onNodeWithTag("library-card-preview-pager", useUnmergedTree = true)
+            .performTouchInput { swipeLeft() }
         composeRule.assertPreviewCurrentCard("BET-CITY")
     }
 

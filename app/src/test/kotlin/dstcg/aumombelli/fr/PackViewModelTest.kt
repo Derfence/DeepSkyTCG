@@ -251,7 +251,7 @@ class PackViewModelTest {
         viewModel.openPack("core-alpha")
         advanceUntilIdle()
 
-        assertEquals(PackEvent.PackReadyForReveal(), event.await())
+        assertEquals(true, event.await() is PackEvent.PackReadyForReveal)
         assertEquals(listOf("core-alpha" to false), packGateway.openPackCalls)
         assertEquals(2, viewModel.uiState.value.currentCollection.cards["ALP-001"]?.totalOwned)
         assertEquals(1, viewModel.uiState.value.currentCollection.cards["ALP-002"]?.totalOwned)

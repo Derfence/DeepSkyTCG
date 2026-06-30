@@ -39,6 +39,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -574,7 +575,8 @@ private fun TimelineCardSlot(
                         modifier = Modifier
                             .align(Alignment.TopCenter)
                             .padding(top = 6.dp)
-                            .testTag("timeline-slot-feedback-${slot.index}"),
+                            .testTag("timeline-slot-feedback-${slot.index}")
+                            .semantics(mergeDescendants = true) {},
                     ) {
                         Text(
                             text = slotFeedback.label,

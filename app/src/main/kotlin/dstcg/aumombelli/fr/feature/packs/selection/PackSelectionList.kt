@@ -125,6 +125,7 @@ internal fun ExtensionList(
                             ResizableExtensionName(
                                 text = extension.name,
                                 modifier = Modifier.weight(1f),
+                                testTag = "pack-extension-name-${extension.id}",
                             )
                             progress?.let {
                                 Text(
@@ -189,6 +190,7 @@ private fun ResizableExtensionName(
     text: String,
     modifier: Modifier = Modifier,
     maxFontSize: TextUnit = MaterialTheme.typography.titleLarge.fontSize,
+    testTag: String? = null,
 ) {
     val minFontSize = 12.sp
 
@@ -210,7 +212,9 @@ private fun ResizableExtensionName(
                     fontSize = (fontSize.value - 1f).coerceAtLeast(minFontSize.value).sp
                 }
             },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(if (testTag != null) Modifier.testTag(testTag) else Modifier),
         )
     }
 }
