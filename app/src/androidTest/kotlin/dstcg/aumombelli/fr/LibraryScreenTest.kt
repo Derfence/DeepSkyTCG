@@ -25,6 +25,7 @@ import androidx.compose.ui.test.swipeRight
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.audio.AmbientTrack
 import fr.aumombelli.dstcg.audio.AudioController
+import fr.aumombelli.dstcg.audio.AudioPlaybackOptions
 import fr.aumombelli.dstcg.audio.AudioSettings
 import fr.aumombelli.dstcg.audio.LocalAudioController
 import fr.aumombelli.dstcg.audio.SoundCue
@@ -912,7 +913,7 @@ class LibraryScreenTest {
         val playedCues: List<SoundCue>
             get() = synchronized(playedCueStorage) { playedCueStorage.toList() }
 
-        override fun play(cue: SoundCue) {
+        override fun play(cue: SoundCue, options: AudioPlaybackOptions) {
             synchronized(playedCueStorage) {
                 playedCueStorage += cue
             }

@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import fr.aumombelli.dstcg.audio.AmbientTrack
 import fr.aumombelli.dstcg.audio.AudioController
+import fr.aumombelli.dstcg.audio.AudioPlaybackOptions
 import fr.aumombelli.dstcg.audio.AudioSettings
 import fr.aumombelli.dstcg.audio.SoundCue
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
@@ -562,7 +563,7 @@ class DstcgAppBackNavigationTest {
         val playedCues: List<SoundCue>
             get() = synchronized(playedCueStorage) { playedCueStorage.toList() }
 
-        override fun play(cue: SoundCue) {
+        override fun play(cue: SoundCue, options: AudioPlaybackOptions) {
             synchronized(playedCueStorage) {
                 playedCueStorage += cue
             }

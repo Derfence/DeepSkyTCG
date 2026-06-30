@@ -28,11 +28,16 @@ import androidx.compose.ui.test.swipeUp
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.audio.AmbientTrack
 import fr.aumombelli.dstcg.audio.AudioController
+import fr.aumombelli.dstcg.audio.AudioPlaybackOptions
 import fr.aumombelli.dstcg.audio.AudioSettings
 import fr.aumombelli.dstcg.audio.LocalAudioController
 import fr.aumombelli.dstcg.audio.SoundCue
 import fr.aumombelli.dstcg.feature.packs.opening.AstroPackRevealUiItem
 import fr.aumombelli.dstcg.feature.packs.opening.EquipmentPackRevealUiItem
+import fr.aumombelli.dstcg.feature.packs.opening.PACK_OPENING_SOFT_REVEAL_MAX_PLAYBACK_RATE_MULTIPLIER
+import fr.aumombelli.dstcg.feature.packs.opening.PACK_OPENING_SOFT_REVEAL_MAX_VOLUME_MULTIPLIER
+import fr.aumombelli.dstcg.feature.packs.opening.PACK_OPENING_SOFT_REVEAL_MIN_PLAYBACK_RATE_MULTIPLIER
+import fr.aumombelli.dstcg.feature.packs.opening.PACK_OPENING_SOFT_REVEAL_MIN_VOLUME_MULTIPLIER
 import fr.aumombelli.dstcg.feature.packs.opening.PackOpeningRevealSlotProbe
 import fr.aumombelli.dstcg.model.CardDefinition
 import fr.aumombelli.dstcg.model.DrawPackResponse
@@ -256,6 +261,33 @@ class PackOpeningScreenTest {
     }
 
     @Test
+    fun pack_opening_first_card_reveal_uses_soft_reveal_sound() {
+        val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
+        val audioController = RecordingAudioController()
+
+        composeRule.mainClock.autoAdvance = false
+        composeRule.setContent {
+            CompositionLocalProvider(LocalAudioController provides audioController) {
+                PackOpeningScreen(
+                    state = buildPackOpeningState(
+                        drawnAt = "2026-03-23T12:00:00Z",
+                        cards = listOf(testPackCard("ALP-001", "Nebuleuse d'Orion", "Common", "spark_fox")),
+                        definitions = listOf(firstCard),
+                        highestBurstRarity = "Common",
+                    ),
+                    onDone = {},
+                )
+            }
+        }
+
+        composeRule.advanceToRevealedCards()
+
+        assertEquals(listOf(SoundCue.PackBurst, SoundCue.PackReveal), audioController.playedCues)
+        assertEquals(AudioPlaybackOptions(), audioController.playedOptions[0])
+        assertSoftRevealOptions(audioController.playedOptions[1])
+    }
+
+    @Test
     fun pack_opening_card_change_plays_reveal_sound() {
         val firstCard = testCardDefinition("ALP-001", name = "Nebuleuse d'Orion")
         val secondCard = testCardDefinition("ALP-002", name = "Galaxie d'Andromede")
@@ -312,6 +344,7 @@ class PackOpeningScreenTest {
         }
 
         assertEquals(listOf(SoundCue.PackReveal), audioController.playedCues)
+        assertSoftRevealOptions(audioController.playedOptions.single())
     }
 
     @Test
@@ -357,6 +390,7 @@ class PackOpeningScreenTest {
         composeRule.runOnIdle { }
 
         assertEquals(listOf(SoundCue.PackReveal), audioController.playedCues)
+        assertSoftRevealOptions(audioController.playedOptions.single())
     }
 
     @Test
@@ -1541,6 +1575,18 @@ class PackOpeningScreenTest {
         )
     }
 
+    private fun assertSoftRevealOptions(options: AudioPlaybackOptions) {
+        assertTrue(
+            options.volumeMultiplier in
+                PACK_OPENING_SOFT_REVEAL_MIN_VOLUME_MULTIPLIER..PACK_OPENING_SOFT_REVEAL_MAX_VOLUME_MULTIPLIER,
+        )
+        assertTrue(
+            options.playbackRateMultiplier in
+                PACK_OPENING_SOFT_REVEAL_MIN_PLAYBACK_RATE_MULTIPLIER..
+                PACK_OPENING_SOFT_REVEAL_MAX_PLAYBACK_RATE_MULTIPLIER,
+        )
+    }
+
     private fun androidx.compose.ui.test.junit4.ComposeContentTestRule.performDismissSwipeOnCurrentCard() {
         firstNodeWithTag("pack-opening-current-card-surface").performTouchInput {
             down(center)
@@ -1586,16 +1632,22 @@ class PackOpeningScreenTest {
 
     private class RecordingAudioController : AudioController {
         private val mutableSettings = MutableStateFlow(AudioSettings())
+        private val lock = Any()
         private val playedCueStorage = mutableListOf<SoundCue>()
+        private val playedOptionStorage = mutableListOf<AudioPlaybackOptions>()
 
         override val settings: StateFlow<AudioSettings> = mutableSettings.asStateFlow()
 
         val playedCues: List<SoundCue>
-            get() = synchronized(playedCueStorage) { playedCueStorage.toList() }
+            get() = synchronized(lock) { playedCueStorage.toList() }
 
-        override fun play(cue: SoundCue) {
-            synchronized(playedCueStorage) {
+        val playedOptions: List<AudioPlaybackOptions>
+            get() = synchronized(lock) { playedOptionStorage.toList() }
+
+        override fun play(cue: SoundCue, options: AudioPlaybackOptions) {
+            synchronized(lock) {
                 playedCueStorage += cue
+                playedOptionStorage += options
             }
         }
 
@@ -1612,8 +1664,9 @@ class PackOpeningScreenTest {
         override fun release() = Unit
 
         fun clearPlayedCues() {
-            synchronized(playedCueStorage) {
+            synchronized(lock) {
                 playedCueStorage.clear()
+                playedOptionStorage.clear()
             }
         }
     }

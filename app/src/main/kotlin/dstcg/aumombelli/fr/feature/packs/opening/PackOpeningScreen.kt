@@ -149,7 +149,7 @@ fun PackOpeningScreen(
             )
         }
         delay(PACK_OPENING_REVEAL_DELAY_MS.toLong())
-        audioController.play(SoundCue.PackReveal)
+        playPackOpeningSoftRevealCue(audioController)
         cardsVisible = true
         cardsEntranceProgress.animateTo(
             targetValue = 1f,
@@ -199,7 +199,7 @@ fun PackOpeningScreen(
                     verticalDragActive = false
                     if (swipeOffset < -220f) {
                         dismissStartOffset = swipeOffset
-                        audioController.play(SoundCue.PackReveal)
+                        playPackOpeningSoftRevealCue(audioController)
                         dismissRequested = true
                     } else {
                         swipeOffset = 0f
@@ -359,7 +359,7 @@ fun PackOpeningScreen(
                             if (!cardsVisible || currentPage == lastPackRevealCuePage) return@LaunchedEffect
 
                             lastPackRevealCuePage = currentPage
-                            audioController.play(SoundCue.PackReveal)
+                            playPackOpeningSoftRevealCue(audioController)
                         }
 
                         LaunchedEffect(packResult.drawnAt, currentPage, cardsVisible) {

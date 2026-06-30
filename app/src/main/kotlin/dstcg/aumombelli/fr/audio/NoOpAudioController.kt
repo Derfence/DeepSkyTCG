@@ -12,7 +12,7 @@ class NoOpAudioController(
 
     override val settings: StateFlow<AudioSettings> = mutableSettings.asStateFlow()
 
-    override fun play(cue: SoundCue) = Unit
+    override fun play(cue: SoundCue, options: AudioPlaybackOptions) = Unit
 
     override fun setAmbient(track: AmbientTrack?) = Unit
 
