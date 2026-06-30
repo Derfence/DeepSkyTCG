@@ -175,7 +175,7 @@ class LocalEndToEndTest {
         composeRule.onNodeWithTag("home-open-pack").performClick()
         composeRule.waitUntilTagExists("pack-status-count", timeoutMillis = 15_000)
         composeRule.onNodeWithTag("pack-status-count").assertTextContains("9/10")
-        composeRule.onNodeWithTag("pack-status-remaining").assertTextContains("Prochaine charge dans", substring = true)
+        composeRule.onNodeWithTag("pack-status-remaining").assertTextContains("Prochain pack dans", substring = true)
         composeRule.pressAndroidBack()
         composeRule.waitUntil(timeoutMillis = 10_000) {
             composeRule.isTagEnabled("home-library") || composeRule.isTagPresent("pack-status-count")

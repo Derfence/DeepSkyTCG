@@ -23,6 +23,8 @@ import fr.aumombelli.dstcg.data.requireUsableProgress
 import fr.aumombelli.dstcg.data.validated
 import fr.aumombelli.dstcg.feature.badges.BadgeItem
 import fr.aumombelli.dstcg.feature.badges.buildNewlyUnlockedBadges
+import fr.aumombelli.dstcg.model.CardDefinition
+import fr.aumombelli.dstcg.model.EquipmentCardDefinition
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.GameBalanceDefinition
 import fr.aumombelli.dstcg.model.OwnedCollection
@@ -43,6 +45,8 @@ data class PackSelectionUiState(
     val isLoading: Boolean = true,
     val extensions: List<ExtensionDefinition> = emptyList(),
     val currentCollection: OwnedCollection = OwnedCollection(),
+    val extensionCardProgress: Map<String, ExtensionCardProgress> = emptyMap(),
+    val activeEquipmentReminders: List<ActiveEquipmentPackReminderUi> = emptyList(),
     val rechargeState: PackRechargeState = PackRechargeState(),
     val rechargeMultiplier: Double = 1.0,
     val availableDrawCount: Int = DEFAULT_MAX_STORED_DRAWS,
@@ -85,6 +89,7 @@ class PackViewModel(
     private val _uiState = MutableStateFlow(PackSelectionUiState())
     val uiState: StateFlow<PackSelectionUiState> = _uiState.asStateFlow()
     private var isPackRequestInFlight: Boolean = false
+    private var catalogCards: List<CardDefinition> = emptyList()
     private val epicBoostManager = EpicBoostManager(gameSettings.entropySource)
 
     private val _events = MutableSharedFlow<PackEvent>()
@@ -109,19 +114,26 @@ class PackViewModel(
         viewModelScope.launch {
             runCatching {
                 val extensions = catalogRepository.loadExtensions()
+                val cards = catalogRepository.loadCards()
                 val gameBalance = catalogRepository.loadGameBalance().validated()
                 val equipmentCards = catalogRepository.loadEquipmentCards()
                 val loadedProgress = progressRepository.loadProgress().requireUsableProgress()
-                Quadruple(extensions, loadedProgress, gameBalance, equipmentCards)
-            }.onSuccess { (extensions, loadedProgress, gameBalance, equipmentCards) ->
+                PackSelectionLoadResult(extensions, cards, loadedProgress, gameBalance, equipmentCards)
+            }.onSuccess { result ->
+                catalogCards = result.cards
                 _uiState.value = PackSelectionUiState(
                     isLoading = false,
-                    extensions = extensions,
-                    currentCollection = loadedProgress.progress.collection,
+                    extensions = result.extensions,
+                    currentCollection = result.loadedProgress.progress.collection,
+                    extensionCardProgress = buildExtensionCardProgress(
+                        extensions = result.extensions,
+                        cards = result.cards,
+                        collection = result.loadedProgress.progress.collection,
+                    ),
                 ).withPackChargeStatus(
-                    loadedProgress = loadedProgress,
-                    gameBalance = gameBalance,
-                    equipmentCards = equipmentCards,
+                    loadedProgress = result.loadedProgress,
+                    gameBalance = result.gameBalance,
+                    equipmentCards = result.equipmentCards,
                 )
             }.onFailure { exception ->
                 _uiState.value = PackSelectionUiState(
@@ -197,20 +209,25 @@ class PackViewModel(
                         beforeProgress = beforeProgress,
                         afterProgress = loadedProgress.progress,
                     )
-                    Quadruple(loadedProgress, newlyUnlockedBadges, gameBalance, equipmentCards)
-                }.onSuccess { (loadedProgress, newlyUnlockedBadges, gameBalance, equipmentCards) ->
-                    _uiState.update {
-                        it.copy(
+                    PackOpenResult(loadedProgress, newlyUnlockedBadges, gameBalance, equipmentCards)
+                }.onSuccess { result ->
+                    _uiState.update { currentState ->
+                        currentState.copy(
                             isLoading = false,
-                            currentCollection = loadedProgress.progress.collection,
+                            currentCollection = result.loadedProgress.progress.collection,
+                            extensionCardProgress = buildExtensionCardProgress(
+                                extensions = currentState.extensions,
+                                cards = catalogCards,
+                                collection = result.loadedProgress.progress.collection,
+                            ),
                             isAwaitingPackResult = false,
                         ).withPackChargeStatus(
-                            loadedProgress = loadedProgress,
-                            gameBalance = gameBalance,
-                            equipmentCards = equipmentCards,
+                            loadedProgress = result.loadedProgress,
+                            gameBalance = result.gameBalance,
+                            equipmentCards = result.equipmentCards,
                         )
                     }
-                    _events.emit(PackEvent.PackReadyForReveal(newlyUnlockedBadges = newlyUnlockedBadges))
+                    _events.emit(PackEvent.PackReadyForReveal(newlyUnlockedBadges = result.newlyUnlockedBadges))
                 }.onFailure { exception ->
                     _uiState.update {
                         it.copy(
@@ -244,7 +261,7 @@ class PackViewModel(
     private fun PackSelectionUiState.withPackChargeStatus(
         loadedProgress: LoadedProgress,
         gameBalance: GameBalanceDefinition,
-        equipmentCards: List<fr.aumombelli.dstcg.model.EquipmentCardDefinition>,
+        equipmentCards: List<EquipmentCardDefinition>,
     ): PackSelectionUiState {
         val referenceEvidence = gameSettings.timeSource.now()
         val drawCooldown = gameBalance.drawCooldownDuration()
@@ -261,6 +278,10 @@ class PackViewModel(
             rechargeMultiplier = rechargeMultiplier,
         )
         return copy(
+            activeEquipmentReminders = buildActiveEquipmentPackReminders(
+                progress = loadedProgress.progress,
+                equipmentCards = equipmentCards,
+            ),
             rechargeState = chargeStatus.rechargeState,
             rechargeMultiplier = rechargeMultiplier,
             availableDrawCount = chargeStatus.availableDrawCount,
@@ -281,9 +302,17 @@ class PackViewModel(
 private fun EntropySource.rollBoosterDecorSeeds(): List<Int> =
     List(EpicBoostConfig.BOOSTERS_PER_EXTENSION) { nextInt(Int.MAX_VALUE) }
 
-private data class Quadruple<A, B, C, D>(
-    val first: A,
-    val second: B,
-    val third: C,
-    val fourth: D,
+private data class PackSelectionLoadResult(
+    val extensions: List<ExtensionDefinition>,
+    val cards: List<CardDefinition>,
+    val loadedProgress: LoadedProgress,
+    val gameBalance: GameBalanceDefinition,
+    val equipmentCards: List<EquipmentCardDefinition>,
+)
+
+private data class PackOpenResult(
+    val loadedProgress: LoadedProgress,
+    val newlyUnlockedBadges: List<BadgeItem>,
+    val gameBalance: GameBalanceDefinition,
+    val equipmentCards: List<EquipmentCardDefinition>,
 )

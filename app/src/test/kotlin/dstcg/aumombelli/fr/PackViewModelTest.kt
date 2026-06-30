@@ -9,6 +9,8 @@ import fr.aumombelli.dstcg.model.ActiveEquipmentEffect
 import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.StandaloneProgress
+import fr.aumombelli.dstcg.ui.viewmodel.ActiveEquipmentPackReminderUi
+import fr.aumombelli.dstcg.ui.viewmodel.ExtensionCardProgress
 import fr.aumombelli.dstcg.ui.viewmodel.PackViewModel
 import java.time.Duration
 import java.time.Instant
@@ -54,6 +56,10 @@ class PackViewModelTest {
     fun `refresh loads extensions collection and charge status from local progress`() = runTest {
         val catalogGateway = FakeCatalogGateway().apply {
             extensions = listOf(ExtensionDefinition("core-alpha", "Core Alpha", "cover"))
+            cards = listOf(
+                testCardDefinition("ALP-001", extensionId = "core-alpha"),
+                testCardDefinition("ALP-002", extensionId = "core-alpha"),
+            )
         }
         val progressGateway = FakeProgressGateway().apply {
             progress = StandaloneProgress(
@@ -79,6 +85,10 @@ class PackViewModelTest {
         assertEquals(Duration.ofHours(6), viewModel.uiState.value.remainingDuration)
         assertEquals(false, viewModel.uiState.value.isDrawLocked)
         assertEquals(1, viewModel.uiState.value.currentCollection.cards["ALP-001"]?.totalOwned)
+        assertEquals(
+            ExtensionCardProgress(obtainedCount = 1, totalCount = 2),
+            viewModel.uiState.value.extensionCardProgress["core-alpha"],
+        )
     }
 
     @Test
@@ -86,6 +96,7 @@ class PackViewModelTest {
         val observatory = testEquipmentCardDefinition(
             id = "observatory-master",
             type = EquipmentType.Observatory,
+            level = 3,
             bonusValue = 2.0,
         )
         val catalogGateway = FakeCatalogGateway().apply {
@@ -123,6 +134,16 @@ class PackViewModelTest {
         assertEquals(
             "2026-03-24T15:00:00Z",
             viewModel.uiState.value.buildLiveChargeStatus(fixedNow).nextChargeAt,
+        )
+        assertEquals(
+            listOf(
+                ActiveEquipmentPackReminderUi(
+                    type = EquipmentType.Observatory,
+                    level = 3,
+                    packsRemaining = 3,
+                ),
+            ),
+            viewModel.uiState.value.activeEquipmentReminders,
         )
     }
 
@@ -210,6 +231,10 @@ class PackViewModelTest {
         }
         val catalogGateway = FakeCatalogGateway().apply {
             extensions = listOf(ExtensionDefinition("core-alpha", "Core Alpha", "cover"))
+            cards = listOf(
+                testCardDefinition("ALP-001", extensionId = "core-alpha"),
+                testCardDefinition("ALP-002", extensionId = "core-alpha"),
+            )
         }
 
         val viewModel = PackViewModel(
@@ -230,6 +255,10 @@ class PackViewModelTest {
         assertEquals(listOf("core-alpha" to false), packGateway.openPackCalls)
         assertEquals(2, viewModel.uiState.value.currentCollection.cards["ALP-001"]?.totalOwned)
         assertEquals(1, viewModel.uiState.value.currentCollection.cards["ALP-002"]?.totalOwned)
+        assertEquals(
+            ExtensionCardProgress(obtainedCount = 2, totalCount = 2),
+            viewModel.uiState.value.extensionCardProgress["core-alpha"],
+        )
         assertEquals(9, viewModel.uiState.value.availableDrawCount)
         assertEquals("2026-03-24T18:00:00Z", viewModel.uiState.value.nextChargeAt)
         assertEquals(Duration.ofHours(6), viewModel.uiState.value.remainingDuration)

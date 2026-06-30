@@ -23,6 +23,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
 import fr.aumombelli.dstcg.model.DrawPackResponse
+import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.toDisplayCard
@@ -31,6 +32,8 @@ import fr.aumombelli.dstcg.testsupport.androidTestRechargeStateWithNextChargeAt
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.screen.PackOpeningScreen
 import fr.aumombelli.dstcg.ui.screen.PackSelectionScreen
+import fr.aumombelli.dstcg.ui.viewmodel.ActiveEquipmentPackReminderUi
+import fr.aumombelli.dstcg.ui.viewmodel.ExtensionCardProgress
 import fr.aumombelli.dstcg.ui.viewmodel.PackOpeningUiState
 import fr.aumombelli.dstcg.ui.viewmodel.PackSelectionUiState
 import java.time.Duration
@@ -68,6 +71,81 @@ class PackSelectionScreenTest {
         composeRule.onNodeWithTag("pack-back").performClick()
 
         assertEquals(1, backClicks)
+    }
+
+    @Test
+    fun extension_list_shows_obtained_card_count_next_to_extension_name() {
+        composeRule.setContent {
+            PackSelectionScreen(
+                state = PackSelectionUiState(
+                    isLoading = false,
+                    extensions = listOf(
+                        ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                    ),
+                    extensionCardProgress = mapOf(
+                        "astronomes-en-herbe" to ExtensionCardProgress(
+                            obtainedCount = 2,
+                            totalCount = 10,
+                        ),
+                    ),
+                ),
+                onRefresh = {},
+                onSelectExtension = {},
+                onSelectBooster = {},
+                onOpenPack = {},
+                onPackRevealReady = {},
+                packReadySignal = 0,
+                showBackground = false,
+            )
+        }
+
+        composeRule.onNodeWithTag("pack-extension-astronomes-en-herbe")
+            .assertTextContains("Astronomes en herbe")
+        composeRule.onNodeWithTag("pack-extension-progress-astronomes-en-herbe")
+            .assertTextContains("2/10")
+    }
+
+    @Test
+    fun extension_intro_shows_active_equipment_reminders_compactly() {
+        composeRule.setContent {
+            PackSelectionScreen(
+                state = PackSelectionUiState(
+                    isLoading = false,
+                    extensions = listOf(
+                        ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                    ),
+                    activeEquipmentReminders = listOf(
+                        ActiveEquipmentPackReminderUi(
+                            type = EquipmentType.Telescope,
+                            level = 2,
+                            packsRemaining = 3,
+                        ),
+                        ActiveEquipmentPackReminderUi(
+                            type = EquipmentType.Mount,
+                            level = 1,
+                            packsRemaining = 1,
+                        ),
+                    ),
+                ),
+                onRefresh = {},
+                onSelectExtension = {},
+                onSelectBooster = {},
+                onOpenPack = {},
+                onPackRevealReady = {},
+                packReadySignal = 0,
+                showBackground = false,
+            )
+        }
+
+        composeRule.onNodeWithTag("pack-active-equipment-reminders").assertIsDisplayed()
+        composeRule.onNodeWithTag("pack-active-equipment-reminder-telescope")
+            .assertTextContains("lvl2")
+        composeRule.onNodeWithTag("pack-active-equipment-reminder-telescope")
+            .assertTextContains(":3")
+        composeRule.onNodeWithTag("pack-active-equipment-reminder-mount")
+            .assertTextContains("lvl1")
+        composeRule.onNodeWithTag("pack-active-equipment-reminder-mount")
+            .assertTextContains(":1")
     }
 
     @Test
@@ -728,7 +806,7 @@ class PackSelectionScreenTest {
         composeRule.onAllNodesWithTag("pack-status-pack-slot-empty").assertCountEquals(10)
         composeRule.onAllNodesWithTag("pack-status-weather").assertCountEquals(0)
         composeRule.onNodeWithTag("pack-status-remaining")
-            .assertTextContains("Prochaine charge dans", substring = true)
+            .assertTextContains("Prochain pack dans", substring = true)
         composeRule.onNodeWithTag("pack-status-progress").assertIsDisplayed()
         composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe").assertIsNotEnabled()
         composeRule.onNodeWithTag("pack-extension-enter-astronomes-en-herbe")

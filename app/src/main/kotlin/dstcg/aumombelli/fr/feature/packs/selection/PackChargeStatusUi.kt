@@ -70,7 +70,7 @@ internal fun PackChargeStatus(
     val statusText = if (safeMaxStoredDraws > 0 && visibleAvailableDrawCount >= safeMaxStoredDraws) {
         "Stock plein ${safeMaxStoredDraws}/${safeMaxStoredDraws}"
     } else {
-        "Prochaine charge dans ${remainingDurationText ?: "..."}"
+        "Prochain pack dans ${remainingDurationText ?: "..."}"
     }
 
     MotionCard(modifier = modifier) {
