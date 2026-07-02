@@ -23,7 +23,7 @@ class CraftingOperationsTest {
     )
 
     @Test
-    fun `darken sky consumes exact source variant and creates next standard sky`() {
+    fun `darken sky consumes standard copies and creates next standard sky`() {
         val collection = ownedCollectionWithVariants(
             card.id,
             OwnedVariantCount("city", "standard", 2),
@@ -41,7 +41,47 @@ class CraftingOperationsTest {
     }
 
     @Test
-    fun `darken sky loses stamped finish when stamped copies are consumed`() {
+    fun `darken sky combines standard and stamped copies in the same sky basket`() {
+        val collection = ownedCollectionWithVariants(
+            card.id,
+            OwnedVariantCount("city", "standard", 1),
+            OwnedVariantCount("city", "stamped", 1),
+        )
+
+        val recipe = validateRecipe(
+            collection = collection,
+            mode = CraftingMode.DarkenSky,
+            source = CraftingCardRef(card.id, "city", "standard"),
+        )
+        val updated = collection.applyCraftingRecipe(recipe)
+
+        assertEquals(0, updated.craftingCountFor(CraftingCardRef(card.id, "city", "standard")))
+        assertEquals(0, updated.craftingCountFor(CraftingCardRef(card.id, "city", "stamped")))
+        assertEquals(1, updated.craftingCountFor(CraftingCardRef(card.id, "suburban", "standard")))
+    }
+
+    @Test
+    fun `darken sky consumes standard copies before stamped copies`() {
+        val collection = ownedCollectionWithVariants(
+            card.id,
+            OwnedVariantCount("city", "standard", 2),
+            OwnedVariantCount("city", "stamped", 2),
+        )
+
+        val recipe = validateRecipe(
+            collection = collection,
+            mode = CraftingMode.DarkenSky,
+            source = CraftingCardRef(card.id, "city", "standard"),
+        )
+        val updated = collection.applyCraftingRecipe(recipe)
+
+        assertEquals(0, updated.craftingCountFor(CraftingCardRef(card.id, "city", "standard")))
+        assertEquals(2, updated.craftingCountFor(CraftingCardRef(card.id, "city", "stamped")))
+        assertEquals(1, updated.craftingCountFor(CraftingCardRef(card.id, "suburban", "standard")))
+    }
+
+    @Test
+    fun `darken sky can consume stamped copies only and loses stamped finish`() {
         val collection = ownedCollectionWithVariants(
             card.id,
             OwnedVariantCount("city", "stamped", 2),
@@ -50,7 +90,7 @@ class CraftingOperationsTest {
         val recipe = validateRecipe(
             collection = collection,
             mode = CraftingMode.DarkenSky,
-            source = CraftingCardRef(card.id, "city", "stamped"),
+            source = CraftingCardRef(card.id, "city", "standard"),
         )
         val updated = collection.applyCraftingRecipe(recipe)
 
