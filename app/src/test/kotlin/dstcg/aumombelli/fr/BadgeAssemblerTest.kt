@@ -63,6 +63,42 @@ class BadgeAssemblerTest {
     }
 
     @Test
+    fun `collection badge can silently lock again when required variant is lost`() {
+        val beforeProgress = badgeProgress(
+            collection = ownedCollectionWithVariants(
+                "AST-001",
+                OwnedVariantCount("city", "stamped", 1),
+            ),
+        )
+        val afterProgress = badgeProgress(
+            collection = ownedCollectionWithVariants(
+                "AST-001",
+                OwnedVariantCount("city", "standard", 1),
+            ),
+        )
+        val afterSection = buildBadgeBookSections(
+            extensions = listOf(ExtensionDefinition("astro", "Astro", "cover")),
+            cards = listOf(testCardDefinition("AST-001", extensionId = "astro")),
+            equipmentCards = emptyList(),
+            variantProfiles = testVariantProfiles(),
+            progress = afterProgress,
+        ).first { it.extensionId == "astro" }
+
+        val stampedBadge = afterSection.badges.first { it.id == "astro::finish::stamped" }
+        val newlyUnlockedBadges = buildNewlyUnlockedBadges(
+            extensions = listOf(ExtensionDefinition("astro", "Astro", "cover")),
+            cards = listOf(testCardDefinition("AST-001", extensionId = "astro")),
+            equipmentCards = emptyList(),
+            variantProfiles = testVariantProfiles(),
+            beforeProgress = beforeProgress,
+            afterProgress = afterProgress,
+        )
+
+        assertFalse(stampedBadge.isUnlocked)
+        assertEquals(emptyList<String>(), newlyUnlockedBadges.map { it.id })
+    }
+
+    @Test
     fun `section counts unlocked badges only when every card matches the requirement`() {
         val section = buildBadgeBookSections(
             extensions = listOf(ExtensionDefinition("astro", "Astro", "cover")),

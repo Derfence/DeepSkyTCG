@@ -14,12 +14,13 @@ La bibliothèque affiche la collection locale persistante.
 - Dans chaque groupe catalogue, une option active remplace l'option déjà active du même groupe ; toucher l'option active la désactive.
 - `Holographique` est une qualité du ciel, pas un groupe de filtre séparé.
 - Un filtre de qualité du ciel masque les cartes non obtenues, car aucune variante possédée ne peut confirmer cette qualité.
-- Quand `Échangeable` est combiné avec une qualité du ciel, seule une variante de cette qualité disponible en double rend la carte visible.
+- Le filtre `Échangeable` affiche les cartes possédées en au moins deux exemplaires au total, toutes variantes confondues.
+- Quand `Échangeable` est combiné avec une qualité du ciel, une variante possédée de cette qualité suffit si la carte a un autre exemplaire.
 - L'aperçu réserve la place du sélecteur de variantes et de l'action d'échange, puis dimensionne la carte selon la largeur ou la hauteur encore disponible.
 - La fiche détaillée dimensionne également la carte selon la largeur ou la hauteur disponible avant d'afficher sa description.
 - Le sélecteur de variantes permet de consulter les qualités de ciel et finitions possédées.
 - Les nouvelles cartes peuvent afficher l'indicateur à trois étoiles pendant la première visite.
-- Une variante avec au moins `2` copies peut proposer l'action `Échanger`.
+- Toute variante possédée peut proposer l'action `Échanger` si la carte a au moins `2` exemplaires au total.
 
 ## Variantes pédagogiques
 
@@ -37,6 +38,7 @@ Le carnet de badges est accessible après le premier pack. Les badges couvrent n
 - équipements activés et effets simultanés.
 
 Les célébrations de badges peuvent être différées pendant l'onboarding, puis rejouées au retour sur l'accueil.
+Comme les badges sont recalculés depuis la collection courante, un échange peut retirer silencieusement un badge si ses conditions ne sont plus remplies.
 
 ## Tests associés
 

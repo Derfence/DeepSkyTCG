@@ -35,7 +35,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import fr.aumombelli.dstcg.model.LibraryCardItem
 import fr.aumombelli.dstcg.model.TradeCardCandidate
-import fr.aumombelli.dstcg.model.canTradeAway
+import fr.aumombelli.dstcg.model.canTradeVariantAway
 import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.ui.component.AstroCardDetailsSurface
 import fr.aumombelli.dstcg.ui.component.AstroCardFullscreenCloseButton
@@ -303,7 +303,7 @@ internal fun FullscreenCardDialog(
 private fun LibraryCardItem.toTradeCandidateOrNull(
     activeVariant: fr.aumombelli.dstcg.model.DisplayCardVariant,
 ): TradeCardCandidate? =
-    if (activeVariant.canTradeAway()) {
+    if (canTradeVariantAway(activeVariant)) {
         TradeCardCandidate(
             card = definition,
             extensionName = extensionName,

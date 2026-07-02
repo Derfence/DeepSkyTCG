@@ -55,7 +55,7 @@ Les commandes détaillées sont dans [Installation et tests](docs/setup-and-test
 - Progression sécurisée dans DataStore avec chiffrement AES-GCM via Android Keystore.
 - Stock local de `10` ouvertures, `5` cartes par pack et cooldown de `6 h` modulé par la météo UTC.
 - Catalogue embarqué synchronisé depuis `catalogue_astronomie.xlsx`.
-- Bluetooth LE pour échanger une variante en doublon contre une variante compatible, sans serveur ni appairage système.
+- Bluetooth LE pour échanger une variante possédée d'une carte en doublon contre une variante compatible, sans serveur ni appairage système.
 - Onboarding local guidé jusqu'à l'artisanat, avec explication des outils et de leurs coûts.
 
 Ne pousse rien depuis ce dépôt sans instruction explicite.

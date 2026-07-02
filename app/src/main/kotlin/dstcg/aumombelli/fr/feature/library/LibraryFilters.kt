@@ -6,8 +6,8 @@ import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.LibraryCardItem
 import fr.aumombelli.dstcg.model.LibrarySection
 import fr.aumombelli.dstcg.model.VariantProfile
-import fr.aumombelli.dstcg.model.canTradeAway
 import fr.aumombelli.dstcg.model.hasTradeableVariant
+import fr.aumombelli.dstcg.model.isOwnedForTrade
 import fr.aumombelli.dstcg.model.raritySortPriority
 import fr.aumombelli.dstcg.model.skyQualitySortPriority
 
@@ -100,7 +100,7 @@ internal fun LibraryFilters.affectsVariantChoice(): Boolean =
 
 internal fun LibraryCardItem.bestVariantMatching(filters: LibraryFilters): DisplayCardVariant? =
     availableVariants
-        .filter { variant -> variant.matchesVariantFilters(filters) }
+        .filter { variant -> matchesVariantFilters(filters, variant) }
         .maxWithOrNull(bestDisplayVariantComparator)
 
 private fun LibraryCardItem.matchesLibraryFilters(filters: LibraryFilters): Boolean {
@@ -114,15 +114,18 @@ private fun LibraryCardItem.matchesLibraryFilters(filters: LibraryFilters): Bool
         return hasTradeableVariant()
     }
     return availableVariants.any { variant ->
-        variant.matchesVariantFilters(filters)
+        matchesVariantFilters(filters, variant)
     }
 }
 
-private fun DisplayCardVariant.matchesVariantFilters(filters: LibraryFilters): Boolean {
-    if (filters.skyQuality != null && skyQuality != filters.skyQuality) {
+private fun LibraryCardItem.matchesVariantFilters(
+    filters: LibraryFilters,
+    variant: DisplayCardVariant,
+): Boolean {
+    if (filters.skyQuality != null && variant.skyQuality != filters.skyQuality) {
         return false
     }
-    return !filters.tradeableOnly || canTradeAway()
+    return !filters.tradeableOnly || (hasTradeableVariant() && variant.isOwnedForTrade())
 }
 
 private val bestDisplayVariantComparator: Comparator<DisplayCardVariant> =

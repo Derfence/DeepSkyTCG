@@ -109,7 +109,7 @@ class LibraryNavigationTest {
             item.defaultLibraryVariantKey(LibraryFilters(skyQuality = "holographic")),
         )
         assertEquals(
-            "city::standard",
+            "holographic::standard",
             item.defaultLibraryVariantKey(LibraryFilters(tradeableOnly = true)),
         )
     }

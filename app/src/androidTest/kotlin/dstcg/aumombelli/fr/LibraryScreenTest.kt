@@ -525,6 +525,38 @@ class LibraryScreenTest {
     }
 
     @Test
+    fun preview_shows_trade_for_single_variant_when_card_has_another_copy() {
+        val ownedItem = LibraryCardItem(
+            definition = testCardDefinition("M42", name = "Nebuleuse d'Orion"),
+            extensionName = "Astronomes en herbe",
+            ownedCount = 2,
+            availableVariants = listOf(
+                DisplayCardVariant("city", "Ville", "standard", "Standard", false, 1),
+                DisplayCardVariant("mountain", "Montagne", "standard", "Standard", false, 1),
+            ),
+        )
+
+        composeRule.setContent {
+            LibraryScreen(
+                state = LibraryUiState(
+                    isLoading = false,
+                    sections = listOf(
+                        LibrarySection(
+                            extension = ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                            cards = listOf(ownedItem),
+                        ),
+                    ),
+                ),
+                onRefresh = {},
+            )
+        }
+
+        composeRule.onNodeWithTag("library-card-M42").performClick()
+
+        composeRule.onNodeWithTag("library-card-trade").assertIsDisplayed()
+    }
+
+    @Test
     fun filter_chips_show_extension_logo_and_rarity_star() {
         composeRule.setContent {
             LibraryScreen(
@@ -643,9 +675,9 @@ class LibraryScreenTest {
         composeRule.assertLibraryFilterSelected("library-filter-rarity-Rare")
         composeRule.assertLibraryFilterSelected("library-filter-sky-holographic")
         composeRule.assertLibraryFilterSelected("library-filter-tradeable")
-        composeRule.assertLibrarySectionCount("systeme-solaire", "1/3")
+        composeRule.assertLibrarySectionCount("systeme-solaire", "2/3")
         composeRule.assertLibraryNodeDisplayed("library-card-BET-001")
-        composeRule.onAllNodesWithTag("library-card-BET-002").assertCountEquals(0)
+        composeRule.assertLibraryNodeDisplayed("library-card-BET-002")
         composeRule.onAllNodesWithTag("library-card-BET-003").assertCountEquals(0)
     }
 

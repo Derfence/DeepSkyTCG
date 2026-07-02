@@ -9,7 +9,7 @@ L'échange Bluetooth permet à deux appareils proches d'échanger une variante d
 Depuis la bibliothèque :
 
 1. ouvrir une carte obtenue ;
-2. sélectionner une variante avec au moins `2` copies ;
+2. sélectionner une variante possédée d'une carte dont au moins `2` exemplaires existent, toutes variantes confondues ;
 3. appuyer sur `Échanger` ;
 4. autoriser et activer Bluetooth si nécessaire ;
 5. vérifier le nom visible local, limité à 12 octets pour tenir dans l'annonce BLE ;
@@ -24,7 +24,8 @@ Un échange est accepté seulement si :
 
 - les deux appareils utilisent la même empreinte de catalogue ;
 - les deux cartes existent dans le catalogue ;
-- la carte locale est disponible en doublon ;
+- la carte locale est disponible en doublon, toutes variantes confondues ;
+- la variante locale envoyée est possédée ;
 - les raretés sont identiques ;
 - les variantes `skyQuality::finish` sont identiques ;
 - les deux cartes ne sont pas la même variante exacte ;
