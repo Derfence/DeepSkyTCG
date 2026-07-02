@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -38,6 +39,7 @@ internal fun CardArtBackground(
     inset: Dp = 0.dp,
     artShape: Shape = RectangleShape,
     artVisibility: CardArtVisibility = CardArtVisibility.Visible,
+    artBlurRadius: Dp = 0.dp,
     contentScale: ContentScale = ContentScale.Crop,
     modifier: Modifier = Modifier,
 ) {
@@ -93,7 +95,7 @@ internal fun CardArtBackground(
                         CardArtImage(
                             bitmap = cardArt.primary,
                             contentScale = contentScale,
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier.cardArtBlur(artBlurRadius),
                         )
                     }
                 }
@@ -103,7 +105,7 @@ internal fun CardArtBackground(
                         CardArtImage(
                             bitmap = cardArt.fallback,
                             contentScale = contentScale,
-                            modifier = Modifier.fillMaxSize(),
+                            modifier = Modifier.cardArtBlur(artBlurRadius),
                         )
                     }
                 }
@@ -113,24 +115,39 @@ internal fun CardArtBackground(
                         modifier = artModifier.testTag(CardBackgroundFallbackAssetTag),
                     ) {
                         Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(
-                                    Brush.radialGradient(
-                                        colors = listOf(
-                                            Color.White.copy(alpha = 0.14f),
-                                            Color.Transparent,
+                            modifier = Modifier.cardArtBlur(artBlurRadius),
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        Brush.radialGradient(
+                                            colors = listOf(
+                                                Color.White.copy(alpha = 0.14f),
+                                                Color.Transparent,
+                                            ),
                                         ),
-                                    ),
-                                )
-                                .testTag(CardBackgroundPlaceholderTag),
-                        )
+                                    )
+                                    .testTag(CardBackgroundPlaceholderTag),
+                            )
+                        }
                     }
                 }
             }
         }
     }
 }
+
+private fun Modifier.cardArtBlur(radius: Dp): Modifier =
+    fillMaxSize()
+        .then(if (radius > 0.dp) Modifier.blur(radius) else Modifier)
+        .testTag(
+            if (radius > 0.dp) {
+                CardBackgroundBlurredArtTag
+            } else {
+                CardBackgroundSharpArtTag
+            },
+        )
 
 @Composable
 private fun HiddenCardArtPlaceholder(

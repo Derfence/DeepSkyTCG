@@ -28,17 +28,19 @@ Source : `ui/theme/CardRarity.kt`.
 | `Rare` | `#FFD76A` | `#66FFB400` | 4 |
 | `Epic` | `#C69BFF` | `#887A3DFF` | 6 |
 
-## Qualites de ciel
+## Qualités de ciel
 
-| Code | Haut | Bas | Intention visuelle |
-| --- | --- | --- | --- |
-| `city` | `#8E845F` | `#3E382C` | ciel urbain lumineux |
-| `suburban` | `#5F4A46` | `#211C24` | ciel periurbain |
-| `rural` | `#123660` | `#08182C` | ciel profond bleu |
-| `mountain` | `#061323` | `#010308` | ciel tres sombre |
-| `holographic` | `#05070D` | `#000000` | effet premium cyan/rose |
+| Code | Haut | Bas | Flou d’art | Intention visuelle |
+| --- | --- | --- | --- | --- |
+| `city` | `#8E845F` | `#3E382C` | `14.dp` | ciel urbain lumineux |
+| `suburban` | `#5F4A46` | `#211C24` | `9.dp` | ciel périurbain |
+| `rural` | `#123660` | `#08182C` | `5.dp` | ciel profond bleu |
+| `mountain` | `#061323` | `#010308` | `2.dp` | ciel très sombre |
+| `holographic` | `#05070D` | `#000000` | `0.dp` | effet premium cyan/rose |
 
-## Equipements
+Le flou s’applique uniquement à l’illustration de carte. Les textes, badges, bordures, compteurs, tampons et effets holographiques restent nets.
+
+## Équipements
 
 Source : `ui/component/EquipmentCategoryColorTokens.kt`.
 

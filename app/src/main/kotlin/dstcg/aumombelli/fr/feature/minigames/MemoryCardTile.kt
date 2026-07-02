@@ -51,6 +51,7 @@ import fr.aumombelli.dstcg.ui.component.HolographicFoilOverlay
 import fr.aumombelli.dstcg.ui.component.HolographicGlareOverlay
 import fr.aumombelli.dstcg.ui.component.HolographicRimLightOverlay
 import fr.aumombelli.dstcg.ui.component.TwinklingStarsOverlay
+import fr.aumombelli.dstcg.ui.component.skyQualityArtBlurRadius
 import fr.aumombelli.dstcg.ui.motion.autoplayHolographicMotion
 import fr.aumombelli.dstcg.ui.theme.skyQualityPalette
 import kotlin.math.PI
@@ -218,6 +219,7 @@ private fun MemoryCardFront(
             mode = AstroCardSurfaceMode.Thumbnail,
             palette = palette,
             artVisibility = CardArtVisibility.Visible,
+            artBlurRadius = skyQualityArtBlurRadius(displayCard.activeVariant.skyQuality),
             modifier = Modifier.fillMaxSize(),
         )
         Box(

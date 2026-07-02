@@ -51,6 +51,7 @@ import fr.aumombelli.dstcg.ui.component.CardArtBackground
 import fr.aumombelli.dstcg.ui.component.SceneNavigationButton
 import fr.aumombelli.dstcg.ui.component.SceneNavigationIcon
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
+import fr.aumombelli.dstcg.ui.component.skyQualityArtBlurRadius
 import fr.aumombelli.dstcg.ui.motion.SkyBackdropVariant
 import fr.aumombelli.dstcg.ui.screen.dstcgContentInsetsPadding
 import fr.aumombelli.dstcg.ui.theme.skyQualityPalette
@@ -400,6 +401,7 @@ private fun QuizObservationImage(
             mode = AstroCardSurfaceMode.Thumbnail,
             palette = skyQualityPalette(card.activeVariant.skyQuality),
             artShape = shape,
+            artBlurRadius = skyQualityArtBlurRadius(card.activeVariant.skyQuality),
             contentScale = ContentScale.Fit,
             modifier = Modifier.fillMaxSize(),
         )

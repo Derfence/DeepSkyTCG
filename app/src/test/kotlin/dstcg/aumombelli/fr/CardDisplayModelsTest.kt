@@ -1,15 +1,18 @@
 package fr.aumombelli.dstcg
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.model.OwnedCardEntry
 import fr.aumombelli.dstcg.model.OwnedVariantCount
 import fr.aumombelli.dstcg.model.raritySortPriority
 import fr.aumombelli.dstcg.model.toDisplayVariants
 import fr.aumombelli.dstcg.ui.component.cardArtCreditArtistName
 import fr.aumombelli.dstcg.ui.component.cardHeadlineContent
+import fr.aumombelli.dstcg.ui.component.skyQualityArtBlurRadius
 import fr.aumombelli.dstcg.ui.theme.rarityBadgeStyle
 import fr.aumombelli.dstcg.ui.theme.skyQualityPalette
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CardDisplayModelsTest {
@@ -59,6 +62,27 @@ class CardDisplayModelsTest {
         assertEquals(Color(0xFF8E845F), skyQualityPalette("city").top)
         assertEquals(Color(0xFF5F4A46), skyQualityPalette("suburban").top)
         assertEquals(Color(0xFF010308), skyQualityPalette("mountain").bottom)
+    }
+
+    @Test
+    fun `sky quality art blur grows from holographic to city`() {
+        val blurScale = listOf(
+            "holographic" to 0.dp,
+            "mountain" to 2.dp,
+            "rural" to 5.dp,
+            "suburban" to 9.dp,
+            "city" to 14.dp,
+        )
+
+        blurScale.forEach { (skyQuality, expectedRadius) ->
+            assertEquals(expectedRadius, skyQualityArtBlurRadius(skyQuality))
+        }
+        blurScale.map { skyQualityArtBlurRadius(it.first) }
+            .zipWithNext()
+            .forEach { (previous, next) ->
+                assertTrue("Expected blur to grow with lower sky quality", previous <= next)
+            }
+        assertEquals(0.dp, skyQualityArtBlurRadius("unknown"))
     }
 
     @Test

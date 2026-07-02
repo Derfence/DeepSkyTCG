@@ -44,6 +44,15 @@ internal enum class CardArtVisibility {
     Hidden,
 }
 
+internal fun skyQualityArtBlurRadius(skyQuality: String): Dp = when (skyQuality) {
+    "city" -> 14.dp
+    "suburban" -> 9.dp
+    "rural" -> 5.dp
+    "mountain" -> 2.dp
+    "holographic" -> 0.dp
+    else -> 0.dp
+}
+
 @Composable
 internal fun AstroCardPreviewSurface(
     displayCard: DisplayCard,
@@ -59,6 +68,7 @@ internal fun AstroCardPreviewSurface(
     val compact = mode == AstroCardSurfaceMode.Thumbnail
     val shape = RoundedCornerShape(if (compact) 24.dp else 30.dp)
     val artInset = cardArtInset(mode)
+    val artBlurRadius = skyQualityArtBlurRadius(displayCard.activeVariant.skyQuality)
     val interactiveHoloMotion = holographicMotion
         ?.takeIf { displayCard.activeVariant.isHolographic }
     val renderedHoloMotion = if (displayCard.activeVariant.isHolographic) {
@@ -101,6 +111,7 @@ internal fun AstroCardPreviewSurface(
                 inset = artInset,
                 artShape = cardArtShape(mode),
                 artVisibility = artVisibility,
+                artBlurRadius = artBlurRadius,
                 modifier = Modifier.fillMaxSize(),
             )
             CardFaceScrim(modifier = Modifier.fillMaxSize())
