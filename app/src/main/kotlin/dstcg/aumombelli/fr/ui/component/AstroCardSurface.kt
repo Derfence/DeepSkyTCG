@@ -44,11 +44,14 @@ internal enum class CardArtVisibility {
     Hidden,
 }
 
+private val MaximumSkyQualityArtBlurRadius = 5.dp
+private val SkyQualityArtBlurStep = MaximumSkyQualityArtBlurRadius / 3f
+
 internal fun skyQualityArtBlurRadius(skyQuality: String): Dp = when (skyQuality) {
-    "city" -> 14.dp
-    "suburban" -> 9.dp
-    "rural" -> 5.dp
-    "mountain" -> 2.dp
+    "city" -> MaximumSkyQualityArtBlurRadius
+    "suburban" -> SkyQualityArtBlurStep * 2f
+    "rural" -> SkyQualityArtBlurStep
+    "mountain" -> 0.dp
     "holographic" -> 0.dp
     else -> 0.dp
 }

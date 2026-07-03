@@ -68,10 +68,10 @@ class CardDisplayModelsTest {
     fun `sky quality art blur grows from holographic to city`() {
         val blurScale = listOf(
             "holographic" to 0.dp,
-            "mountain" to 2.dp,
-            "rural" to 5.dp,
-            "suburban" to 9.dp,
-            "city" to 14.dp,
+            "mountain" to 0.dp,
+            "rural" to 5.dp / 3f,
+            "suburban" to 5.dp * 2f / 3f,
+            "city" to 5.dp,
         )
 
         blurScale.forEach { (skyQuality, expectedRadius) ->
