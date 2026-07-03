@@ -109,12 +109,13 @@ internal val QuizQuestionTemplates = listOf(
         id = "absolute-magnitude",
         kind = QuizQuestionKind.AbsoluteMagnitudeClass,
         depth = QuizQuestionDepth.Measurement,
-        prompt = { "Que suggère sa magnitude absolue ?" },
+        prompt = { "À quel point cet objet paraît-il lumineux dans le ciel ?" },
         answer = { it.magnitudeClass },
-        explanation = { facts, answer -> "La magnitude absolue de ${facts.cardName} la classe comme : $answer." },
+        explanation = { facts, answer ->
+            "La magnitude visuelle de ${facts.cardName} indique sa luminosité apparente depuis la Terre : $answer."
+        },
         controlledAnswers = { MagnitudeClassAnswers },
         isEligible = { it.magnitudeClass != null },
-        catalogFilter = { target, other -> target.profile == other.profile },
     ),
     QuizQuestionTemplate(
         id = "profile-category",
@@ -248,11 +249,11 @@ private val AstronomicalRealSizeAnswers = listOf(
 )
 
 private val MagnitudeClassAnswers = listOf(
-    "extrêmement lumineuse à l'échelle galactique",
-    "très lumineuse intrinsèquement",
-    "lumineuse intrinsèquement",
-    "de luminosité intrinsèque modérée",
-    "peu lumineuse intrinsèquement",
+    "Très brillante à l'œil nu",
+    "Facile à voir à l'œil nu",
+    "Visible sous un bon ciel sombre",
+    "Jumelles ou petit télescope utiles",
+    "Télescope nécessaire",
 )
 
 private val ProfileCategoryAnswers = listOf(

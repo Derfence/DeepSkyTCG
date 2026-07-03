@@ -360,11 +360,8 @@ private fun TimelineCriterion.valueFor(card: CardDefinition): TimelineCriterionV
             )
         }
 
-    TimelineCriterion.Luminosity -> when (val details = card.astronomy.details) {
-        is StarDetails -> details.absoluteMagnitude.toTimelineValue()
-        is DeepSkyDetails -> details.absoluteMagnitude?.toTimelineValue()
-        else -> null
-    }
+    TimelineCriterion.Luminosity -> card.astronomy.details.timelineVisualMagnitude()
+        ?.toTimelineValue()
 
     TimelineCriterion.SkyPosition -> TimelineCriterionValue(
         sortValue = card.astronomy.coordinates.declination.toSignedDegrees(),
@@ -381,13 +378,23 @@ private fun fr.aumombelli.dstcg.model.AstronomyDetails.timelineVisualSize():
     else -> null
 }
 
+private fun fr.aumombelli.dstcg.model.AstronomyDetails.timelineVisualMagnitude():
+    fr.aumombelli.dstcg.model.MagnitudeMeasurement? = when (this) {
+    is DeepSkyDetails -> visualMagnitude
+    is fr.aumombelli.dstcg.model.ConstellationDetails -> visualMagnitude
+    is fr.aumombelli.dstcg.model.SkyEventDetails -> visualMagnitude
+    is SolarSystemDetails -> visualMagnitude
+    is StarDetails -> visualMagnitude
+    else -> null
+}
+
 private fun fr.aumombelli.dstcg.model.LightYearMeasurement.toTimelineValue(): TimelineCriterionValue =
     TimelineCriterionValue(
         sortValue = lightYears,
         label = label,
     )
 
-private fun fr.aumombelli.dstcg.model.AbsoluteMagnitudeMeasurement.toTimelineValue(): TimelineCriterionValue =
+private fun fr.aumombelli.dstcg.model.MagnitudeMeasurement.toTimelineValue(): TimelineCriterionValue =
     TimelineCriterionValue(
         sortValue = value,
         label = label,

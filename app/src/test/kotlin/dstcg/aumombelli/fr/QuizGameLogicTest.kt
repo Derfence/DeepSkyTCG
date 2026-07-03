@@ -2,6 +2,7 @@ package fr.aumombelli.dstcg
 
 import fr.aumombelli.dstcg.feature.minigames.QuizGame
 import fr.aumombelli.dstcg.feature.minigames.QuizGameBuildResult
+import fr.aumombelli.dstcg.feature.minigames.QuizFactSet
 import fr.aumombelli.dstcg.feature.minigames.QuizQuestionKind
 import fr.aumombelli.dstcg.feature.minigames.buildQuizGame
 import fr.aumombelli.dstcg.feature.minigames.calculateQuizReward
@@ -10,6 +11,7 @@ import fr.aumombelli.dstcg.model.CardDefinition
 import fr.aumombelli.dstcg.model.ConstellationDetails
 import fr.aumombelli.dstcg.model.DeepSkyDetails
 import fr.aumombelli.dstcg.model.ExtensionDefinition
+import fr.aumombelli.dstcg.model.MagnitudeMeasurement
 import fr.aumombelli.dstcg.model.MiniGameCardResolutionSource
 import fr.aumombelli.dstcg.model.MiniGameDifficulty
 import fr.aumombelli.dstcg.model.MiniGameGlobalCardRef
@@ -26,6 +28,7 @@ import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -159,6 +162,25 @@ class QuizGameLogicTest {
 
             assertFalse(game.questions.any { it.kind == QuizQuestionKind.Constellation })
         }
+    }
+
+    @Test
+    fun `quiz magnitude fact uses visual magnitude with beginner friendly answer`() {
+        val baseCard = quizCards().first()
+        val details = baseCard.astronomy.details as DeepSkyDetails
+        val cardWithVisualMagnitude = baseCard.copy(
+            astronomy = baseCard.astronomy.copy(
+                details = details.copy(
+                    visualMagnitude = MagnitudeMeasurement(-0.1, "-0.1"),
+                ),
+            ),
+        )
+
+        val facts = QuizFactSet.from(cardWithVisualMagnitude)
+        val factsWithoutVisualMagnitude = QuizFactSet.from(baseCard)
+
+        assertEquals("Très brillante à l'œil nu", facts.magnitudeClass)
+        assertNull(factsWithoutVisualMagnitude.magnitudeClass)
     }
 
     @Test

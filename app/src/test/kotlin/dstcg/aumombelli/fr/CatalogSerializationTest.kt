@@ -88,7 +88,8 @@ class CatalogSerializationTest {
                       "label": "45°00′00″"
                     },
                     "label": "180,00 × 90,00 (90°00′00″ × 45°00′00″)"
-                  }
+                  },
+                  "visualMagnitude": { "value": 0.9, "label": "mag. 0,9 max." }
                 }
               }
             }
@@ -101,6 +102,7 @@ class CatalogSerializationTest {
             "180,00 × 90,00 (90°00′00″ × 45°00′00″)",
             (details as SkyEventDetails).visualSize?.label,
         )
+        assertEquals("mag. 0,9 max.", details.visualMagnitude?.label)
     }
 
     @Test
@@ -151,6 +153,7 @@ class CatalogSerializationTest {
         val details = card.astronomy.details
         assertTrue(details is SkyEventDetails)
         assertNull((details as SkyEventDetails).visualSize)
+        assertNull(details.visualMagnitude)
     }
 
     @Test
@@ -183,7 +186,8 @@ class CatalogSerializationTest {
                   "detailType": "solar_system",
                   "distance": { "lightYears": 0.39, "label": "0,39 UA du Soleil" },
                   "realSize": { "lightYears": 4879.0, "label": "4 879 km" },
-                  "absoluteMagnitude": { "value": -2.0, "label": "mag. -2,0 max." }
+                  "absoluteMagnitude": { "value": -2.0, "label": "mag. -2,0 max." },
+                  "visualMagnitude": { "value": -2.5, "label": "mag. -2,5 max." }
                 }
               }
             }
@@ -195,5 +199,6 @@ class CatalogSerializationTest {
         assertEquals("0,39 UA du Soleil", (details as SolarSystemDetails).distance?.label)
         assertEquals("4 879 km", details.realSize?.label)
         assertEquals("mag. -2,0 max.", details.absoluteMagnitude?.label)
+        assertEquals("mag. -2,5 max.", details.visualMagnitude?.label)
     }
 }

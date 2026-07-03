@@ -25,7 +25,8 @@
         "detailType": "star",
         "distance": { "lightYears": 420.0, "label": "420 annees-lumiere" },
         "realSize": { "lightYears": 0.005, "label": "0,005 annee-lumiere" },
-        "absoluteMagnitude": { "value": -2.3, "label": "-2.3" }
+        "absoluteMagnitude": { "value": -2.3, "label": "-2.3" },
+        "visualMagnitude": { "value": 3.08, "label": "3.08" }
       }
     }
   },
@@ -55,7 +56,8 @@
         "detailType": "star",
         "distance": { "lightYears": 93.0, "label": "93 annees-lumiere" },
         "realSize": { "lightYears": 0.0003, "label": "0,0003 annee-lumiere" },
-        "absoluteMagnitude": { "value": -0.2, "label": "-0.2" }
+        "absoluteMagnitude": { "value": -0.2, "label": "-0.2" },
+        "visualMagnitude": { "value": 2.12, "label": "2.12" }
       }
     }
   },
@@ -85,7 +87,8 @@
         "detailType": "star",
         "distance": { "lightYears": 350.0, "label": "350 annees-lumiere" },
         "realSize": { "lightYears": 0.0000118, "label": "0,0000118 annee-lumiere" },
-        "absoluteMagnitude": { "value": -0.3, "label": "-0.3" }
+        "absoluteMagnitude": { "value": -0.3, "label": "-0.3" },
+        "visualMagnitude": { "value": 2.1, "label": "2.1" }
       }
     }
   },
@@ -115,7 +118,8 @@
         "detailType": "star",
         "distance": { "lightYears": 16.7, "label": "16,7 annees-lumiere" },
         "realSize": { "lightYears": 0.000000265, "label": "0,000000265 annee-lumiere" },
-        "absoluteMagnitude": { "value": 2.2, "label": "2.2" }
+        "absoluteMagnitude": { "value": 2.2, "label": "2.2" },
+        "visualMagnitude": { "value": 0.76, "label": "0.76" }
       }
     }
   },
@@ -179,7 +183,8 @@
         "detailType": "star",
         "distance": { "lightYears": 36.7, "label": "36,7 annees-lumiere" },
         "realSize": { "lightYears": 0.00000373, "label": "0,00000373 annee-lumiere" },
-        "absoluteMagnitude": { "value": -0.3, "label": "-0.3" }
+        "absoluteMagnitude": { "value": -0.3, "label": "-0.3" },
+        "visualMagnitude": { "value": -0.05, "label": "-0.05" }
       }
     }
   },
@@ -243,7 +248,8 @@
         "detailType": "star",
         "distance": { "lightYears": 548.0, "label": "548 annees-lumiere" },
         "realSize": { "lightYears": 0.00011, "label": "0,00011 annee-lumiere" },
-        "absoluteMagnitude": { "value": -5.85, "label": "-5.85" }
+        "absoluteMagnitude": { "value": -5.85, "label": "-5.85" },
+        "visualMagnitude": { "value": 0.42, "label": "0.42" }
       }
     }
   },
@@ -273,7 +279,8 @@
         "detailType": "star",
         "distance": { "lightYears": 42.9, "label": "42,9 annees-lumiere" },
         "realSize": { "lightYears": 0.00000176, "label": "0,00000176 annee-lumiere" },
-        "absoluteMagnitude": { "value": 0.3, "label": "0.3" }
+        "absoluteMagnitude": { "value": 0.3, "label": "0.3" },
+        "visualMagnitude": { "value": 0.08, "label": "0.08" }
       }
     }
   },
@@ -344,7 +351,8 @@
           "angularHeight": { "degrees": 0, "arcMinutes": 40, "arcSeconds": 0, "label": "0°40′00″" },
           "label": "2,50 × 1,30 (1°16′00″ × 0°40′00″)"
         },
-        "absoluteMagnitude": { "value": -1.0, "label": "-1" }
+        "absoluteMagnitude": { "value": -1.0, "label": "-1" },
+        "visualMagnitude": { "value": 3.6, "label": "3.6" }
       }
     }
   },
@@ -370,7 +378,10 @@
         "label": "AD 00h 00m 00,0s ; Dec +00° 00′ 00″"
       },
       "shortDescription": "Comète très médiatisée en 2020, connue pour sa belle queue visible à l'oeil nu.",
-      "details": { "detailType": "sky_event" }
+      "details": {
+        "detailType": "sky_event",
+        "visualMagnitude": { "value": 0.9, "label": "mag. 0,9 max. 2020" }
+      }
     }
   },
   {
@@ -440,7 +451,8 @@
           "angularHeight": { "degrees": 0, "arcMinutes": 30, "arcSeconds": 0, "label": "0°30′00″" },
           "label": "2,00 × 1,00 (1°00′00″ × 0°30′00″)"
         },
-        "absoluteMagnitude": { "value": -3.7, "label": "-3.7" }
+        "absoluteMagnitude": { "value": -3.7, "label": "-3.7" },
+        "visualMagnitude": { "value": 3.7, "label": "3.7 / 3.8" }
       }
     }
   },
@@ -534,7 +546,10 @@
         "label": "AD 00h 00m 00,0s ; Dec +00° 00′ 00″"
       },
       "shortDescription": "Comète la plus célèbre du ciel, connue pour revenir environ tous les 76 ans.",
-      "details": { "detailType": "sky_event" }
+      "details": {
+        "detailType": "sky_event",
+        "visualMagnitude": { "value": 2.1, "label": "mag. 2,1 max. 1986" }
+      }
     }
   },
   {
@@ -570,7 +585,8 @@
           "angularHeight": { "degrees": 2, "arcMinutes": 30, "arcSeconds": 0, "label": "2°30′00″" },
           "label": "11,00 × 5,00 (5°30′00″ × 2°30′00″)"
         },
-        "absoluteMagnitude": { "value": -2.7, "label": "-2.7" }
+        "absoluteMagnitude": { "value": -2.7, "label": "-2.7" },
+        "visualMagnitude": { "value": 0.5, "label": "0.5" }
       }
     }
   },
@@ -675,7 +691,8 @@
           "angularHeight": { "degrees": 0, "arcMinutes": 14, "arcSeconds": 0, "label": "0°14′00″" },
           "label": "0,45 × 0,45 (0°14′00″ × 0°14′00″)"
         },
-        "absoluteMagnitude": { "value": -6.3, "label": "-6.3" }
+        "absoluteMagnitude": { "value": -6.3, "label": "-6.3" },
+        "visualMagnitude": { "value": 5.8, "label": "5.8" }
       }
     }
   },
@@ -712,7 +729,8 @@
           "angularHeight": { "degrees": 0, "arcMinutes": 20, "arcSeconds": 0, "label": "0°20′00″" },
           "label": "0,65 × 0,65 (0°20′00″ × 0°20′00″)"
         },
-        "absoluteMagnitude": { "value": -8.5, "label": "-8.5" }
+        "absoluteMagnitude": { "value": -8.5, "label": "-8.5" },
+        "visualMagnitude": { "value": 5.8, "label": "5.8" }
       }
     }
   },
@@ -749,7 +767,8 @@
           "angularHeight": { "degrees": 0, "arcMinutes": 28, "arcSeconds": 0, "label": "0°28′00″" },
           "label": "1,13 × 0,90 (0°35′00″ × 0°28′00″)"
         },
-        "absoluteMagnitude": { "value": -6.4, "label": "-6.4" }
+        "absoluteMagnitude": { "value": -6.4, "label": "-6.4" },
+        "visualMagnitude": { "value": 6.4, "label": "6.4" }
       }
     }
   },
@@ -786,7 +805,8 @@
           "angularHeight": { "degrees": 0, "arcMinutes": 15, "arcSeconds": 0, "label": "0°15′00″" },
           "label": "0,65 × 0,48 (0°20′00″ × 0°15′00″)"
         },
-        "absoluteMagnitude": { "value": -5.8, "label": "-5.8" }
+        "absoluteMagnitude": { "value": -5.8, "label": "-5.8" },
+        "visualMagnitude": { "value": 6.0, "label": "6.0" }
       }
     }
   },
@@ -823,7 +843,8 @@
           "angularHeight": { "degrees": 0, "arcMinutes": 24, "arcSeconds": 0, "label": "0°24′00″" },
           "label": "0,77 × 0,77 (0°24′00″ × 0°24′00″)"
         },
-        "absoluteMagnitude": { "value": -8.5, "label": "-8.5" }
+        "absoluteMagnitude": { "value": -8.5, "label": "-8.5" },
+        "visualMagnitude": { "value": 5.1, "label": "5.1" }
       }
     }
   },
@@ -859,7 +880,8 @@
           "angularWidth": { "degrees": 2, "arcMinutes": 0, "arcSeconds": 0, "label": "2°00′00″" },
           "angularHeight": { "degrees": 1, "arcMinutes": 0, "arcSeconds": 0, "label": "1°00′00″" },
           "label": "3,87 × 1,94 (2°00′00″ × 1°00′00″)"
-        }
+        },
+        "visualMagnitude": { "value": 2.5, "label": "2.5" }
       }
     }
   },
@@ -896,7 +918,8 @@
           "angularHeight": { "degrees": 0, "arcMinutes": 5, "arcSeconds": 0, "label": "0°05′00″" },
           "label": "0,27 × 0,18 (0°08′00″ × 0°05′00″)"
         },
-        "absoluteMagnitude": { "value": -0.5, "label": "-0.5" }
+        "absoluteMagnitude": { "value": -0.5, "label": "-0.5" },
+        "visualMagnitude": { "value": 7.4, "label": "7.4" }
       }
     }
   },
@@ -933,7 +956,8 @@
           "angularHeight": { "degrees": 1, "arcMinutes": 0, "arcSeconds": 0, "label": "1°00′00″" },
           "label": "6,00 × 2,00 (3°00′00″ × 1°00′00″)"
         },
-        "absoluteMagnitude": { "value": -21.5, "label": "-21.5" }
+        "absoluteMagnitude": { "value": -21.5, "label": "-21.5" },
+        "visualMagnitude": { "value": 3.44, "label": "3.44" }
       }
     }
   },
@@ -970,7 +994,8 @@
           "angularHeight": { "degrees": 0, "arcMinutes": 45, "arcSeconds": 0, "label": "0°45′00″" },
           "label": "2,30 × 1,50 (1°08′00″ × 0°45′00″)"
         },
-        "absoluteMagnitude": { "value": -18.9, "label": "-18.9" }
+        "absoluteMagnitude": { "value": -18.9, "label": "-18.9" },
+        "visualMagnitude": { "value": 5.72, "label": "5.72" }
       }
     }
   },
@@ -1007,7 +1032,8 @@
           "angularHeight": { "degrees": 0, "arcMinutes": 24, "arcSeconds": 0, "label": "0°24′00″" },
           "label": "0,77 × 0,77 (0°24′00″ × 0°24′00″)"
         },
-        "absoluteMagnitude": { "value": -5.0, "label": "-5" }
+        "absoluteMagnitude": { "value": -5.0, "label": "-5" },
+        "visualMagnitude": { "value": 6.2, "label": "6.2" }
       }
     }
   },
@@ -1044,7 +1070,8 @@
           "angularHeight": { "degrees": 0, "arcMinutes": 21, "arcSeconds": 0, "label": "0°21′00″" },
           "label": "0,68 × 0,68 (0°21′00″ × 0°21′00″)"
         },
-        "absoluteMagnitude": { "value": -4.2, "label": "-4.2" }
+        "absoluteMagnitude": { "value": -4.2, "label": "-4.2" },
+        "visualMagnitude": { "value": 7.4, "label": "7.4" }
       }
     }
   },
@@ -1081,7 +1108,8 @@
           "angularHeight": { "degrees": 0, "arcMinutes": 32, "arcSeconds": 0, "label": "0°32′00″" },
           "label": "1,03 × 1,03 (0°32′00″ × 0°32′00″)"
         },
-        "absoluteMagnitude": { "value": -4.2, "label": "-4.2" }
+        "absoluteMagnitude": { "value": -4.2, "label": "-4.2" },
+        "visualMagnitude": { "value": 4.6, "label": "4.6" }
       }
     }
   },
@@ -1118,7 +1146,8 @@
           "angularHeight": { "degrees": 0, "arcMinutes": 38, "arcSeconds": 0, "label": "0°38′00″" },
           "label": "1,23 × 1,23 (0°38′00″ × 0°38′00″)"
         },
-        "absoluteMagnitude": { "value": -4.2, "label": "-4.2" }
+        "absoluteMagnitude": { "value": -4.2, "label": "-4.2" },
+        "visualMagnitude": { "value": 4.5, "label": "4.5" }
       }
     }
   },
@@ -1155,7 +1184,8 @@
           "angularHeight": { "degrees": 1, "arcMinutes": 0, "arcSeconds": 0, "label": "1°00′00″" },
           "label": "2,10 × 1,94 (1°05′00″ × 1°00′00″)"
         },
-        "absoluteMagnitude": { "value": -4.1, "label": "-4.1" }
+        "absoluteMagnitude": { "value": -4.1, "label": "-4.1" },
+        "visualMagnitude": { "value": 4.0, "label": "4.0" }
       }
     }
   },
@@ -1192,7 +1222,8 @@
           "angularHeight": { "degrees": 1, "arcMinutes": 50, "arcSeconds": 0, "label": "1°50′00″" },
           "label": "3,67 × 3,67 (1°50′00″ × 1°50′00″)"
         },
-        "absoluteMagnitude": { "value": -1.6, "label": "-1.6" }
+        "absoluteMagnitude": { "value": -1.6, "label": "-1.6" },
+        "visualMagnitude": { "value": 1.6, "label": "1.6" }
       }
     }
   },
@@ -1229,7 +1260,8 @@
           "angularHeight": { "degrees": 0, "arcMinutes": 27, "arcSeconds": 0, "label": "0°27′00″" },
           "label": "0,87 × 0,87 (0°27′00″ × 0°27′00″)"
         },
-        "absoluteMagnitude": { "value": -6.1, "label": "-6.1" }
+        "absoluteMagnitude": { "value": -6.1, "label": "-6.1" },
+        "visualMagnitude": { "value": 6.0, "label": "6.0" }
       }
     }
   },
@@ -1266,7 +1298,8 @@
           "angularHeight": { "degrees": 0, "arcMinutes": 1, "arcSeconds": 12, "label": "0°01′12″" },
           "label": "0,05 × 0,04 (0°01′24″ × 0°01′12″)"
         },
-        "absoluteMagnitude": { "value": 0.7, "label": "0.7" }
+        "absoluteMagnitude": { "value": 0.7, "label": "0.7" },
+        "visualMagnitude": { "value": 8.8, "label": "8.8" }
       }
     }
   },
@@ -1303,7 +1336,8 @@
           "angularHeight": { "degrees": 0, "arcMinutes": 25, "arcSeconds": 0, "label": "0°25′00″" },
           "label": "0,81 × 0,81 (0°25′00″ × 0°25′00″)"
         },
-        "absoluteMagnitude": { "value": -5.6, "label": "-5.6" }
+        "absoluteMagnitude": { "value": -5.6, "label": "-5.6" },
+        "visualMagnitude": { "value": 4.2, "label": "4.2" }
       }
     }
   },
@@ -1340,7 +1374,8 @@
           "angularHeight": { "degrees": 0, "arcMinutes": 40, "arcSeconds": 0, "label": "0°40′00″" },
           "label": "2,90 × 1,29 (1°30′00″ × 0°40′00″)"
         },
-        "absoluteMagnitude": { "value": -6.0, "label": "-6" }
+        "absoluteMagnitude": { "value": -6.0, "label": "-6" },
+        "visualMagnitude": { "value": 4.6, "label": "4.6" }
       }
     }
   },
@@ -1377,7 +1412,8 @@
           "angularHeight": { "degrees": 0, "arcMinutes": 12, "arcSeconds": 30, "label": "0°12′30″" },
           "label": "0,88 × 0,42 (0°26′00″ × 0°12′30″)"
         },
-        "absoluteMagnitude": { "value": -20.8, "label": "-20.8" }
+        "absoluteMagnitude": { "value": -20.8, "label": "-20.8" },
+        "visualMagnitude": { "value": 6.94, "label": "6.94" }
       }
     }
   },
@@ -1414,7 +1450,8 @@
           "angularHeight": { "degrees": 0, "arcMinutes": 4, "arcSeconds": 30, "label": "0°04′30″" },
           "label": "0,37 × 0,15 (0°11′00″ × 0°04′30″)"
         },
-        "absoluteMagnitude": { "value": -20.0, "label": "-20" }
+        "absoluteMagnitude": { "value": -20.0, "label": "-20" },
+        "visualMagnitude": { "value": 8.41, "label": "8.41" }
       }
     }
   },
@@ -1444,7 +1481,8 @@
         "detailType": "star",
         "distance": { "lightYears": 300.0, "label": "300 annees-lumiere" },
         "realSize": { "lightYears": 0.001, "label": "0,001 annee-lumiere" },
-        "absoluteMagnitude": { "value": -0.6, "label": "-0.6" }
+        "absoluteMagnitude": { "value": -0.6, "label": "-0.6" },
+        "visualMagnitude": { "value": 6.53, "label": "6.53" }
       }
     }
   },
@@ -1474,7 +1512,8 @@
         "detailType": "star",
         "distance": { "lightYears": 83.0, "label": "83 annees-lumiere" },
         "realSize": { "lightYears": 0.007, "label": "0,007 annee-lumiere" },
-        "absoluteMagnitude": { "value": 2.2, "label": "2.2" }
+        "absoluteMagnitude": { "value": 2.2, "label": "2.2" },
+        "visualMagnitude": { "value": 1.85, "label": "1.85" }
       }
     }
   },
@@ -1511,7 +1550,8 @@
           "angularHeight": { "degrees": 1, "arcMinutes": 45, "arcSeconds": 0, "label": "1°45′00″" },
           "label": "4,00 × 3,50 (2°00′00″ × 1°45′00″)"
         },
-        "absoluteMagnitude": { "value": -6.0, "label": "-6" }
+        "absoluteMagnitude": { "value": -6.0, "label": "-6" },
+        "visualMagnitude": { "value": 4.0, "label": "4.0" }
       }
     }
   },
@@ -1643,7 +1683,8 @@
         "detailType": "star",
         "distance": { "lightYears": 433.0, "label": "433 annees-lumiere" },
         "realSize": { "lightYears": 0.0005, "label": "0,0005 annee-lumiere" },
-        "absoluteMagnitude": { "value": -3.6, "label": "-3.6" }
+        "absoluteMagnitude": { "value": -3.6, "label": "-3.6" },
+        "visualMagnitude": { "value": 2.02, "label": "2.02" }
       }
     }
   },
@@ -1673,7 +1714,8 @@
         "detailType": "star",
         "distance": { "lightYears": 8.6, "label": "8,6 annees-lumiere" },
         "realSize": { "lightYears": 0.00000025, "label": "0,00000025 annee-lumiere" },
-        "absoluteMagnitude": { "value": 1.42, "label": "1.42" }
+        "absoluteMagnitude": { "value": 1.42, "label": "1.42" },
+        "visualMagnitude": { "value": -1.46, "label": "-1.46" }
       }
     }
   },
@@ -1737,7 +1779,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 0.39, "label": "0,39 UA du Soleil" },
         "realSize": { "lightYears": 4879.0, "label": "4 879 km" },
-        "absoluteMagnitude": { "value": -2.0, "label": "mag. -2,0 max." }
+        "absoluteMagnitude": { "value": -2.0, "label": "mag. -2,0 max." },
+        "visualMagnitude": { "value": -2.5, "label": "mag. -2,5 max." }
       }
     }
   },
@@ -1767,7 +1810,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 0.72, "label": "0,72 UA du Soleil" },
         "realSize": { "lightYears": 12104.0, "label": "12 104 km" },
-        "absoluteMagnitude": { "value": -4.9, "label": "mag. -4,9 max." }
+        "absoluteMagnitude": { "value": -4.9, "label": "mag. -4,9 max." },
+        "visualMagnitude": { "value": -4.9, "label": "mag. -4,9 max." }
       }
     }
   },
@@ -1826,7 +1870,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 1.52, "label": "1,52 UA du Soleil" },
         "realSize": { "lightYears": 6779.0, "label": "6 779 km" },
-        "absoluteMagnitude": { "value": -2.9, "label": "mag. -2,9 max." }
+        "absoluteMagnitude": { "value": -2.9, "label": "mag. -2,9 max." },
+        "visualMagnitude": { "value": -2.9, "label": "mag. -2,9 max." }
       }
     }
   },
@@ -1856,7 +1901,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 5.2, "label": "5,2 UA du Soleil" },
         "realSize": { "lightYears": 139820.0, "label": "139 820 km" },
-        "absoluteMagnitude": { "value": -2.9, "label": "mag. -2,9 max." }
+        "absoluteMagnitude": { "value": -2.9, "label": "mag. -2,9 max." },
+        "visualMagnitude": { "value": -2.9, "label": "mag. -2,9 max." }
       }
     }
   },
@@ -1886,7 +1932,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 9.58, "label": "9,58 UA du Soleil" },
         "realSize": { "lightYears": 116460.0, "label": "116 460 km" },
-        "absoluteMagnitude": { "value": -0.5, "label": "mag. -0,5 max." }
+        "absoluteMagnitude": { "value": -0.5, "label": "mag. -0,5 max." },
+        "visualMagnitude": { "value": -0.5, "label": "mag. -0,5 max." }
       }
     }
   },
@@ -1916,7 +1963,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 19.2, "label": "19,2 UA du Soleil" },
         "realSize": { "lightYears": 50724.0, "label": "50 724 km" },
-        "absoluteMagnitude": { "value": 5.3, "label": "mag. 5,3 max." }
+        "absoluteMagnitude": { "value": 5.3, "label": "mag. 5,3 max." },
+        "visualMagnitude": { "value": 5.4, "label": "mag. 5,4 max." }
       }
     }
   },
@@ -1946,7 +1994,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 30.06, "label": "30,06 UA du Soleil" },
         "realSize": { "lightYears": 49244.0, "label": "49 244 km" },
-        "absoluteMagnitude": { "value": 7.7, "label": "mag. 7,7 max." }
+        "absoluteMagnitude": { "value": 7.7, "label": "mag. 7,7 max." },
+        "visualMagnitude": { "value": 7.7, "label": "mag. 7,7 max." }
       }
     }
   },
@@ -1976,7 +2025,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 2.77, "label": "2,77 UA du Soleil" },
         "realSize": { "lightYears": 940.0, "label": "940 km" },
-        "absoluteMagnitude": { "value": 6.7, "label": "mag. 6,7 max." }
+        "absoluteMagnitude": { "value": 6.7, "label": "mag. 6,7 max." },
+        "visualMagnitude": { "value": 6.7, "label": "mag. 6,7 max." }
       }
     }
   },
@@ -2006,7 +2056,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 39.48, "label": "39,48 UA du Soleil" },
         "realSize": { "lightYears": 2377.0, "label": "2 377 km" },
-        "absoluteMagnitude": { "value": 13.7, "label": "mag. 13,7 max." }
+        "absoluteMagnitude": { "value": 13.7, "label": "mag. 13,7 max." },
+        "visualMagnitude": { "value": 13.8, "label": "mag. 13,8 max." }
       }
     }
   },
@@ -2036,7 +2087,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 45.79, "label": "45,79 UA du Soleil" },
         "realSize": { "lightYears": 1430.0, "label": "~1 430 km" },
-        "absoluteMagnitude": { "value": 16.7, "label": "mag. 16,7 max." }
+        "absoluteMagnitude": { "value": 16.7, "label": "mag. 16,7 max." },
+        "visualMagnitude": { "value": 16.9, "label": "mag. 16,9 max." }
       }
     }
   },
@@ -2066,7 +2118,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 67.67, "label": "67,67 UA du Soleil" },
         "realSize": { "lightYears": 2326.0, "label": "2 326 km" },
-        "absoluteMagnitude": { "value": 18.7, "label": "mag. 18,7 max." }
+        "absoluteMagnitude": { "value": 18.7, "label": "mag. 18,7 max." },
+        "visualMagnitude": { "value": 18.4, "label": "mag. 18,4 max." }
       }
     }
   },
@@ -2096,7 +2149,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 384400.0, "label": "384 400 km de la Terre" },
         "realSize": { "lightYears": 3475.0, "label": "3 475 km" },
-        "absoluteMagnitude": { "value": -12.7, "label": "mag. -12,7 max." }
+        "absoluteMagnitude": { "value": -12.7, "label": "mag. -12,7 max." },
+        "visualMagnitude": { "value": -12.9, "label": "mag. -12,9 max." }
       }
     }
   },
@@ -2126,7 +2180,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 9376.0, "label": "9 376 km de Mars" },
         "realSize": { "lightYears": 22.5, "label": "~22,5 km" },
-        "absoluteMagnitude": { "value": 11.3, "label": "mag. 11,3 max." }
+        "absoluteMagnitude": { "value": 11.3, "label": "mag. 11,3 max." },
+        "visualMagnitude": { "value": 10.4, "label": "mag. 10,4 max." }
       }
     }
   },
@@ -2156,7 +2211,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 23463.0, "label": "23 463 km de Mars" },
         "realSize": { "lightYears": 12.4, "label": "~12,4 km" },
-        "absoluteMagnitude": { "value": 12.4, "label": "mag. 12,4 max." }
+        "absoluteMagnitude": { "value": 12.4, "label": "mag. 12,4 max." },
+        "visualMagnitude": { "value": 11.4, "label": "mag. 11,4 max." }
       }
     }
   },
@@ -2186,7 +2242,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 421700.0, "label": "421 700 km de Jupiter" },
         "realSize": { "lightYears": 3643.0, "label": "3 643 km" },
-        "absoluteMagnitude": { "value": 5.0, "label": "mag. 5,0 max." }
+        "absoluteMagnitude": { "value": 5.0, "label": "mag. 5,0 max." },
+        "visualMagnitude": { "value": 4.8, "label": "mag. 4,8 max." }
       }
     }
   },
@@ -2216,7 +2273,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 671100.0, "label": "671 100 km de Jupiter" },
         "realSize": { "lightYears": 3122.0, "label": "3 122 km" },
-        "absoluteMagnitude": { "value": 5.3, "label": "mag. 5,3 max." }
+        "absoluteMagnitude": { "value": 5.3, "label": "mag. 5,3 max." },
+        "visualMagnitude": { "value": 5.1, "label": "mag. 5,1 max." }
       }
     }
   },
@@ -2246,7 +2304,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 1070400.0, "label": "1 070 400 km de Jupiter" },
         "realSize": { "lightYears": 5268.0, "label": "5 268 km" },
-        "absoluteMagnitude": { "value": 4.6, "label": "mag. 4,6 max." }
+        "absoluteMagnitude": { "value": 4.6, "label": "mag. 4,6 max." },
+        "visualMagnitude": { "value": 4.4, "label": "mag. 4,4 max." }
       }
     }
   },
@@ -2276,7 +2335,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 1882700.0, "label": "1 882 700 km de Jupiter" },
         "realSize": { "lightYears": 4821.0, "label": "4 821 km" },
-        "absoluteMagnitude": { "value": 5.7, "label": "mag. 5,7 max." }
+        "absoluteMagnitude": { "value": 5.7, "label": "mag. 5,7 max." },
+        "visualMagnitude": { "value": 5.5, "label": "mag. 5,5 max." }
       }
     }
   },
@@ -2306,7 +2366,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 1221870.0, "label": "1 221 870 km de Saturne" },
         "realSize": { "lightYears": 5150.0, "label": "5 150 km" },
-        "absoluteMagnitude": { "value": 8.2, "label": "mag. 8,2 max." }
+        "absoluteMagnitude": { "value": 8.2, "label": "mag. 8,2 max." },
+        "visualMagnitude": { "value": 8.1, "label": "mag. 8,1 max." }
       }
     }
   },
@@ -2336,7 +2397,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 237948.0, "label": "237 948 km de Saturne" },
         "realSize": { "lightYears": 504.0, "label": "504 km" },
-        "absoluteMagnitude": { "value": 11.7, "label": "mag. 11,7 max." }
+        "absoluteMagnitude": { "value": 11.7, "label": "mag. 11,7 max." },
+        "visualMagnitude": { "value": 11.5, "label": "mag. 11,5 max." }
       }
     }
   },
@@ -2366,7 +2428,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 185539.0, "label": "185 539 km de Saturne" },
         "realSize": { "lightYears": 396.0, "label": "396 km" },
-        "absoluteMagnitude": { "value": 12.9, "label": "mag. 12,9 max." }
+        "absoluteMagnitude": { "value": 12.9, "label": "mag. 12,9 max." },
+        "visualMagnitude": { "value": 12.6, "label": "mag. 12,6 max." }
       }
     }
   },
@@ -2396,7 +2459,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 527108.0, "label": "527 108 km de Saturne" },
         "realSize": { "lightYears": 1528.0, "label": "1 528 km" },
-        "absoluteMagnitude": { "value": 9.7, "label": "mag. 9,7 max." }
+        "absoluteMagnitude": { "value": 9.7, "label": "mag. 9,7 max." },
+        "visualMagnitude": { "value": 9.4, "label": "mag. 9,4 max." }
       }
     }
   },
@@ -2426,7 +2490,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 377400.0, "label": "377 400 km de Saturne" },
         "realSize": { "lightYears": 1123.0, "label": "1 123 km" },
-        "absoluteMagnitude": { "value": 10.4, "label": "mag. 10,4 max." }
+        "absoluteMagnitude": { "value": 10.4, "label": "mag. 10,4 max." },
+        "visualMagnitude": { "value": 10.1, "label": "mag. 10,1 max." }
       }
     }
   },
@@ -2456,7 +2521,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 294619.0, "label": "294 619 km de Saturne" },
         "realSize": { "lightYears": 1062.0, "label": "1 062 km" },
-        "absoluteMagnitude": { "value": 10.2, "label": "mag. 10,2 max." }
+        "absoluteMagnitude": { "value": 10.2, "label": "mag. 10,2 max." },
+        "visualMagnitude": { "value": 10.0, "label": "mag. 10,0 max." }
       }
     }
   },
@@ -2486,7 +2552,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 3560820.0, "label": "3 560 820 km de Saturne" },
         "realSize": { "lightYears": 1469.0, "label": "1 469 km" },
-        "absoluteMagnitude": { "value": 10.2, "label": "mag. 10,2 max." }
+        "absoluteMagnitude": { "value": 10.2, "label": "mag. 10,2 max." },
+        "visualMagnitude": { "value": 10.8, "label": "mag. 10,8 max." }
       }
     }
   },
@@ -2516,7 +2583,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 1481100.0, "label": "1 481 100 km de Saturne" },
         "realSize": { "lightYears": 270.0, "label": "~270 km" },
-        "absoluteMagnitude": { "value": 14.2, "label": "mag. 14,2 max." }
+        "absoluteMagnitude": { "value": 14.2, "label": "mag. 14,2 max." },
+        "visualMagnitude": { "value": 14.1, "label": "mag. 14,1 max." }
       }
     }
   },
@@ -2546,7 +2614,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 12947918.0, "label": "12 947 918 km de Saturne" },
         "realSize": { "lightYears": 213.0, "label": "~213 km" },
-        "absoluteMagnitude": { "value": 16.5, "label": "mag. 16,5 max." }
+        "absoluteMagnitude": { "value": 16.5, "label": "mag. 16,5 max." },
+        "visualMagnitude": { "value": 16.1, "label": "mag. 16,1 max." }
       }
     }
   },
@@ -2576,7 +2645,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 435910.0, "label": "435 910 km de Uranus" },
         "realSize": { "lightYears": 1578.0, "label": "1 578 km" },
-        "absoluteMagnitude": { "value": 13.9, "label": "mag. 13,9 max." }
+        "absoluteMagnitude": { "value": 13.9, "label": "mag. 13,9 max." },
+        "visualMagnitude": { "value": 13.5, "label": "mag. 13,5 max." }
       }
     }
   },
@@ -2606,7 +2676,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 190900.0, "label": "190 900 km de Uranus" },
         "realSize": { "lightYears": 1158.0, "label": "1 158 km" },
-        "absoluteMagnitude": { "value": 14.2, "label": "mag. 14,2 max." }
+        "absoluteMagnitude": { "value": 14.2, "label": "mag. 14,2 max." },
+        "visualMagnitude": { "value": 14.0, "label": "mag. 14,0 max." }
       }
     }
   },
@@ -2636,7 +2707,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 266000.0, "label": "266 000 km de Uranus" },
         "realSize": { "lightYears": 1169.0, "label": "1 169 km" },
-        "absoluteMagnitude": { "value": 15.3, "label": "mag. 15,3 max." }
+        "absoluteMagnitude": { "value": 15.3, "label": "mag. 15,3 max." },
+        "visualMagnitude": { "value": 14.6, "label": "mag. 14,6 max." }
       }
     }
   },
@@ -2666,7 +2738,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 129900.0, "label": "129 900 km de Uranus" },
         "realSize": { "lightYears": 472.0, "label": "472 km" },
-        "absoluteMagnitude": { "value": 16.6, "label": "mag. 16,6 max." }
+        "absoluteMagnitude": { "value": 16.6, "label": "mag. 16,6 max." },
+        "visualMagnitude": { "value": 16.1, "label": "mag. 16,1 max." }
       }
     }
   },
@@ -2696,7 +2769,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 354759.0, "label": "354 759 km de Neptune" },
         "realSize": { "lightYears": 2707.0, "label": "2 707 km" },
-        "absoluteMagnitude": { "value": 13.5, "label": "mag. 13,5 max." }
+        "absoluteMagnitude": { "value": 13.5, "label": "mag. 13,5 max." },
+        "visualMagnitude": { "value": 13.4, "label": "mag. 13,4 max." }
       }
     }
   },
@@ -2726,7 +2800,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 5513400.0, "label": "5 513 400 km de Neptune" },
         "realSize": { "lightYears": 340.0, "label": "~340 km" },
-        "absoluteMagnitude": { "value": 18.7, "label": "mag. 18,7 max." }
+        "absoluteMagnitude": { "value": 18.7, "label": "mag. 18,7 max." },
+        "visualMagnitude": { "value": 18.7, "label": "mag. 18,7 max." }
       }
     }
   },
@@ -2756,7 +2831,8 @@
         "detailType": "solar_system",
         "distance": { "lightYears": 181400.0, "label": "181 400 km de Jupiter" },
         "realSize": { "lightYears": 167.0, "label": "~167 km" },
-        "absoluteMagnitude": { "value": 14.1, "label": "mag. 14,1 max." }
+        "absoluteMagnitude": { "value": 14.1, "label": "mag. 14,1 max." },
+        "visualMagnitude": { "value": 13.9, "label": "mag. 13,9 max." }
       }
     }
   },
