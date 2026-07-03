@@ -9,6 +9,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
@@ -24,6 +26,8 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
+import fr.aumombelli.dstcg.data.WeatherPolicy
+import fr.aumombelli.dstcg.data.WeatherState
 import fr.aumombelli.dstcg.model.DrawPackResponse
 import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.model.ExtensionDefinition
@@ -40,6 +44,8 @@ import fr.aumombelli.dstcg.ui.viewmodel.PackOpeningUiState
 import fr.aumombelli.dstcg.ui.viewmodel.PackSelectionUiState
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneOffset
 import kotlin.math.abs
 import kotlin.math.absoluteValue
 import org.junit.Assert.assertEquals
@@ -856,6 +862,65 @@ class PackSelectionScreenTest {
     }
 
     @Test
+    fun recharge_progress_indicator_exposes_current_weather_cue() {
+        val trustedNow = Instant.parse("2026-03-24T12:00:00Z")
+        val weatherDate = LocalDate.of(2026, 3, 24)
+        val state = mutableStateOf(
+            PackSelectionUiState(
+                isLoading = false,
+                extensions = listOf(
+                    ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+                ),
+                rechargeState = PackRechargeState(
+                    availableDrawCount = 0,
+                    accumulatedChargeUnits = 0L,
+                    lastChargeEvaluationAt = trustedNow.toString(),
+                ),
+                weatherPolicy = SingleDayWeatherPolicy(
+                    date = weatherDate,
+                    weatherState = WeatherState.Rain,
+                ),
+                trustedNow = trustedNow,
+                trustedElapsedRealtimeMs = SystemClock.elapsedRealtime(),
+            ),
+        )
+
+        composeRule.setContent {
+            PackSelectionScreen(
+                state = state.value,
+                onRefresh = {},
+                onSelectExtension = {},
+                onSelectBooster = {},
+                onOpenPack = {},
+                onPackRevealReady = {},
+                packReadySignal = 0,
+                showBackground = false,
+            )
+        }
+
+        composeRule.onNodeWithTag("pack-status-weather-indicator")
+            .assertIsDisplayed()
+            .assert(hasContentDescription("Météo de recharge : Pluie, recharge en pause, x0"))
+        composeRule.onNodeWithTag("pack-status-weather-motion")
+            .assertTextContains("II")
+
+        composeRule.runOnIdle {
+            state.value = state.value.copy(
+                weatherPolicy = SingleDayWeatherPolicy(
+                    date = weatherDate,
+                    weatherState = WeatherState.Pure,
+                ),
+            )
+        }
+        composeRule.waitForIdle()
+
+        composeRule.onNodeWithTag("pack-status-weather-indicator")
+            .assert(hasContentDescription("Météo de recharge : Pur, recharge accélérée, x2"))
+        composeRule.onNodeWithTag("pack-status-weather-motion")
+            .assertTextContains(">>")
+    }
+
+    @Test
     fun stock_status_shows_filled_and_empty_pack_slots() {
         composeRule.setContent {
             PackSelectionScreen(
@@ -944,5 +1009,18 @@ class PackSelectionScreenTest {
     ) {
         onNodeWithTag("pack-extension-selection-scroll", useUnmergedTree = true)
             .assert(hasAnyDescendant(hasTestTag(tag)))
+    }
+
+    private fun hasContentDescription(value: String): SemanticsMatcher =
+        SemanticsMatcher.expectValue(SemanticsProperties.ContentDescription, listOf(value))
+
+    private class SingleDayWeatherPolicy(
+        private val date: LocalDate,
+        private val weatherState: WeatherState,
+    ) : WeatherPolicy {
+        override fun weatherAt(instant: Instant): WeatherState {
+            val instantDate = instant.atOffset(ZoneOffset.UTC).toLocalDate()
+            return if (instantDate == date) weatherState else WeatherState.Clear
+        }
     }
 }

@@ -1,8 +1,12 @@
 package fr.aumombelli.dstcg
 
+import androidx.compose.ui.graphics.Color
 import fr.aumombelli.dstcg.data.DeterministicWeatherCalendar
+import fr.aumombelli.dstcg.data.WeatherState
 import fr.aumombelli.dstcg.feature.packs.selection.buildWeatherForecastDayUiModels
 import fr.aumombelli.dstcg.feature.packs.selection.formatWeatherForecastUtcTimeLabel
+import fr.aumombelli.dstcg.feature.packs.selection.weatherRechargeContentDescription
+import fr.aumombelli.dstcg.feature.packs.selection.weatherRechargeVisuals
 import java.time.Instant
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
@@ -10,6 +14,36 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class WeatherForecastUiTest {
+    @Test
+    fun `weather recharge visuals expose speed cues for every weather state`() {
+        val expected = mapOf(
+            WeatherState.Rain to Triple(Color(0xFF6AB8FF), "II", "recharge en pause"),
+            WeatherState.Cloudy to Triple(Color(0xFF9DAEC7), ">", "recharge ralentie"),
+            WeatherState.Clear to Triple(Color(0xFFFFD86E), ">", "recharge normale"),
+            WeatherState.Pure to Triple(Color(0xFF7BF3FF), ">>", "recharge accélérée"),
+        )
+
+        expected.forEach { (weatherState, expectedVisuals) ->
+            val visuals = weatherRechargeVisuals(weatherState)
+
+            assertEquals(expectedVisuals.first, visuals.fillColor)
+            assertEquals(expectedVisuals.second, visuals.motionGlyph)
+            assertEquals(expectedVisuals.third, visuals.motionLabel)
+        }
+    }
+
+    @Test
+    fun `weather recharge accessibility description links weather to recharge speed`() {
+        assertEquals(
+            "Météo de recharge : Pluie, recharge en pause, x0",
+            weatherRechargeContentDescription(WeatherState.Rain),
+        )
+        assertEquals(
+            "Météo de recharge : Pur, recharge accélérée, x2",
+            weatherRechargeContentDescription(WeatherState.Pure),
+        )
+    }
+
     @Test
     fun `forecast builder returns seven ordered utc days with french labels`() {
         val forecast = buildWeatherForecastDayUiModels(
