@@ -65,10 +65,12 @@ data class VisualSize(
 )
 
 @Serializable
-data class AbsoluteMagnitudeMeasurement(
+data class MagnitudeMeasurement(
     val value: Double,
     val label: String,
 )
+
+typealias AbsoluteMagnitudeMeasurement = MagnitudeMeasurement
 
 @Serializable
 sealed class AstronomyDetails
@@ -80,6 +82,7 @@ data class DeepSkyDetails(
     val realSize: LightYearMeasurement,
     val visualSize: VisualSize,
     val absoluteMagnitude: AbsoluteMagnitudeMeasurement? = null,
+    val visualMagnitude: MagnitudeMeasurement? = null,
 ) : AstronomyDetails()
 
 @Serializable
@@ -89,18 +92,21 @@ data class StarDetails(
     val realSize: LightYearMeasurement? = null,
     val visualSize: VisualSize? = null,
     val absoluteMagnitude: AbsoluteMagnitudeMeasurement,
+    val visualMagnitude: MagnitudeMeasurement? = null,
 ) : AstronomyDetails()
 
 @Serializable
 @SerialName("constellation")
 data class ConstellationDetails(
     val visualSize: VisualSize,
+    val visualMagnitude: MagnitudeMeasurement? = null,
 ) : AstronomyDetails()
 
 @Serializable
 @SerialName("sky_event")
 data class SkyEventDetails(
     val visualSize: VisualSize? = null,
+    val visualMagnitude: MagnitudeMeasurement? = null,
 ) : AstronomyDetails()
 
 @Serializable
@@ -109,4 +115,5 @@ data class SolarSystemDetails(
     val distance: LightYearMeasurement? = null,
     val realSize: LightYearMeasurement? = null,
     val absoluteMagnitude: AbsoluteMagnitudeMeasurement? = null,
+    val visualMagnitude: MagnitudeMeasurement? = null,
 ) : AstronomyDetails()

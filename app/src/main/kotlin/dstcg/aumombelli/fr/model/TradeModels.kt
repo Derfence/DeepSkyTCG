@@ -75,7 +75,7 @@ data class TradeCardCandidate(
     val variant: DisplayCardVariant,
 )
 
-const val MINIMUM_TRADE_VARIANT_COUNT: Int = 2
+const val MINIMUM_TRADE_CARD_COUNT: Int = 2
 
 sealed interface TradeValidationResult {
     data object Valid : TradeValidationResult
@@ -96,16 +96,28 @@ fun OwnedCollection.tradeCountFor(ref: TradeCardRef): Int =
         ?: 0
 
 fun OwnedCollection.canTradeAway(ref: TradeCardRef): Boolean =
-    tradeCountFor(ref) >= MINIMUM_TRADE_VARIANT_COUNT
+    tradeCountFor(ref) > 0 && hasTradeableCard(ref.cardId)
 
-fun OwnedVariantCount.canTradeAway(): Boolean = count >= MINIMUM_TRADE_VARIANT_COUNT
+fun OwnedCollection.hasTradeableCard(cardId: String): Boolean =
+    ownedCountFor(cardId) >= MINIMUM_TRADE_CARD_COUNT
 
-fun DisplayCardVariant.canTradeAway(): Boolean = count >= MINIMUM_TRADE_VARIANT_COUNT
+fun OwnedCardEntry.hasTradeableCard(): Boolean =
+    normalized().totalOwned >= MINIMUM_TRADE_CARD_COUNT
 
-fun LibraryCardItem.hasTradeableVariant(): Boolean = availableVariants.any(DisplayCardVariant::canTradeAway)
+fun DisplayCardVariant.isOwnedForTrade(): Boolean = count > 0
+
+fun LibraryCardItem.hasTradeableVariant(): Boolean =
+    ownedCount >= MINIMUM_TRADE_CARD_COUNT && availableVariants.any(DisplayCardVariant::isOwnedForTrade)
+
+fun LibraryCardItem.canTradeVariantAway(activeVariant: DisplayCardVariant): Boolean =
+    hasTradeableVariant() && activeVariant.isOwnedForTrade()
 
 fun LibraryCardItem.firstTradeableVariant(): DisplayCardVariant? =
-    availableVariants.firstOrNull(DisplayCardVariant::canTradeAway)
+    if (hasTradeableVariant()) {
+        availableVariants.firstOrNull(DisplayCardVariant::isOwnedForTrade)
+    } else {
+        null
+    }
 
 fun OwnedCollection.applyTrade(
     outgoing: TradeCardRef,
@@ -127,8 +139,11 @@ fun validateTradePair(
     val remoteCard = cardsById[remoteOutgoing.cardId]
         ?: return TradeValidationResult.Invalid("Carte distante inconnue.")
 
-    if (!localCollection.canTradeAway(localOutgoing)) {
-        return TradeValidationResult.Invalid("Cette variante n'est pas disponible en doublon.")
+    if (localCollection.tradeCountFor(localOutgoing) <= 0) {
+        return TradeValidationResult.Invalid("Cette variante n'est pas possédée.")
+    }
+    if (!localCollection.hasTradeableCard(localOutgoing.cardId)) {
+        return TradeValidationResult.Invalid("Cette carte n'a pas d'autre exemplaire disponible.")
     }
     if (!localCard.supportsTradeRef(localOutgoing, variantProfilesById)) {
         return TradeValidationResult.Invalid("La variante locale n'existe pas dans le catalogue.")

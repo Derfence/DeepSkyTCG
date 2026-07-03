@@ -343,6 +343,7 @@ fun PackSelectionScreen(
                     availableDrawCount = liveChargeStatus.availableDrawCount,
                     maxStoredDraws = liveChargeStatus.maxStoredDraws,
                     rechargeProgress = liveChargeStatus.rechargeProgress,
+                    currentWeather = liveChargeStatus.currentWeather,
                     remainingDurationText = remainingDurationText,
                     modifier = Modifier
                         .graphicsLayer {

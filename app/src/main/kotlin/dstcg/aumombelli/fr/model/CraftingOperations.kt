@@ -14,36 +14,47 @@ fun buildCraftingCandidates(
         val card = cardsById[cardId] ?: return@flatMap emptyList()
         val extension = extensionsById[card.extensionId] ?: return@flatMap emptyList()
         val profile = variantProfilesById[card.variantProfileId] ?: return@flatMap emptyList()
-        entry.variants.mapNotNull { variant ->
-            val sourceRef = CraftingCardRef(
-                cardId = cardId,
-                skyQuality = variant.skyQuality,
-                finish = variant.finish,
-            )
-            val recipe = validateCraftingRecipe(
-                mode = mode,
+        when (mode) {
+            CraftingMode.DarkenSky -> buildDarkenSkyCandidates(
                 collection = collection,
-                source = sourceRef,
+                entry = entry,
                 card = card,
+                extension = extension,
                 variantProfile = profile,
                 skyUpgradeCosts = skyUpgradeCosts,
-            ).getOrNull() ?: return@mapNotNull null
-            CraftingCardCandidate(
-                card = card,
-                extensionName = extension.name,
-                mode = mode,
-                sourceVariant = profile.toDisplayVariant(
-                    skyQuality = recipe.source.skyQuality,
-                    finish = recipe.source.finish,
-                    count = variant.count,
-                ),
-                targetVariant = profile.toDisplayVariant(
-                    skyQuality = recipe.target.skyQuality,
-                    finish = recipe.target.finish,
-                    count = collection.craftingCountFor(recipe.target),
-                ),
-                consumedCount = recipe.consumedCount,
             )
+
+            CraftingMode.SpaceAgency -> entry.variants.mapNotNull { variant ->
+                val sourceRef = CraftingCardRef(
+                    cardId = cardId,
+                    skyQuality = variant.skyQuality,
+                    finish = variant.finish,
+                )
+                val recipe = validateCraftingRecipe(
+                    mode = mode,
+                    collection = collection,
+                    source = sourceRef,
+                    card = card,
+                    variantProfile = profile,
+                    skyUpgradeCosts = skyUpgradeCosts,
+                ).getOrNull() ?: return@mapNotNull null
+                CraftingCardCandidate(
+                    card = card,
+                    extensionName = extension.name,
+                    mode = mode,
+                    sourceVariant = profile.toDisplayVariant(
+                        skyQuality = recipe.source.skyQuality,
+                        finish = recipe.source.finish,
+                        count = variant.count,
+                    ),
+                    targetVariant = profile.toDisplayVariant(
+                        skyQuality = recipe.target.skyQuality,
+                        finish = recipe.target.finish,
+                        count = collection.craftingCountFor(recipe.target),
+                    ),
+                    consumedCount = recipe.consumedCount,
+                )
+            }
         }
     }.sortedWith(
         compareBy<CraftingCardCandidate> { raritySortPriority(it.card.rarityLabel) }
@@ -51,6 +62,54 @@ fun buildCraftingCandidates(
             .thenByDescending { skyQualitySortPriority(it.sourceVariant.skyQuality) }
             .thenBy { it.sourceVariant.finishLabel },
     )
+
+private fun buildDarkenSkyCandidates(
+    collection: OwnedCollection,
+    entry: OwnedCardEntry,
+    card: CardDefinition,
+    extension: ExtensionDefinition,
+    variantProfile: VariantProfile,
+    skyUpgradeCosts: Map<String, Int>,
+): List<CraftingCardCandidate> {
+    val standardFinish = variantProfile.standardFinish() ?: return emptyList()
+    return entry.variants
+        .map { it.skyQuality }
+        .distinct()
+        .mapNotNull { skyQuality ->
+            val sourceRef = CraftingCardRef(
+                cardId = card.id,
+                skyQuality = skyQuality,
+                finish = standardFinish.code,
+            )
+            val recipe = validateCraftingRecipe(
+                mode = CraftingMode.DarkenSky,
+                collection = collection,
+                source = sourceRef,
+                card = card,
+                variantProfile = variantProfile,
+                skyUpgradeCosts = skyUpgradeCosts,
+            ).getOrNull() ?: return@mapNotNull null
+            CraftingCardCandidate(
+                card = card,
+                extensionName = extension.name,
+                mode = CraftingMode.DarkenSky,
+                sourceVariant = variantProfile.toDisplayVariant(
+                    skyQuality = recipe.source.skyQuality,
+                    finish = recipe.source.finish,
+                    count = collection.craftingCountForSkyQuality(
+                        cardId = card.id,
+                        skyQuality = skyQuality,
+                    ),
+                ),
+                targetVariant = variantProfile.toDisplayVariant(
+                    skyQuality = recipe.target.skyQuality,
+                    finish = recipe.target.finish,
+                    count = collection.craftingCountFor(recipe.target),
+                ),
+                consumedCount = recipe.consumedCount,
+            )
+        }
+}
 
 fun validateCraftingRecipe(
     mode: CraftingMode,
@@ -89,9 +148,8 @@ fun validateCraftingRecipe(
         ?: return CraftingRecipeValidation.Invalid("Qualite de ciel inconnue.")
     val sourceFinish = variantProfile.finishes.firstOrNull { it.code == source.finish }
         ?: return CraftingRecipeValidation.Invalid("Finition inconnue.")
-    val sourceCount = collection.craftingCountFor(source)
 
-    val recipe = when (mode) {
+    return when (mode) {
         CraftingMode.DarkenSky -> {
             val nextSky = variantProfile.nextSkyQualityAfter(sourceSky.code)
                 ?: return CraftingRecipeValidation.Invalid("Cette qualite de ciel est deja au maximum.")
@@ -102,15 +160,28 @@ fun validateCraftingRecipe(
             if (cost <= 0) {
                 return CraftingRecipeValidation.Invalid("Le cout d'amelioration doit etre positif.")
             }
-            CraftingRecipe(
-                mode = mode,
-                source = source,
-                target = CraftingCardRef(
-                    cardId = source.cardId,
-                    skyQuality = nextSky.code,
-                    finish = standardFinish.code,
+            val consumedSources = collection.darkenSkyConsumedSources(
+                cardId = source.cardId,
+                skyQuality = sourceSky.code,
+                amount = cost,
+                variantProfile = variantProfile,
+                standardFinish = standardFinish,
+            )
+            if (consumedSources.sumOf { it.count } < cost) {
+                return CraftingRecipeValidation.Invalid("Pas assez de copies pour cette fabrication.")
+            }
+            CraftingRecipeValidation.Valid(
+                CraftingRecipe(
+                    mode = mode,
+                    source = source,
+                    target = CraftingCardRef(
+                        cardId = source.cardId,
+                        skyQuality = nextSky.code,
+                        finish = standardFinish.code,
+                    ),
+                    consumedCount = cost,
+                    consumedSources = consumedSources,
                 ),
-                consumedCount = cost,
             )
         }
 
@@ -122,7 +193,7 @@ fun validateCraftingRecipe(
             if (sourceFinish.code != standardFinish.code || sourceFinish.isStamped) {
                 return CraftingRecipeValidation.Invalid("Seules les cartes standard peuvent etre tamponnees.")
             }
-            CraftingRecipe(
+            val recipe = CraftingRecipe(
                 mode = mode,
                 source = source,
                 target = CraftingCardRef(
@@ -132,17 +203,21 @@ fun validateCraftingRecipe(
                 ),
                 consumedCount = StampedCraftingCost,
             )
+            if (collection.craftingCountFor(source) < recipe.consumedCount) {
+                return CraftingRecipeValidation.Invalid("Pas assez de copies pour cette fabrication.")
+            }
+            CraftingRecipeValidation.Valid(recipe)
         }
     }
-
-    if (sourceCount < recipe.consumedCount) {
-        return CraftingRecipeValidation.Invalid("Pas assez de copies pour cette fabrication.")
-    }
-    return CraftingRecipeValidation.Valid(recipe)
 }
 
 fun OwnedCollection.applyCraftingRecipe(recipe: CraftingRecipe): OwnedCollection =
-    decrementCraftingVariant(recipe.source, recipe.consumedCount)
+    recipe.consumedSources.fold(this) { collection, ingredient ->
+        collection.decrementCraftingVariant(
+            ref = ingredient.source,
+            amount = ingredient.count,
+        )
+    }
         .incrementCraftingVariant(recipe.target)
         .normalized()
 
@@ -152,6 +227,17 @@ fun OwnedCollection.craftingCountFor(ref: CraftingCardRef): Int =
         ?.variants
         ?.firstOrNull { it.skyQuality == ref.skyQuality && it.finish == ref.finish }
         ?.count
+        ?: 0
+
+fun OwnedCollection.craftingCountForSkyQuality(
+    cardId: String,
+    skyQuality: String,
+): Int =
+    cards[cardId]
+        ?.normalized()
+        ?.variants
+        ?.filter { it.skyQuality == skyQuality }
+        ?.sumOf { it.count }
         ?: 0
 
 sealed interface CraftingRecipeValidation {
@@ -182,6 +268,46 @@ private fun VariantProfile.standardFinish(): CardFinishDefinition? =
 
 private fun VariantProfile.stampedFinish(): CardFinishDefinition? =
     finishes.firstOrNull { it.isStamped }
+
+private fun OwnedCollection.darkenSkyConsumedSources(
+    cardId: String,
+    skyQuality: String,
+    amount: Int,
+    variantProfile: VariantProfile,
+    standardFinish: CardFinishDefinition,
+): List<CraftingRecipeIngredient> {
+    var remaining = amount
+    return variantProfile.darkenSkyConsumptionFinishes(standardFinish).mapNotNull { finish ->
+        if (remaining <= 0) return@mapNotNull null
+        val source = CraftingCardRef(
+            cardId = cardId,
+            skyQuality = skyQuality,
+            finish = finish.code,
+        )
+        val consumedCount = minOf(remaining, craftingCountFor(source))
+        if (consumedCount <= 0) {
+            null
+        } else {
+            remaining -= consumedCount
+            CraftingRecipeIngredient(
+                source = source,
+                count = consumedCount,
+            )
+        }
+    }
+}
+
+private fun VariantProfile.darkenSkyConsumptionFinishes(
+    standardFinish: CardFinishDefinition,
+): List<CardFinishDefinition> {
+    val stampedFinishes = finishes
+        .filter { it.code != standardFinish.code && it.isStamped }
+        .sortedBy { it.code }
+    val otherFinishes = finishes
+        .filter { it.code != standardFinish.code && !it.isStamped }
+        .sortedBy { it.code }
+    return listOf(standardFinish) + stampedFinishes + otherFinishes
+}
 
 private fun OwnedCollection.decrementCraftingVariant(
     ref: CraftingCardRef,

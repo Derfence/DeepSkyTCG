@@ -93,6 +93,8 @@ CATALOGUE_FIELDS = [
     "visualSizeLabel",
     "absoluteMagnitudeValue",
     "absoluteMagnitudeLabel",
+    "visualMagnitudeValue",
+    "visualMagnitudeLabel",
 ]
 
 EQUIPMENT_FIELDS = [
@@ -2324,6 +2326,9 @@ def canonical_catalogue_payload(card: dict[str, Any]) -> dict[str, Any]:
     if "absoluteMagnitude" in details:
         payload["absoluteMagnitudeValue"] = stable_number(details["absoluteMagnitude"]["value"])
         payload["absoluteMagnitudeLabel"] = details["absoluteMagnitude"]["label"]
+    if "visualMagnitude" in details:
+        payload["visualMagnitudeValue"] = stable_number(details["visualMagnitude"]["value"])
+        payload["visualMagnitudeLabel"] = details["visualMagnitude"]["label"]
     return payload
 
 
@@ -2424,6 +2429,9 @@ def card_to_catalogue_row(card: dict[str, Any], card_rarity_multiplier: Decimal)
     if "absoluteMagnitude" in details:
         row["absoluteMagnitudeValue"] = details["absoluteMagnitude"]["value"]
         row["absoluteMagnitudeLabel"] = details["absoluteMagnitude"]["label"]
+    if "visualMagnitude" in details:
+        row["visualMagnitudeValue"] = details["visualMagnitude"]["value"]
+        row["visualMagnitudeLabel"] = details["visualMagnitude"]["label"]
 
     return row
 
@@ -2992,6 +3000,9 @@ def build_details(
         absolute_magnitude = build_absolute_magnitude(row, row_number, sheet_name, required=False)
         if absolute_magnitude is not None:
             details["absoluteMagnitude"] = absolute_magnitude
+        visual_magnitude = build_visual_magnitude(row, row_number, sheet_name, required=False)
+        if visual_magnitude is not None:
+            details["visualMagnitude"] = visual_magnitude
         return details
 
     if detail_type == "star":
@@ -3020,13 +3031,20 @@ def build_details(
         if visual_size is not None:
             details["visualSize"] = visual_size
         details["absoluteMagnitude"] = build_absolute_magnitude(row, row_number, sheet_name, required=True)
+        visual_magnitude = build_visual_magnitude(row, row_number, sheet_name, required=False)
+        if visual_magnitude is not None:
+            details["visualMagnitude"] = visual_magnitude
         return details
 
     if detail_type == "constellation":
-        return {
+        details = {
             "detailType": detail_type,
             "visualSize": build_visual_size(row, row_number, sheet_name, required=True),
         }
+        visual_magnitude = build_visual_magnitude(row, row_number, sheet_name, required=False)
+        if visual_magnitude is not None:
+            details["visualMagnitude"] = visual_magnitude
+        return details
 
     if detail_type == "solar_system":
         details: dict[str, Any] = {
@@ -3054,6 +3072,7 @@ def build_details(
         )
         visual_size = build_visual_size(row, row_number, sheet_name, required=False)
         absolute_magnitude = build_absolute_magnitude(row, row_number, sheet_name, required=False)
+        visual_magnitude = build_visual_magnitude(row, row_number, sheet_name, required=False)
         if distance is not None:
             details["distance"] = distance
         if real_size is not None:
@@ -3062,6 +3081,8 @@ def build_details(
             details["visualSize"] = visual_size
         if absolute_magnitude is not None:
             details["absoluteMagnitude"] = absolute_magnitude
+        if visual_magnitude is not None:
+            details["visualMagnitude"] = visual_magnitude
         return details
 
     if detail_type == "sky_event":
@@ -3069,8 +3090,11 @@ def build_details(
             "detailType": detail_type,
         }
         visual_size = build_visual_size(row, row_number, sheet_name, required=False)
+        visual_magnitude = build_visual_magnitude(row, row_number, sheet_name, required=False)
         if visual_size is not None:
             details["visualSize"] = visual_size
+        if visual_magnitude is not None:
+            details["visualMagnitude"] = visual_magnitude
         return details
 
     raise CatalogSheetError(
@@ -3125,10 +3149,44 @@ def build_absolute_magnitude(
     sheet_name: str,
     required: bool,
 ) -> dict[str, Any] | None:
-    value = parse_float(row, "absoluteMagnitudeValue", row_number, sheet_name, required=required)
+    return build_magnitude_measurement(
+        row,
+        row_number,
+        sheet_name,
+        value_field="absoluteMagnitudeValue",
+        label_field="absoluteMagnitudeLabel",
+        required=required,
+    )
+
+
+def build_visual_magnitude(
+    row: dict[str, str],
+    row_number: int,
+    sheet_name: str,
+    required: bool,
+) -> dict[str, Any] | None:
+    return build_magnitude_measurement(
+        row,
+        row_number,
+        sheet_name,
+        value_field="visualMagnitudeValue",
+        label_field="visualMagnitudeLabel",
+        required=required,
+    )
+
+
+def build_magnitude_measurement(
+    row: dict[str, str],
+    row_number: int,
+    sheet_name: str,
+    value_field: str,
+    label_field: str,
+    required: bool,
+) -> dict[str, Any] | None:
+    value = parse_float(row, value_field, row_number, sheet_name, required=required)
     if value is None:
         return None
-    label = optional_text(row, "absoluteMagnitudeLabel") or format_signed_number(value)
+    label = optional_text(row, label_field) or format_signed_number(value)
     return {
         "value": value,
         "label": label,

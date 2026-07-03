@@ -14,6 +14,7 @@ import fr.aumombelli.dstcg.model.DeepSkyDetails
 import fr.aumombelli.dstcg.model.Declination
 import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.LightYearMeasurement
+import fr.aumombelli.dstcg.model.MagnitudeMeasurement
 import fr.aumombelli.dstcg.model.MiniGameCardResolutionSource
 import fr.aumombelli.dstcg.model.MiniGameDifficulty
 import fr.aumombelli.dstcg.model.MiniGameGlobalCardRef
@@ -86,8 +87,8 @@ class TimelineGameLogicTest {
     @Test
     fun `visual magnitude comparison orders dimmest then brightest`() {
         val cards = listOf(
-            deepSkyCard("ALP-001", absoluteMagnitude = -1.0),
-            deepSkyCard("ALP-002", absoluteMagnitude = 7.0),
+            deepSkyCard("ALP-001", absoluteMagnitude = -10.0, visualMagnitude = 7.0),
+            deepSkyCard("ALP-002", absoluteMagnitude = 10.0, visualMagnitude = -1.0),
         )
 
         val game = buildReadyGame(
@@ -98,9 +99,22 @@ class TimelineGameLogicTest {
         )
 
         assertEquals(
-            listOf("ALP-002", "ALP-001"),
+            listOf("ALP-001", "ALP-002"),
             game.comparisons.single().correctSlots.map { it.id },
         )
+    }
+
+    @Test
+    fun `visual magnitude eligibility requires a visual magnitude`() {
+        val withVisualMagnitude = deepSkyCard("ALP-001", visualMagnitude = 1.0)
+        val withoutVisualMagnitude = deepSkyCard("ALP-002", visualMagnitude = null)
+
+        val eligibleIds = eligibleTimelineCardIds(
+            criterion = TimelineCriterion.Luminosity,
+            cards = listOf(withVisualMagnitude, withoutVisualMagnitude),
+        )
+
+        assertEquals(setOf("ALP-001"), eligibleIds)
     }
 
     @Test
@@ -277,6 +291,7 @@ class TimelineGameLogicTest {
         visualWidth: Double = 1.0,
         visualHeight: Double = 1.0,
         absoluteMagnitude: Double = -1.0,
+        visualMagnitude: Double? = absoluteMagnitude,
     ): CardDefinition {
         val base = testCardDefinition(
             id = id,
@@ -291,6 +306,7 @@ class TimelineGameLogicTest {
                     realSize = LightYearMeasurement(realSize, "$realSize années-lumière"),
                     visualSize = visualSize(visualWidth, visualHeight),
                     absoluteMagnitude = AbsoluteMagnitudeMeasurement(absoluteMagnitude, absoluteMagnitude.toString()),
+                    visualMagnitude = visualMagnitude?.let { MagnitudeMeasurement(it, it.toString()) },
                 ),
             ),
         )

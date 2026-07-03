@@ -68,6 +68,7 @@ Invariants :
 
 L'ecran des packs affiche une prevision sur `7` jours, de `J` a `J+6`, avec heure de reference `UTC`, icone et multiplicateur.
 Cette prevision est affichee au-dessus du bloc stock/recharge des packs.
+Le bloc stock/recharge colore aussi la barre de progression selon la météo courante. Un indicateur placé au bout de la progression reprend l'icône météo et ajoute un signal de vitesse : pause pour la pluie, flèche ralentie pour le nuageux, flèche normale pour le clair et double flèche pour le ciel pur. L'indicateur reste entièrement visible aux extrémités de la barre, avec une marque sur la barre pour garder le point réel de progression lisible.
 
 Representations actuelles :
 

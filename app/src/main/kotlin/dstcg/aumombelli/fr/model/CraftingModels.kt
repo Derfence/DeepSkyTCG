@@ -13,11 +13,22 @@ data class CraftingCardRef(
     val variantKey: String get() = "$skyQuality::$finish"
 }
 
+data class CraftingRecipeIngredient(
+    val source: CraftingCardRef,
+    val count: Int,
+)
+
 data class CraftingRecipe(
     val mode: CraftingMode,
     val source: CraftingCardRef,
     val target: CraftingCardRef,
     val consumedCount: Int,
+    val consumedSources: List<CraftingRecipeIngredient> = listOf(
+        CraftingRecipeIngredient(
+            source = source,
+            count = consumedCount,
+        ),
+    ),
 )
 
 data class CraftingCardCandidate(

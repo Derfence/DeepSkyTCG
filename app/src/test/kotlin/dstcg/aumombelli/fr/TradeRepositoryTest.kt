@@ -14,20 +14,34 @@ import org.junit.Test
 
 class TradeRepositoryTest {
     @Test
-    fun `load candidates returns only duplicated variants`() = runTest {
+    fun `load candidates returns all owned variants for cards duplicated across variants`() = runTest {
         val repository = testTradeRepository(
             collection = ownedCollectionWithVariants(
                 "ALP-001",
-                OwnedVariantCount("city", "standard", 2),
+                OwnedVariantCount("city", "standard", 1),
                 OwnedVariantCount("rural", "standard", 1),
             ),
         ).repository
 
         val candidates = repository.loadTradeCandidates()
 
-        assertEquals(1, candidates.size)
-        assertEquals("ALP-001", candidates.single().card.id)
-        assertEquals("city", candidates.single().variant.skyQuality)
+        assertEquals(2, candidates.size)
+        assertEquals(setOf("city", "rural"), candidates.map { it.variant.skyQuality }.toSet())
+        assertEquals(setOf("ALP-001"), candidates.map { it.card.id }.toSet())
+    }
+
+    @Test
+    fun `load candidates ignores cards with a single total copy`() = runTest {
+        val repository = testTradeRepository(
+            collection = ownedCollectionWithVariants(
+                "ALP-001",
+                OwnedVariantCount("city", "standard", 1),
+            ),
+        ).repository
+
+        val candidates = repository.loadTradeCandidates()
+
+        assertEquals(emptyList<String>(), candidates.map { it.card.id })
     }
 
     @Test
@@ -87,7 +101,8 @@ class TradeRepositoryTest {
         val fixture = testTradeRepository(
             collection = ownedCollectionWithVariants(
                 "ALP-001",
-                OwnedVariantCount("city", "standard", 2),
+                OwnedVariantCount("city", "standard", 1),
+                OwnedVariantCount("rural", "standard", 1),
             ),
         )
         val outgoing = TradeCardRef("ALP-001", "city", "standard")
@@ -101,6 +116,8 @@ class TradeRepositoryTest {
         val receivedCard = fixture.repository.loadTradeCard(incoming)
 
         assertEquals(TradeValidationResult.Valid, result)
+        assertEquals(0, fixture.progressGateway.progress.collection.tradeCountFor(outgoing))
+        assertEquals(1, fixture.progressGateway.progress.collection.tradeCountFor(TradeCardRef("ALP-001", "rural", "standard")))
         assertEquals(1, fixture.progressGateway.progress.collection.tradeCountFor(incoming))
         assertEquals("ALP-002", receivedCard?.definition?.id)
         assertEquals("Astronomes en herbe", receivedCard?.extensionName)

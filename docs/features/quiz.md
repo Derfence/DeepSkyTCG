@@ -50,7 +50,7 @@ Questions dérivées possibles :
 - ordre de grandeur de distance ;
 - taille apparente comparée à la pleine Lune ;
 - ordre de grandeur de taille réelle ;
-- classe de magnitude absolue pour les étoiles et le ciel profond ;
+- classe de magnitude visuelle quand elle est renseignée, avec des réponses orientées visibilité dans le ciel ;
 - questions adaptées aux objets du Système solaire.
 
 Chaque question propose `4` réponses distinctes. Les distracteurs viennent d'abord des autres cartes du catalogue, puis de listes contrôlées et de réponses synthétiques par ordre de grandeur. Une difficulté ne devient plus indisponible par manque de distracteurs ; l'état indisponible est réservé aux blocages techniques comme l'absence de carte du jour, de définition catalogue ou de variante affichable.

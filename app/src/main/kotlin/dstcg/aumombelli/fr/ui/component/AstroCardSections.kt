@@ -40,9 +40,11 @@ import fr.aumombelli.dstcg.model.StarDetails
 import fr.aumombelli.dstcg.model.toDisplayCard
 
 internal const val CardBackgroundArtTag = "astro-card-background-art"
+internal const val CardBackgroundBlurredArtTag = "astro-card-background-art-blurred"
 internal const val CardBackgroundFallbackAssetTag = "astro-card-background-fallback-asset"
 internal const val CardBackgroundHiddenPlaceholderTag = "astro-card-background-hidden-placeholder"
 internal const val CardBackgroundPlaceholderTag = "astro-card-background-placeholder"
+internal const val CardBackgroundSharpArtTag = "astro-card-background-art-sharp"
 internal const val CardFooterTag = "astro-card-footer"
 internal const val CardCatalogNumberTag = "astro-card-catalog-number"
 internal const val CardVariationTag = "astro-card-variation"
@@ -399,22 +401,27 @@ internal fun measurementItems(details: AstronomyDetails): List<Pair<String, Stri
         add("Taille reelle" to details.realSize.label)
         add("Taille visuelle" to details.visualSize.label)
         details.absoluteMagnitude?.let { add("Magnitude absolue" to it.label) }
+        details.visualMagnitude?.let { add("Magnitude visuelle" to it.label) }
     }
     is StarDetails -> buildList {
         add("Distance a la Terre" to details.distance.label)
         details.realSize?.let { add("Taille reelle" to it.label) }
         details.visualSize?.let { add("Taille visuelle" to it.label) }
         add("Magnitude absolue" to details.absoluteMagnitude.label)
+        details.visualMagnitude?.let { add("Magnitude visuelle" to it.label) }
     }
-    is ConstellationDetails -> listOf(
-        "Taille visuelle" to details.visualSize.label,
-    )
-    is SkyEventDetails -> details.visualSize?.let {
-        listOf("Taille visuelle" to it.label)
-    } ?: emptyList()
+    is ConstellationDetails -> buildList {
+        add("Taille visuelle" to details.visualSize.label)
+        details.visualMagnitude?.let { add("Magnitude visuelle" to it.label) }
+    }
+    is SkyEventDetails -> buildList {
+        details.visualSize?.let { add("Taille visuelle" to it.label) }
+        details.visualMagnitude?.let { add("Magnitude visuelle" to it.label) }
+    }
     is SolarSystemDetails -> buildList {
         details.distance?.let { add("Distance" to it.label) }
         details.realSize?.let { add("Taille reelle" to it.label) }
+        details.visualMagnitude?.let { add("Magnitude visuelle" to it.label) }
     }
 }
 

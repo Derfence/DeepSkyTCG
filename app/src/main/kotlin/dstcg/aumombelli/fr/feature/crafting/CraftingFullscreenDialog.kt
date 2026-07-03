@@ -232,7 +232,10 @@ private fun CraftingConfirmationPanel(
                 fontWeight = FontWeight.Bold,
             )
             Text(
-                text = "Consomme ${candidate.consumedCount} x ${candidate.sourceVariant.skyQualityLabel} · ${candidate.sourceVariant.finishLabel}",
+                text = consumedTextFor(
+                    mode = mode,
+                    candidate = candidate,
+                ),
                 color = Color(0xFFD3E3F3),
                 modifier = Modifier.testTag("crafting-consumed-text"),
             )
@@ -279,6 +282,17 @@ private fun CraftingConfirmationPanel(
             }
         }
     }
+}
+
+private fun consumedTextFor(
+    mode: CraftingMode,
+    candidate: CraftingCardCandidate,
+): String = when (mode) {
+    CraftingMode.DarkenSky ->
+        "Consomme ${candidate.consumedCount} x ${candidate.sourceVariant.skyQualityLabel} · standards et tamponnées"
+
+    CraftingMode.SpaceAgency ->
+        "Consomme ${candidate.consumedCount} x ${candidate.sourceVariant.skyQualityLabel} · ${candidate.sourceVariant.finishLabel}"
 }
 
 private val CraftingActionAreaReservedHeight = 280.dp

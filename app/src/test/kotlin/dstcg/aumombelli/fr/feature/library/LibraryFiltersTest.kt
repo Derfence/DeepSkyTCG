@@ -100,25 +100,23 @@ class LibraryFiltersTest {
         )
 
         assertEquals(listOf("beta"), filtered.map { it.extension.id })
-        assertEquals(listOf("BET-001"), filtered.single().cards.map { it.definition.id })
-        assertEquals("holographic::standard", filtered.single().cards.single().bestVariantMatching(
+        assertEquals(listOf("BET-001", "BET-002"), filtered.single().cards.map { it.definition.id })
+        assertEquals("holographic::standard", filtered.single().cards.first().bestVariantMatching(
             LibraryFilters(
                 skyQuality = "holographic",
                 tradeableOnly = true,
             ),
         )?.key)
-        assertNull(
+        assertEquals(
+            "holographic::standard",
             sections.last().cards.last().bestVariantMatching(
-                LibraryFilters(
-                    skyQuality = "holographic",
-                    tradeableOnly = true,
-                ),
-            ),
+                LibraryFilters(skyQuality = "holographic", tradeableOnly = true),
+            )?.key,
         )
     }
 
     @Test
-    fun `tradeable filter selects best tradeable variant`() {
+    fun `tradeable filter selects best owned variant when card total is duplicated`() {
         val item = libraryItem(
             id = "ALP-001",
             extensionId = "alpha",
@@ -132,7 +130,21 @@ class LibraryFiltersTest {
 
         val selectedVariant = item.bestVariantMatching(LibraryFilters(tradeableOnly = true))
 
-        assertEquals("mountain::standard", selectedVariant?.key)
+        assertEquals("holographic::standard", selectedVariant?.key)
+    }
+
+    @Test
+    fun `tradeable filter ignores cards with one total copy`() {
+        val item = libraryItem(
+            id = "ALP-001",
+            extensionId = "alpha",
+            rarityLabel = "Rare",
+            variants = listOf(holographic(count = 1)),
+        )
+
+        val selectedVariant = item.bestVariantMatching(LibraryFilters(tradeableOnly = true))
+
+        assertNull(selectedVariant)
     }
 
     private fun libraryItem(

@@ -176,6 +176,43 @@ class CatalogSyncTest(unittest.TestCase):
 
         self.assertEqual(workbook_bytes_before_apply, workbook_path.read_bytes())
 
+    def test_visual_magnitude_round_trips_between_workbook_and_json(self):
+        temp_dir, catalog_dir = self.create_temp_catalog_dir()
+        workbook_path = temp_dir / "catalogue.xlsx"
+        self.export_workbook(workbook_path, catalog_dir)
+
+        sheets = self.read_sheets(workbook_path)
+        catalogue = sheets[self.catalog_sync.CATALOGUE_SHEET_NAME]
+        self.set_catalogue_value(catalogue, "aeh-albireo", "visualMagnitudeValue", "3.08")
+        self.set_catalogue_value(catalogue, "aeh-albireo", "visualMagnitudeLabel", "3.08")
+        self.write_sheets(workbook_path, sheets)
+
+        _, cards, _, _, _, _ = self.catalog_sync.apply_workbook(workbook_path, catalog_dir)
+        cards_by_id = {card["id"]: card for card in cards}
+
+        albireo_details = cards_by_id["aeh-albireo"]["astronomy"]["details"]
+        self.assertEqual({"value": 3.08, "label": "3.08"}, albireo_details["visualMagnitude"])
+        self.assertEqual({"value": -2.3, "label": "-2.3"}, albireo_details["absoluteMagnitude"])
+        self.assertNotIn(
+            "visualMagnitude",
+            cards_by_id["aeh-andromede-constellation"]["astronomy"]["details"],
+        )
+
+        round_trip_path = temp_dir / "round-trip.xlsx"
+        self.export_workbook(round_trip_path, catalog_dir)
+        round_trip_catalogue = self.read_sheets(round_trip_path)[self.catalog_sync.CATALOGUE_SHEET_NAME]
+        header = round_trip_catalogue.rows[0]
+        self.assertIn("visualMagnitudeValue", header)
+        self.assertIn("visualMagnitudeLabel", header)
+        card_id_index = header.index("cardId")
+        row = next(
+            row
+            for row in round_trip_catalogue.rows
+            if len(row) > card_id_index and row[card_id_index] == "aeh-albireo"
+        )
+        self.assertEqual("3.08", str(row[header.index("visualMagnitudeValue")]))
+        self.assertEqual("3.08", row[header.index("visualMagnitudeLabel")])
+
     def test_export_command_is_read_only_error(self):
         with self.assertRaisesRegex(self.catalog_sync.CatalogSheetError, "read-only"):
             self.catalog_sync.handle_export(argparse.Namespace(sheet=Path("catalogue.xlsx")))

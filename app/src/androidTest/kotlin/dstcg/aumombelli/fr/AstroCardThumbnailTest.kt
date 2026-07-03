@@ -351,6 +351,85 @@ class AstroCardThumbnailTest {
     }
 
     @Test
+    fun city_preview_marks_card_art_as_blurred() {
+        val item = LibraryCardItem(
+            definition = testCardDefinition("M42", name = "Nebuleuse d'Orion"),
+            extensionName = "Astronomes en herbe",
+            ownedCount = 1,
+            availableVariants = listOf(
+                DisplayCardVariant("city", "Ville", "standard", "Standard", false, 1),
+            ),
+        )
+        val displayCard = item.toDisplayCard() ?: error("Expected display card")
+
+        composeRule.setContent {
+            AstroCardPreviewSurface(
+                displayCard = displayCard,
+                mode = AstroCardSurfaceMode.Preview,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+
+        composeRule.onAllNodesWithTag(CARD_BACKGROUND_BLURRED_ART_TAG, useUnmergedTree = true)
+            .assertCountEquals(1)
+        composeRule.onAllNodesWithTag(CARD_BACKGROUND_SHARP_ART_TAG, useUnmergedTree = true)
+            .assertCountEquals(0)
+    }
+
+    @Test
+    fun holographic_preview_keeps_card_art_sharp() {
+        val item = LibraryCardItem(
+            definition = testCardDefinition("M42", name = "Nebuleuse d'Orion"),
+            extensionName = "Astronomes en herbe",
+            ownedCount = 1,
+            availableVariants = listOf(
+                DisplayCardVariant("holographic", "Holographique", "standard", "Standard", true, 1),
+            ),
+        )
+        val displayCard = item.toDisplayCard() ?: error("Expected display card")
+
+        composeRule.setContent {
+            AstroCardPreviewSurface(
+                displayCard = displayCard,
+                mode = AstroCardSurfaceMode.Preview,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+
+        composeRule.onAllNodesWithTag(CARD_BACKGROUND_SHARP_ART_TAG, useUnmergedTree = true)
+            .assertCountEquals(1)
+        composeRule.onAllNodesWithTag(CARD_BACKGROUND_BLURRED_ART_TAG, useUnmergedTree = true)
+            .assertCountEquals(0)
+    }
+
+    @Test
+    fun unowned_thumbnail_keeps_hidden_placeholder_unblurred() {
+        val item = LibraryCardItem(
+            definition = testCardDefinition("M42", name = "Nebuleuse d'Orion"),
+            extensionName = "Astronomes en herbe",
+            ownedCount = 0,
+            availableVariants = listOf(
+                DisplayCardVariant("city", "Ville", "standard", "Standard", false, 1),
+            ),
+        )
+
+        composeRule.setContent {
+            AstroCardThumbnail(
+                item = item,
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {},
+            )
+        }
+
+        composeRule.onAllNodesWithTag(CARD_BACKGROUND_HIDDEN_PLACEHOLDER_TAG, useUnmergedTree = true)
+            .assertCountEquals(1)
+        composeRule.onAllNodesWithTag(CARD_BACKGROUND_BLURRED_ART_TAG, useUnmergedTree = true)
+            .assertCountEquals(0)
+        composeRule.onAllNodesWithTag(CARD_BACKGROUND_SHARP_ART_TAG, useUnmergedTree = true)
+            .assertCountEquals(0)
+    }
+
+    @Test
     fun holographic_thumbnail_and_preview_keep_foil_border_without_explicit_motion() {
         val holographicVariant = DisplayCardVariant(
             skyQuality = "holographic",
@@ -394,8 +473,10 @@ class AstroCardThumbnailTest {
 
     private companion object {
         const val CARD_BACKGROUND_ART_TAG = "astro-card-background-art"
+        const val CARD_BACKGROUND_BLURRED_ART_TAG = "astro-card-background-art-blurred"
         const val CARD_BACKGROUND_FALLBACK_ASSET_TAG = "astro-card-background-fallback-asset"
         const val CARD_BACKGROUND_HIDDEN_PLACEHOLDER_TAG = "astro-card-background-hidden-placeholder"
+        const val CARD_BACKGROUND_SHARP_ART_TAG = "astro-card-background-art-sharp"
         const val CARD_CATALOG_NUMBER_TAG = "astro-card-catalog-number"
         const val CARD_EXTENSION_LOGO_TAG = "astro-card-extension-logo"
         const val CARD_FOOTER_TAG = "astro-card-footer"

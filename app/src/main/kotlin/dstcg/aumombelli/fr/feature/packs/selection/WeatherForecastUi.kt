@@ -150,7 +150,7 @@ internal fun WeatherForecastCard(
 }
 
 @Composable
-private fun WeatherForecastIcon(
+internal fun WeatherForecastIcon(
     weatherState: WeatherState,
     modifier: Modifier = Modifier,
 ) {

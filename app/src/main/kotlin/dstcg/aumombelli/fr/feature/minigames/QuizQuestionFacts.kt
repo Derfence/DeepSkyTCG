@@ -40,7 +40,7 @@ internal data class QuizFactSet(
             val distance = details.distanceMeasurement()
             val realSize = details.realSizeMeasurement()
             val visualSize = details.visualSizeMeasurement()
-            val magnitudeValue = details.absoluteMagnitudeValue()
+            val magnitudeValue = details.visualMagnitudeValue()
             return QuizFactSet(
                 cardId = card.id,
                 cardName = astronomy.commonName.cleanAnswer() ?: card.name.cleanAnswer() ?: card.id,
@@ -55,9 +55,7 @@ internal data class QuizFactSet(
                 distanceScale = distance?.toDistanceScale(profile),
                 visualMoonScale = visualSize?.toVisualMoonScale(),
                 realSizeScale = realSize?.toRealSizeScale(profile),
-                magnitudeClass = magnitudeValue
-                    ?.takeIf { profile == QuizObjectProfile.Star || profile == QuizObjectProfile.DeepSky }
-                    ?.toMagnitudeClass(),
+                magnitudeClass = magnitudeValue?.toMagnitudeClass(),
                 profileCategory = profile.categoryAnswer,
                 solarSystemDistanceContext = distance?.label?.toSolarSystemDistanceContext()
                     ?.takeIf { profile == QuizObjectProfile.SolarSystem },
@@ -146,10 +144,12 @@ private fun AstronomyDetails.visualSizeMeasurement(): VisualSize? = when (this) 
     else -> null
 }
 
-private fun AstronomyDetails.absoluteMagnitudeValue(): Double? = when (this) {
-    is DeepSkyDetails -> absoluteMagnitude?.value
-    is StarDetails -> absoluteMagnitude.value
-    is SolarSystemDetails -> absoluteMagnitude?.value
+private fun AstronomyDetails.visualMagnitudeValue(): Double? = when (this) {
+    is DeepSkyDetails -> visualMagnitude?.value
+    is StarDetails -> visualMagnitude?.value
+    is ConstellationDetails -> visualMagnitude?.value
+    is SkyEventDetails -> visualMagnitude?.value
+    is SolarSystemDetails -> visualMagnitude?.value
     else -> null
 }
 
@@ -205,11 +205,11 @@ private fun VisualSize.toVisualMoonScale(): String {
 }
 
 private fun Double.toMagnitudeClass(): String = when {
-    this <= -20.0 -> "extrêmement lumineuse à l'échelle galactique"
-    this <= -8.0 -> "très lumineuse intrinsèquement"
-    this <= -2.0 -> "lumineuse intrinsèquement"
-    this <= 2.0 -> "de luminosité intrinsèque modérée"
-    else -> "peu lumineuse intrinsèquement"
+    this < 0.0 -> "Très brillante à l'œil nu"
+    this <= 3.0 -> "Facile à voir à l'œil nu"
+    this <= 6.0 -> "Visible sous un bon ciel sombre"
+    this <= 10.0 -> "Jumelles ou petit télescope utiles"
+    else -> "Télescope nécessaire"
 }
 
 private fun Declination.toHemisphereAnswer(): String {

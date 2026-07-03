@@ -200,6 +200,8 @@ class CraftingScreenTest {
         }
 
         composeRule.onNodeWithTag("library-card-ALP-001").performClick()
+        composeRule.onNodeWithTag("crafting-consumed-text")
+            .assertTextContains("standards et tamponnées", substring = true)
         composeRule.onNodeWithTag("crafting-confirm").performClick()
 
         composeRule.onNodeWithTag("crafting-confirm").assertIsNotEnabled()

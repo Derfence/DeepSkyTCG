@@ -32,6 +32,35 @@ class CraftingRepositoryTest {
     }
 
     @Test
+    fun `load darken sky candidates aggregates standard and stamped copies by sky quality`() = runTest {
+        val fixture = testCraftingRepository(
+            collection = ownedCollectionWithVariants(
+                "ALP-001",
+                OwnedVariantCount("city", "standard", 1),
+                OwnedVariantCount("city", "stamped", 1),
+            ),
+        )
+
+        val skyCandidates = fixture.repository.loadCraftingCandidates(CraftingMode.DarkenSky)
+
+        assertEquals(listOf("city::standard"), skyCandidates.map { it.sourceVariant.key })
+        assertEquals(2, skyCandidates.single().sourceVariant.count)
+    }
+
+    @Test
+    fun `has darken sky candidates is true when mixed standard and stamped basket is sufficient`() = runTest {
+        val fixture = testCraftingRepository(
+            collection = ownedCollectionWithVariants(
+                "ALP-001",
+                OwnedVariantCount("city", "standard", 1),
+                OwnedVariantCount("city", "stamped", 1),
+            ),
+        )
+
+        assertTrue(fixture.repository.hasDarkenSkyCandidates())
+    }
+
+    @Test
     fun `apply crafting mutates progress atomically after validation`() = runTest {
         val fixture = testCraftingRepository(
             collection = ownedCollectionWithVariants(
