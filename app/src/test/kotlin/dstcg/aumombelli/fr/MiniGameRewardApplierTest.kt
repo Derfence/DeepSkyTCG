@@ -122,6 +122,46 @@ class MiniGameRewardApplierTest {
     }
 
     @Test
+    fun `daily rewards grant a pack when they fill recharge during rain pause`() {
+        val rainPauseNow = Instant.parse("2026-01-04T22:00:00Z")
+        val dailyGameIds = listOf(
+            MiniGameId.Memory,
+            MiniGameId.Quiz,
+            MiniGameId.Timeline,
+            MiniGameId.Observatory,
+        )
+        var progress = StandaloneProgress(
+            collection = OwnedCollection(),
+            rechargeState = PackRechargeState(
+                availableDrawCount = 0,
+                accumulatedChargeUnits = 36_000L,
+                lastChargeEvaluationAt = rainPauseNow.toString(),
+            ),
+        )
+
+        dailyGameIds.forEach { miniGameId ->
+            val result = applier.grantReward(
+                progress = progress,
+                miniGameId = miniGameId,
+                todayUtc = "2026-01-04",
+                reward = MiniGameReward.fromMinutes(60L),
+                now = rainPauseNow,
+                drawCooldown = drawCooldown,
+                maxStoredDraws = 10,
+                weatherPolicy = DeterministicWeatherCalendar,
+            )
+            require(result is MiniGameRewardGrantResult.Granted)
+            progress = progress.copy(
+                rechargeState = result.rechargeState,
+                miniGamesProgress = result.miniGamesProgress,
+            )
+        }
+
+        assertEquals(1, progress.rechargeState.availableDrawCount)
+        assertEquals(0L, progress.rechargeState.accumulatedChargeUnits)
+    }
+
+    @Test
     fun `reward applies second precision to recharge`() {
         val result = applier.grantReward(
             progress = StandaloneProgress(

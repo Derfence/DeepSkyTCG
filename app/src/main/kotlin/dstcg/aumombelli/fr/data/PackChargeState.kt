@@ -306,19 +306,24 @@ internal fun applyPackRechargeReduction(
                 weatherPolicy = weatherPolicy,
                 rechargeMultiplier = rechargeMultiplier,
             )
-            val minimumAccumulatedUnits = if (availableDrawCount == normalizedState.availableDrawCount) {
-                normalizedState.accumulatedChargeUnits
-            } else {
-                0L
+            if (unitsUntilReducedCharge > 0L) {
+                val minimumAccumulatedUnits = if (availableDrawCount == normalizedState.availableDrawCount) {
+                    normalizedState.accumulatedChargeUnits
+                } else {
+                    0L
+                }
+                val accumulatedChargeUnits = (cooldownUnits - unitsUntilReducedCharge)
+                    .coerceIn(0L, cooldownUnits - 1L)
+                    .coerceAtLeast(minimumAccumulatedUnits)
+                return PackRechargeState(
+                    availableDrawCount = availableDrawCount,
+                    accumulatedChargeUnits = accumulatedChargeUnits,
+                    lastChargeEvaluationAt = normalizedNow.toString(),
+                )
             }
-            val accumulatedChargeUnits = (cooldownUnits - unitsUntilReducedCharge)
-                .coerceIn(0L, cooldownUnits - 1L)
-                .coerceAtLeast(minimumAccumulatedUnits)
-            return PackRechargeState(
-                availableDrawCount = availableDrawCount,
-                accumulatedChargeUnits = accumulatedChargeUnits,
-                lastChargeEvaluationAt = normalizedNow.toString(),
-            )
+            // The reward moved the recovery into a paused weather window. No
+            // positive charge-unit delta can represent that instant, so recover
+            // the scheduled draw instead of pinning the bar one unit below full.
         }
 
         availableDrawCount = (availableDrawCount + 1).coerceAtMost(maxStoredDraws)
