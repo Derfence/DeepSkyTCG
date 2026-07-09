@@ -4,8 +4,8 @@ Document officiel de confidentialité pour **Deep Sky Trading Card Game**.
 
 - Application Android : `Deep Sky Trading Card Game`
 - Identifiant d'application : `fr.aumombelli.dstcg`
-- Version documentée : `2.6.2`
-- Dernière mise à jour : 12 juin 2026
+- Version documentée : `2.7.26`
+- Dernière mise à jour : 09 juillet 2026
 
 ## Résumé
 
