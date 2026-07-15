@@ -66,7 +66,6 @@ internal fun HomeScene(
                 !sceneState.transitionLocked &&
                 NewPlayerOnboardingInteractionPolicy.allowsHomeOpenPack(onboardingStep)
             ) {
-                appContainer.audioController.play(SoundCue.UiNavigate)
                 scope.launch {
                     onboardingCoordinator.onHomeOpenPackSelected()
                     transitions.animateHomeToPackSelection()

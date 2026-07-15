@@ -32,6 +32,7 @@ Les fichiers joués par l'application sont dans `app/src/main/assets/sounds/`.
 Le routage et les réglages de mix sont centralisés dans `AudioMix.kt` :
 
 - plusieurs cues métier peuvent réutiliser le même fichier audio, par exemple les entrées pack, artisanat ou mini-jeux peuvent pointer vers `sound_ui_navigate.ogg` tant qu'un son dédié n'existe pas ;
+- le clic sur la carte centrale de l'accueil délègue son son à `PackSelectionOpen` : il ne joue pas aussi `UiNavigate`, car ces deux cues utilisent actuellement le même fichier ;
 - les volumes, variations de pitch, cooldowns, fondus d'ambiance et ducking sont définis au même endroit ;
 - les ambiances utilisent des fondus pour éviter les coupures entre les scènes ;
 - les gros effets, comme ouverture de pack, holographique, fin de mini-jeu et badge, baissent temporairement l'ambiance pour rester lisibles.

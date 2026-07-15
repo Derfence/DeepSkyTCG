@@ -132,6 +132,19 @@ class DstcgAppBackNavigationTest {
     }
 
     @Test
+    fun central_home_card_click_plays_pack_selection_sound_only_once() {
+        val audioController = RecordingAudioController()
+        setAppContent(backNavigationTestAppContainer(audioController = audioController))
+        startAndReachHome()
+        audioController.clearPlayedCues()
+
+        composeRule.onNodeWithTag("home-open-pack").performClick()
+        advanceBy(1)
+
+        assertEquals(listOf(SoundCue.PackSelectionOpen), audioController.playedCues)
+    }
+
+    @Test
     fun visible_back_from_menu_plays_navigation_sound_without_replacing_animation_sound() {
         val audioController = RecordingAudioController()
         setAppContent(backNavigationTestAppContainer(audioController = audioController))
