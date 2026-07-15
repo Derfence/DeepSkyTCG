@@ -11,6 +11,7 @@ import fr.aumombelli.dstcg.data.StandaloneGameSettings
 import fr.aumombelli.dstcg.data.buildPackChargeUiStatus
 import fr.aumombelli.dstcg.data.drawCooldownDuration
 import fr.aumombelli.dstcg.data.requireUsableProgress
+import fr.aumombelli.dstcg.model.ActiveEquipmentEffect
 import fr.aumombelli.dstcg.model.EquipmentBadgeProgress
 import fr.aumombelli.dstcg.model.EquipmentCardDefinition
 import fr.aumombelli.dstcg.model.EquipmentType
@@ -91,6 +92,43 @@ class ProgressRepositoryTest {
         val storedEnvelope = fixture.secureDataStore.data.first()
         assertFalse(storedEnvelope.isEmpty())
         assertFalse(storedEnvelope.ciphertextBase64.contains("ALP-001"))
+    }
+
+    @Test
+    fun `loading a newly recharged pack decrements observatory validity`() = runTest {
+        val timeSource = MutableTrustedTimeSource(wallClockUtc = fixedNow)
+        val observatory = testEquipmentCardDefinition(
+            id = "observatory-lv1",
+            type = EquipmentType.Observatory,
+            bonusValue = 2.0,
+        )
+        val fixture = newFixture(
+            timeSource = timeSource,
+            equipmentCards = listOf(observatory),
+        )
+        fixture.repository.saveProgress(
+            StandaloneProgress(
+                collection = ownedCollectionOf(),
+                rechargeState = testRechargeStateWithNextChargeAt(
+                    availableDrawCount = 0,
+                    nextChargeAt = "2026-03-24T18:00:00Z",
+                    now = fixedNow,
+                ),
+                activeEquipmentByType = mapOf(
+                    EquipmentType.Observatory to ActiveEquipmentEffect(
+                        equipmentCardId = observatory.id,
+                        equipmentType = EquipmentType.Observatory,
+                        packsRemaining = 2,
+                    ),
+                ),
+            ),
+        )
+
+        timeSource.advanceBy(Duration.ofHours(3))
+        val loaded = fixture.repository.loadProgress().requireUsableProgress().progress
+
+        assertEquals(1, loaded.rechargeState.availableDrawCount)
+        assertEquals(1, loaded.activeEquipmentByType[EquipmentType.Observatory]?.packsRemaining)
     }
 
     @Test

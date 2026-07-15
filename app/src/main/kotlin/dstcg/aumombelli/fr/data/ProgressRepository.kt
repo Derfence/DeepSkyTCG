@@ -79,22 +79,18 @@ class ProgressRepository(
             progress = progress.copy(collection = normalizedCollection),
             equipmentCards = equipmentCards,
         )
-        val rechargeMultiplier = resolveActiveEquipmentBonus(
-            activeEquipmentByType = sanitizedProgress.activeEquipmentByType,
-            equipmentCards = equipmentCards,
-        ).rechargeMultiplier
         val effectiveNow = currentRecord.trustedNow ?: timeEvidence.wallClockUtc
         val normalizedProgress = sanitizedProgress.copy(
             openedPackCount = sanitizedProgress.openedPackCount.coerceAtLeast(0),
             hasOpenedEpicBoostedPack = sanitizedProgress.hasOpenedEpicBoostedPack,
             newPlayerOnboardingStep = sanitizedProgress.newPlayerOnboardingStep,
             newPlayerOnboardingPackCount = sanitizedProgress.newPlayerOnboardingPackCount.coerceAtLeast(0),
-        ).withNormalizedPackCharge(
+        ).withNormalizedPackChargeAndEquipmentValidity(
             now = effectiveNow,
             drawCooldown = drawCooldown,
             maxStoredDraws = settings.maxStoredDraws,
             weatherPolicy = settings.weatherPolicy,
-            rechargeMultiplier = rechargeMultiplier,
+            equipmentCards = equipmentCards,
         ).normalizedEquipmentState()
 
         val snapshot = ProgressSnapshot(
@@ -220,22 +216,18 @@ class ProgressRepository(
             isLegacySnapshot = snapshot.schemaVersion < ProgressSnapshot.ONBOARDING_STATE_SCHEMA_VERSION,
         )
         val normalizedOnboardingPackCount = normalizeNewPlayerOnboardingPackCount(snapshot)
-        val rechargeMultiplier = resolveActiveEquipmentBonus(
-            activeEquipmentByType = sanitizedProgress.activeEquipmentByType,
-            equipmentCards = equipmentCards,
-        ).rechargeMultiplier
         val normalizedProgress = sanitizedProgress.copy(
             rechargeState = snapshot.rechargeState,
             openedPackCount = snapshot.openedPackCount.coerceAtLeast(0),
             hasOpenedEpicBoostedPack = snapshot.hasOpenedEpicBoostedPack,
             newPlayerOnboardingStep = normalizedOnboardingStep,
             newPlayerOnboardingPackCount = normalizedOnboardingPackCount,
-        ).withNormalizedPackCharge(
+        ).withNormalizedPackChargeAndEquipmentValidity(
             now = trustedTime.trustedNow,
             drawCooldown = drawCooldown,
             maxStoredDraws = settings.maxStoredDraws,
             weatherPolicy = settings.weatherPolicy,
-            rechargeMultiplier = rechargeMultiplier,
+            equipmentCards = equipmentCards,
         ).normalizedEquipmentState()
 
         val normalizedSnapshot = snapshot.copy(

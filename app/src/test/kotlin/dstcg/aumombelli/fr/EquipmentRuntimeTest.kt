@@ -3,8 +3,10 @@ package fr.aumombelli.dstcg
 import fr.aumombelli.dstcg.data.DeterministicWeatherCalendar
 import fr.aumombelli.dstcg.data.buildPackChargeUiStatus
 import fr.aumombelli.dstcg.data.resolveActiveEquipmentBonus
+import fr.aumombelli.dstcg.data.withNormalizedPackChargeAndEquipmentValidity
 import fr.aumombelli.dstcg.model.ActiveEquipmentEffect
 import fr.aumombelli.dstcg.model.EquipmentType
+import fr.aumombelli.dstcg.model.StandaloneProgress
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.test.runTest
@@ -59,5 +61,41 @@ class EquipmentRuntimeTest {
         )
 
         assertEquals("2026-03-24T15:00:00Z", chargeStatus.nextChargeAt)
+    }
+
+    @Test
+    fun `observatory expires when a pack recharges and later time uses normal speed`() {
+        val observatory = testEquipmentCardDefinition(
+            id = "observatory-beginner",
+            type = EquipmentType.Observatory,
+            bonusValue = 2.0,
+        )
+        val progress = StandaloneProgress(
+            collection = ownedCollectionOf(),
+            rechargeState = testRechargeStateWithNextChargeAt(
+                availableDrawCount = 0,
+                nextChargeAt = "2026-03-24T18:00:00Z",
+                now = fixedNow,
+            ),
+            activeEquipmentByType = mapOf(
+                EquipmentType.Observatory to ActiveEquipmentEffect(
+                    equipmentCardId = observatory.id,
+                    equipmentType = EquipmentType.Observatory,
+                    packsRemaining = 1,
+                ),
+            ),
+        )
+
+        val updated = progress.withNormalizedPackChargeAndEquipmentValidity(
+            now = fixedNow.plus(Duration.ofHours(6)),
+            drawCooldown = Duration.ofHours(6),
+            maxStoredDraws = 10,
+            weatherPolicy = DeterministicWeatherCalendar,
+            equipmentCards = listOf(observatory),
+        )
+
+        assertEquals(1, updated.rechargeState.availableDrawCount)
+        assertEquals(54_000L, updated.rechargeState.accumulatedChargeUnits)
+        assertEquals(false, updated.activeEquipmentByType.containsKey(EquipmentType.Observatory))
     }
 }

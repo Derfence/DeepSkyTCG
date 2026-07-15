@@ -37,8 +37,9 @@ Deuxieme pack guide :
 
 ## Activation
 
-- L'activation consomme `1` exemplaire possede.
-- `packsRemaining` diminue a chaque ouverture de pack.
+- L'activation consomme `1` exemplaire possédé.
+- Pour `Télescope` et `Monture`, `packsRemaining` diminue à chaque ouverture de pack.
+- Pour `Observatoire`, `packsRemaining` diminue chaque fois qu'une nouvelle charge de pack est effectivement régénérée. Une ouverture n'en consomme pas, et un stock déjà plein non plus.
 - L'effet expire automatiquement a `0`.
 - `activationCount` conserve l'historique d'utilisation par carte.
 - `lastActivatedCardIdByType` conserve le dernier equipement utilise par type.

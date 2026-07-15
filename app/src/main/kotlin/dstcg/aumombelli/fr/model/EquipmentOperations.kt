@@ -69,11 +69,34 @@ fun StandaloneProgress.normalizedEquipmentState(): StandaloneProgress = copy(
 
 fun StandaloneProgress.consumeEquipmentEffectsAfterPackOpen(): StandaloneProgress = copy(
     activeEquipmentByType = activeEquipmentByType.mapNotNull { (type, effect) ->
-        effect.copy(packsRemaining = effect.packsRemaining - 1)
+        val updatedEffect = if (type == EquipmentType.Observatory) {
+            effect
+        } else {
+            effect.copy(packsRemaining = effect.packsRemaining - 1)
+        }
+        updatedEffect
             .normalized()
-            ?.let { updatedEffect -> type to updatedEffect }
+            ?.let { normalizedEffect -> type to normalizedEffect }
     }.toMap(),
 ).normalizedEquipmentState()
+
+fun StandaloneProgress.consumeObservatoryEffectAfterPackRecharge(
+    rechargedPackCount: Int,
+): StandaloneProgress {
+    if (rechargedPackCount <= 0) return normalizedEquipmentState()
+    val observatoryEffect = activeEquipmentByType[EquipmentType.Observatory]
+        ?: return normalizedEquipmentState()
+    val updatedEffects = activeEquipmentByType.toMutableMap()
+    val updatedObservatory = observatoryEffect.copy(
+        packsRemaining = observatoryEffect.packsRemaining - rechargedPackCount,
+    ).normalized()
+    if (updatedObservatory == null) {
+        updatedEffects.remove(EquipmentType.Observatory)
+    } else {
+        updatedEffects[EquipmentType.Observatory] = updatedObservatory
+    }
+    return copy(activeEquipmentByType = updatedEffects).normalizedEquipmentState()
+}
 
 fun StandaloneProgress.toEquipmentState(): EquipmentState = EquipmentState(
     inventory = equipmentInventory.normalized(),
