@@ -22,6 +22,7 @@ import fr.aumombelli.dstcg.feature.minigames.TimelineGameBuildResult
 import fr.aumombelli.dstcg.feature.minigames.buildQuizGame
 import fr.aumombelli.dstcg.feature.minigames.buildTimelineGame
 import fr.aumombelli.dstcg.feature.minigames.eligibleTimelineCardIds
+import fr.aumombelli.dstcg.feature.minigames.requiresAbandonmentConfirmation
 import fr.aumombelli.dstcg.feature.minigames.selectPlayableTimelineCriterion
 import fr.aumombelli.dstcg.feature.minigames.timelineResolvedCardCountForDifficulty
 import fr.aumombelli.dstcg.model.AbsoluteMagnitudeMeasurement
@@ -70,6 +71,7 @@ class MiniGamesViewModelTest {
         advanceUntilIdle()
 
         viewModel.openMemory()
+        assertTrue(!viewModel.uiState.value.screen.requiresAbandonmentConfirmation())
         viewModel.backToMenu()
         advanceUntilIdle()
 
@@ -168,6 +170,7 @@ class MiniGamesViewModelTest {
         val playing = viewModel.uiState.value.screen as MiniGamesScreenUiState.TimelinePlaying
         assertTrue(dailyState.hasPlayed)
         assertNull(dailyState.reward)
+        assertTrue(playing.requiresAbandonmentConfirmation())
         assertEquals(1, playing.comparisonCount)
         assertEquals(0, playing.score)
         assertEquals(2, playing.slots.size)
@@ -311,6 +314,7 @@ class MiniGamesViewModelTest {
         val playing = viewModel.uiState.value.screen as MiniGamesScreenUiState.ObservatoryPlaying
         assertTrue(dailyState.hasPlayed)
         assertNull(dailyState.reward)
+        assertTrue(playing.requiresAbandonmentConfirmation())
         assertEquals(0, playing.targetIndex)
         assertEquals(1, playing.targetCount)
         assertEquals(ObservatoryStep.OpenDome, playing.step)
@@ -719,6 +723,7 @@ class MiniGamesViewModelTest {
         val playing = viewModel.uiState.value.screen as MiniGamesScreenUiState.MemoryPlaying
         assertTrue(dailyState.hasPlayed)
         assertNull(dailyState.reward)
+        assertTrue(playing.requiresAbandonmentConfirmation())
         assertEquals(0, playing.moves)
         assertEquals(0, playing.currentStreak)
         assertEquals(0, playing.bestStreak)
@@ -741,6 +746,7 @@ class MiniGamesViewModelTest {
         val playing = viewModel.uiState.value.screen as MiniGamesScreenUiState.QuizPlaying
         assertTrue(dailyState.hasPlayed)
         assertNull(dailyState.reward)
+        assertTrue(playing.requiresAbandonmentConfirmation())
         assertEquals(0, playing.score)
         assertEquals(1, playing.questionCount)
     }

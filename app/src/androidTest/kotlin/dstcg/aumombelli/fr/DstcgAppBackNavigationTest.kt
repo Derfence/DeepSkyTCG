@@ -9,6 +9,7 @@ import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeLeft
@@ -261,6 +262,38 @@ class DstcgAppBackNavigationTest {
 
         pressAndroidBack()
         advanceUntilTagDisplayed("home-open-pack", timeoutMillis = 10_000)
+    }
+
+    @Test
+    fun leaving_an_active_mini_game_requires_confirmation_and_consumes_the_attempt() {
+        setAppContent(miniGamesMenuTestAppContainer())
+        startAndReachHome()
+
+        composeRule.onNodeWithTag("home-card-flip").performClick()
+        advanceUntilTagDisplayed("home-mini-games-open-menu", timeoutMillis = 5_000)
+        composeRule.onNodeWithTag("home-mini-games-open-menu").performClick()
+        advanceUntilTagDisplayed("mini-games-menu-screen", timeoutMillis = 10_000)
+        advanceUntilTagEnabled("mini-games-memory", timeoutMillis = 10_000)
+        composeRule.onNodeWithTag("mini-games-memory").performClick()
+        advanceUntilTagDisplayed("memory-difficulty-selection", timeoutMillis = 5_000)
+        composeRule.onNodeWithTag("memory-difficulty-apprentice").performClick()
+        advanceUntilTagDisplayed("memory-playing", timeoutMillis = 10_000)
+
+        composeRule.onNodeWithTag("memory-back").performClick()
+        composeRule.onNodeWithTag("mini-game-abandonment-dialog").assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "Si tu quittes maintenant, le jeu sera considéré comme abandonné " +
+                "et tu ne pourras pas y rejouer aujourd'hui.",
+        ).assertIsDisplayed()
+        composeRule.onNodeWithTag("mini-game-abandonment-cancel").performClick()
+        composeRule.onNodeWithTag("memory-playing").assertIsDisplayed()
+
+        pressAndroidBack()
+        composeRule.onNodeWithTag("mini-game-abandonment-dialog").assertIsDisplayed()
+        composeRule.onNodeWithTag("mini-game-abandonment-confirm").performClick()
+
+        advanceUntilTagDisplayed("mini-games-menu-screen", timeoutMillis = 10_000)
+        composeRule.onNodeWithText("Essai utilisé aujourd'hui").assertIsDisplayed()
     }
 
     @Test
