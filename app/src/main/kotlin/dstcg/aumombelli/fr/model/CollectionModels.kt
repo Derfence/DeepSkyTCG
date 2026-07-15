@@ -20,6 +20,7 @@ data class OwnedVariantCount(
     val count: Int,
 )
 
+@Serializable
 data class StandaloneProgress(
     val collection: OwnedCollection,
     val rechargeState: PackRechargeState = PackRechargeState(),

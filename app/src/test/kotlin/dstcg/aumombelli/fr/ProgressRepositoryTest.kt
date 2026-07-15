@@ -28,6 +28,7 @@ import fr.aumombelli.dstcg.model.OwnedEquipmentCardEntry
 import fr.aumombelli.dstcg.model.OwnedEquipmentInventory
 import fr.aumombelli.dstcg.model.OwnedVariantCount
 import fr.aumombelli.dstcg.model.StandaloneProgress
+import fr.aumombelli.dstcg.model.TradeLedgerState
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -484,6 +485,33 @@ class ProgressRepositoryTest {
         assertEquals(HomeMenuNoveltyState(), loaded.homeMenuNoveltyState)
         assertEquals(LibraryCardNoveltyState(), loaded.libraryCardNoveltyState)
         assertEquals(MiniGamesProgress(), loaded.miniGamesProgress)
+    }
+
+    @Test
+    fun `restore normalizes collection and merges completed trade ledger`() = runTest {
+        val fixture = newFixture()
+        fixture.repository.saveProgress(
+            StandaloneProgress(
+                collection = ownedCollectionOf("ALP-001" to 1),
+                tradeLedgerState = TradeLedgerState(completedTradeIds = listOf("local-trade")),
+            ),
+        )
+
+        fixture.repository.restoreProgress(
+            StandaloneProgress(
+                collection = OwnedCollection(
+                    cards = ownedCollectionOf("ALP-001" to 2).cards +
+                        ("UNKNOWN" to OwnedCardEntry(totalOwned = 99, variants = emptyList())),
+                ),
+                openedPackCount = 5,
+                tradeLedgerState = TradeLedgerState(completedTradeIds = listOf("imported-trade")),
+            ),
+        )
+
+        val restored = fixture.repository.loadProgress().requireUsableProgress().progress
+        assertEquals(5, restored.openedPackCount)
+        assertEquals(setOf("ALP-001"), restored.collection.cards.keys)
+        assertEquals(listOf("imported-trade", "local-trade"), restored.tradeLedgerState.completedTradeIds)
     }
 
     private fun newFixture(

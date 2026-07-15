@@ -1,11 +1,15 @@
 package fr.aumombelli.dstcg
 
 import android.content.Context
+import androidx.core.content.pm.PackageInfoCompat
 import fr.aumombelli.dstcg.audio.AndroidAudioController
 import fr.aumombelli.dstcg.audio.AudioController
 import fr.aumombelli.dstcg.audio.AudioSettingsRepository
 import fr.aumombelli.dstcg.audio.audioSettingsDataStore
 import fr.aumombelli.dstcg.data.AndroidKeystoreProgressCipher
+import fr.aumombelli.dstcg.data.BackupGateway
+import fr.aumombelli.dstcg.data.BackupRepository
+import fr.aumombelli.dstcg.data.BackupSecurityRepository
 import fr.aumombelli.dstcg.data.CatalogGateway
 import fr.aumombelli.dstcg.data.CollectionGateway
 import fr.aumombelli.dstcg.data.CollectionRepository
@@ -27,6 +31,7 @@ import fr.aumombelli.dstcg.data.TradeGateway
 import fr.aumombelli.dstcg.data.TradeRepository
 import fr.aumombelli.dstcg.data.TradeSettingsGateway
 import fr.aumombelli.dstcg.data.TradeSettingsRepository
+import fr.aumombelli.dstcg.data.UnavailableBackupGateway
 import fr.aumombelli.dstcg.data.tradeSettingsDataStore
 
 class AppContainer(
@@ -41,6 +46,7 @@ class AppContainer(
     val tradeSettingsRepository: TradeSettingsGateway,
     val gameSettings: StandaloneGameSettings,
     val audioController: AudioController,
+    val backupGateway: BackupGateway = UnavailableBackupGateway,
 ) {
     companion object {
         fun create(context: Context): AppContainer {
@@ -91,6 +97,16 @@ class AppContainer(
                 context = appContext,
                 settingsRepository = AudioSettingsRepository(appContext.audioSettingsDataStore),
             )
+            val backupGateway = BackupRepository(
+                progressRepository = progressRepository,
+                securityRepository = BackupSecurityRepository.fromContext(
+                    context = appContext,
+                    timeSource = gameSettings.timeSource,
+                ),
+                appVersionCode = PackageInfoCompat.getLongVersionCode(
+                    appContext.packageManager.getPackageInfo(appContext.packageName, 0),
+                ).toInt(),
+            )
 
             return AppContainer(
                 progressRepository = progressRepository,
@@ -104,6 +120,7 @@ class AppContainer(
                 tradeSettingsRepository = tradeSettingsRepository,
                 gameSettings = gameSettings,
                 audioController = audioController,
+                backupGateway = backupGateway,
             )
         }
     }

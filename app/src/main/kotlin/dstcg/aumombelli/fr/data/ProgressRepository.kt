@@ -46,6 +46,7 @@ class ProgressRepository(
 ) : ProgressGateway {
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
     private val progressMutationMutex = Mutex()
+    private val trustedTimeResolver = TrustedTimeResolver(settings.timeSource)
 
     override suspend fun loadProgress(): ProgressLoadResult = loadProgressRecord().result
 
@@ -150,6 +151,72 @@ class ProgressRepository(
             loadedProgress.progress.copy(
                 newPlayerOnboardingStep = NewPlayerOnboardingStep.ShowWelcomeIntro,
                 newPlayerOnboardingPackCount = 0,
+            ),
+        )
+    }
+
+    override suspend fun restoreProgress(progress: StandaloneProgress) = progressMutationMutex.withLock {
+        val currentRecord = loadProgressRecord()
+        val currentSnapshot = currentRecord.snapshot
+        val currentProgress = when (val result = currentRecord.result) {
+            is ProgressLoadResult.Ok -> result.progress
+            is ProgressLoadResult.Recovered -> result.progress
+            is ProgressLoadResult.Compromised -> null
+        }
+        val mergedLedger = mergeTradeLedgers(
+            local = currentProgress?.tradeLedgerState,
+            imported = progress.tradeLedgerState,
+        )
+        val timeResolution = trustedTimeResolver.resolve(
+            currentSnapshot?.toTrustedTimeAnchor(),
+        )
+        val equipmentCards = catalogRepository.loadEquipmentCards()
+        val sanitizedCollection = sanitizeCollection(progress.collection)
+        val normalizedOnboardingStep = progress.newPlayerOnboardingStep.normalizedForProgress(
+            openedPackCount = progress.openedPackCount.coerceAtLeast(0),
+            collection = sanitizedCollection,
+            isLegacySnapshot = false,
+        )
+        val sanitizedProgress = sanitizeEquipmentState(
+            progress = progress.copy(
+                collection = sanitizedCollection,
+                tradeLedgerState = mergedLedger,
+            ),
+            equipmentCards = equipmentCards,
+        ).copy(
+            openedPackCount = progress.openedPackCount.coerceAtLeast(0),
+            newPlayerOnboardingStep = normalizedOnboardingStep,
+            newPlayerOnboardingPackCount = progress.newPlayerOnboardingPackCount.coerceAtLeast(0),
+        ).withNormalizedPackChargeAndEquipmentValidity(
+            now = timeResolution.trustedNow,
+            drawCooldown = currentDrawCooldown(),
+            maxStoredDraws = settings.maxStoredDraws,
+            weatherPolicy = settings.weatherPolicy,
+            equipmentCards = equipmentCards,
+        ).normalizedEquipmentState()
+
+        writeSnapshot(
+            ProgressSnapshot(
+                installId = currentSnapshot?.installId ?: installIdFactory(),
+                collection = sanitizedProgress.collection,
+                rechargeState = sanitizedProgress.rechargeState,
+                openedPackCount = sanitizedProgress.openedPackCount,
+                hasOpenedEpicBoostedPack = sanitizedProgress.hasOpenedEpicBoostedPack,
+                newPlayerOnboardingStep = sanitizedProgress.newPlayerOnboardingStep,
+                newPlayerOnboardingPackCount = sanitizedProgress.newPlayerOnboardingPackCount,
+                equipmentInventory = sanitizedProgress.equipmentInventory,
+                activeEquipmentByType = sanitizedProgress.activeEquipmentByType,
+                lastActivatedCardIdByType = sanitizedProgress.lastActivatedCardIdByType,
+                equipmentBadgeProgress = sanitizedProgress.equipmentBadgeProgress,
+                homeMenuNoveltyState = sanitizedProgress.homeMenuNoveltyState,
+                libraryCardNoveltyState = sanitizedProgress.libraryCardNoveltyState,
+                tradeLedgerState = sanitizedProgress.tradeLedgerState,
+                miniGamesMenuUnlocked = sanitizedProgress.miniGamesMenuUnlocked,
+                miniGamesProgress = sanitizedProgress.miniGamesProgress,
+                lastTrustedWallClockUtc = timeResolution.trustedNow.toString(),
+                lastTrustedElapsedRealtimeMs = timeResolution.timeEvidence.elapsedRealtimeMs,
+                lastObservedBootMarker = timeResolution.timeEvidence.bootSessionId,
+                tamperFlag = timeResolution.tamperDetected,
             ),
         )
     }
@@ -414,49 +481,33 @@ class ProgressRepository(
         ).normalized()
     }
 
-    private fun resolveTrustedTime(snapshot: ProgressSnapshot): TrustedTimeResolution {
-        val timeEvidence = settings.timeSource.now()
-        val storedWallClock = runCatching { Instant.parse(snapshot.lastTrustedWallClockUtc) }
-            .getOrElse { timeEvidence.wallClockUtc }
-        val sameBoot = snapshot.lastObservedBootMarker == timeEvidence.bootSessionId
-        var tamperDetected = snapshot.tamperFlag
+    private fun resolveTrustedTime(snapshot: ProgressSnapshot): TrustedTimeResolution =
+        trustedTimeResolver.resolve(snapshot.toTrustedTimeAnchor())
 
-        val trustedNow = if (sameBoot) {
-            val elapsedDeltaMs = timeEvidence.elapsedRealtimeMs - snapshot.lastTrustedElapsedRealtimeMs
-            if (elapsedDeltaMs < 0L) {
-                tamperDetected = true
-                storedWallClock
-            } else {
-                val monotonicWallClock = storedWallClock.plusMillis(elapsedDeltaMs)
-                when {
-                    timeEvidence.wallClockUtc.isBefore(storedWallClock.minus(CLOCK_TOLERANCE)) -> {
-                        tamperDetected = true
-                        storedWallClock
-                    }
+    private fun ProgressSnapshot.toTrustedTimeAnchor(): TrustedTimeAnchor = TrustedTimeAnchor(
+        wallClockUtc = lastTrustedWallClockUtc,
+        elapsedRealtimeMs = lastTrustedElapsedRealtimeMs,
+        bootSessionId = lastObservedBootMarker,
+        tamperFlag = tamperFlag,
+    )
 
-                    timeEvidence.wallClockUtc.isAfter(monotonicWallClock.plus(CLOCK_TOLERANCE)) -> {
-                        tamperDetected = true
-                        monotonicWallClock
-                    }
-
-                    else -> monotonicWallClock
-                }
-            }
-        } else {
-            if (timeEvidence.wallClockUtc.isBefore(storedWallClock.minus(CLOCK_TOLERANCE))) {
-                tamperDetected = true
-                storedWallClock
-            } else {
-                timeEvidence.wallClockUtc
-            }
-        }
-
-        return TrustedTimeResolution(
-            trustedNow = trustedNow,
-            timeEvidence = timeEvidence,
-            tamperDetected = tamperDetected,
+    private fun mergeTradeLedgers(
+        local: TradeLedgerState?,
+        imported: TradeLedgerState,
+    ): TradeLedgerState {
+        val completed = (imported.completedTradeIds + local.orEmptyCompletedTradeIds())
+            .distinct()
+            .takeLast(MAX_REMEMBERED_RESTORED_TRADES)
+        val localPending = local?.pendingTrade?.takeUnless { it.tradeId in completed }
+        return TradeLedgerState(
+            completedTradeIds = completed,
+            pendingTrade = localPending,
+            pendingTradeId = localPending?.tradeId,
         )
     }
+
+    private fun TradeLedgerState?.orEmptyCompletedTradeIds(): List<String> =
+        this?.completedTradeIds.orEmpty()
 
     private fun compromisedResult(): ProgressLoadResult.Compromised = ProgressLoadResult.Compromised(
         message = COMPROMISED_PROGRESS_MESSAGE,
@@ -471,19 +522,13 @@ class ProgressRepository(
         val trustedNow: Instant?,
     )
 
-    private data class TrustedTimeResolution(
-        val trustedNow: Instant,
-        val timeEvidence: TrustedTimeEvidence,
-        val tamperDetected: Boolean,
-    )
-
     companion object {
-        private val CLOCK_TOLERANCE: Duration = Duration.ofMinutes(2)
         private const val COMPROMISED_PROGRESS_MESSAGE =
             "La progression locale semble corrompue. Reinitialise-la pour continuer."
         private const val RECOVERED_PROGRESS_MESSAGE =
             "La progression locale a ete securisee et certaines donnees ont ete normalisees."
         private const val GUIDED_ONBOARDING_PACK_COUNT = 2
+        private const val MAX_REMEMBERED_RESTORED_TRADES = 32
 
         fun fromContext(
             context: Context,

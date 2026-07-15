@@ -42,6 +42,7 @@ docs/README.md
 | Remplacer sons, musiques et crédits audio | [Sons et crédits audio](audio-assets.md) |
 | Documenter un écran précis | Pages [fonctionnalités](features/home.md) |
 | Vérifier le premier parcours joueur | [Onboarding](new-player-onboarding.md) |
+| Exporter ou restaurer la progression | [Sauvegardes](features/backups.md) |
 
 ## Fonctionnalités
 
@@ -56,6 +57,7 @@ docs/README.md
 - [Memory](features/memory.md)
 - [Timeline](features/timeline.md)
 - [Échange Bluetooth](features/trade-bluetooth.md)
+- [Sauvegardes](features/backups.md)
 
 ## Rattrapage depuis git
 

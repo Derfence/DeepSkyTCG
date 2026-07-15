@@ -52,6 +52,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
+import fr.aumombelli.dstcg.feature.backup.BackupSheet
+import fr.aumombelli.dstcg.feature.backup.BackupUiState
 import fr.aumombelli.dstcg.ui.component.NewContentIndicator
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.component.drawEquipmentMountGlyph
@@ -71,6 +73,13 @@ fun HomeScreen(
     onOpenMiniGamesMenu: () -> Unit = {},
     onResetProgress: () -> Unit,
     onResetNewPlayerOnboarding: () -> Unit = {},
+    backupState: BackupUiState = BackupUiState(),
+    onRequestBackupExport: () -> Unit = {},
+    onRequestBackupImport: () -> Unit = {},
+    onSubmitBackupExportPassword: (String, String) -> Unit = { _, _ -> },
+    onSubmitBackupImportPassword: (String) -> Unit = {},
+    onConfirmBackupImport: () -> Unit = {},
+    onDismissBackupDialog: () -> Unit = {},
     soundEnabled: Boolean = true,
     onSoundEnabledChange: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier,
@@ -89,6 +98,7 @@ fun HomeScreen(
     var tutorialResetConfirmationVisible by remember { mutableStateOf(false) }
     var aboutSheetVisible by remember { mutableStateOf(false) }
     var audioCreditsSheetVisible by remember { mutableStateOf(false) }
+    var backupSheetVisible by remember { mutableStateOf(false) }
     val density = LocalDensity.current
     val contentAlpha by animateFloatAsState(
         targetValue = if (contentVisible) 1f else 0f,
@@ -122,7 +132,8 @@ fun HomeScreen(
         !state.isLoading &&
         state.errorMessage == null &&
         !state.isResettingProgress &&
-        !state.isResettingTutorial
+        !state.isResettingTutorial &&
+        !backupState.isBusy
     val settingsEnabled = interactionsEnabled && contentVisible
     val resetActionsEnabled = !state.isLoading && !state.isResettingProgress && !state.isResettingTutorial
 
@@ -290,6 +301,19 @@ fun HomeScreen(
                                 },
                                 enabled = resetActionsEnabled,
                                 modifier = Modifier.testTag("home-settings-reset-tutorial"),
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Sauvegarde") },
+                                onClick = {
+                                    settingsExpanded = false
+                                    aboutSheetVisible = false
+                                    audioCreditsSheetVisible = false
+                                    resetConfirmationVisible = false
+                                    tutorialResetConfirmationVisible = false
+                                    backupSheetVisible = true
+                                },
+                                enabled = resetActionsEnabled,
+                                modifier = Modifier.testTag("home-settings-backup"),
                             )
                             DropdownMenuItem(
                                 text = { Text("Sons") },
@@ -485,6 +509,21 @@ fun HomeScreen(
         HomeAudioCreditsSheet(
             visible = audioCreditsSheetVisible && contentVisible,
             onDismiss = { audioCreditsSheetVisible = false },
+        )
+
+        BackupSheet(
+            visible = backupSheetVisible && contentVisible,
+            state = backupState,
+            onDismiss = {
+                backupSheetVisible = false
+                onDismissBackupDialog()
+            },
+            onRequestExport = onRequestBackupExport,
+            onRequestImport = onRequestBackupImport,
+            onSubmitExportPassword = onSubmitBackupExportPassword,
+            onSubmitImportPassword = onSubmitBackupImportPassword,
+            onConfirmImport = onConfirmBackupImport,
+            onDismissDialog = onDismissBackupDialog,
         )
 
         if (resetConfirmationVisible && contentVisible) {

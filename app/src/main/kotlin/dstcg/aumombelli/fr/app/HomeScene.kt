@@ -2,21 +2,29 @@ package fr.aumombelli.dstcg.app
 
 import android.app.Activity
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.aumombelli.dstcg.AppContainer
 import fr.aumombelli.dstcg.audio.SoundCue
+import fr.aumombelli.dstcg.data.BackupRepository
+import fr.aumombelli.dstcg.feature.backup.BackupViewModel
 import fr.aumombelli.dstcg.feature.home.HomeScreen
 import fr.aumombelli.dstcg.feature.home.HomeViewModel
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
 import fr.aumombelli.dstcg.ui.motion.BrandLogoVariant
 import fr.aumombelli.dstcg.ui.viewmodel.DstcgViewModelFactory
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 
 @Composable
 internal fun HomeScene(
@@ -42,7 +50,76 @@ internal fun HomeScene(
         },
     )
     val uiState by homeViewModel.uiState.collectAsState()
+    val backupViewModel: BackupViewModel = viewModel(
+        key = "backup",
+        factory = DstcgViewModelFactory {
+            BackupViewModel(appContainer.backupGateway)
+        },
+    )
+    val backupUiState by backupViewModel.uiState.collectAsState()
     val audioSettings by appContainer.audioController.settings.collectAsState()
+    val context = LocalContext.current
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/octet-stream"),
+    ) { uri ->
+        val document = backupUiState.exportDocument
+        if (uri == null || document == null) {
+            backupViewModel.consumeExportDocument(saved = false)
+        } else {
+            scope.launch {
+                runCatching {
+                    withContext(Dispatchers.IO) {
+                        context.contentResolver.openOutputStream(uri, "w")?.use { output ->
+                            output.write(document.bytes)
+                        } ?: error("Le fichier de destination n'a pas pu être ouvert.")
+                    }
+                }.onSuccess {
+                    backupViewModel.consumeExportDocument(saved = true)
+                }.onFailure { exception ->
+                    backupViewModel.reportDocumentWriteFailure(
+                        exception.message ?: "Impossible d'écrire la sauvegarde.",
+                    )
+                }
+            }
+        }
+    }
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri != null) {
+            scope.launch {
+                runCatching {
+                    withContext(Dispatchers.IO) {
+                        context.contentResolver.openInputStream(uri)?.use { input ->
+                            input.readBytesLimited(BackupRepository.MAX_BACKUP_SIZE_BYTES)
+                        } ?: error("Le fichier sélectionné n'a pas pu être ouvert.")
+                    }
+                }.onSuccess(backupViewModel::acceptImportDocument)
+                    .onFailure { exception ->
+                        backupViewModel.reportDocumentReadFailure(
+                            exception.message ?: "Impossible de lire la sauvegarde.",
+                        )
+                    }
+            }
+        }
+    }
+
+    LaunchedEffect(backupUiState.exportDocument) {
+        backupUiState.exportDocument?.let { exportLauncher.launch(it.fileName) }
+    }
+
+    LaunchedEffect(backupUiState.openDocumentRequestId) {
+        if (backupUiState.openDocumentRequestId > 0) {
+            importLauncher.launch(arrayOf("application/octet-stream", "application/json", "text/plain"))
+        }
+    }
+
+    LaunchedEffect(backupUiState.importCompletedId) {
+        if (backupUiState.importCompletedId > 0) {
+            homeViewModel.refresh()
+            onboardingCoordinator.syncFromProgress()
+        }
+    }
 
     LaunchedEffect(Unit) {
         if (hasEnteredHomeOnce.value) {
@@ -153,6 +230,13 @@ internal fun HomeScene(
                 },
             )
         },
+        backupState = backupUiState,
+        onRequestBackupExport = backupViewModel::requestExport,
+        onRequestBackupImport = backupViewModel::requestImportDocument,
+        onSubmitBackupExportPassword = backupViewModel::submitExportPassword,
+        onSubmitBackupImportPassword = backupViewModel::submitImportPassword,
+        onConfirmBackupImport = backupViewModel::confirmImport,
+        onDismissBackupDialog = backupViewModel::dismissDialog,
         soundEnabled = audioSettings.enabled,
         onSoundEnabledChange = { enabled ->
             scope.launch {
@@ -183,4 +267,20 @@ internal fun HomeScene(
             updateSceneState { it.withCoachmarkTargetBounds(target, bounds) }
         },
     )
+}
+
+private fun java.io.InputStream.readBytesLimited(maxBytes: Int): ByteArray {
+    val output = ByteArrayOutputStream()
+    val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+    var total = 0
+    while (true) {
+        val read = read(buffer)
+        if (read < 0) break
+        total += read
+        if (total > maxBytes) {
+            throw IllegalArgumentException("La sauvegarde dépasse la limite de 5 Mio.")
+        }
+        output.write(buffer, 0, read)
+    }
+    return output.toByteArray()
 }
