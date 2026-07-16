@@ -134,8 +134,11 @@ fun HomeScreen(
         !state.isResettingProgress &&
         !state.isResettingTutorial &&
         !backupState.isBusy
-    val settingsEnabled = interactionsEnabled && contentVisible
-    val resetActionsEnabled = !state.isLoading && !state.isResettingProgress && !state.isResettingTutorial
+    val settingsEnabled = interactionsEnabled && contentVisible && !backupState.isBusy
+    val resetActionsEnabled = !state.isLoading &&
+        !state.isResettingProgress &&
+        !state.isResettingTutorial &&
+        !backupState.isBusy
 
     LaunchedEffect(contentVisible) {
         if (!contentVisible) {

@@ -6,6 +6,7 @@ import fr.aumombelli.dstcg.data.EncryptedProgressEnvelope
 import fr.aumombelli.dstcg.data.EncryptedProgressEnvelopeSerializer
 import fr.aumombelli.dstcg.data.ProgressLoadResult
 import fr.aumombelli.dstcg.data.ProgressRepository
+import fr.aumombelli.dstcg.data.ProgressRestoreValidationException
 import fr.aumombelli.dstcg.data.ProgressSnapshot
 import fr.aumombelli.dstcg.data.StandaloneGameSettings
 import fr.aumombelli.dstcg.data.buildPackChargeUiStatus
@@ -15,6 +16,7 @@ import fr.aumombelli.dstcg.model.ActiveEquipmentEffect
 import fr.aumombelli.dstcg.model.EquipmentBadgeProgress
 import fr.aumombelli.dstcg.model.EquipmentCardDefinition
 import fr.aumombelli.dstcg.model.EquipmentType
+import fr.aumombelli.dstcg.model.ExtensionDefinition
 import fr.aumombelli.dstcg.model.HomeMenuNoveltyState
 import fr.aumombelli.dstcg.model.LibraryCardNoveltyState
 import fr.aumombelli.dstcg.model.MiniGameDailyState
@@ -31,13 +33,17 @@ import fr.aumombelli.dstcg.model.StandaloneProgress
 import fr.aumombelli.dstcg.model.TradeLedgerState
 import java.time.Duration
 import java.time.Instant
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -499,10 +505,7 @@ class ProgressRepositoryTest {
 
         fixture.repository.restoreProgress(
             StandaloneProgress(
-                collection = OwnedCollection(
-                    cards = ownedCollectionOf("ALP-001" to 2).cards +
-                        ("UNKNOWN" to OwnedCardEntry(totalOwned = 99, variants = emptyList())),
-                ),
+                collection = ownedCollectionOf("ALP-001" to 2),
                 openedPackCount = 5,
                 tradeLedgerState = TradeLedgerState(completedTradeIds = listOf("imported-trade")),
             ),
@@ -514,6 +517,71 @@ class ProgressRepositoryTest {
         assertEquals(listOf("imported-trade", "local-trade"), restored.tradeLedgerState.completedTradeIds)
     }
 
+    @Test
+    fun `restore rejects unknown catalog references before mutation`() = runTest {
+        val fixture = newFixture()
+        fixture.repository.saveProgress(
+            StandaloneProgress(collection = ownedCollectionOf("ALP-001" to 1)),
+        )
+
+        try {
+            fixture.repository.restoreProgress(
+                StandaloneProgress(
+                    collection = OwnedCollection(
+                        cards = mapOf(
+                            "UNKNOWN" to OwnedCardEntry(
+                                totalOwned = 1,
+                                variants = listOf(OwnedVariantCount("city", "standard", 1)),
+                            ),
+                        ),
+                    ),
+                ),
+            )
+            fail("ProgressRestoreValidationException attendue")
+        } catch (_: ProgressRestoreValidationException) {
+            // Expected: validation must happen before the DataStore write.
+        }
+
+        val preserved = fixture.repository.loadProgress().requireUsableProgress().progress
+        assertEquals(setOf("ALP-001"), preserved.collection.cards.keys)
+    }
+
+    @Test
+    fun `restore serializes a concurrent progress mutation`() = runTest {
+        val restoreEnteredValidation = CompletableDeferred<Unit>()
+        val allowRestore = CompletableDeferred<Unit>()
+        val fixture = newFixture { catalog ->
+            catalog.beforeLoadExtensions = {
+                restoreEnteredValidation.complete(Unit)
+                allowRestore.await()
+            }
+        }
+
+        val restoreJob = launch {
+            fixture.repository.restoreProgress(
+                StandaloneProgress(
+                    collection = ownedCollectionOf("ALP-001" to 1),
+                    openedPackCount = 5,
+                ),
+            )
+        }
+        restoreEnteredValidation.await()
+        val mutationJob = launch {
+            fixture.repository.updateProgress { progress ->
+                progress.copy(openedPackCount = progress.openedPackCount + 1)
+            }
+        }
+        runCurrent()
+        assertFalse(mutationJob.isCompleted)
+
+        allowRestore.complete(Unit)
+        restoreJob.join()
+        mutationJob.join()
+
+        val restored = fixture.repository.loadProgress().requireUsableProgress().progress
+        assertEquals(6, restored.openedPackCount)
+    }
+
     private fun newFixture(
         timeSource: MutableTrustedTimeSource = MutableTrustedTimeSource(
             wallClockUtc = fixedNow,
@@ -521,6 +589,7 @@ class ProgressRepositoryTest {
             bootSessionId = "test-boot",
         ),
         equipmentCards: List<EquipmentCardDefinition> = emptyList(),
+        configureCatalog: (FakeCatalogGateway) -> Unit = {},
     ): RepositoryFixture {
         val secureDataStore = inMemoryDataStore(EncryptedProgressEnvelopeSerializer.defaultValue)
         val cipher = newTestProgressCipher()
@@ -528,9 +597,13 @@ class ProgressRepositoryTest {
             timeSource = timeSource,
         )
         val catalogGateway = FakeCatalogGateway().apply {
+            extensions = listOf(
+                ExtensionDefinition("astronomes-en-herbe", "Astronomes en herbe", "cover"),
+            )
             cards = listOf(testCardDefinition("ALP-001", variantProfileId = "observation-default"))
             this.equipmentCards = equipmentCards
         }
+        configureCatalog(catalogGateway)
         return RepositoryFixture(
             secureDataStore = secureDataStore,
             cipher = cipher,

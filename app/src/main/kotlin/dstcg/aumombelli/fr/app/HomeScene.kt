@@ -14,6 +14,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.aumombelli.dstcg.AppContainer
 import fr.aumombelli.dstcg.audio.SoundCue
 import fr.aumombelli.dstcg.data.BackupRepository
+import fr.aumombelli.dstcg.data.readBackupBytesLimited
+import fr.aumombelli.dstcg.data.writeBackupDocument
 import fr.aumombelli.dstcg.feature.backup.BackupViewModel
 import fr.aumombelli.dstcg.feature.home.HomeScreen
 import fr.aumombelli.dstcg.feature.home.HomeViewModel
@@ -24,7 +26,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.ByteArrayOutputStream
 
 @Composable
 internal fun HomeScene(
@@ -66,11 +67,12 @@ internal fun HomeScene(
         if (uri == null || document == null) {
             backupViewModel.consumeExportDocument(saved = false)
         } else {
+            backupViewModel.beginExportDocumentWrite()
             scope.launch {
                 runCatching {
                     withContext(Dispatchers.IO) {
                         context.contentResolver.openOutputStream(uri, "w")?.use { output ->
-                            output.write(document.bytes)
+                            output.writeBackupDocument(document.bytes)
                         } ?: error("Le fichier de destination n'a pas pu être ouvert.")
                     }
                 }.onSuccess {
@@ -87,11 +89,12 @@ internal fun HomeScene(
         ActivityResultContracts.OpenDocument(),
     ) { uri ->
         if (uri != null) {
+            backupViewModel.beginImportDocumentRead()
             scope.launch {
                 runCatching {
                     withContext(Dispatchers.IO) {
                         context.contentResolver.openInputStream(uri)?.use { input ->
-                            input.readBytesLimited(BackupRepository.MAX_BACKUP_SIZE_BYTES)
+                            input.readBackupBytesLimited(BackupRepository.MAX_BACKUP_SIZE_BYTES)
                         } ?: error("Le fichier sélectionné n'a pas pu être ouvert.")
                     }
                 }.onSuccess(backupViewModel::acceptImportDocument)
@@ -101,6 +104,8 @@ internal fun HomeScene(
                         )
                     }
             }
+        } else {
+            backupViewModel.cancelImportDocumentSelection()
         }
     }
 
@@ -267,20 +272,4 @@ internal fun HomeScene(
             updateSceneState { it.withCoachmarkTargetBounds(target, bounds) }
         },
     )
-}
-
-private fun java.io.InputStream.readBytesLimited(maxBytes: Int): ByteArray {
-    val output = ByteArrayOutputStream()
-    val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-    var total = 0
-    while (true) {
-        val read = read(buffer)
-        if (read < 0) break
-        total += read
-        if (total > maxBytes) {
-            throw IllegalArgumentException("La sauvegarde dépasse la limite de 5 Mio.")
-        }
-        output.write(buffer, 0, read)
-    }
-    return output.toByteArray()
 }

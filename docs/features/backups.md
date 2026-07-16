@@ -9,12 +9,12 @@ Depuis l'accueil, ouvrir **Paramètres**, puis **Sauvegarde**. L'écran indique 
 ## Export
 
 1. Choisir **Exporter**.
-2. Saisir et confirmer une phrase de passe de 12 à 128 caractères.
+2. Saisir et confirmer un mot de passe non vide, sans règle de longueur ou de complexité.
 3. Choisir la destination du fichier `.dstcgsave` avec le sélecteur Android.
 
 La sauvegarde contient la collection, les packs, les équipements, les badges, le tutoriel, les mini-jeux et le ledger d'échange. Les préférences audio et le nom Bluetooth ne sont pas inclus.
 
-Le mot de passe n'est pas conservé. Sa perte rend la sauvegarde irrécupérable.
+Le mot de passe n'est pas conservé. Sa perte rend la sauvegarde irrécupérable. Un mot de passe faible facilite le déchiffrement ou la fabrication d'une sauvegarde valide par une personne connaissant le format.
 
 ## Import
 

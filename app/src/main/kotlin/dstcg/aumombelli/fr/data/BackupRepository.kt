@@ -4,15 +4,19 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.UUID
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
-class BackupRepository(
+internal class BackupRepository(
     private val progressRepository: ProgressGateway,
-    private val securityRepository: BackupSecurityRepository,
-    private val codec: BackupCodec = BackupCodec(),
+    private val securityRepository: BackupSecurityGateway,
+    private val codec: BackupCryptography = BackupCodec(),
     private val appVersionCode: Int,
+    private val cryptoDispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val backupIdFactory: () -> String = { UUID.randomUUID().toString() },
     private val previewTokenFactory: () -> String = { UUID.randomUUID().toString() },
 ) : BackupGateway {
@@ -23,7 +27,6 @@ class BackupRepository(
     override val lastSuccessfulImportAt: Flow<Instant?> = securityRepository.lastSuccessfulImportAt
 
     override suspend fun exportBackup(password: String): BackupDocument {
-        validateAndNormalizeBackupPassword(password)
         val status = securityRepository.status()
         val loaded = progressRepository.loadProgress().requireUsableProgress()
         val minimumCreatedAt = status.lastSuccessfulImportAt?.plusMillis(1)
@@ -39,7 +42,9 @@ class BackupRepository(
             progressSchemaVersion = ProgressSnapshot.CURRENT_SCHEMA_VERSION,
             progress = loaded.progress,
         )
-        val bytes = codec.encrypt(payload, password)
+        val bytes = withContext(cryptoDispatcher) {
+            codec.encrypt(payload, password)
+        }
         return BackupDocument(
             fileName = "deep-sky-${FILE_DATE_FORMATTER.format(createdAt)}.dstcgsave",
             bytes = bytes,
@@ -51,7 +56,9 @@ class BackupRepository(
         if (input.bytes.isEmpty() || input.bytes.size > MAX_BACKUP_SIZE_BYTES) {
             throw BackupFormatException("La sauvegarde est vide ou dépasse la limite de 5 Mio.")
         }
-        val payload = codec.decrypt(input.bytes, password)
+        val payload = withContext(cryptoDispatcher) {
+            codec.decrypt(input.bytes, password)
+        }
         validatePayload(payload)
         val createdAt = runCatching { Instant.parse(payload.createdAtUtc) }
             .getOrElse { throw BackupFormatException("La date de création de la sauvegarde est invalide.") }
@@ -63,6 +70,7 @@ class BackupRepository(
                     "a été réalisée le ${cutoff.toDisplayUtc()}. Elle ne peut pas être réimportée.",
             )
         }
+        progressRepository.validateRestorableProgress(payload.progress)
         val token = previewTokenFactory()
         val preview = payload.toPreview(token, createdAt)
         previewMutex.withLock {
@@ -99,11 +107,22 @@ class BackupRepository(
         BackupImportResult(importedAt = importedAt, backupCreatedAt = createdAt)
     }
 
+    override suspend fun discardBackupPreview(previewToken: String?) {
+        previewMutex.withLock {
+            if (previewToken == null || inspectedBackup?.token == previewToken) {
+                inspectedBackup = null
+            }
+        }
+    }
+
     private fun validatePayload(payload: PortableBackupPayload) {
         if (payload.payloadVersion != PortableBackupPayload.CURRENT_PAYLOAD_VERSION) {
             throw BackupFormatException("Cette version de contenu de sauvegarde n'est pas prise en charge.")
         }
         if (payload.progressSchemaVersion > ProgressSnapshot.CURRENT_SCHEMA_VERSION) {
+            throw BackupFormatException("Cette sauvegarde nécessite une version plus récente de l'application.")
+        }
+        if (payload.appVersionCode > appVersionCode) {
             throw BackupFormatException("Cette sauvegarde nécessite une version plus récente de l'application.")
         }
         if (payload.backupId.isBlank()) {

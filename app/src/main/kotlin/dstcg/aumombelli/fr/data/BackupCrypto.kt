@@ -12,16 +12,21 @@ import javax.crypto.spec.SecretKeySpec
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
-class BackupCodec(
+internal interface BackupCryptography {
+    fun encrypt(payload: PortableBackupPayload, password: String): ByteArray
+    fun decrypt(bytes: ByteArray, password: String): PortableBackupPayload
+}
+
+internal class BackupCodec(
     private val secureRandom: SecureRandom = SecureRandom(),
-) {
+) : BackupCryptography {
     private val json = Json {
         encodeDefaults = true
         ignoreUnknownKeys = false
     }
 
-    fun encrypt(payload: PortableBackupPayload, password: String): ByteArray {
-        val normalizedPassword = validateAndNormalizeBackupPassword(password)
+    override fun encrypt(payload: PortableBackupPayload, password: String): ByteArray {
+        val normalizedPassword = normalizeBackupPassword(password)
         val salt = ByteArray(SALT_SIZE_BYTES).also(secureRandom::nextBytes)
         val nonce = ByteArray(NONCE_SIZE_BYTES).also(secureRandom::nextBytes)
         val key = deriveKey(normalizedPassword, salt)
@@ -42,8 +47,8 @@ class BackupCodec(
         return json.encodeToString(BackupEnvelope.serializer(), envelope).encodeToByteArray()
     }
 
-    fun decrypt(bytes: ByteArray, password: String): PortableBackupPayload {
-        val normalizedPassword = validateAndNormalizeBackupPassword(password)
+    override fun decrypt(bytes: ByteArray, password: String): PortableBackupPayload {
+        val normalizedPassword = normalizeBackupPassword(password)
         val envelope = try {
             json.decodeFromString(BackupEnvelope.serializer(), bytes.decodeToString())
         } catch (exception: Exception) {
@@ -126,8 +131,6 @@ class BackupCodec(
     companion object {
         const val INVALID_PASSWORD_OR_BACKUP_MESSAGE =
             "Mot de passe incorrect ou sauvegarde endommagée."
-        const val MIN_PASSWORD_LENGTH = 12
-        const val MAX_PASSWORD_LENGTH = 128
         private const val SALT_SIZE_BYTES = 16
         private const val NONCE_SIZE_BYTES = 12
         private const val KEY_SIZE_BITS = 256
@@ -136,14 +139,10 @@ class BackupCodec(
     }
 }
 
-fun validateAndNormalizeBackupPassword(password: String): String {
+fun normalizeBackupPassword(password: String): String {
     val normalized = Normalizer.normalize(password, Normalizer.Form.NFC)
-    val codePointCount = normalized.codePointCount(0, normalized.length)
-    if (codePointCount !in BackupCodec.MIN_PASSWORD_LENGTH..BackupCodec.MAX_PASSWORD_LENGTH) {
-        throw BackupPasswordException(
-            "Le mot de passe doit contenir entre ${BackupCodec.MIN_PASSWORD_LENGTH} et " +
-                "${BackupCodec.MAX_PASSWORD_LENGTH} caractères.",
-        )
+    if (normalized.isEmpty()) {
+        throw BackupPasswordException("Le mot de passe ne peut pas être vide.")
     }
     return normalized
 }

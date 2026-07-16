@@ -147,8 +147,10 @@ class FakeCatalogGateway : CatalogGateway {
     var gameBalanceFailure: Throwable? = null
     var equipmentCardsFailure: Throwable? = null
     var equipmentSettingsFailure: Throwable? = null
+    var beforeLoadExtensions: suspend () -> Unit = {}
 
     override suspend fun loadExtensions(): List<ExtensionDefinition> {
+        beforeLoadExtensions()
         extensionsFailure?.let { throw it }
         return extensions
     }

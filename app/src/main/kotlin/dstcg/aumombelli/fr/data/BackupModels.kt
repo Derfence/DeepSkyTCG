@@ -70,6 +70,7 @@ interface BackupGateway {
     suspend fun exportBackup(password: String): BackupDocument
     suspend fun inspectBackup(input: BackupInput, password: String): BackupPreview
     suspend fun importBackup(previewToken: String): BackupImportResult
+    suspend fun discardBackupPreview(previewToken: String?)
 }
 
 open class BackupException(message: String, cause: Throwable? = null) : IllegalStateException(message, cause)
@@ -93,4 +94,6 @@ object UnavailableBackupGateway : BackupGateway {
 
     override suspend fun importBackup(previewToken: String): BackupImportResult =
         throw BackupException("La sauvegarde n'est pas disponible.")
+
+    override suspend fun discardBackupPreview(previewToken: String?) = Unit
 }

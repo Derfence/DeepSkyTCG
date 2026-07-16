@@ -34,26 +34,35 @@ data class BackupSecurityState(
     val tamperFlag: Boolean = false,
 )
 
-data class BackupSecurityStatus(
+internal data class BackupSecurityStatus(
     val lastSuccessfulImportAt: Instant?,
     val trustedNow: Instant,
 )
 
-class BackupSecurityRepository(
+internal interface BackupSecurityGateway {
+    val lastSuccessfulImportAt: Flow<Instant?>
+
+    suspend fun status(): BackupSecurityStatus
+    suspend fun beginImport(backupId: String): Instant
+    suspend fun completeImport(backupId: String): Instant
+    suspend fun cancelImport(backupId: String)
+}
+
+internal class BackupSecurityRepository(
     private val dataStore: DataStore<EncryptedProgressEnvelope>,
     private val cipher: ProgressCipher,
     timeSource: TrustedTimeSource,
-) {
+) : BackupSecurityGateway {
     private val json = Json { encodeDefaults = true; ignoreUnknownKeys = true }
     private val mutex = Mutex()
     private val trustedTimeResolver = TrustedTimeResolver(timeSource)
 
-    val lastSuccessfulImportAt: Flow<Instant?> = dataStore.data.map { envelope ->
+    override val lastSuccessfulImportAt: Flow<Instant?> = dataStore.data.map { envelope ->
         val state = decryptState(envelope)
         state.effectiveLastImportAt()
     }
 
-    suspend fun status(): BackupSecurityStatus = mutex.withLock {
+    override suspend fun status(): BackupSecurityStatus = mutex.withLock {
         val state = readState().promotePending()
         val resolution = trustedTimeResolver.resolve(state.toTimeAnchor())
         val updated = state.withTimeResolution(resolution)
@@ -64,7 +73,7 @@ class BackupSecurityRepository(
         )
     }
 
-    suspend fun beginImport(backupId: String): Instant = mutex.withLock {
+    override suspend fun beginImport(backupId: String): Instant = mutex.withLock {
         val state = readState().promotePending()
         val resolution = trustedTimeResolver.resolve(state.toTimeAnchor())
         val startedAt = resolution.trustedNow
@@ -76,7 +85,7 @@ class BackupSecurityRepository(
         startedAt
     }
 
-    suspend fun completeImport(backupId: String): Instant = mutex.withLock {
+    override suspend fun completeImport(backupId: String): Instant = mutex.withLock {
         val state = readState()
         val pending = state.pendingImport?.takeIf { it.backupId == backupId }
             ?: throw BackupSecurityStateException("L'import provisoire est introuvable.")
@@ -93,7 +102,7 @@ class BackupSecurityRepository(
         requireNotNull(effective)
     }
 
-    suspend fun cancelImport(backupId: String) = mutex.withLock {
+    override suspend fun cancelImport(backupId: String) = mutex.withLock {
         val state = readState()
         if (state.pendingImport?.backupId == backupId) {
             val resolution = trustedTimeResolver.resolve(state.toTimeAnchor())

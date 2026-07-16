@@ -1,6 +1,7 @@
 package fr.aumombelli.dstcg
 
 import fr.aumombelli.dstcg.data.BackupSecurityRepository
+import fr.aumombelli.dstcg.data.BackupSecurityStateException
 import fr.aumombelli.dstcg.data.EncryptedProgressEnvelope
 import java.time.Duration
 import java.time.Instant
@@ -33,6 +34,31 @@ class BackupSecurityRepositoryTest {
         val status = fixture.repository.status()
 
         assertFalse(status.trustedNow.isBefore(now))
+    }
+
+    @Test
+    fun `corrupted encrypted state blocks security status`() = runTest {
+        val now = Instant.parse("2026-07-15T10:00:00Z")
+        val dataStore = inMemoryDataStore(EncryptedProgressEnvelope())
+        val repository = BackupSecurityRepository(
+            dataStore = dataStore,
+            cipher = newTestProgressCipher(),
+            timeSource = MutableTrustedTimeSource(now),
+        )
+        dataStore.updateData {
+            EncryptedProgressEnvelope(
+                schemaVersion = 1,
+                ivBase64 = "AAAA",
+                ciphertextBase64 = "AAAA",
+            )
+        }
+
+        try {
+            repository.status()
+            throw AssertionError("BackupSecurityStateException attendue")
+        } catch (_: BackupSecurityStateException) {
+            // Expected: imports fail closed when the protected cutoff is unreadable.
+        }
     }
 
     private fun fixture(now: Instant): Fixture {

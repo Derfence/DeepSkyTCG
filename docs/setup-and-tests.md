@@ -2,7 +2,7 @@
 
 [← Index documentation](README.md) | [Architecture](architecture.md)
 
-## Prerequis locaux
+## Prérequis locaux
 
 - Java 21.
 - Android SDK Platform `36.1`.
@@ -26,7 +26,7 @@ Depuis Windows :
 .\gradlew.bat :app:connectedDebugAndroidTest
 ```
 
-Depuis WSL/Bash, privilegie le wrapper Windows pour reutiliser `sdk.dir` :
+Depuis WSL/Bash, privilégie le wrapper Windows pour réutiliser `sdk.dir` :
 
 ```bash
 cmd.exe /c gradlew.bat :app:testDebugUnitTest :app:compileDebugAndroidTestKotlin :app:assembleDebug
@@ -38,14 +38,14 @@ Tests du pipeline catalogue :
 python3 -m unittest discover -s scripts -p 'test_*.py'
 ```
 
-## Tests instrumentes
+## Tests instrumentés
 
-`connectedDebugAndroidTest` demande un émulateur ou un appareil ADB disponible. Le workflow GitHub lance ces tests sur émulateur API 36 uniquement sur pull request vers `master` ou `workflow_dispatch`.
+`connectedDebugAndroidTest` demande un émulateur ou un appareil ADB disponible. Le workflow GitHub lance ces tests sur émulateurs API 26 et API 36 sur pull request vers `master` ou `workflow_dispatch`.
 
 ## CI
 
 - `.github/workflows/android-ci.yml` : unit tests + `assembleDebug` sur `dev`, `master`, PR vers `master`, et lancement manuel.
-- `.github/workflows/android-instrumented.yml` : tests instrumentés sur émulateur API 36.
+- `.github/workflows/android-instrumented.yml` : tests instrumentés sur émulateurs API 26 et API 36.
 
 ## Benchmarks
 
@@ -54,6 +54,8 @@ Le module `benchmark` cible `fr.aumombelli.dstcg`. Les scénarios macrobench cou
 - démarrage jusqu'à l'accueil ;
 - ouverture bibliothèque et scroll ;
 - ouverture d'un pack puis retour accueil.
+
+Avant publication d'une évolution du format de sauvegarde, mesurer manuellement un export et un import sur API 26. Relever la durée de PBKDF2 sans imposer de seuil automatique fragile et vérifier que l'interface reste réactive pendant le calcul.
 
 ## Couverture actuelle
 

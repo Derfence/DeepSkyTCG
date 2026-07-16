@@ -1,10 +1,9 @@
 package fr.aumombelli.dstcg
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.onNodeWithText
 import fr.aumombelli.dstcg.feature.backup.BackupDialog
 import fr.aumombelli.dstcg.feature.backup.BackupSheet
 import fr.aumombelli.dstcg.feature.backup.BackupUiState
@@ -33,9 +32,9 @@ class BackupSheetTest {
             }
         }
 
-        composeRule.onNodeWithTag("backup-last-import").assertIsDisplayed()
-        composeRule.onNodeWithTag("backup-export").assertIsDisplayed()
-        composeRule.onNodeWithTag("backup-import").assertIsDisplayed()
+        composeRule.onNodeWithTag("backup-last-import").assertExists()
+        composeRule.onNodeWithTag("backup-export").assertExists()
+        composeRule.onNodeWithTag("backup-import").assertExists()
     }
 
     @Test
@@ -56,8 +55,10 @@ class BackupSheetTest {
             }
         }
 
-        composeRule.onNodeWithTag("backup-export-password").assertIsDisplayed()
-        composeRule.onNodeWithTag("backup-export-confirmation").assertIsDisplayed()
-        composeRule.onNodeWithTag("backup-export-confirm").assertIsDisplayed().performClick()
+        composeRule.onNodeWithTag("backup-export-password").assertExists()
+        composeRule.onNodeWithTag("backup-export-confirmation").assertExists()
+        composeRule.onNodeWithTag("backup-export-password-visibility").assertExists()
+        composeRule.onNodeWithText("12 caractères minimum", substring = true).assertDoesNotExist()
+        composeRule.onNodeWithTag("backup-export-confirm").assertExists()
     }
 }

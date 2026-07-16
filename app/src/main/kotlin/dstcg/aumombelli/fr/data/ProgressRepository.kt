@@ -47,6 +47,7 @@ class ProgressRepository(
     private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
     private val progressMutationMutex = Mutex()
     private val trustedTimeResolver = TrustedTimeResolver(settings.timeSource)
+    private val restoreValidator = ProgressRestoreValidator(catalogRepository)
 
     override suspend fun loadProgress(): ProgressLoadResult = loadProgressRecord().result
 
@@ -155,7 +156,12 @@ class ProgressRepository(
         )
     }
 
+    override suspend fun validateRestorableProgress(progress: StandaloneProgress) {
+        restoreValidator.validate(progress)
+    }
+
     override suspend fun restoreProgress(progress: StandaloneProgress) = progressMutationMutex.withLock {
+        restoreValidator.validate(progress)
         val currentRecord = loadProgressRecord()
         val currentSnapshot = currentRecord.snapshot
         val currentProgress = when (val result = currentRecord.result) {

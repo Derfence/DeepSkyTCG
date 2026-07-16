@@ -100,7 +100,7 @@ Elle ne change pas `ProgressSnapshot.schemaVersion` et n'est pas effacée par la
 
 Le nom visible pendant l'échange Bluetooth est stocké séparément dans `dstcg_trade_settings.preferences_pb`. Il est limité à 12 octets UTF-8 pour tenir dans l'annonce BLE, avec un défaut court du type `Obs. 4821`.
 
-Les sauvegardes portables `.dstcgsave` contiennent uniquement un `StandaloneProgress`. Les identifiants d'installation et les preuves temporelles locales ne sont jamais exportés. Le mot de passe est transformé en clé AES-256 avec PBKDF2-HMAC-SHA256 et 600 000 itérations ; AES-GCM protège la confidentialité et détecte les altérations.
+Les sauvegardes portables `.dstcgsave` contiennent uniquement un `StandaloneProgress`. Les identifiants d'installation et les preuves temporelles locales ne sont jamais exportés. Tout mot de passe non vide est accepté après normalisation Unicode NFC, sans règle de longueur ou de complexité. Il est transformé en clé AES-256 avec PBKDF2-HMAC-SHA256 et 600 000 itérations ; AES-GCM protège la confidentialité et détecte les altérations. Le calcul cryptographique s'exécute hors du thread principal.
 
 La date de dernière importation et l'éventuel import provisoire sont conservés dans `dstcg_backup_security_state.json`, chiffré par une clé Android Keystore distincte. Ce stockage n'est pas effacé par les réinitialisations fonctionnelles. Une sauvegarde créée à cette date ou avant est refusée.
 
