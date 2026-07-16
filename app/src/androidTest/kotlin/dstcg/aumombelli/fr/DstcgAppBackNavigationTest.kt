@@ -280,7 +280,7 @@ class DstcgAppBackNavigationTest {
         advanceUntilTagDisplayed("memory-playing", timeoutMillis = 10_000)
 
         composeRule.onNodeWithTag("memory-back").performClick()
-        composeRule.onNodeWithTag("mini-game-abandonment-dialog").assertIsDisplayed()
+        advanceUntilTagDisplayed("mini-game-abandonment-dialog", timeoutMillis = 5_000)
         composeRule.onNodeWithText(
             "Si tu quittes maintenant, le jeu sera considéré comme abandonné " +
                 "et tu ne pourras pas y rejouer aujourd'hui.",
@@ -289,7 +289,7 @@ class DstcgAppBackNavigationTest {
         composeRule.onNodeWithTag("memory-playing").assertIsDisplayed()
 
         pressAndroidBack()
-        composeRule.onNodeWithTag("mini-game-abandonment-dialog").assertIsDisplayed()
+        advanceUntilTagDisplayed("mini-game-abandonment-dialog", timeoutMillis = 5_000)
         composeRule.onNodeWithTag("mini-game-abandonment-confirm").performClick()
 
         advanceUntilTagDisplayed("mini-games-menu-screen", timeoutMillis = 10_000)
