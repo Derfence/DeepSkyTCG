@@ -455,6 +455,57 @@ internal fun PackRechargeState.derivedNextChargeAt(
     rechargeMultiplier = rechargeMultiplier,
 )
 
+/**
+ * Derives when the stock will next reach its cap without mutating persisted
+ * progress. Observatory validity is consumed in the simulation exactly as it
+ * is when progress is normalized after an absence.
+ */
+internal fun StandaloneProgress.derivedFullStockAt(
+    now: Instant,
+    drawCooldown: Duration,
+    maxStoredDraws: Int,
+    weatherPolicy: WeatherPolicy,
+    equipmentCards: List<EquipmentCardDefinition>,
+): Instant? {
+    var simulatedProgress = withNormalizedPackChargeAndEquipmentValidity(
+        now = now,
+        drawCooldown = drawCooldown,
+        maxStoredDraws = maxStoredDraws,
+        weatherPolicy = weatherPolicy,
+        equipmentCards = equipmentCards,
+    )
+    if (simulatedProgress.rechargeState.availableDrawCount >= maxStoredDraws) {
+        return null
+    }
+
+    var evaluationNow = now
+    repeat(maxStoredDraws.coerceAtLeast(0)) {
+        val rechargeMultiplier = resolveActiveEquipmentBonus(
+            activeEquipmentByType = simulatedProgress.activeEquipmentByType,
+            equipmentCards = equipmentCards,
+        ).rechargeMultiplier
+        val nextChargeAt = simulatedProgress.rechargeState.derivedNextChargeAt(
+            now = evaluationNow,
+            drawCooldown = drawCooldown,
+            maxStoredDraws = maxStoredDraws,
+            weatherPolicy = weatherPolicy,
+            rechargeMultiplier = rechargeMultiplier,
+        ) ?: return null
+        simulatedProgress = simulatedProgress.withNormalizedPackChargeAndEquipmentValidity(
+            now = nextChargeAt,
+            drawCooldown = drawCooldown,
+            maxStoredDraws = maxStoredDraws,
+            weatherPolicy = weatherPolicy,
+            equipmentCards = equipmentCards,
+        )
+        if (simulatedProgress.rechargeState.availableDrawCount >= maxStoredDraws) {
+            return nextChargeAt
+        }
+        evaluationNow = nextChargeAt
+    }
+    return null
+}
+
 private fun computeNextChargeAt(
     rechargeState: PackRechargeState,
     now: Instant,

@@ -19,6 +19,7 @@ Fonctionnalites :
 - [Accueil](docs/features/home.md)
 - [Packs et tirage local](docs/features/packs.md)
 - [Météo et recharge](docs/features/weather-recharge.md)
+- [Notifications locales](docs/features/notifications.md)
 - [Bibliothèque et badges](docs/features/library-badges.md)
 - [Équipements](docs/features/equipment.md)
 - [Artisanat](docs/features/crafting.md)

@@ -33,6 +33,15 @@ import fr.aumombelli.dstcg.data.TradeSettingsGateway
 import fr.aumombelli.dstcg.data.TradeSettingsRepository
 import fr.aumombelli.dstcg.data.UnavailableBackupGateway
 import fr.aumombelli.dstcg.data.tradeSettingsDataStore
+import fr.aumombelli.dstcg.notification.AndroidNotificationPublisher
+import fr.aumombelli.dstcg.notification.AndroidNotificationScheduler
+import fr.aumombelli.dstcg.notification.AppNotificationCoordinator
+import fr.aumombelli.dstcg.notification.DefaultAppNotificationCoordinator
+import fr.aumombelli.dstcg.notification.DisabledNotificationPreferences
+import fr.aumombelli.dstcg.notification.NoOpAppNotificationCoordinator
+import fr.aumombelli.dstcg.notification.NotificationPreferencesGateway
+import fr.aumombelli.dstcg.notification.NotificationPreferencesRepository
+import fr.aumombelli.dstcg.notification.NotificationRuntime
 
 class AppContainer(
     val progressRepository: ProgressGateway,
@@ -47,6 +56,8 @@ class AppContainer(
     val gameSettings: StandaloneGameSettings,
     val audioController: AudioController,
     val backupGateway: BackupGateway = UnavailableBackupGateway,
+    val notificationPreferences: NotificationPreferencesGateway = DisabledNotificationPreferences,
+    val notificationCoordinator: AppNotificationCoordinator = NoOpAppNotificationCoordinator,
 ) {
     companion object {
         fun create(context: Context): AppContainer {
@@ -107,6 +118,15 @@ class AppContainer(
                     appContext.packageManager.getPackageInfo(appContext.packageName, 0),
                 ).toInt(),
             )
+            val notificationPreferences = NotificationPreferencesRepository.fromContext(appContext)
+            val notificationRuntime = NotificationRuntime(
+                progressRepository = progressRepository,
+                preferences = notificationPreferences,
+                scheduler = AndroidNotificationScheduler(appContext),
+                publisher = AndroidNotificationPublisher(appContext),
+                gameSettings = gameSettings,
+                catalogRepository = catalogRepository,
+            )
 
             return AppContainer(
                 progressRepository = progressRepository,
@@ -121,6 +141,8 @@ class AppContainer(
                 gameSettings = gameSettings,
                 audioController = audioController,
                 backupGateway = backupGateway,
+                notificationPreferences = notificationPreferences,
+                notificationCoordinator = DefaultAppNotificationCoordinator(notificationRuntime),
             )
         }
     }

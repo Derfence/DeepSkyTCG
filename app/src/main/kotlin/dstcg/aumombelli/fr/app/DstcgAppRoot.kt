@@ -8,12 +8,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import fr.aumombelli.dstcg.AppContainer
 import fr.aumombelli.dstcg.audio.LocalAudioController
 import fr.aumombelli.dstcg.performance.LocalAppPerformanceProfile
 import fr.aumombelli.dstcg.performance.rememberAppPerformanceProfile
 import fr.aumombelli.dstcg.ui.component.CardArtBitmapLoader
 import fr.aumombelli.dstcg.ui.component.LocalCardArtBitmapLoader
+import kotlinx.coroutines.launch
 
 @Composable
 internal fun DstcgAppRoot(
@@ -34,11 +36,21 @@ internal fun DstcgAppRoot(
         )
     }
 
-    DisposableEffect(lifecycleOwner, audioController) {
+    DisposableEffect(lifecycleOwner, audioController, appContainer.notificationCoordinator) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
-                Lifecycle.Event.ON_START -> audioController.onAppForegrounded()
-                Lifecycle.Event.ON_STOP -> audioController.onAppBackgrounded()
+                Lifecycle.Event.ON_START -> {
+                    audioController.onAppForegrounded()
+                    lifecycleOwner.lifecycleScope.launch {
+                        appContainer.notificationCoordinator.onAppForegrounded()
+                    }
+                }
+                Lifecycle.Event.ON_STOP -> {
+                    audioController.onAppBackgrounded()
+                    lifecycleOwner.lifecycleScope.launch {
+                        appContainer.notificationCoordinator.onAppBackgrounded()
+                    }
+                }
                 else -> Unit
             }
         }

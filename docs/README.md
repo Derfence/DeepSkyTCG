@@ -49,6 +49,7 @@ docs/README.md
 - [Accueil](features/home.md)
 - [Packs et tirage local](features/packs.md)
 - [Météo et recharge](features/weather-recharge.md)
+- [Notifications locales](features/notifications.md)
 - [Bibliothèque et badges](features/library-badges.md)
 - [Équipements](features/equipment.md)
 - [Artisanat](features/crafting.md)
