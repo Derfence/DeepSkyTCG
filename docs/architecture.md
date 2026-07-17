@@ -108,6 +108,8 @@ Les choix de notifications, la dernière ouverture et les marqueurs anti-doublon
 
 Les sauvegardes portables `.dstcgsave` contiennent uniquement un `StandaloneProgress`. Les identifiants d'installation et les preuves temporelles locales ne sont jamais exportés. Tout mot de passe non vide est accepté après normalisation Unicode NFC, sans règle de longueur ou de complexité. Il est transformé en clé AES-256 avec PBKDF2-HMAC-SHA256 et 600 000 itérations ; AES-GCM protège la confidentialité et détecte les altérations. Le calcul cryptographique s'exécute hors du thread principal.
 
+Avant de lancer `ActivityResultContracts.CreateDocument`, l'enveloppe chiffrée est déposée atomiquement dans `filesDir/pending_backup_export`. Le résultat SAF relit cette copie privée depuis le `BackupViewModel`, ce qui rend l'écriture indépendante de l'ancienne instance d'activité. La destination est relue et comparée par taille et SHA-256 avant de déclarer l'export réussi ; la copie temporaire est ensuite supprimée.
+
 La date de dernière importation et l'éventuel import provisoire sont conservés dans `dstcg_backup_security_state.json`, chiffré par une clé Android Keystore distincte. Ce stockage n'est pas effacé par les réinitialisations fonctionnelles. Une sauvegarde créée à cette date ou avant est refusée.
 
 ## Points de vigilance

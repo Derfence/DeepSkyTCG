@@ -106,6 +106,11 @@ fun HomeScreen(
     var audioCreditsSheetVisible by remember { mutableStateOf(false) }
     var backupSheetVisible by remember { mutableStateOf(false) }
     var notificationSettingsSheetVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(backupState.message, backupState.errorMessage) {
+        if (backupState.message != null || backupState.errorMessage != null) {
+            backupSheetVisible = true
+        }
+    }
     val density = LocalDensity.current
     val contentAlpha by animateFloatAsState(
         targetValue = if (contentVisible) 1f else 0f,

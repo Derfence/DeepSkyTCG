@@ -5,6 +5,7 @@ import fr.aumombelli.dstcg.data.BackupGateway
 import fr.aumombelli.dstcg.data.BackupImportResult
 import fr.aumombelli.dstcg.data.BackupInput
 import fr.aumombelli.dstcg.data.BackupPreview
+import fr.aumombelli.dstcg.data.InMemoryPendingBackupExportStore
 import fr.aumombelli.dstcg.feature.backup.BackupDialog
 import fr.aumombelli.dstcg.feature.backup.BackupOperation
 import fr.aumombelli.dstcg.feature.backup.BackupViewModel
@@ -28,28 +29,38 @@ class BackupViewModelTest {
     @Test
     fun `export accepts one normalized character and stays busy through SAF write`() =
         runTest(mainDispatcherRule.dispatcher) {
-        val gateway = FakeBackupGateway()
-        val viewModel = BackupViewModel(gateway, mainDispatcherRule.dispatcher)
-        viewModel.requestExport()
+            val gateway = FakeBackupGateway()
+            val store = InMemoryPendingBackupExportStore()
+            val viewModel = BackupViewModel(gateway, store, mainDispatcherRule.dispatcher)
+            viewModel.requestExport()
 
-        viewModel.submitExportPassword("e\u0301", "é")
-        advanceUntilIdle()
+            viewModel.submitExportPassword("e\u0301", "é")
+            advanceUntilIdle()
 
-        assertEquals("é", gateway.exportedPassword)
-        assertEquals(BackupOperation.AwaitingExportDestination, viewModel.uiState.value.operation)
-        assertTrue(viewModel.uiState.value.isBusy)
+            assertEquals("é", gateway.exportedPassword)
+            assertEquals(BackupOperation.AwaitingExportDestination, viewModel.uiState.value.operation)
+            assertTrue(viewModel.uiState.value.isBusy)
+            assertEquals("backup.dstcgsave", viewModel.uiState.value.exportFileName)
 
-        viewModel.beginExportDocumentWrite()
-        assertEquals(BackupOperation.WritingExport, viewModel.uiState.value.operation)
-        viewModel.consumeExportDocument(saved = true)
-        assertFalse(viewModel.uiState.value.isBusy)
-    }
+            var written: ByteArray? = null
+            viewModel.writePendingExport { written = it.copyOf() }
+            advanceUntilIdle()
+
+            assertTrue(byteArrayOf(1).contentEquals(written))
+            assertFalse(viewModel.uiState.value.isBusy)
+            assertEquals("Sauvegarde exportée avec succès.", viewModel.uiState.value.message)
+            assertNull(store.load())
+        }
 
     @Test
     fun `export rejects mismatched confirmation without calling gateway`() =
         runTest(mainDispatcherRule.dispatcher) {
         val gateway = FakeBackupGateway()
-        val viewModel = BackupViewModel(gateway, mainDispatcherRule.dispatcher)
+        val viewModel = BackupViewModel(
+            gateway,
+            InMemoryPendingBackupExportStore(),
+            mainDispatcherRule.dispatcher,
+        )
 
         viewModel.submitExportPassword("a", "b")
         advanceUntilIdle()
@@ -60,7 +71,11 @@ class BackupViewModelTest {
 
     @Test
     fun `cancelled import selection releases busy state`() = runTest(mainDispatcherRule.dispatcher) {
-        val viewModel = BackupViewModel(FakeBackupGateway(), mainDispatcherRule.dispatcher)
+        val viewModel = BackupViewModel(
+            FakeBackupGateway(),
+            InMemoryPendingBackupExportStore(),
+            mainDispatcherRule.dispatcher,
+        )
 
         viewModel.requestImportDocument()
         assertEquals(BackupOperation.AwaitingImportDocument, viewModel.uiState.value.operation)
@@ -72,7 +87,11 @@ class BackupViewModelTest {
     @Test
     fun `dismissing preview discards decrypted payload`() = runTest(mainDispatcherRule.dispatcher) {
         val gateway = FakeBackupGateway()
-        val viewModel = BackupViewModel(gateway, mainDispatcherRule.dispatcher)
+        val viewModel = BackupViewModel(
+            gateway,
+            InMemoryPendingBackupExportStore(),
+            mainDispatcherRule.dispatcher,
+        )
         viewModel.requestImportDocument()
         viewModel.beginImportDocumentRead()
         viewModel.acceptImportDocument(byteArrayOf(1))
@@ -85,6 +104,54 @@ class BackupViewModelTest {
 
         assertEquals(listOf("preview-token"), gateway.discardedTokens)
     }
+
+    @Test
+    fun `recreated view model writes the encrypted export staged by its predecessor`() =
+        runTest(mainDispatcherRule.dispatcher) {
+            val store = InMemoryPendingBackupExportStore()
+            val firstViewModel = BackupViewModel(
+                FakeBackupGateway(),
+                store,
+                mainDispatcherRule.dispatcher,
+            )
+            firstViewModel.submitExportPassword("x", "x")
+            advanceUntilIdle()
+
+            val recreatedViewModel = BackupViewModel(
+                FakeBackupGateway(),
+                store,
+                mainDispatcherRule.dispatcher,
+            )
+            var written: ByteArray? = null
+            recreatedViewModel.writePendingExport { written = it.copyOf() }
+            advanceUntilIdle()
+
+            assertTrue(byteArrayOf(1).contentEquals(written))
+            assertEquals(
+                "Sauvegarde exportée avec succès.",
+                recreatedViewModel.uiState.value.message,
+            )
+            assertNull(store.load())
+        }
+
+    @Test
+    fun `missing staged export is reported after view model recreation`() =
+        runTest(mainDispatcherRule.dispatcher) {
+            val viewModel = BackupViewModel(
+                FakeBackupGateway(),
+                InMemoryPendingBackupExportStore(),
+                mainDispatcherRule.dispatcher,
+            )
+
+            viewModel.writePendingExport { error("Le writer ne doit pas être appelé.") }
+            advanceUntilIdle()
+
+            assertEquals(
+                "L'export temporaire a été perdu avant l'écriture du fichier.",
+                viewModel.uiState.value.errorMessage,
+            )
+            assertFalse(viewModel.uiState.value.isBusy)
+        }
 
     private class FakeBackupGateway : BackupGateway {
         override val lastSuccessfulImportAt = MutableStateFlow<Instant?>(null)

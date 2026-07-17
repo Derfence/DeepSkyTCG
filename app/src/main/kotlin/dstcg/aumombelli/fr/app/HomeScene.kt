@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.os.Build
+import android.provider.DocumentsContract
 import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -25,6 +26,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import fr.aumombelli.dstcg.AppContainer
 import fr.aumombelli.dstcg.audio.SoundCue
 import fr.aumombelli.dstcg.data.BackupRepository
+import fr.aumombelli.dstcg.data.matchesBackupDocument
 import fr.aumombelli.dstcg.data.readBackupBytesLimited
 import fr.aumombelli.dstcg.data.writeBackupDocument
 import fr.aumombelli.dstcg.feature.backup.BackupViewModel
@@ -68,7 +70,10 @@ internal fun HomeScene(
     val backupViewModel: BackupViewModel = viewModel(
         key = "backup",
         factory = DstcgViewModelFactory {
-            BackupViewModel(appContainer.backupGateway)
+            BackupViewModel(
+                backupGateway = appContainer.backupGateway,
+                pendingExportStore = appContainer.pendingBackupExportStore,
+            )
         },
     )
     val backupUiState by backupViewModel.uiState.collectAsState()
@@ -114,24 +119,26 @@ internal fun HomeScene(
     val exportLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/octet-stream"),
     ) { uri ->
-        val document = backupUiState.exportDocument
-        if (uri == null || document == null) {
-            backupViewModel.consumeExportDocument(saved = false)
+        if (uri == null) {
+            backupViewModel.cancelExportDocumentSelection()
         } else {
-            backupViewModel.beginExportDocumentWrite()
-            scope.launch {
-                runCatching {
-                    withContext(Dispatchers.IO) {
-                        context.contentResolver.openOutputStream(uri, "w")?.use { output ->
-                            output.writeBackupDocument(document.bytes)
+            val resolver = context.applicationContext.contentResolver
+            backupViewModel.writePendingExport { bytes ->
+                withContext(Dispatchers.IO) {
+                    try {
+                        resolver.openOutputStream(uri, "w")?.use { output ->
+                            output.writeBackupDocument(bytes)
                         } ?: error("Le fichier de destination n'a pas pu être ouvert.")
+                        val matches = resolver.openInputStream(uri)?.use { input ->
+                            input.matchesBackupDocument(bytes)
+                        } ?: false
+                        if (!matches) {
+                            error("Le fichier exporté n'a pas pu être vérifié après son écriture.")
+                        }
+                    } catch (exception: Exception) {
+                        runCatching { DocumentsContract.deleteDocument(resolver, uri) }
+                        throw exception
                     }
-                }.onSuccess {
-                    backupViewModel.consumeExportDocument(saved = true)
-                }.onFailure { exception ->
-                    backupViewModel.reportDocumentWriteFailure(
-                        exception.message ?: "Impossible d'écrire la sauvegarde.",
-                    )
                 }
             }
         }
@@ -160,8 +167,10 @@ internal fun HomeScene(
         }
     }
 
-    LaunchedEffect(backupUiState.exportDocument) {
-        backupUiState.exportDocument?.let { exportLauncher.launch(it.fileName) }
+    LaunchedEffect(backupUiState.exportDocumentRequestId) {
+        if (backupUiState.exportDocumentRequestId > 0) {
+            backupUiState.exportFileName?.let { exportLauncher.launch(it) }
+        }
     }
 
     LaunchedEffect(backupUiState.openDocumentRequestId) {

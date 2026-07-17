@@ -24,6 +24,9 @@ import fr.aumombelli.dstcg.data.MiniGamesGateway
 import fr.aumombelli.dstcg.data.MiniGamesRepository
 import fr.aumombelli.dstcg.data.PackGateway
 import fr.aumombelli.dstcg.data.PackRepository
+import fr.aumombelli.dstcg.data.FilePendingBackupExportStore
+import fr.aumombelli.dstcg.data.InMemoryPendingBackupExportStore
+import fr.aumombelli.dstcg.data.PendingBackupExportStore
 import fr.aumombelli.dstcg.data.ProgressGateway
 import fr.aumombelli.dstcg.data.ProgressRepository
 import fr.aumombelli.dstcg.data.StandaloneGameSettings
@@ -56,6 +59,7 @@ class AppContainer(
     val gameSettings: StandaloneGameSettings,
     val audioController: AudioController,
     val backupGateway: BackupGateway = UnavailableBackupGateway,
+    val pendingBackupExportStore: PendingBackupExportStore = InMemoryPendingBackupExportStore(),
     val notificationPreferences: NotificationPreferencesGateway = DisabledNotificationPreferences,
     val notificationCoordinator: AppNotificationCoordinator = NoOpAppNotificationCoordinator,
 ) {
@@ -118,6 +122,9 @@ class AppContainer(
                     appContext.packageManager.getPackageInfo(appContext.packageName, 0),
                 ).toInt(),
             )
+            val pendingBackupExportStore = FilePendingBackupExportStore(
+                directory = appContext.filesDir.resolve("pending_backup_export"),
+            )
             val notificationPreferences = NotificationPreferencesRepository.fromContext(appContext)
             val notificationRuntime = NotificationRuntime(
                 progressRepository = progressRepository,
@@ -141,6 +148,7 @@ class AppContainer(
                 gameSettings = gameSettings,
                 audioController = audioController,
                 backupGateway = backupGateway,
+                pendingBackupExportStore = pendingBackupExportStore,
                 notificationPreferences = notificationPreferences,
                 notificationCoordinator = DefaultAppNotificationCoordinator(notificationRuntime),
             )

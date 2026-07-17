@@ -2,12 +2,13 @@ package fr.aumombelli.dstcg.feature.backup
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import fr.aumombelli.dstcg.data.BackupDocument
 import fr.aumombelli.dstcg.data.BackupGateway
 import fr.aumombelli.dstcg.data.BackupInput
 import fr.aumombelli.dstcg.data.BackupPreview
+import fr.aumombelli.dstcg.data.PendingBackupExportStore
 import fr.aumombelli.dstcg.data.normalizeBackupPassword
 import java.time.Instant
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,7 +41,8 @@ data class BackupUiState(
     val dialog: BackupDialog = BackupDialog.None,
     val operation: BackupOperation = BackupOperation.Idle,
     val preview: BackupPreview? = null,
-    val exportDocument: BackupDocument? = null,
+    val exportFileName: String? = null,
+    val exportDocumentRequestId: Int = 0,
     val openDocumentRequestId: Int = 0,
     val importCompletedId: Int = 0,
     val message: String? = null,
@@ -52,6 +54,7 @@ data class BackupUiState(
 
 class BackupViewModel(
     private val backupGateway: BackupGateway,
+    private val pendingExportStore: PendingBackupExportStore,
     private val passwordDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(BackupUiState())
@@ -146,14 +149,22 @@ class BackupViewModel(
                 )
                 return@launch
             }
-            runCatching { backupGateway.exportBackup(normalizedPasswords.first) }
-                .onSuccess { document ->
-                    _uiState.value = _uiState.value.copy(
-                        operation = BackupOperation.AwaitingExportDestination,
-                        dialog = BackupDialog.None,
-                        exportDocument = document,
-                    )
+            runCatching {
+                val document = backupGateway.exportBackup(normalizedPasswords.first)
+                try {
+                    pendingExportStore.stage(document)
+                } finally {
+                    document.bytes.fill(0)
                 }
+                document.fileName
+            }.onSuccess { fileName ->
+                _uiState.value = _uiState.value.copy(
+                    operation = BackupOperation.AwaitingExportDestination,
+                    dialog = BackupDialog.None,
+                    exportFileName = fileName,
+                    exportDocumentRequestId = _uiState.value.exportDocumentRequestId + 1,
+                )
+            }
                 .onFailure(::showFailure)
         }
     }
@@ -214,27 +225,50 @@ class BackupViewModel(
         )
     }
 
-    fun consumeExportDocument(saved: Boolean) {
-        _uiState.value = _uiState.value.copy(
-            operation = BackupOperation.Idle,
-            exportDocument = null,
-            message = if (saved) "Sauvegarde exportée avec succès." else null,
-            errorMessage = if (saved) null else "L'export de la sauvegarde a été annulé.",
-        )
-    }
-
-    fun beginExportDocumentWrite() {
-        if (_uiState.value.operation == BackupOperation.AwaitingExportDestination) {
-            _uiState.value = _uiState.value.copy(operation = BackupOperation.WritingExport)
+    fun cancelExportDocumentSelection() {
+        viewModelScope.launch {
+            runCatching { pendingExportStore.discard() }
+            _uiState.value = _uiState.value.copy(
+                operation = BackupOperation.Idle,
+                exportFileName = null,
+                message = null,
+                errorMessage = "L'export de la sauvegarde a été annulé.",
+            )
         }
     }
 
-    fun reportDocumentWriteFailure(message: String) {
-        _uiState.value = _uiState.value.copy(
-            operation = BackupOperation.Idle,
-            exportDocument = null,
-            errorMessage = message,
-        )
+    fun writePendingExport(writer: suspend (ByteArray) -> Unit) {
+        if (_uiState.value.operation == BackupOperation.WritingExport) return
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                operation = BackupOperation.WritingExport,
+                errorMessage = null,
+            )
+            var bytes: ByteArray? = null
+            try {
+                bytes = pendingExportStore.load()
+                    ?: error("L'export temporaire a été perdu avant l'écriture du fichier.")
+                writer(checkNotNull(bytes))
+                pendingExportStore.discard()
+                _uiState.value = _uiState.value.copy(
+                    operation = BackupOperation.Idle,
+                    exportFileName = null,
+                    message = "Sauvegarde exportée avec succès.",
+                    errorMessage = null,
+                )
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (exception: Exception) {
+                runCatching { pendingExportStore.discard() }
+                _uiState.value = _uiState.value.copy(
+                    operation = BackupOperation.Idle,
+                    exportFileName = null,
+                    errorMessage = exception.message ?: "Impossible d'écrire la sauvegarde.",
+                )
+            } finally {
+                bytes?.fill(0)
+            }
+        }
     }
 
     private fun showFailure(exception: Throwable) {

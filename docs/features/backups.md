@@ -12,6 +12,8 @@ Depuis l'accueil, ouvrir **Paramètres**, puis **Sauvegarde**. L'écran indique 
 2. Saisir et confirmer un mot de passe non vide, sans règle de longueur ou de complexité.
 3. Choisir la destination du fichier `.dstcgsave` avec le sélecteur Android.
 
+Avant l'ouverture du sélecteur, l'application place temporairement l'enveloppe déjà chiffrée dans son stockage privé. L'export peut ainsi reprendre si Android recrée l'activité pendant le choix de la destination. Le fichier temporaire est supprimé après réussite ou annulation. Après l'écriture, le contenu du fichier choisi est relu et vérifié avant l'affichage du message de réussite.
+
 La sauvegarde contient la collection, les packs, les équipements, les badges, le tutoriel, les mini-jeux et le ledger d'échange. Les préférences audio et le nom Bluetooth ne sont pas inclus.
 
 Le mot de passe n'est pas conservé. Sa perte rend la sauvegarde irrécupérable. Un mot de passe faible facilite le déchiffrement ou la fabrication d'une sauvegarde valide par une personne connaissant le format.
