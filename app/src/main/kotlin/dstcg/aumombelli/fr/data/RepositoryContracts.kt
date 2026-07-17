@@ -42,6 +42,10 @@ interface ProgressGateway {
     suspend fun updateProgress(transform: (StandaloneProgress) -> StandaloneProgress)
     suspend fun resetProgress()
     suspend fun resetNewPlayerOnboarding()
+    suspend fun validateRestorableProgress(progress: StandaloneProgress) = Unit
+    suspend fun restoreProgress(progress: StandaloneProgress) {
+        saveProgress(progress)
+    }
 }
 
 interface CollectionGateway {

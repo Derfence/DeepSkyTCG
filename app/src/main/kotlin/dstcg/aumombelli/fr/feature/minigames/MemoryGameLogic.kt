@@ -11,6 +11,7 @@ import fr.aumombelli.dstcg.model.MiniGameOwnedVariantRef
 import fr.aumombelli.dstcg.model.MiniGameResolvedCardRef
 import fr.aumombelli.dstcg.model.OwnedCollection
 import fr.aumombelli.dstcg.model.VariantProfile
+import fr.aumombelli.dstcg.model.skyQualitySortPriority
 import fr.aumombelli.dstcg.model.toDisplayCard
 import fr.aumombelli.dstcg.model.toDisplayVariant
 
@@ -107,16 +108,20 @@ internal fun buildMemoryBoard(
         extensions = extensions,
         variantProfiles = variantProfiles,
     )
+    val bestOwnedEntriesByCardKey = collection.ownedMiniGameVariants(cards)
+        .mapNotNull(catalog::entryFor)
+        .groupBy { it.identity.cardKey }
+        .mapValues { (_, entries) -> entries.maxWith(bestMemoryVariantComparator) }
     val resolvedPairEntries = resolvedPairCards
-        .mapNotNull { catalog.entryFor(it.ownedVariant) }
+        .mapNotNull { resolved ->
+            bestOwnedEntriesByCardKey[resolved.ownedVariant.cardKey]
+        }
         .distinctBy { it.identity.cardKey }
     val pairEntries = if (resolvedPairEntries.size >= spec.pairCount) {
         resolvedPairEntries
     } else {
         val resolvedCardKeys = resolvedPairEntries.map { it.identity.cardKey }.toSet()
-        resolvedPairEntries + collection.ownedMiniGameVariants(cards)
-            .mapNotNull { catalog.entryFor(it) }
-            .distinctBy { it.identity.cardKey }
+        resolvedPairEntries + bestOwnedEntriesByCardKey.values
             .filter { it.identity.cardKey !in resolvedCardKeys }
             .stableMemoryOrder(dateUtc, difficulty, "pair-fill")
     }
@@ -161,6 +166,16 @@ internal fun buildMemoryBoard(
         ),
     )
 }
+
+private val MiniGameOwnedVariantRef.cardKey: String
+    get() = "$extensionId::$cardId"
+
+private val bestMemoryVariantComparator: Comparator<MemoryCardEntry> =
+    compareBy<MemoryCardEntry> { it.displayCard.activeVariant.isHolographic }
+        .thenBy { skyQualitySortPriority(it.identity.skyQuality) }
+        .thenBy { it.displayCard.activeVariant.isStamped }
+        .thenBy { it.identity.skyQuality }
+        .thenBy { it.identity.finish }
 
 private val MemoryBoardCell.shuffleKey: String
     get() = when (this) {

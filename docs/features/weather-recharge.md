@@ -25,7 +25,8 @@ Limite connue : sur une premiere installation sans serveur, si l'horloge locale 
 
 La base `x1` vaut `5` unites par seconde. Une recharge complete vaut `drawCooldown.seconds * 5`.
 
-Quand un `Observatoire` est actif, la meteo est appliquee d'abord, puis le multiplicateur d'equipement.
+Quand un `Observatoire` est actif, la météo est appliquée d'abord, puis le multiplicateur d'équipement.
+Chaque charge effectivement régénérée consomme une unité de validité de l'Observatoire. Si plusieurs charges reviennent pendant une absence, le multiplicateur cesse de s'appliquer dès que l'équipement expire ; les charges suivantes progressent à la vitesse normale.
 
 ## Calendrier deterministe
 

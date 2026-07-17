@@ -25,6 +25,7 @@ import androidx.compose.ui.test.swipeRight
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
 import fr.aumombelli.dstcg.feature.home.HomeScreen
 import fr.aumombelli.dstcg.feature.home.HomeUiState
+import fr.aumombelli.dstcg.notification.NotificationSettings
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.theme.DstcgTheme
 import org.junit.Assert.assertEquals
@@ -310,7 +311,7 @@ class HomeScreenStateTest {
         composeRule.onNodeWithTag("home-settings-about").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("home-about-sheet").assertIsDisplayed()
-        composeRule.onNodeWithTag("home-about-sheet-version").assertTextContains("v2.7.26")
+        composeRule.onNodeWithTag("home-about-sheet-version").assertTextContains("v2.7.35")
     }
 
     @Test
@@ -341,6 +342,30 @@ class HomeScreenStateTest {
 
         composeRule.runOnIdle {
             assertEquals(true, requestedSoundEnabled)
+        }
+    }
+
+    @Test
+    fun settings_menu_opens_independent_notification_controls() {
+        var fullStockEnabled = false
+        var returnReminderEnabled = false
+        setHomeScreenContent(
+            initialState = HomeUiState(isLoading = false),
+            notificationSettings = NotificationSettings(),
+            notificationSystemPermissionGranted = true,
+            onFullStockNotificationEnabledChange = { fullStockEnabled = it },
+            onReturnReminderEnabledChange = { returnReminderEnabled = it },
+        )
+
+        composeRule.onNodeWithTag("home-settings").performClick()
+        composeRule.onNodeWithTag("home-settings-notifications").performClick()
+
+        composeRule.onNodeWithTag("home-notification-settings-sheet").assertIsDisplayed()
+        composeRule.onNodeWithTag("home-notification-full-stock-switch").performClick()
+        composeRule.onNodeWithTag("home-notification-return-switch").performClick()
+        composeRule.runOnIdle {
+            assertTrue(fullStockEnabled)
+            assertTrue(returnReminderEnabled)
         }
     }
 
@@ -522,6 +547,10 @@ class HomeScreenStateTest {
         onResetNewPlayerOnboarding: () -> Unit = {},
         soundEnabled: Boolean = true,
         onSoundEnabledChange: (Boolean) -> Unit = {},
+        notificationSettings: NotificationSettings = NotificationSettings(),
+        notificationSystemPermissionGranted: Boolean = false,
+        onFullStockNotificationEnabledChange: (Boolean) -> Unit = {},
+        onReturnReminderEnabledChange: (Boolean) -> Unit = {},
         onCoachmarkTargetBoundsChanged: (
             NewPlayerOnboardingTarget,
             Rect?,
@@ -542,6 +571,10 @@ class HomeScreenStateTest {
                     onResetNewPlayerOnboarding = onResetNewPlayerOnboarding,
                     soundEnabled = soundEnabled,
                     onSoundEnabledChange = onSoundEnabledChange,
+                    notificationSettings = notificationSettings,
+                    notificationSystemPermissionGranted = notificationSystemPermissionGranted,
+                    onFullStockNotificationEnabledChange = onFullStockNotificationEnabledChange,
+                    onReturnReminderEnabledChange = onReturnReminderEnabledChange,
                     showBackground = false,
                     contentVisible = true,
                     onCoachmarkTargetBoundsChanged = onCoachmarkTargetBoundsChanged,

@@ -24,6 +24,23 @@ class AndroidKeystoreProgressCipherTest {
         }
     }
 
+    @Test
+    fun backup_security_alias_round_trip_is_non_empty_and_authenticated() {
+        val alias = "dstcg_backup_security_test_${System.nanoTime()}"
+
+        try {
+            val cipher = AndroidKeystoreProgressCipher(alias = alias)
+            val plaintext = "{\"lastSuccessfulImportAtUtc\":\"2026-07-15T10:00:00Z\"}".encodeToByteArray()
+
+            val encryptedPayload = cipher.encrypt(plaintext)
+
+            assertFalse(encryptedPayload.ciphertext.isEmpty())
+            assertArrayEquals(plaintext, cipher.decrypt(encryptedPayload))
+        } finally {
+            deleteSecretKey(alias)
+        }
+    }
+
     private fun deleteSecretKey(alias: String) {
         val keyStore = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
         keyStore.deleteEntry(alias)

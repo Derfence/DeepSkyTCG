@@ -172,6 +172,38 @@ class MemoryGameLogicTest {
         assertEquals(2, result.cards.count { it.identity.cardId == "ALP-002" })
     }
 
+    @Test
+    fun `board always displays the best owned variant for each selected card`() {
+        val cards = testCards(2)
+        val result = buildReadyBoard(
+            difficulty = MiniGameDifficulty.Apprentice,
+            cards = cards,
+            collection = ownedCollection(
+                "ALP-001" to listOf(
+                    OwnedVariantCount("city", "stamped", 1),
+                    OwnedVariantCount("holographic", "standard", 1),
+                ),
+                "ALP-002" to listOf(
+                    OwnedVariantCount("rural", "standard", 1),
+                    OwnedVariantCount("rural", "stamped", 1),
+                ),
+            ),
+            resolvedPairCards = listOf(
+                resolved("ALP-001", skyQuality = "city", finish = "stamped"),
+                resolved("ALP-001", skyQuality = "city", finish = "stamped"),
+            ),
+        )
+
+        assertEquals(
+            setOf(
+                "alpha::ALP-001::holographic::standard",
+                "alpha::ALP-002::rural::stamped",
+            ),
+            result.cards.map { it.identity.key }.toSet(),
+        )
+        assertTrue(result.cards.groupingBy { it.identity.key }.eachCount().values.all { it == 2 })
+    }
+
     private fun buildReadyBoard(
         difficulty: MiniGameDifficulty,
         cards: List<CardDefinition>,

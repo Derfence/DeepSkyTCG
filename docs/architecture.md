@@ -10,7 +10,9 @@
 - MVVM avec `ViewModel`
 - Kotlin serialization
 - Jetpack DataStore
+- Jetpack WorkManager pour les notifications locales différées
 - Android Keystore pour la progression chiffrée
+- Sauvegardes portables PBKDF2-HMAC-SHA256 et AES-256-GCM
 - Audio Android natif (`SoundPool` et `MediaPlayer`)
 - Module `benchmark` pour macrobenchmarks et baseline profile
 
@@ -40,6 +42,9 @@ AppSceneContent
      |-- DataStore chiffré
      |-- DataStore préférences audio
      |-- DataStore réglages d'échange
+     |-- DataStore préférences de notifications
+     |-- DataStore chiffré de sécurité des sauvegardes
+     |-- WorkManager et canaux de notifications Android
      `-- Bluetooth LE GATT
 ```
 
@@ -51,6 +56,7 @@ AppSceneContent
 | `audio/` | Contrôleur audio, cues SFX, mix runtime, ambiance et préférence globale sons activés/désactivés. |
 | `feature/*` | Écrans Compose, composants de feature et ViewModels proches de l'UI. |
 | `data/` | Repositories, tirage local, recharge, météo, catalogue, persistance. |
+| `notification/` | Préférences locales, calcul des échéances, workers, canaux et publication. |
 | `domain/` | Règles pures partagées, notamment les badges. |
 | `model/` | Modèles sérialisables, opérations de collection, artisanat, échange. |
 | `ui/component` | Surfaces de cartes, assets, indicateurs, glyphes. |
@@ -97,6 +103,12 @@ La préférence audio globale est volontairement séparée de la progression et 
 Elle ne change pas `ProgressSnapshot.schemaVersion` et n'est pas effacée par la réinitialisation de la bibliothèque.
 
 Le nom visible pendant l'échange Bluetooth est stocké séparément dans `dstcg_trade_settings.preferences_pb`. Il est limité à 12 octets UTF-8 pour tenir dans l'annonce BLE, avec un défaut court du type `Obs. 4821`.
+
+Les choix de notifications, la dernière ouverture et les marqueurs anti-doublon sont stockés séparément dans `dstcg_notification_settings.preferences_pb`. Ces données restent locales à l'installation et ne sont pas exportées dans les sauvegardes de progression.
+
+Les sauvegardes portables `.dstcgsave` contiennent uniquement un `StandaloneProgress`. Les identifiants d'installation et les preuves temporelles locales ne sont jamais exportés. Tout mot de passe non vide est accepté après normalisation Unicode NFC, sans règle de longueur ou de complexité. Il est transformé en clé AES-256 avec PBKDF2-HMAC-SHA256 et 600 000 itérations ; AES-GCM protège la confidentialité et détecte les altérations. Le calcul cryptographique s'exécute hors du thread principal.
+
+La date de dernière importation et l'éventuel import provisoire sont conservés dans `dstcg_backup_security_state.json`, chiffré par une clé Android Keystore distincte. Ce stockage n'est pas effacé par les réinitialisations fonctionnelles. Une sauvegarde créée à cette date ou avant est refusée.
 
 ## Points de vigilance
 

@@ -11,8 +11,13 @@ permissions:
 
 jobs:
   instrumented-tests:
+    name: Instrumented tests (API ${{ matrix.api-level }})
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        api-level: [26, 36]
 
     steps:
       - name: Checkout
@@ -34,8 +39,8 @@ jobs:
       - name: Run connected tests on emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 36
+          api-level: ${{ matrix.api-level }}
           arch: x86_64
-          profile: pixel_7
+          profile: pixel_2
           disable-animations: true
           script: ./gradlew :app:connectedDebugAndroidTest

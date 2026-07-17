@@ -1,7 +1,10 @@
 package fr.aumombelli.dstcg.data
 
+import fr.aumombelli.dstcg.model.EquipmentCardDefinition
+import fr.aumombelli.dstcg.model.EquipmentType
 import fr.aumombelli.dstcg.model.PackRechargeState
 import fr.aumombelli.dstcg.model.StandaloneProgress
+import fr.aumombelli.dstcg.model.consumeObservatoryEffectAfterPackRecharge
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -247,6 +250,85 @@ internal fun StandaloneProgress.withNormalizedPackCharge(
 }
 
 /**
+ * Normalizes recharge while consuming one Observatory validity unit for every
+ * recovered pack. Once the Observatory expires, the remaining elapsed time is
+ * evaluated again without its recharge multiplier.
+ */
+internal fun StandaloneProgress.withNormalizedPackChargeAndEquipmentValidity(
+    now: Instant,
+    drawCooldown: Duration,
+    maxStoredDraws: Int,
+    weatherPolicy: WeatherPolicy,
+    equipmentCards: List<EquipmentCardDefinition>,
+): StandaloneProgress {
+    val normalizedNow = now.normalizedRechargeInstant()
+    var updatedProgress = this
+
+    while (updatedProgress.rechargeState.availableDrawCount < maxStoredDraws) {
+        val observatoryEffect = updatedProgress.activeEquipmentByType[EquipmentType.Observatory]
+        if (observatoryEffect == null) {
+            val rechargeMultiplier = resolveActiveEquipmentBonus(
+                activeEquipmentByType = updatedProgress.activeEquipmentByType,
+                equipmentCards = equipmentCards,
+            ).rechargeMultiplier
+            return updatedProgress.withNormalizedPackCharge(
+                now = normalizedNow,
+                drawCooldown = drawCooldown,
+                maxStoredDraws = maxStoredDraws,
+                weatherPolicy = weatherPolicy,
+                rechargeMultiplier = rechargeMultiplier,
+            )
+        }
+
+        val rechargeMultiplier = resolveActiveEquipmentBonus(
+            activeEquipmentByType = updatedProgress.activeEquipmentByType,
+            equipmentCards = equipmentCards,
+        ).rechargeMultiplier
+        val evaluationStart = updatedProgress.rechargeState.lastChargeEvaluationAt
+            ?.let { runCatching { Instant.parse(it) }.getOrNull() }
+            ?.normalizedRechargeInstant()
+            ?: normalizedNow
+        val nextChargeAt = computeNextChargeAt(
+            rechargeState = updatedProgress.rechargeState,
+            now = evaluationStart,
+            drawCooldown = drawCooldown,
+            maxStoredDraws = maxStoredDraws,
+            weatherPolicy = weatherPolicy,
+            rechargeMultiplier = rechargeMultiplier,
+        )
+        val evaluationEnd = nextChargeAt
+            ?.takeUnless { it.isAfter(normalizedNow) }
+            ?: normalizedNow
+        val availableBefore = updatedProgress.rechargeState.availableDrawCount.coerceIn(0, maxStoredDraws)
+        val normalizedRechargeState = normalizePackRechargeState(
+            rechargeState = updatedProgress.rechargeState,
+            now = evaluationEnd,
+            drawCooldown = drawCooldown,
+            maxStoredDraws = maxStoredDraws,
+            weatherPolicy = weatherPolicy,
+            rechargeMultiplier = rechargeMultiplier,
+        )
+        val recoveredPackCount = (
+            normalizedRechargeState.availableDrawCount - availableBefore
+            ).coerceAtLeast(0)
+        updatedProgress = updatedProgress
+            .copy(rechargeState = normalizedRechargeState)
+            .consumeObservatoryEffectAfterPackRecharge(recoveredPackCount)
+
+        if (evaluationEnd == normalizedNow || recoveredPackCount == 0) {
+            return updatedProgress
+        }
+    }
+
+    return updatedProgress.withNormalizedPackCharge(
+        now = normalizedNow,
+        drawCooldown = drawCooldown,
+        maxStoredDraws = maxStoredDraws,
+        weatherPolicy = weatherPolicy,
+    )
+}
+
+/**
  * Applies a fixed time reduction to pack recharge after first normalizing the
  * canonical state. The reduction is intentionally weather-independent.
  */
@@ -377,6 +459,57 @@ internal fun PackRechargeState.derivedNextChargeAt(
     weatherPolicy = weatherPolicy,
     rechargeMultiplier = rechargeMultiplier,
 )
+
+/**
+ * Derives when the stock will next reach its cap without mutating persisted
+ * progress. Observatory validity is consumed in the simulation exactly as it
+ * is when progress is normalized after an absence.
+ */
+internal fun StandaloneProgress.derivedFullStockAt(
+    now: Instant,
+    drawCooldown: Duration,
+    maxStoredDraws: Int,
+    weatherPolicy: WeatherPolicy,
+    equipmentCards: List<EquipmentCardDefinition>,
+): Instant? {
+    var simulatedProgress = withNormalizedPackChargeAndEquipmentValidity(
+        now = now,
+        drawCooldown = drawCooldown,
+        maxStoredDraws = maxStoredDraws,
+        weatherPolicy = weatherPolicy,
+        equipmentCards = equipmentCards,
+    )
+    if (simulatedProgress.rechargeState.availableDrawCount >= maxStoredDraws) {
+        return null
+    }
+
+    var evaluationNow = now
+    repeat(maxStoredDraws.coerceAtLeast(0)) {
+        val rechargeMultiplier = resolveActiveEquipmentBonus(
+            activeEquipmentByType = simulatedProgress.activeEquipmentByType,
+            equipmentCards = equipmentCards,
+        ).rechargeMultiplier
+        val nextChargeAt = simulatedProgress.rechargeState.derivedNextChargeAt(
+            now = evaluationNow,
+            drawCooldown = drawCooldown,
+            maxStoredDraws = maxStoredDraws,
+            weatherPolicy = weatherPolicy,
+            rechargeMultiplier = rechargeMultiplier,
+        ) ?: return null
+        simulatedProgress = simulatedProgress.withNormalizedPackChargeAndEquipmentValidity(
+            now = nextChargeAt,
+            drawCooldown = drawCooldown,
+            maxStoredDraws = maxStoredDraws,
+            weatherPolicy = weatherPolicy,
+            equipmentCards = equipmentCards,
+        )
+        if (simulatedProgress.rechargeState.availableDrawCount >= maxStoredDraws) {
+            return nextChargeAt
+        }
+        evaluationNow = nextChargeAt
+    }
+    return null
+}
 
 private fun computeNextChargeAt(
     rechargeState: PackRechargeState,

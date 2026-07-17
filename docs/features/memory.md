@@ -29,6 +29,8 @@ Terminer une grille débloque la difficulté suivante si elle existe.
 
 Memory utilise uniquement les cartes possédées par le joueur. Une variante possédée suffit à générer une paire : les cartes ne sont pas consommées et il n'est pas nécessaire de posséder deux exemplaires.
 
+Pour chaque carte retenue, le plateau affiche toujours la meilleure variante possédée : la qualité de ciel la plus élevée disponible, puis la finition tamponnée à qualité égale. Cette règle s'applique aussi aux cartes ajoutées pour compléter une grille lorsque le tirage contient plusieurs fois la même carte.
+
 Les paires sont strictes :
 
 - même carte ;

@@ -59,6 +59,8 @@ Source de verite : `feature/home/HomeResponsiveLayout.kt`.
 
 ## Parametres
 
+Le menu contient une entrée `Notifications` ouvrant une feuille avec deux réglages indépendants : stock de packs plein et rappel unique après sept jours sans ouverture de l'application.
+
 Le menu contient :
 
 - `Réinitialiser la bibliothèque` ;

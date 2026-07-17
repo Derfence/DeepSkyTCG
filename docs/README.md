@@ -43,12 +43,14 @@ docs/README.md
 | Remplacer sons, musiques et crédits audio | [Sons et crédits audio](audio-assets.md) |
 | Documenter un écran précis | Pages [fonctionnalités](features/home.md) |
 | Vérifier le premier parcours joueur | [Onboarding](new-player-onboarding.md) |
+| Exporter ou restaurer la progression | [Sauvegardes](features/backups.md) |
 
 ## Fonctionnalités
 
 - [Accueil](features/home.md)
 - [Packs et tirage local](features/packs.md)
 - [Météo et recharge](features/weather-recharge.md)
+- [Notifications locales](features/notifications.md)
 - [Bibliothèque et badges](features/library-badges.md)
 - [Équipements](features/equipment.md)
 - [Artisanat](features/crafting.md)
@@ -57,6 +59,7 @@ docs/README.md
 - [Memory](features/memory.md)
 - [Timeline](features/timeline.md)
 - [Échange Bluetooth](features/trade-bluetooth.md)
+- [Sauvegardes](features/backups.md)
 
 ## Rattrapage depuis git
 

@@ -5,10 +5,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.aumombelli.dstcg.AppContainer
 import fr.aumombelli.dstcg.audio.SoundCue
 import fr.aumombelli.dstcg.feature.minigames.MemoryGameScreen
+import fr.aumombelli.dstcg.feature.minigames.MiniGameAbandonmentDialog
 import fr.aumombelli.dstcg.feature.minigames.MiniGamesMenuScreen
 import fr.aumombelli.dstcg.feature.minigames.MiniGamesScreenUiState
 import fr.aumombelli.dstcg.feature.minigames.MiniGamesViewModel
@@ -16,6 +20,7 @@ import fr.aumombelli.dstcg.feature.minigames.ObservatoryGameScreen
 import fr.aumombelli.dstcg.feature.minigames.ObservatoryStep
 import fr.aumombelli.dstcg.feature.minigames.QuizGameScreen
 import fr.aumombelli.dstcg.feature.minigames.TimelineGameScreen
+import fr.aumombelli.dstcg.feature.minigames.requiresAbandonmentConfirmation
 import fr.aumombelli.dstcg.ui.viewmodel.DstcgViewModelFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -38,6 +43,7 @@ internal fun MiniGamesScene(
         },
     )
     val uiState by miniGamesViewModel.uiState.collectAsState()
+    var abandonmentConfirmationVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(sceneState.miniGamesMenuContentVisible) {
         if (sceneState.miniGamesMenuContentVisible && uiState.screen is MiniGamesScreenUiState.Menu) {
@@ -61,11 +67,20 @@ internal fun MiniGamesScene(
             miniGamesViewModel.backToMenu()
         }
     }
+    val requestBackToMiniGamesMenu: () -> Unit = {
+        if (backAllowed) {
+            if (uiState.screen.requiresAbandonmentConfirmation()) {
+                abandonmentConfirmationVisible = true
+            } else {
+                navigateBackToMiniGamesMenu()
+            }
+        }
+    }
     val navigateBack: () -> Unit = {
         if (uiState.screen is MiniGamesScreenUiState.Menu) {
             navigateBackToHome()
         } else {
-            navigateBackToMiniGamesMenu()
+            requestBackToMiniGamesMenu()
         }
     }
     val openMiniGame: (() -> Unit) -> Unit = { open ->
@@ -75,6 +90,13 @@ internal fun MiniGamesScene(
         }
     }
     val nativeBackBlocked = shouldBlockMiniGamesNativeBackNavigation(uiState.screen)
+    val abandonmentConfirmationRequired = uiState.screen.requiresAbandonmentConfirmation()
+
+    LaunchedEffect(abandonmentConfirmationRequired) {
+        if (!abandonmentConfirmationRequired) {
+            abandonmentConfirmationVisible = false
+        }
+    }
 
     BackHandler(enabled = backAllowed) {
         if (!nativeBackBlocked) {
@@ -99,7 +121,7 @@ internal fun MiniGamesScene(
         is MiniGamesScreenUiState.QuizResult,
         is MiniGamesScreenUiState.QuizUnavailable -> QuizGameScreen(
             state = uiState,
-            onBackToMenu = navigateBackToMiniGamesMenu,
+            onBackToMenu = requestBackToMiniGamesMenu,
             onSelectDifficulty = miniGamesViewModel::selectQuizDifficulty,
             onSelectAnswer = miniGamesViewModel::selectQuizAnswer,
             onContinue = miniGamesViewModel::continueQuiz,
@@ -110,7 +132,7 @@ internal fun MiniGamesScene(
         is MiniGamesScreenUiState.TimelineResult,
         is MiniGamesScreenUiState.TimelineUnavailable -> TimelineGameScreen(
             state = uiState,
-            onBackToMenu = navigateBackToMiniGamesMenu,
+            onBackToMenu = requestBackToMiniGamesMenu,
             onSelectDifficulty = miniGamesViewModel::selectTimelineDifficulty,
             onPlaceCard = miniGamesViewModel::placeTimelineCard,
             onReturnCardToHand = miniGamesViewModel::returnTimelineCardToHand,
@@ -123,7 +145,7 @@ internal fun MiniGamesScene(
         is MiniGamesScreenUiState.ObservatoryResult,
         is MiniGamesScreenUiState.ObservatoryUnavailable -> ObservatoryGameScreen(
             state = uiState,
-            onBackToMenu = navigateBackToMiniGamesMenu,
+            onBackToMenu = requestBackToMiniGamesMenu,
             onSelectDifficulty = miniGamesViewModel::selectObservatoryDifficulty,
             onSetDomeProgress = miniGamesViewModel::setObservatoryDomeProgress,
             onValidateDomeProgress = miniGamesViewModel::validateObservatoryDomeProgress,
@@ -138,9 +160,19 @@ internal fun MiniGamesScene(
 
         else -> MemoryGameScreen(
             state = uiState,
-            onBackToMenu = navigateBackToMiniGamesMenu,
+            onBackToMenu = requestBackToMiniGamesMenu,
             onSelectDifficulty = miniGamesViewModel::selectMemoryDifficulty,
             onSelectCell = miniGamesViewModel::selectMemoryCell,
+        )
+    }
+
+    if (abandonmentConfirmationVisible && abandonmentConfirmationRequired) {
+        MiniGameAbandonmentDialog(
+            onDismiss = { abandonmentConfirmationVisible = false },
+            onConfirm = {
+                abandonmentConfirmationVisible = false
+                navigateBackToMiniGamesMenu()
+            },
         )
     }
 }

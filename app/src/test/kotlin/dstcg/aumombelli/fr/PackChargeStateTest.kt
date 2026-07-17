@@ -2,9 +2,17 @@ package fr.aumombelli.dstcg
 
 import fr.aumombelli.dstcg.data.DeterministicWeatherCalendar
 import fr.aumombelli.dstcg.data.WeatherState
+import fr.aumombelli.dstcg.data.WeatherPolicy
 import fr.aumombelli.dstcg.data.buildPackChargeUiStatus
+import fr.aumombelli.dstcg.data.derivedFullStockAt
 import fr.aumombelli.dstcg.data.normalizePackRechargeState
 import fr.aumombelli.dstcg.model.PackRechargeState
+import fr.aumombelli.dstcg.model.ActiveEquipmentEffect
+import fr.aumombelli.dstcg.model.EquipmentBonusUnit
+import fr.aumombelli.dstcg.model.EquipmentCardDefinition
+import fr.aumombelli.dstcg.model.EquipmentType
+import fr.aumombelli.dstcg.model.OwnedCollection
+import fr.aumombelli.dstcg.model.StandaloneProgress
 import java.time.Duration
 import java.time.Instant
 import org.junit.Assert.assertEquals
@@ -148,5 +156,113 @@ class PackChargeStateTest {
         assertEquals(10, normalized.availableDrawCount)
         assertEquals(0L, normalized.accumulatedChargeUnits)
         assertNull(normalized.lastChargeEvaluationAt)
+    }
+
+    @Test
+    fun `full stock instant is derived from every missing charge`() {
+        val now = Instant.parse("2026-02-01T00:00:00Z")
+        val progress = StandaloneProgress(
+            collection = OwnedCollection(),
+            rechargeState = PackRechargeState(
+                availableDrawCount = 8,
+                lastChargeEvaluationAt = now.toString(),
+            ),
+        )
+
+        val dueAt = progress.derivedFullStockAt(
+            now = now,
+            drawCooldown = drawCooldown,
+            maxStoredDraws = maxStoredDraws,
+            weatherPolicy = AlwaysClearWeather,
+            equipmentCards = emptyList(),
+        )
+
+        assertEquals(Instant.parse("2026-02-01T12:00:00Z"), dueAt)
+    }
+
+    @Test
+    fun `full stock instant accounts for accumulated partial charge`() {
+        val now = Instant.parse("2026-02-01T00:00:00Z")
+        val progress = StandaloneProgress(
+            collection = OwnedCollection(),
+            rechargeState = PackRechargeState(
+                availableDrawCount = 9,
+                accumulatedChargeUnits = 54_000L,
+                lastChargeEvaluationAt = now.toString(),
+            ),
+        )
+
+        val dueAt = progress.derivedFullStockAt(
+            now = now,
+            drawCooldown = drawCooldown,
+            maxStoredDraws = maxStoredDraws,
+            weatherPolicy = AlwaysClearWeather,
+            equipmentCards = emptyList(),
+        )
+
+        assertEquals(Instant.parse("2026-02-01T03:00:00Z"), dueAt)
+    }
+
+    @Test
+    fun `full stock instant consumes observatory validity between charges`() {
+        val now = Instant.parse("2026-02-01T00:00:00Z")
+        val observatory = EquipmentCardDefinition(
+            id = "observatory-test",
+            type = EquipmentType.Observatory,
+            displayName = "Observatoire de test",
+            level = 1,
+            imageRef = "test",
+            packsAffected = 1,
+            bonusValue = 2.0,
+            bonusUnit = EquipmentBonusUnit.RechargeMultiplier,
+            dropWeight = 1,
+            description = "Double une recharge.",
+        )
+        val progress = StandaloneProgress(
+            collection = OwnedCollection(),
+            rechargeState = PackRechargeState(
+                availableDrawCount = 8,
+                lastChargeEvaluationAt = now.toString(),
+            ),
+            activeEquipmentByType = mapOf(
+                EquipmentType.Observatory to ActiveEquipmentEffect(
+                    equipmentCardId = observatory.id,
+                    equipmentType = EquipmentType.Observatory,
+                    packsRemaining = 1,
+                ),
+            ),
+        )
+
+        val dueAt = progress.derivedFullStockAt(
+            now = now,
+            drawCooldown = drawCooldown,
+            maxStoredDraws = maxStoredDraws,
+            weatherPolicy = AlwaysClearWeather,
+            equipmentCards = listOf(observatory),
+        )
+
+        assertEquals(Instant.parse("2026-02-01T09:00:00Z"), dueAt)
+    }
+
+    @Test
+    fun `full stock has no future notification instant`() {
+        val progress = StandaloneProgress(
+            collection = OwnedCollection(),
+            rechargeState = PackRechargeState(availableDrawCount = maxStoredDraws),
+        )
+
+        assertNull(
+            progress.derivedFullStockAt(
+                now = Instant.parse("2026-02-01T00:00:00Z"),
+                drawCooldown = drawCooldown,
+                maxStoredDraws = maxStoredDraws,
+                weatherPolicy = AlwaysClearWeather,
+                equipmentCards = emptyList(),
+            ),
+        )
+    }
+
+    private object AlwaysClearWeather : WeatherPolicy {
+        override fun weatherAt(instant: Instant): WeatherState = WeatherState.Clear
     }
 }

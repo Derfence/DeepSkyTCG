@@ -52,6 +52,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import fr.aumombelli.dstcg.app.NewPlayerOnboardingTarget
+import fr.aumombelli.dstcg.feature.backup.BackupSheet
+import fr.aumombelli.dstcg.feature.backup.BackupUiState
+import fr.aumombelli.dstcg.notification.NotificationSettings
 import fr.aumombelli.dstcg.ui.component.NewContentIndicator
 import fr.aumombelli.dstcg.ui.component.TRADING_CARD_WIDTH_OVER_HEIGHT
 import fr.aumombelli.dstcg.ui.component.drawEquipmentMountGlyph
@@ -71,8 +74,20 @@ fun HomeScreen(
     onOpenMiniGamesMenu: () -> Unit = {},
     onResetProgress: () -> Unit,
     onResetNewPlayerOnboarding: () -> Unit = {},
+    backupState: BackupUiState = BackupUiState(),
+    onRequestBackupExport: () -> Unit = {},
+    onRequestBackupImport: () -> Unit = {},
+    onSubmitBackupExportPassword: (String, String) -> Unit = { _, _ -> },
+    onSubmitBackupImportPassword: (String) -> Unit = {},
+    onConfirmBackupImport: () -> Unit = {},
+    onDismissBackupDialog: () -> Unit = {},
     soundEnabled: Boolean = true,
     onSoundEnabledChange: (Boolean) -> Unit = {},
+    notificationSettings: NotificationSettings = NotificationSettings(),
+    notificationSystemPermissionGranted: Boolean = false,
+    onFullStockNotificationEnabledChange: (Boolean) -> Unit = {},
+    onReturnReminderEnabledChange: (Boolean) -> Unit = {},
+    onOpenNotificationSystemSettings: () -> Unit = {},
     modifier: Modifier = Modifier,
     showBackground: Boolean = true,
     contentVisible: Boolean = true,
@@ -89,6 +104,8 @@ fun HomeScreen(
     var tutorialResetConfirmationVisible by remember { mutableStateOf(false) }
     var aboutSheetVisible by remember { mutableStateOf(false) }
     var audioCreditsSheetVisible by remember { mutableStateOf(false) }
+    var backupSheetVisible by remember { mutableStateOf(false) }
+    var notificationSettingsSheetVisible by remember { mutableStateOf(false) }
     val density = LocalDensity.current
     val contentAlpha by animateFloatAsState(
         targetValue = if (contentVisible) 1f else 0f,
@@ -122,9 +139,13 @@ fun HomeScreen(
         !state.isLoading &&
         state.errorMessage == null &&
         !state.isResettingProgress &&
-        !state.isResettingTutorial
-    val settingsEnabled = interactionsEnabled && contentVisible
-    val resetActionsEnabled = !state.isLoading && !state.isResettingProgress && !state.isResettingTutorial
+        !state.isResettingTutorial &&
+        !backupState.isBusy
+    val settingsEnabled = interactionsEnabled && contentVisible && !backupState.isBusy
+    val resetActionsEnabled = !state.isLoading &&
+        !state.isResettingProgress &&
+        !state.isResettingTutorial &&
+        !backupState.isBusy
 
     LaunchedEffect(contentVisible) {
         if (!contentVisible) {
@@ -134,6 +155,7 @@ fun HomeScreen(
             tutorialResetConfirmationVisible = false
             aboutSheetVisible = false
             audioCreditsSheetVisible = false
+            notificationSettingsSheetVisible = false
             onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeOpenPack, null)
             onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeLibrary, null)
             onCoachmarkTargetBoundsChanged(NewPlayerOnboardingTarget.HomeEquipment, null)
@@ -180,6 +202,7 @@ fun HomeScreen(
             tutorialResetConfirmationVisible = false
             aboutSheetVisible = false
             audioCreditsSheetVisible = false
+            notificationSettingsSheetVisible = false
         }
     }
 
@@ -188,12 +211,14 @@ fun HomeScreen(
             resetConfirmationVisible ||
             tutorialResetConfirmationVisible ||
             aboutSheetVisible ||
-            audioCreditsSheetVisible,
+            audioCreditsSheetVisible ||
+            notificationSettingsSheetVisible,
     ) {
         when {
             resetConfirmationVisible -> resetConfirmationVisible = false
             tutorialResetConfirmationVisible -> tutorialResetConfirmationVisible = false
             audioCreditsSheetVisible -> audioCreditsSheetVisible = false
+            notificationSettingsSheetVisible -> notificationSettingsSheetVisible = false
             aboutSheetVisible -> aboutSheetVisible = false
             else -> settingsExpanded = false
         }
@@ -292,6 +317,19 @@ fun HomeScreen(
                                 modifier = Modifier.testTag("home-settings-reset-tutorial"),
                             )
                             DropdownMenuItem(
+                                text = { Text("Sauvegarde") },
+                                onClick = {
+                                    settingsExpanded = false
+                                    aboutSheetVisible = false
+                                    audioCreditsSheetVisible = false
+                                    resetConfirmationVisible = false
+                                    tutorialResetConfirmationVisible = false
+                                    backupSheetVisible = true
+                                },
+                                enabled = resetActionsEnabled,
+                                modifier = Modifier.testTag("home-settings-backup"),
+                            )
+                            DropdownMenuItem(
                                 text = { Text("Sons") },
                                 onClick = {
                                     onSoundEnabledChange(!soundEnabled)
@@ -304,6 +342,16 @@ fun HomeScreen(
                                     )
                                 },
                                 modifier = Modifier.testTag("home-settings-sound-toggle"),
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Notifications") },
+                                onClick = {
+                                    settingsExpanded = false
+                                    aboutSheetVisible = false
+                                    audioCreditsSheetVisible = false
+                                    notificationSettingsSheetVisible = true
+                                },
+                                modifier = Modifier.testTag("home-settings-notifications"),
                             )
                             DropdownMenuItem(
                                 text = { Text("À propos") },
@@ -485,6 +533,31 @@ fun HomeScreen(
         HomeAudioCreditsSheet(
             visible = audioCreditsSheetVisible && contentVisible,
             onDismiss = { audioCreditsSheetVisible = false },
+        )
+
+        HomeNotificationSettingsSheet(
+            visible = notificationSettingsSheetVisible && contentVisible,
+            settings = notificationSettings,
+            systemPermissionGranted = notificationSystemPermissionGranted,
+            onFullStockEnabledChange = onFullStockNotificationEnabledChange,
+            onReturnReminderEnabledChange = onReturnReminderEnabledChange,
+            onOpenSystemSettings = onOpenNotificationSystemSettings,
+            onDismiss = { notificationSettingsSheetVisible = false },
+        )
+
+        BackupSheet(
+            visible = backupSheetVisible && contentVisible,
+            state = backupState,
+            onDismiss = {
+                backupSheetVisible = false
+                onDismissBackupDialog()
+            },
+            onRequestExport = onRequestBackupExport,
+            onRequestImport = onRequestBackupImport,
+            onSubmitExportPassword = onSubmitBackupExportPassword,
+            onSubmitImportPassword = onSubmitBackupImportPassword,
+            onConfirmImport = onConfirmBackupImport,
+            onDismissDialog = onDismissBackupDialog,
         )
 
         if (resetConfirmationVisible && contentVisible) {

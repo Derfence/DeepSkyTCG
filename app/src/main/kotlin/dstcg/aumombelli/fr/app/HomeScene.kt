@@ -1,22 +1,45 @@
 package fr.aumombelli.dstcg.app
 
+import android.Manifest
 import android.app.Activity
+import android.content.Intent
+import android.os.Build
+import android.provider.Settings
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import fr.aumombelli.dstcg.AppContainer
 import fr.aumombelli.dstcg.audio.SoundCue
+import fr.aumombelli.dstcg.data.BackupRepository
+import fr.aumombelli.dstcg.data.readBackupBytesLimited
+import fr.aumombelli.dstcg.data.writeBackupDocument
+import fr.aumombelli.dstcg.feature.backup.BackupViewModel
 import fr.aumombelli.dstcg.feature.home.HomeScreen
 import fr.aumombelli.dstcg.feature.home.HomeViewModel
 import fr.aumombelli.dstcg.model.NewPlayerOnboardingStep
+import fr.aumombelli.dstcg.notification.AndroidNotificationPublisher
+import fr.aumombelli.dstcg.notification.LocalNotificationType
+import fr.aumombelli.dstcg.notification.NotificationSettings
 import fr.aumombelli.dstcg.ui.motion.BrandLogoVariant
 import fr.aumombelli.dstcg.ui.viewmodel.DstcgViewModelFactory
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 internal fun HomeScene(
@@ -42,7 +65,117 @@ internal fun HomeScene(
         },
     )
     val uiState by homeViewModel.uiState.collectAsState()
+    val backupViewModel: BackupViewModel = viewModel(
+        key = "backup",
+        factory = DstcgViewModelFactory {
+            BackupViewModel(appContainer.backupGateway)
+        },
+    )
+    val backupUiState by backupViewModel.uiState.collectAsState()
     val audioSettings by appContainer.audioController.settings.collectAsState()
+    val notificationSettings by appContainer.notificationPreferences.settings.collectAsState(
+        initial = NotificationSettings(),
+    )
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var notificationSystemPermissionGranted by remember {
+        mutableStateOf(AndroidNotificationPublisher(context).canPostNotifications())
+    }
+    var pendingNotificationEnable by remember { mutableStateOf<LocalNotificationType?>(null) }
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        notificationSystemPermissionGranted = granted &&
+            AndroidNotificationPublisher(context).canPostNotifications()
+        val pending = pendingNotificationEnable
+        pendingNotificationEnable = null
+        if (granted && pending != null) {
+            scope.launch {
+                when (pending) {
+                    LocalNotificationType.FullStock ->
+                        appContainer.notificationPreferences.setFullStockEnabled(true)
+                    LocalNotificationType.ReturnReminder ->
+                        appContainer.notificationPreferences.setReturnReminderEnabled(true)
+                }
+            }
+        }
+    }
+
+    DisposableEffect(lifecycleOwner, context) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                notificationSystemPermissionGranted =
+                    AndroidNotificationPublisher(context).canPostNotifications()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/octet-stream"),
+    ) { uri ->
+        val document = backupUiState.exportDocument
+        if (uri == null || document == null) {
+            backupViewModel.consumeExportDocument(saved = false)
+        } else {
+            backupViewModel.beginExportDocumentWrite()
+            scope.launch {
+                runCatching {
+                    withContext(Dispatchers.IO) {
+                        context.contentResolver.openOutputStream(uri, "w")?.use { output ->
+                            output.writeBackupDocument(document.bytes)
+                        } ?: error("Le fichier de destination n'a pas pu être ouvert.")
+                    }
+                }.onSuccess {
+                    backupViewModel.consumeExportDocument(saved = true)
+                }.onFailure { exception ->
+                    backupViewModel.reportDocumentWriteFailure(
+                        exception.message ?: "Impossible d'écrire la sauvegarde.",
+                    )
+                }
+            }
+        }
+    }
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri != null) {
+            backupViewModel.beginImportDocumentRead()
+            scope.launch {
+                runCatching {
+                    withContext(Dispatchers.IO) {
+                        context.contentResolver.openInputStream(uri)?.use { input ->
+                            input.readBackupBytesLimited(BackupRepository.MAX_BACKUP_SIZE_BYTES)
+                        } ?: error("Le fichier sélectionné n'a pas pu être ouvert.")
+                    }
+                }.onSuccess(backupViewModel::acceptImportDocument)
+                    .onFailure { exception ->
+                        backupViewModel.reportDocumentReadFailure(
+                            exception.message ?: "Impossible de lire la sauvegarde.",
+                        )
+                    }
+            }
+        } else {
+            backupViewModel.cancelImportDocumentSelection()
+        }
+    }
+
+    LaunchedEffect(backupUiState.exportDocument) {
+        backupUiState.exportDocument?.let { exportLauncher.launch(it.fileName) }
+    }
+
+    LaunchedEffect(backupUiState.openDocumentRequestId) {
+        if (backupUiState.openDocumentRequestId > 0) {
+            importLauncher.launch(arrayOf("application/octet-stream", "application/json", "text/plain"))
+        }
+    }
+
+    LaunchedEffect(backupUiState.importCompletedId) {
+        if (backupUiState.importCompletedId > 0) {
+            homeViewModel.refresh()
+            onboardingCoordinator.syncFromProgress()
+        }
+    }
 
     LaunchedEffect(Unit) {
         if (hasEnteredHomeOnce.value) {
@@ -66,7 +199,6 @@ internal fun HomeScene(
                 !sceneState.transitionLocked &&
                 NewPlayerOnboardingInteractionPolicy.allowsHomeOpenPack(onboardingStep)
             ) {
-                appContainer.audioController.play(SoundCue.UiNavigate)
                 scope.launch {
                     onboardingCoordinator.onHomeOpenPackSelected()
                     transitions.animateHomeToPackSelection()
@@ -154,11 +286,51 @@ internal fun HomeScene(
                 },
             )
         },
+        backupState = backupUiState,
+        onRequestBackupExport = backupViewModel::requestExport,
+        onRequestBackupImport = backupViewModel::requestImportDocument,
+        onSubmitBackupExportPassword = backupViewModel::submitExportPassword,
+        onSubmitBackupImportPassword = backupViewModel::submitImportPassword,
+        onConfirmBackupImport = backupViewModel::confirmImport,
+        onDismissBackupDialog = backupViewModel::dismissDialog,
         soundEnabled = audioSettings.enabled,
         onSoundEnabledChange = { enabled ->
             scope.launch {
                 appContainer.audioController.setEnabled(enabled)
             }
+        },
+        notificationSettings = notificationSettings,
+        notificationSystemPermissionGranted = notificationSystemPermissionGranted,
+        onFullStockNotificationEnabledChange = { enabled ->
+            if (!enabled || notificationSystemPermissionGranted) {
+                scope.launch {
+                    appContainer.notificationPreferences.setFullStockEnabled(enabled)
+                }
+            } else {
+                pendingNotificationEnable = LocalNotificationType.FullStock
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+        },
+        onReturnReminderEnabledChange = { enabled ->
+            if (!enabled || notificationSystemPermissionGranted) {
+                scope.launch {
+                    appContainer.notificationPreferences.setReturnReminderEnabled(enabled)
+                }
+            } else {
+                pendingNotificationEnable = LocalNotificationType.ReturnReminder
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+        },
+        onOpenNotificationSystemSettings = {
+            context.startActivity(
+                Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                    .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
         },
         showBackground = false,
         contentVisible = sceneState.homeContentVisible,

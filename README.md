@@ -20,6 +20,7 @@ Fonctionnalites :
 - [Accueil](docs/features/home.md)
 - [Packs et tirage local](docs/features/packs.md)
 - [Météo et recharge](docs/features/weather-recharge.md)
+- [Notifications locales](docs/features/notifications.md)
 - [Bibliothèque et badges](docs/features/library-badges.md)
 - [Équipements](docs/features/equipment.md)
 - [Artisanat](docs/features/crafting.md)
@@ -51,7 +52,7 @@ Les commandes détaillées sont dans [Installation et tests](docs/setup-and-test
 
 ## État fonctionnel actuel
 
-- Version affichée dans l'application : `v2.7.26`.
+- Version affichée dans l'application : `v2.7.35`.
 - Application mono-profil, sans login, sans backend et sans publicité.
 - Progression sécurisée dans DataStore avec chiffrement AES-GCM via Android Keystore.
 - Stock local de `10` ouvertures, `5` cartes par pack et cooldown de `6 h` modulé par la météo UTC.
